@@ -5,8 +5,15 @@ from infrastructure.databases.base import Base
 
 # Database configuration
 DATABASE_URI = Config.DATABASE_URI
-engine = create_engine(DATABASE_URI)
+engine = create_engine(
+    DATABASE_URI,
+    connect_args={
+        "encrypt": "yes",
+        "trustServerCertificate": "yes",
+    },
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 session = SessionLocal()
+
 def init_mssql(app):
     Base.metadata.create_all(bind=engine)
