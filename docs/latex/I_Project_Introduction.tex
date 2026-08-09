@@ -1,0 +1,137 @@
+\section{Project Introduction}
+\label{sec:project_introduction}
+
+\subsection{Overview}
+\label{subsec:overview}
+
+\subsubsection{Project Information}
+\label{subsubsec:project_info}
+
+\textbf{Project Name:} AI-powered Film Photography Contest Management Platform\\
+\textbf{Software Type:} Web Application\\
+\textbf{Purpose:} To streamline the organization, submission, judging, and exhibition processes of film photography competitions.\\
+\textbf{Group Name:} Group 7
+
+\subsection{Project Team}
+\label{subsec:project_team}
+
+\begin{tabularx}{\textwidth}{|l|l|X|}
+    \hline
+    \textbf{Full Name} & \textbf{Role} & \textbf{Email} \\
+    \hline
+    Nguyen Van Chien & Lecturer & \href{mailto:chiennv@ut.edu.vn}{chiennv@ut.edu.vn} \\
+    \hline
+    Tran Phat Tai & Leader & \href{mailto:taitp1804@ut.edu.vn}{taitp1804@ut.edu.vn} \\
+    \hline
+    Tran Quy Minh Thien & Member & \href{mailto:thientqm795398@ut.edu.vn}{thientqm795398@ut.edu.vn} \\
+    \hline
+    Vo Quoc Khanh & Member & \href{mailto:khanhvq667208@ut.edu.vn}{khanhvq667208@ut.edu.vn} \\
+    \hline
+    Nguyen Thi My Uyen & Member & \href{mailto:uyenntm682174@ut.edu.vn}{uyenntm682174@ut.edu.vn} \\
+    \hline
+    Huynh Nguyen Duy Tan & Member & \href{mailto:tanhnd541780@ut.edu.vn}{tanhnd541780@ut.edu.vn} \\
+    \hline
+\end{tabularx}
+
+% ----------------------------------------------------
+\subsection{Product Background}
+\label{subsec:product_background}
+\begingroup
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0.8em}
+
+Film photography has become increasingly popular in recent years, leading to a growing number of photography contests. However, most contests are still managed using separate tools such as online forms, spreadsheets, emails, and cloud storage, resulting in inefficient workflows and difficulties in submission verification, judging, and data management.
+
+Unlike digital photography contests, film photography requires additional technical metadata such as film stock, camera, lens, ISO, developing laboratory, and scanning information. Existing contest management systems generally do not support these specialized requirements.
+
+To address these limitations, this project proposes an AI-powered Film Photography Contest Management Platform. The platform centralizes contest management, supports film-specific metadata, and integrates AI for duplicate image detection, AI-generated image detection, automatic image categorization, and contest analytics, improving efficiency, transparency, and fairness throughout the competition process.
+\endgroup
+
+% ----------------------------------------------------
+\subsection{Existing Systems}
+\label{subsec:existing_systems}
+
+\subsubsection{Picter}
+\label{subsubsec:picter}
+
+\textbf{Link:} \url{https://www.picter.com}\\
+\textbf{Description:} A professional platform for managing photography competitions, open calls, grants, and awards. It is widely used by organizations such as World Press Photo, Leica, and Magnum.\\
+\textbf{Actors:} Organizers, judges, photographers, administrators.\\
+\textbf{Key Features:}
+\begin{itemize}
+    \item Online contest creation and management.
+    \item Photo submission and portfolio management.
+    \item Online judging and scoring.
+    \item Result publication and digital archive.
+\end{itemize}
+\textbf{Pros:} Complete end-to-end contest management; professional judging workflow; supports large-scale international competitions.\\
+\textbf{Cons:} Not designed specifically for film photography; does not provide film-specific metadata management (film stock, camera, developing lab, etc.); limited AI verification features.
+
+\subsubsection{CameraComp}
+\label{subsubsec:cameracomp}
+
+\textbf{Link:} \url{https://www.cameracomp.com}\\
+\textbf{Description:} A cloud-based competition management system developed for photography clubs and federations.\\
+\textbf{Actors:} Club administrators, judges, photographers.\\
+\textbf{Key Features:}
+\begin{itemize}
+    \item Competition management.
+    \item Image submission.
+    \item Online and offline judging.
+    \item Member and event management.
+\end{itemize}
+\textbf{Pros:} Simple and intuitive interface; integrated competition and member management; supports multiple judging methods.\\
+\textbf{Cons:} Focuses on photography clubs rather than film photography contests; no AI-generated image detection; no film metadata management.
+
+Compared with the systems above, the proposed platform is specifically designed for film photography contests. It focuses on film-specific metadata, AI-based verification, and a more specialized workflow for organizers, judges, and participants.
+
+% ----------------------------------------------------
+\subsection{Business Opportunity}
+\label{subsec:business_opportunity}
+\begingroup
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0.8em}
+
+The growing popularity of film photography has increased the demand for efficient contest management. However, most organizers still use separate tools, making submission management, judging, and verification inefficient. This project provides a centralized platform with AI support to improve efficiency, transparency, and fairness for photography contests.
+\endgroup
+
+% ----------------------------------------------------
+\subsection{Software Product Vision}
+\label{subsec:software_product_vision}
+\begingroup
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0.8em}
+
+The project aims to develop a web and mobile platform for managing film photography contests. It supports the complete contest workflow, from registration and submission to judging and result publication, while integrating AI for duplicate image detection, AI-generated image detection, and automated image categorization to enhance contest management.
+\endgroup
+
+% ----------------------------------------------------
+\subsection{Project Scope \& Limitations}
+\label{subsec:project_scope_limitations}
+
+\subsubsection{Major Features}
+\label{subsubsec:major_features}
+
+The following primary functional modules are included:
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{FE1 – User \& Role Management:} Provides authentication, role-based access control (RBAC), and profile management for Candidates, Judges, and Organizers/Admins.
+    \item \textbf{FE2 – Contest Management:} Enables Organizers to create and configure new contests, set submission rules, manage timelines, oversee participant lists, and assign judges.
+    \item \textbf{FE3 – Submission System:} Allows candidates to upload high-resolution film scan images, input detailed technical specifications (EXIF metadata, Camera, Lens, Film Stock/ISO, Aperture, Shutter Speed), and track submission statuses.
+    \item \textbf{FE4 – Judging \& Evaluation:} Provides a dedicated judging panel featuring high-resolution image viewing tools (Zoom/Pan), multi-criteria evaluation scoring, and feedback/commenting capabilities.
+    \item \textbf{FE5 – Automated Processing \& Anti-cheat:} Automatically extracts EXIF data from uploaded images and utilizes perceptual hashing (pHash) with Hamming distance calculations to detect and flag potential image plagiarism or duplicate submissions.
+    \item \textbf{FE6 – Exhibition Gallery:} A public online gallery showcasing winning or selected submissions, equipped with advanced filtering options by Film Stock, Camera model, or Contest.
+\end{itemize}
+
+\subsubsection{Limitations \& Exclusions}
+\label{subsubsec:limitations_exclusions}
+
+The following points detail the operational constraints and out-of-scope boundaries:
+
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{LI-01:} File size and format restrictions: Supports only \texttt{.jpg}, \texttt{.jpeg}, and \texttt{.png} formats, with file sizes strictly limited between 2 MB and 25 MB.
+    \item \textbf{LI-02:} Automated metadata extraction depends entirely on intact EXIF data within uploaded film scan files; stripped EXIF files require manual input and administrative flagging.
+    \item \textbf{LI-03:} Perceptual hashing (pHash) and Hamming distance duplication detection are processed asynchronously via message queues, resulting in slight processing delays rather than real-time feedback upon upload.
+    \item \textbf{LI-04:} No support for native mobile applications (iOS/Android); the system is strictly developed as a responsive web application.
+    \item \textbf{LI-05:} No integration with online payment gateways or photo editing/post-processing tools (candidates must upload finalized image files, and all financial transactions are out of scope).
+\end{itemize}

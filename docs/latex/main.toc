@@ -1,0 +1,16 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{Acknowledgement}{3}{section*.2}%
+\contentsline {section}{Definition and Acronyms}{3}{section*.3}%
+\contentsline {section}{\numberline {1}Project Introduction}{5}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Overview}{5}{subsection.1.1}%
+\contentsline {subsubsection}{\numberline {1.1.1}Project Information}{5}{subsubsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.2}Project Team}{5}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Product Background}{5}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Existing Systems}{6}{subsection.1.4}%
+\contentsline {subsubsection}{\numberline {1.4.1}Picter}{6}{subsubsection.1.4.1}%
+\contentsline {subsubsection}{\numberline {1.4.2}CameraComp}{6}{subsubsection.1.4.2}%
+\contentsline {subsection}{\numberline {1.5}Business Opportunity}{7}{subsection.1.5}%
+\contentsline {subsection}{\numberline {1.6}Software Product Vision}{7}{subsection.1.6}%
+\contentsline {subsection}{\numberline {1.7}Project Scope \& Limitations}{7}{subsection.1.7}%
+\contentsline {subsubsection}{\numberline {1.7.1}Major Features}{7}{subsubsection.1.7.1}%
+\contentsline {subsubsection}{\numberline {1.7.2}Limitations \& Exclusions}{8}{subsubsection.1.7.2}%

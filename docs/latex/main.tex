@@ -1,0 +1,174 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+% Formatting & Table Packages
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{microtype}
+\usepackage{indentfirst}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+
+% Header & Footer
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\cfoot{\thepage}
+
+% Hyperlinks & PDF Metadata
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue!80!black,
+    pdftitle={Software Requirements Specification - AI-powered Film Photography Contest Management Platform},
+    pdfauthor={Group 7}
+}
+
+% Colors
+\definecolor{headerblue}{RGB}{220,235,252}
+\definecolor{altrowgray}{RGB}{248,249,250}
+
+\begin{document}
+
+\begin{titlepage}
+    \thispagestyle{empty}
+
+    \begin{center}
+
+        % University
+        {\large\bfseries UNIVERSITY OF TRANSPORT HO CHI MINH CITY}\\[0.15cm]
+        {\normalsize\bfseries FACULTY OF INFORMATION TECHNOLOGY}\\[0.15cm]
+
+        \rule{0.35\textwidth}{0.5pt}
+
+        % Move the title and table downward
+        \vfill
+
+        % Project title
+        {\Huge\bfseries Capstone Project Document}\\[0.3cm]
+        \rule{0.5\textwidth}{0.5pt}\\[1.5cm]
+
+        % Project information table
+        \renewcommand{\arraystretch}{1.1}
+
+        \makebox[\textwidth][c]{%
+        \begin{tabularx}{0.90\textwidth}{|
+            >{\centering\arraybackslash}p{4.2cm}|
+            >{\centering\arraybackslash}X|}
+            
+            \hline
+
+            % Project name - full width
+            \multicolumn{2}{|c|}{%
+                \begin{minipage}{0.85\textwidth}
+                    \centering
+                    \vspace{0.2cm}
+                    \textbf{\large AI-powered Film Photography Contest Management Platform}
+                    \vspace{0.2cm}
+                \end{minipage}
+            }
+            \\[0.5em]
+            \hline
+
+            \bfseries Group Members:
+            & Tran Phat Tai - 086206011804\\
+            & Tran Quy Minh Thien - 079207025398\\
+            & Vo Quoc Khanh - 066207017208\\
+            & Nguyen Thi My Uyen - 068307002174\\
+            & Huynh Nguyen Duy Tan - 054207001780\\
+            \hline
+
+            \bfseries Lecturer:
+            & Nguyen Van Chien\\
+            \hline
+
+        \end{tabularx}
+        }
+
+        \vfill
+
+        % Date
+        {\small - Ho Chi Minh City, September 2026 -}
+
+    \end{center}
+\end{titlepage}
+
+\newpage
+
+\pagenumbering{arabic}
+\setcounter{page}{2}
+
+\pdfbookmark[1]{Contents}{toc}
+\begingroup
+\renewcommand{\contentsname}{\centering Contents}
+\tableofcontents
+\endgroup
+\newpage
+
+\begingroup
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0.8em}
+\section*{Acknowledgement}
+\addcontentsline{toc}{section}{Acknowledgement}
+
+The completion of this Software Requirements Specification (SRS) and the AI-powered Film Photography Contest Management Platform project would not have been possible without the support and guidance of many individuals.
+
+First and foremost, we would like to express our deepest gratitude to the lecturers and the board of University of Transport Ho Chi Minh City. The dynamic learning environment and practical curriculum at University of Transport Ho Chi Minh City have provided us with a solid foundation in Software Engineering and Business Analysis, enabling us to approach this project with confidence.
+
+We are especially grateful to our supervisor. Your dedicated guidance, valuable insights, and constructive criticism throughout the semester have been instrumental in shaping this project. Your expertise helped us navigate complex challenges, from defining use cases and screen flows to finalizing this SRS document according to industry standards.
+
+Finally, although we have worked hard to ensure accuracy, errors may still exist. We welcome any feedback and suggestions from our lecturers to further improve this project.
+\endgroup
+
+\section*{Definition and Acronyms}
+\addcontentsline{toc}{section}{Definition and Acronyms}
+
+\begin{longtable}{|p{2.2cm}|p{4.4cm}|p{7.0cm}|}
+    \hline
+    \rowcolor{headerblue} \textbf{Acronym} & \textbf{Definition} & \textbf{Description} \\ \hline
+    \endfirsthead
+    \hline
+    \rowcolor{headerblue} \textbf{Acronym} & \textbf{Definition} & \textbf{Description} \\ \hline
+    \endhead
+    \endfoot
+    \endlastfoot
+    \textbf{API} & Application Programming Interface & A set of rules and protocols that allows different software applications to communicate with each other. \\ \hline
+    \textbf{BA} & Business Analysis & The practice of enabling change in an enterprise by defining needs and recommending solutions that deliver value to stakeholders. \\ \hline
+    \textbf{BR} & Business Rule & A rule that defines or constrains some aspect of business and always resolves to either true or false. \\ \hline
+    \textbf{ERD} & Entity Relationship Diagram & A flowchart that illustrates how "entities" such as people, objects, or concepts relate to each other within a system. \\ \hline
+    \textbf{EXIF} & Exchangeable Image File Format & A standard format for specifying metadata tags embedded in digital image files (e.g., Camera Model, Lens, Film Stock/ISO). \\ \hline
+    \textbf{GUI} & Graphical User Interface & A type of user interface that allows users to interact with electronic devices through graphical icons and visual indicators. \\ \hline
+    \textbf{MHs} & Man-Hours & An estimated unit of work equal to one hour of continuous labor by one project team member. \\ \hline
+    \textbf{pHash} & Perceptual Hashing & A fingerprinting algorithm used to analyze image contents and generate a unique hash for duplicate image detection. \\ \hline
+    \textbf{PM} & Project Manager & The person responsible for planning, executing, monitoring, controlling, and closing projects. \\ \hline
+    \textbf{RBAC} & Role-Based Access Control & A security approach that restricts system access based on defined user roles (e.g., Candidate, Judge, Organizer). \\ \hline
+    \textbf{SDD} & Software Design Description & A document that describes the design of a software system, including its architecture, components, and interfaces. \\ \hline
+    \textbf{SPMP} & Software Project Management Plan & A document that defines the project plan, specifying the tasks, schedule, resources, and management approach. \\ \hline
+    \textbf{SRS} & Software Requirement Specification & A document that describes what the software will do and how it will be expected to perform. \\ \hline
+    \textbf{UAT} & User Acceptance Test & The final phase of the software testing process where actual software users test the software to make sure it can handle required tasks in real-world scenarios. \\ \hline
+    \textbf{UC} & Use Case & A list of actions or event steps typically defining the interactions between a role and a system to achieve a goal. \\ \hline
+\end{longtable}
+
+\newpage
+
+\input{I_Project_Introduction}
+
+\end{document}
