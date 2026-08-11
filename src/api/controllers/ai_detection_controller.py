@@ -1,5 +1,9 @@
 from flask import Blueprint, request, jsonify
-from src.services.ai_detection_service import AiDetectionService
+
+try:
+    from src.services.ai_detection_service import AiDetectionService
+except ImportError:
+    from services.ai_detection_service import AiDetectionService
 
 bp = Blueprint('ai_detection', __name__, url_prefix='/ai-detection')
 service = AiDetectionService()

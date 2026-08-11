@@ -1,6 +1,9 @@
 from flask import Blueprint, request, jsonify
 
-from src.services.duplicate_detection_service import DuplicateDetectionService
+try:
+    from src.services.duplicate_detection_service import DuplicateDetectionService
+except ImportError:
+    from services.duplicate_detection_service import DuplicateDetectionService
 
 bp = Blueprint('duplicate_detection', __name__, url_prefix='/duplicate-detection')
 service = DuplicateDetectionService()
