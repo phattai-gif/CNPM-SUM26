@@ -1,6 +1,9 @@
-\section{Project Introduction}
-\label{sec:project_introduction}
-
+\section*{I. Project Introduction}
+\addcontentsline{toc}{section}{I. Project Introduction}
+\setcounter{section}{1}
+% Number subsections in this chapter as 1, 2, ... (not 1.1)
+\renewcommand{\thesubsection}{\arabic{subsection}}
+\setcounter{subsection}{0}
 \subsection{Overview}
 \label{subsec:overview}
 
@@ -135,3 +138,5 @@ The following points detail the operational constraints and out-of-scope boundar
     \item \textbf{LI-04:} No support for native mobile applications (iOS/Android); the system is strictly developed as a responsive web application.
     \item \textbf{LI-05:} No integration with online payment gateways or photo editing/post-processing tools (candidates must upload finalized image files, and all financial transactions are out of scope).
 \end{itemize}
+% Restore subsection numbering format to default (section.subsection)
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}

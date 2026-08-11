@@ -1,0 +1,366 @@
+% --- Chapter II: Project Management Plan ---
+\newpage
+
+\section*{II. Project Management Plan}
+\addcontentsline{toc}{section}{II. Project Management Plan}
+\setcounter{section}{2}
+
+% Number subsections in this chapter as 2, 3, ... (Chapter I style)
+\renewcommand{\thesubsection}{\arabic{subsection}}
+\setcounter{subsection}{0}
+
+\subsection{Overview}
+
+\subsubsection{Scope \& Estimation}
+\label{subsubsec:ii_scope}
+
+% Breakable table using longtable; column widths as fractions of \textwidth for balanced layout
+\begin{longtable}{|>{\centering\arraybackslash}p{0.06\textwidth}|>{\raggedright\arraybackslash}p{0.62\textwidth}|>{\centering\arraybackslash}p{0.12\textwidth}|>{\centering\arraybackslash}p{0.16\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{WBS}} & \multicolumn{1}{c|}{\textbf{Item}} & \multicolumn{1}{c|}{\textbf{Complexity}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Est. Effort}\\\textbf{(MHs)}\end{tabular}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|c|}{\textbf{WBS}} & \multicolumn{1}{c|}{\textbf{Item}} & \multicolumn{1}{c|}{\textbf{Complexity}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Est. Effort}\\\textbf{(MHs)}\end{tabular}} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+
+1 & \textbf{FE01. User \& Role Management} & & 40 \\
+\hline
+1.1 & Authentication System (Login, Register, OAuth Google, JWT) & Simple & 10 \\
+\hline
+1.2 & Password Recovery \& Email Verification & Simple & 8 \\
+\hline
+1.3 & User Profile \& Portfolio Management & Medium & 10 \\
+\hline
+1.4 & Role-Based Access Control (RBAC) \& User Management (Admin) & Medium & 12 \\
+\hline
+
+2 & \textbf{FE02. Contest Management} & & 48 \\
+\hline
+2.1 & Contest Creation \& Basic Setup (Rules, Prizes, Categories) & Medium & 14 \\
+\hline
+2.2 & Timeline \& Phase Transition Configuration (Auto Scheduler) & Medium & 12 \\
+\hline
+2.3 & Jury Assignment \& Judging Criteria Setup & Medium & 12 \\
+\hline
+2.4 & Contest Status Management \& Moderator Dashboard & Simple & 10 \\
+\hline
+
+3 & \textbf{FE03. Submission System} & & 64 \\
+\hline
+3.1 & Presigned Cloud Storage Upload (S3/Cloudinary) for Hi-Res Scan & Complex & 20 \\
+\hline
+3.2 & Film Specifications \& Metadata Input Form (Film Stock, Camera, Lens) & Medium & 14 \\
+\hline
+3.3 & Negative Film / Contact Sheet Proof Attachment Upload & Medium & 16 \\
+\hline
+3.4 & Submission Drafts \& Candidate Entry History & Simple & 14 \\
+\hline
+
+4 & \textbf{FE04. Judging \& Evaluation} & & 56 \\
+\hline
+4.1 & Blind Judging Portal (Anonymized Candidate Data) & Medium & 12 \\
+\hline
+4.2 & High-Resolution Image Viewer (Zoom/Pan HD \& Negative Inspector) & Medium & 16 \\
+\hline
+4.3 & Multi-Criteria Scoring System \& Feedback Panel & Complex & 16 \\
+\hline
+4.4 & Final Leaderboard Calculation \& Winner Approval & Medium & 12 \\
+\hline
+
+5 & \textbf{FE05. Automated Processing \& Anti-cheat (AI Subsystem)} & & 72 \\
+\hline
+5.1 & Auto EXIF Metadata Extraction Engine & Medium & 18 \\
+\hline
+5.2 & EXIF vs User Declaration Mismatch Verification & Medium & 14 \\
+\hline
+5.3 & pHash Duplication Detection \& Fingerprinting Algorithm & Complex & 24 \\
+\hline
+5.4 & Fraud Flagging System \& Admin Inspection Dashboard & Medium & 16 \\
+\hline
+
+6 & \textbf{FE06. Exhibition Gallery \& Community} & & 32 \\
+\hline
+6.1 & Public Gallery \& Masonry Display Grid & Simple & 8 \\
+\hline
+6.2 & Advanced Filtering (Film Stock, Camera Model, Contest, Year) & Medium & 10 \\
+\hline
+6.3 & Public Voting \& Anti-Spam Community Engagement & Medium & 8 \\
+\hline
+6.4 & Social Sharing \& Certificate Generation for Winners & Simple & 6 \\
+\hline
+
+7 & \textbf{FE07. System Architecture, QA \& DevOps} & & 88 \\
+\hline
+7.1 & SRS / SDD Documentation \& System Architecture Design & Medium & 24 \\
+\hline
+7.2 & Database Schema Design (ERD) \& Base API Setup & Medium & 16 \\
+\hline
+7.3 & QA Test Plan, Test Cases Execution \& Bug Fixing & Medium & 30 \\
+\hline
+7.4 & Docker Containerization, CI/CD Pipeline \& Deployment & Medium & 18 \\
+\hline
+
+\multicolumn{3}{|r|}{\textbf{TOTAL}} & \textbf{400 MHs} \\
+\hline
+
+\end{longtable}
+
+\subsubsection{Project Objectives}
+\label{subsubsec:ii_objectives}
+
+\begin{table}[ht]
+\centering
+\small
+\renewcommand{\arraystretch}{1.05}
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}p{0.14\textwidth}|>{\centering\arraybackslash}p{0.12\textwidth}|>{\raggedright\arraybackslash}X|}
+\hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Testing}\\\textbf{Stage}\end{tabular}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Test}\\\textbf{Coverage}\end{tabular}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{No. of}\\\textbf{Defects}\end{tabular}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{\% of}\\\textbf{Defect}\end{tabular}} & \multicolumn{1}{c|}{\textbf{Notes}} \\
+\hline
+Reviewing & 100\% artifacts reviewed (SRS, SDD, ERD, Wireframes) & - & - & Peer review and supervisor feedback \\
+\hline
+Unit Test & $\geq$ 70\% code coverage for Core BE and AI modules & 0 critical; $\leq$ 10 minor & $\leq$ 10\% & Automated testing (JUnit, Jest, PyTest for AI functions) \\
+\hline
+Integration Test & $\geq$ 85\% API and async pipeline coverage & 0 critical; $\leq$ 8 minor & $\leq$ 8\% & Postman / Swagger and S3 upload / AI queue testing \\
+\hline
+System Test & $\geq$ 95\% major features (Contest, Submission, AI Inspection, Judging) & 0 critical; $\leq$ 5 minor & $\leq$ 5\% & Staging environment regression and performance testing for high-resolution uploads \\
+\hline
+Acceptance Test (UAT) & 100\% critical user flows and AI verification accuracy & 0 critical / blocker & 0\% & UAT with stakeholders (organizers, jury, candidates) \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Project Risks}
+\label{subsubsec:ii_risks}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.08}
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{0.06\textwidth}|>{\raggedright\arraybackslash}X|>{\centering\arraybackslash}p{0.12\textwidth}|>{\centering\arraybackslash}p{0.14\textwidth}|>{\raggedright\arraybackslash}X|}
+\hline
+\multicolumn{1}{|c|}{\textbf{No.}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Risk}\\\textbf{Description}\end{tabular}} & \multicolumn{1}{c|}{\textbf{Impact}} & \multicolumn{1}{c|}{\textbf{Possibility}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Response}\\\textbf{Plans}\end{tabular}} \\
+\hline
+1 & Changing requirements from stakeholders (organizers, jury) & Medium & Medium & Baseline SRS plus change control process; weekly review and sign-off with supervisor \\
+\hline
+2 & Limited domain knowledge in film photography (film stocks, EXIF structures, scan types) and AI anti-cheat models & High & Medium & Consult film photography experts/advisors; early PoC for EXIF extraction and pHash algorithm; prototype feedback \\
+\hline
+3 & Third-party integrations and services (AWS S3 / Cloudinary for high-resolution image storage, Docker, Redis, Resend / SMTP) are unstable or exceed free-tier limits & Medium & Medium & Early PoC in sandbox; image compression and thumbnail generation; retries and fallback mechanisms; service cost monitoring \\
+\hline
+4 & Data privacy and security (protecting unpublished contest entries and candidate PII) & High & Low & Implement RBAC, anonymized submission pipeline for blind judging, S3 presigned URLs with expiration, and data encryption at rest and in transit \\
+\hline
+5 & Resource availability or absence among team members & Medium & Medium & Cross-training tech stacks (front-end / back-end / AI); backup feature ownership; daily standups; sprint buffer time \\
+\hline
+6 & Performance degradation under peak loads (simultaneous high-resolution image uploads near contest deadline) & High & Medium & Direct-to-S3 presigned upload (bypass core server); Redis caching; asynchronous background AI processing queue; rate limiting and load testing in Sprint 6 \\
+\hline
+\end{tabularx}
+\end{center}
+
+\subsection{Management Approach}
+\label{subsec:ii_management_approach}
+
+\subsubsection{Project Process}
+\label{subsubsec:ii_project_process}
+
+\textbf{Methodology:} The project applies the Agile Scrum methodology.\\
+\textbf{Iteration Model:} 1-week sprints, total of 7 sprints (7 weeks).\\
+\textbf{Sprint Breakdown:}
+\begin{itemize}[leftmargin=*, itemsep=0.3em]
+    \item \textbf{Sprint 1:} Project initiation, requirement elicitation (SRS), architecture \& DB design (SDD), UI/UX wireframing, and AI Proof of Concept (EXIF \& pHash).
+    \item \textbf{Sprint 2:} Development of FE01 (User Authentication, Profile Management, \& RBAC).
+    \item \textbf{Sprint 3:} Development of FE02 (Contest Creation, Timeline, \& Jury Assignment).
+    \item \textbf{Sprint 4:} Development of FE03 (Submission System with Presigned S3 Upload \& Film Specifications).
+    \item \textbf{Sprint 5:} Development of FE04 (Blind Judging Portal, HD Image Viewer, \& Scoring System).
+    \item \textbf{Sprint 6:} Development of FE05 (AI Processing Pipeline: Auto EXIF \& pHash Duplicate Detection) \& FE06 (Exhibition Gallery).
+    \item \textbf{Sprint 7:} FE07 Integration, System Testing, Bug Fixing, UAT, Docker Containerization, \& Cloud Deployment.
+\end{itemize}
+\textbf{Scrum Ceremonies:} Daily Stand-up (15 minutes), Weekly Sprint Planning, Sprint Review, and Sprint Retrospective.\\
+\textbf{Artifacts:} Product Backlog, Sprint Backlog, Burndown Chart, Weekly Working Increment.
+
+\subsubsection{Quality Management}
+\label{subsubsec:ii_quality_management}
+
+The quality objective is to ensure a stable, accurate, secure, and performant platform for managing film photography contests and automated image inspection within the 7-week timeframe.\\
+The approach includes:
+\begin{itemize}[leftmargin=*, itemsep=0.5em]
+    \item \textbf{Defect Prevention:}
+    \begin{itemize}[label={-}, leftmargin=1.5em, itemsep=0.2em]
+        \item Enforce clean code conventions and modular architecture (Separation of Core API and AI Services).
+        \item Database normalization (PostgreSQL), constraints, and indexing for fast query performance on media records.
+    \end{itemize}
+    \item \textbf{Reviewing:}
+    \begin{itemize}[label={-}, leftmargin=1.5em, itemsep=0.2em]
+        \item Mandatory Code Review with at least 1 Peer Reviewer and Leader approval before merging Pull Requests.
+        \item Peer review for technical documentation (SRS, SDD, ERD, Test Cases).
+    \end{itemize}
+    \item \textbf{Unit Testing:}
+    \begin{itemize}[label={-}, leftmargin=1.5em, itemsep=0.2em]
+        \item \textbf{Tools:} Jest/React Testing Library (Frontend), JUnit/PyTest (Core BE \& AI Engine).
+        \item \textbf{Goal:} $\geq$ 70\% code coverage, focusing on critical API logic, EXIF parsers, and hashing algorithm utilities.
+    \end{itemize}
+    \item \textbf{Integration Testing:}
+    \begin{itemize}[label={-}, leftmargin=1.5em, itemsep=0.2em]
+        \item \textbf{Tools:} Postman / Newman for REST API workflows.
+        \item \textbf{Scope:} Asynchronous task queue handling (Redis/Celery) for background image processing and Direct-to-Cloud (AWS S3 / Cloudinary) presigned upload pipelines.
+    \end{itemize}
+    \item \textbf{System Testing:}
+    \begin{itemize}[label={-}, leftmargin=1.5em, itemsep=0.2em]
+        \item Conducted in Week 7 on a Staging Environment hosted on AWS / Cloud VPS.
+        \item Full regression testing of all modules (FE01 to FE07).
+        \item Performance and Load Testing (using Apache JMeter or K6) for peak submission scenarios near contest deadlines and Hi-Res image viewing.
+    \end{itemize}
+    \item \textbf{Acceptance Testing (UAT):}
+    \begin{itemize}[label={-}, leftmargin=1.5em, itemsep=0.2em]
+        \item User Acceptance Testing (Week 7) with primary stakeholders: Contest Organizers, Jury Members, and Candidates/Photographers.
+        \item Ensure 100\% of critical flows (Contest creation, Entry submission, AI flagging, and Blind judging) pass successfully before final presentation.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Training Plan}
+\label{subsubsec:ii_training_plan}
+
+\renewcommand{\arraystretch}{1.1}
+\setlength{\tabcolsep}{6pt}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.30\textwidth}|>{\raggedright\arraybackslash}p{0.20\textwidth}|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.28\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Training Area}} & \multicolumn{1}{c|}{\textbf{Participants}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{When,}\\\textbf{Duration}\end{tabular}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Waiver}\\\textbf{Criteria}\end{tabular}} \\
+\hline
+Next.js / ReactJS (Frontend) & Uyen, Tan & Week 1, 2 days & $\geq$ 1 year React experience \\
+\hline
+Node.js / Java Spring (Backend) & Khanh, Tai & Week 1, 2 days & $\geq$ 1 year Backend experience \\
+\hline
+Python \& OpenCV / pHash / EXIF Parsing & Thien & Week 1, 2 days & Prior AI / Image Processing experience \\
+\hline
+PostgreSQL Schema \& Media Indexing & All & Week 1, 1 day & Prior DB design experience \\
+\hline
+Git/GitHub Workflow (PR, Code Review) & All & Week 1, 0.5 day & Familiar with Git flow \\
+\hline
+AWS S3 / Cloudinary Presigned Direct Upload & Khanh, Uyen, Tan & Week 2, 1 day & Prior Cloud Storage experience \\
+\hline
+Security \& RBAC Authorization (JWT) & All & Week 2, 0.5 day & Completed Security course \\
+\hline
+Redis Queue \& Async Task Handling & Khanh, Thien & Week 3, 1 day & Prior Message Queue experience \\
+\hline
+Deep Zoom HD Image Viewer (OpenSeadragon) & Uyen, Tan & Week 4, 0.5 day & Prior Canvas/Image lib experience \\
+\hline
+Docker Containerization \& Cloud Deployment & Tai, Khanh & Week 6, 1 day & Prior DevOps/Docker experience \\
+\hline
+\end{longtable}
+
+\subsection{Project Deliverables}
+\label{subsec:ii_project_deliverables}
+
+\renewcommand{\arraystretch}{1.08}
+\setlength{\tabcolsep}{6pt}
+\begin{longtable}{|>{\centering\arraybackslash}p{0.08\textwidth}|>{\raggedright\arraybackslash}p{0.46\textwidth}|>{\centering\arraybackslash}p{0.22\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{No.}} & \multicolumn{1}{c|}{\textbf{Deliverable}} & \multicolumn{1}{c|}{\textbf{Due Date}} & \multicolumn{1}{c|}{\textbf{Notes}} \\
+\hline
+1 & Project Charter, SRS, SDD \& AI PoC Report & Sprint 1 (Week 1) & \\
+\hline
+2 & Authentication \& User Management Module (FE01) & Sprint 2 (Week 2) & \\
+\hline
+3 & Contest Management \& Jury Assignment Module (FE02) & Sprint 3 (Week 3) & \\
+\hline
+4 & Submission System \& Direct Cloud Storage (FE03) & Sprint 4 (Week 4) & \\
+\hline
+5 & Blind Judging Portal \& HD Scoring System (FE04) & Sprint 5 (Week 5) & \\
+\hline
+6 & AI Pipeline Integration \& Exhibition Gallery (FE05 \& FE06) & Sprint 6 (Week 6) & \\
+\hline
+7 & Integration Test, Docker Package \& Cloud Deployment (FE07) & Sprint 7 (Week 7) & \\
+\hline
+\end{longtable}
+
+\subsection{Responsibility Assignments}
+\label{subsec:ii_responsibility_assignments}
+
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.44\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Responsibility}} & \textbf{Tai} & \textbf{Thien} & \textbf{Khanh} & \textbf{Uyen} & \textbf{Tan} \\
+\hline
+Project Planning \& Tracking & D & R & S & R & I \\
+\hline
+Prepare Project Charter \& SRS Document & D & R & S & R & S \\
+\hline
+Architecture \& DB Design (SDD, ERD) & S & R & D & I & I \\
+\hline
+UI/UX Wireframing \& Design (Figma) & R & I & I & D & D \\
+\hline
+Core Backend API Implementation (Spring Boot) & S & I & D & I & I \\
+\hline
+Direct Cloud Storage \& Presigned URL Integration & I & S & D & I & R \\
+\hline
+AI Pipeline Implementation (EXIF \& pHash Engine) & R & D & S & I & I \\
+\hline
+Frontend Implementation - Candidate \& Gallery (FE03, FE06) & I & I & I & S & D \\
+\hline
+Frontend Implementation - Jury Portal (FE04) & I & I & I & D & S \\
+\hline
+System Integration \& Testing (Testing \& QA) & R & R & R & R & D \\
+\hline
+Final Deployment \& Project Documentation & D & R & R & R & R \\
+\hline
+\end{longtable}
+
+\subsection{Project Communications}
+\label{subsec:ii_project_communications}
+
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.14\textwidth}|>{\raggedright\arraybackslash}p{0.32\textwidth}|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.14\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Communication}\\\textbf{Item}\end{tabular}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Who/}\\\textbf{Target}\end{tabular}} & \multicolumn{1}{c|}{\textbf{Purpose}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{When,}\\\textbf{Frequency}\end{tabular}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Type, Tool,}\\\textbf{Method(s)}\end{tabular}} \\
+\hline
+Weekly Planning Meeting & All team members & Plan tasks for upcoming sprint, review SRS/SDD, and assign roles & Every Friday\newline (1 session/week) & Online meeting\newline (Google Meet) \\
+\hline
+Weekly Progress Review & All team members & Share development progress, adjust timeline, discuss blockers & Every Wednesday\newline (1 session/week) & Google Docs,\newline Zalo group \\
+\hline
+Internal Feature Demo & Relevant developers\newline + Reviewer (Leader) & Validate completed modules (Spring Boot, Python AI, React UI) before merging & After each feature\newline completion & Live screen share\newline via Google Meet\newline or Zalo video \\
+\hline
+Documentation Review & Assigned members\newline (Tai, Khanh) & Review and update SRS, SDD, ERD, and User Manual documents & Every week & Google Docs \\
+\hline
+Code Review Session & Feature developer\newline + Reviewer & Review code logic, API endpoints, pHash/EXIF algorithms, and coding conventions & Before merging Pull\newline Request to main branch & GitHub Pull Request \\
+\hline
+Urgent Bug or Blocker Sync & Involved members only & Quickly resolve critical technical issues, API mismatch, or Cloud upload errors & Ad-hoc (as needed) & Zalo Chat / Call \\
+\hline
+Shared Asset Management & All members & Store and collaborate on design files (Figma), diagrams (Draw.io), docs, and slide presentations & Continuous & Google Drive / Figma /\newline GitHub \\
+\hline
+\end{longtable}
+
+\subsection{Configuration Management \& Infrastructure}
+\label{subsec:ii_configuration_management}
+
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{6pt}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.30\textwidth}|>{\raggedright\arraybackslash}p{0.64\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Category}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}\textbf{Tools /}\\\textbf{Infrastructure}\end{tabular}} \\
+\hline
+Frontend & React / Next.js \\
+\hline
+Backend & Java Spring Boot, Python FastAPI (AI Subsystem) \\
+\hline
+Database \& Cache & PostgreSQL \\
+\hline
+Cloud Storage & AWS S3 / Cloudinary (Presigned / Signed URL) \\
+\hline
+IDEs / Editors & VS Code, PyCharm \\
+\hline
+Diagramming \& UI & Figma, Draw.io \\
+\hline
+Documentation \& VCS & Google Docs, GitHub \\
+\hline
+Testing \& API Spec & Postman, Swagger / OpenAPI \\
+\hline
+\endlongtable
+
+% restore subsection numbering to default after chapter
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
