@@ -1,0 +1,9 @@
+ src/api/controllers/auth_controller.py |  12 [32m+++[m[31m-[m
+ src/app.py                             |   2 [32m+[m[31m-[m
+ src/create_app.py                      |   2 [32m+[m[31m-[m
+ src/static/auth.css                    | 102 [32m+++++++++++++++++++++++++++++++++[m
+ src/static/auth.js                     |  69 [32m++++++++++++++++++++++[m
+ src/templates/login.html               |  29 [32m++++++++++[m
+ src/templates/register.html            |  38 [32m++++++++++++[m
+ tash push -u -m WIP Login Register     |   2 [32m+[m
+ 8 files changed, 253 insertions(+), 3 deletions(-)

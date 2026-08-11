@@ -6,7 +6,7 @@ from .infrastructure.databases import init_db
 from .app_logging import setup_logging
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='templates', static_folder='static')
     app.config.from_object(Config)
 
     setup_logging(app)

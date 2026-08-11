@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, render_template
 from datetime import datetime, timedelta
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -201,6 +201,16 @@ def login():
             'role': user.role
         }
     }), 200
+
+
+@auth_bp.route('/login', methods=['GET'])
+def login_page():
+    return render_template('login.html')
+
+
+@auth_bp.route('/register', methods=['GET'])
+def register_page():
+    return render_template('register.html')
 
 
 @auth_bp.route('/me', methods=['GET'])
