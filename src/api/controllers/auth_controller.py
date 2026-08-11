@@ -1,21 +1,27 @@
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime, timedelta
-from infrastructure.models.user_model import UserModel
-from infrastructure.databases.mssql import session
-from api.schemas.auth import RigisterUserRequestSchema,RigisterUserResponseSchema
+import jwt
+from werkzeug.security import generate_password_hash
+from api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
+from api.role_required import token_required
 from services.auth_service import AuthService
 from infrastructure.repositories.auth_repository import AuthRepository
-from hashlib import sha256
-import jwt
-from werkzeug.security import generate_password_hash, check_password_hash
+
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
-auth_service = AuthService(AuthRepository(session))
-register_request = RigisterUserRequestSchema()
-register_response = RigisterUserResponseSchema()
+
+# Khởi tạo repository & service dùng FactoryDatabase (PostgreSQL Supabase)
+auth_service = AuthService(AuthRepository())
+
+register_request_schema = RegisterUserRequestSchema()
+register_response_schema = RegisterUserResponseSchema()
+login_request_schema = LoginUserRequestSchema()
+login_response_schema = LoginUserResponseSchema()
+
+
 @auth_bp.route('/check_router', methods=['GET'])
 def check_router():
     """
-    Check router
+    Check router health
     ---
     get:
       summary: Check router health
@@ -24,125 +30,197 @@ def check_router():
       responses:
         200:
           description: Router is working
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
     """
-    return jsonify({'message': 'Router is working!'}), 200
-
-@auth_bp.route('/login', methods=['POST'])
-def login():
-    """
-    Login user
-    ---
-    post:
-      summary: Login user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginUserRequest'
-      tags:
-        - Auth
-      responses:
-        200:
-          description: Successful login
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginUserResponse'
-        401:
-          description: Invalid credentials
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-    """
-    data = request.get_json()
-    username=data['username'],
-    password=data['password']
-    password = generate_password_hash(password)
-    user = auth_service.login(username, password)
-    if not user:
-        return jsonify({'error': 'Invalid credentials'}), 401
-
-    payload = {
-        'user_id': user.id,
-        'exp': datetime.utcnow() + timedelta(hours=2)
-    }
-    token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
-    return jsonify({'token': token})
+    return jsonify({'message': 'Auth router is working!'}), 200
 
 
 @auth_bp.route('/signup', methods=['POST'])
 def register():
     """
-    Register a new user
+    Register a new user with role
     ---
     post:
-      summary: Register a new user
+      summary: Register a new user (admin, organizer, participant, judge)
+      tags:
+        - Auth
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RigisterUserRequest'
-      tags:
-        - Auth
+              type: object
+              required:
+                - username
+                - email
+                - password
+                - passwordconfirm
+              properties:
+                username:
+                  type: string
+                  example: "john_photographer"
+                email:
+                  type: string
+                  example: "john@example.com"
+                password:
+                  type: string
+                  example: "password123"
+                passwordconfirm:
+                  type: string
+                  example: "password123"
+                full_name:
+                  type: string
+                  example: "John Doe"
+                role:
+                  type: string
+                  enum: [admin, organizer, participant, judge]
+                  default: participant
+                  example: "participant"
       responses:
         201:
           description: User registered successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RigisterUserResponse'
         400:
-          description: Invalid input or user exists
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
+          description: Invalid input or user/email already exists
     """
-    data = request.get_json()
-    errors = register_request.validate(data)
+    data = request.get_json() or {}
+
+    errors = register_request_schema.validate(data)
     if errors:
-      return jsonify(errors), 400
-    # Lay thong tin tu nguoi dung truyen vao
+        return jsonify({'message': 'Validation error', 'errors': errors}), 400
 
-    # Support JSON body and avoid KeyError by using .get()
-    username = data.get('username') if isinstance(data, dict) else None
-    password = data.get('password') if isinstance(data, dict) else None
-    passwordconfirm = data.get('passwordconfirm') if isinstance(data, dict) else None
-    email = data.get('email') if isinstance(data, dict) else None
-
-    if not username or not password or not passwordconfirm or not email:
-      return jsonify({'message': 'Missing required fields: username, password, passwordconfirm, email'}), 400
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+    passwordconfirm = data.get('passwordconfirm')
+    full_name = data.get('full_name')
+    role = data.get('role', 'participant').lower()
 
     if password != passwordconfirm:
-      return jsonify({'message': 'Passwords do not match'}), 400
+        return jsonify({'message': 'Passwords do not match'}), 400
 
     if auth_service.check_exist(username):
-      return jsonify({'message': 'User already exists. Please login.'}), 400
-    #  vieets theo kien truc clean architecture
-    # password_hashed = Str.encode()(password)
-    password_hashed =generate_password_hash(password)
-    new_user = auth_service.register(username, password_hashed, email)
+        return jsonify({'message': f'Username "{username}" already exists. Please choose another.'}), 400
+
+    if auth_service.check_email_exist(email):
+        return jsonify({'message': f'Email "{email}" is already registered.'}), 400
+
+    # Mã hóa mật khẩu
+    password_hashed = generate_password_hash(password)
+
+    new_user = auth_service.register(
+        username=username,
+        password=password_hashed,
+        email=email,
+        role=role,
+        full_name=full_name
+    )
+
     if not new_user:
-      return jsonify({'message': 'Registration failed'}), 500 
-    result = register_response.dump(new_user)
-    return jsonify(result), 201
+        return jsonify({'message': 'Registration failed due to server error'}), 500
 
-    #     return redirect(url_for('login'))
+    result = register_response_schema.dump(new_user)
+    return jsonify({
+        'message': 'User registered successfully!',
+        'user': result
+    }), 201
 
-    # return render_template('register.html')
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """
+    Login user and get JWT Token with Role
+    ---
+    post:
+      summary: Login user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: "john_photographer"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        200:
+          description: Successful login with JWT token and user role
+        401:
+          description: Invalid username or password
+    """
+    data = request.get_json() or {}
+
+    errors = login_request_schema.validate(data)
+    if errors:
+        return jsonify({'message': 'Validation error', 'errors': errors}), 400
+
+    username = data.get('username')
+    password = data.get('password')
+
+    user = auth_service.login(username, password)
+    if not user:
+        return jsonify({'message': 'Invalid username or password'}), 401
+
+    # Tạo JWT Payload chứa thông tin User ID, Username và Role
+    payload = {
+        'user_id': user.id,
+        'username': user.username,
+        'role': user.role,
+        'exp': datetime.utcnow() + timedelta(hours=24)
+    }
+
+    secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
+    token = jwt.encode(payload, secret_key, algorithm='HS256')
+
+    return jsonify({
+        'message': 'Login successful!',
+        'token': token,
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'full_name': user.full_name,
+            'role': user.role
+        }
+    }), 200
+
+
+@auth_bp.route('/me', methods=['GET'])
+@token_required
+def get_current_user():
+    """
+    Get current logged-in user profile
+    ---
+    get:
+      summary: Get logged-in user profile from JWT token
+      tags:
+        - Auth
+      security:
+        - Bearer: []
+      responses:
+        200:
+          description: User profile retrieved successfully
+        401:
+          description: Unauthorized
+    """
+    user_id = request.user.get('user_id')
+    user = auth_service.get_user_by_id(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    return jsonify({
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'full_name': user.full_name,
+            'role': user.role
+        }
+    }), 200

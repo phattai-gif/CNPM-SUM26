@@ -1,6 +1,9 @@
 import os
 
-import exifread
+try:
+    import exifread
+except ImportError:
+    exifread = None
 
 
 class AiDetectionService:
@@ -72,6 +75,8 @@ class AiDetectionService:
     @staticmethod
     def extract_exif(image_path: str):
         """Extract EXIF metadata from a specific image file."""
+        if not exifread:
+            return None
         try:
             with open(image_path, "rb") as file:
                 tags = exifread.process_file(file)
