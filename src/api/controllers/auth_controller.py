@@ -1,11 +1,22 @@
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime, timedelta
 import jwt
-from werkzeug.security import generate_password_hash
-from api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
-from api.role_required import token_required
-from services.auth_service import AuthService
-from infrastructure.repositories.auth_repository import AuthRepository
+from werkzeug.security import generate_password_hash, check_password_hash
+
+try:
+    from src.infrastructure.models.user_model import UserModel
+    from src.infrastructure.databases.mssql import session
+    from src.api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
+    from src.api.role_required import token_required
+    from src.services.auth_service import AuthService
+    from src.infrastructure.repositories.auth_repository import AuthRepository
+except ImportError:
+    from infrastructure.models.user_model import UserModel
+    from infrastructure.databases.mssql import session
+    from api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
+    from api.role_required import token_required
+    from services.auth_service import AuthService
+    from infrastructure.repositories.auth_repository import AuthRepository
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
