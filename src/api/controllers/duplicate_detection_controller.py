@@ -11,7 +11,6 @@ service = DuplicateDetectionService()
 
 @bp.route('/check', methods=['POST'])
 def check_duplicate():
-    """Compare two uploaded image files and report whether they are duplicates."""
     if 'new_image' not in request.files or 'existing_image' not in request.files:
         return jsonify({'error': 'Both new_image and existing_image are required'}), 400
 

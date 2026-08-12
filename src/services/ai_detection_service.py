@@ -7,7 +7,7 @@ except ImportError:
 
 
 class AiDetectionService:
-    """Service to check whether an image is likely AI-generated using EXIF metadata."""
+
 
     def detect_ai(self, image_path: str) -> dict:
         """Analyze the image by EXIF metadata and return a score and message."""
