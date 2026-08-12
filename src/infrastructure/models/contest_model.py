@@ -1,6 +1,9 @@
 from sqlalchemy import Column, BigInteger, String, Text, DateTime, ForeignKey
 from sqlalchemy.sql import func
-from infrastructure.databases.base import Base
+try:
+    from src.infrastructure.databases.base import Base
+except ImportError:
+    from infrastructure.databases.base import Base
 
 class ContestModel(Base):
     __tablename__ = 'contests'
@@ -10,6 +13,7 @@ class ContestModel(Base):
     title = Column(String(255), nullable=False)
     slug = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)
+    rules = Column(Text, nullable=True)
     banner_url = Column(String(512), nullable=True)
     created_by = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     status = Column(String(20), nullable=False, default='draft')
@@ -17,3 +21,4 @@ class ContestModel(Base):
     end_date = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
