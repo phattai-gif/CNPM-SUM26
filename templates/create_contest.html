@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tạo cuộc thi</title>
+    <link rel="stylesheet" href="/static/auth.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Tạo cuộc thi mới</h1>
+      <form method="post" action="/organizer/create-contest">
+        <div>
+          <label>Tiêu đề</label>
+          <input type="text" name="title" required />
+        </div>
+        <div>
+          <label>Mô tả</label>
+          <textarea name="description"></textarea>
+        </div>
+        <div>
+          <label>Ngày bắt đầu (YYYY-MM-DDTHH:MM:SS)</label>
+          <input type="text" name="start_date" placeholder="2026-08-12T09:00:00" />
+        </div>
+        <div>
+          <label>Ngày kết thúc (YYYY-MM-DDTHH:MM:SS)</label>
+          <input type="text" name="end_date" placeholder="2026-08-20T18:00:00" />
+        </div>
+        <div>
+          <button type="submit">Tạo</button>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>

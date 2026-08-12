@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Organizer Dashboard</title>
+    <link rel="stylesheet" href="/static/auth.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Organizer Dashboard</h1>
+      <p><a href="/organizer/create-contest" class="btn">Tạo cuộc thi mới</a></p>
+
+      {% if contests and contests|length > 0 %}
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Start</th>
+              <th>End</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in contests %}
+            <tr>
+              <td>{{ c.id }}</td>
+              <td>{{ c.title }}</td>
+              <td>{{ c.status }}</td>
+              <td>{{ c.start_date or '-' }}</td>
+              <td>{{ c.end_date or '-' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>Bạn hiện chưa có cuộc thi nào.</p>
+      {% endif %}
+    </div>
+  </body>
+</html>
