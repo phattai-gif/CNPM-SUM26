@@ -1,109 +1,230 @@
-from datetime import datetime
-
 from flask import Blueprint, jsonify, request
+from api.role_required import token_required
+from infrastructure.repositories.submission_repository import (
+    SubmissionRepository
+)
 
-try:
-    from src.api.role_required import token_required
-    from src.infrastructure.repositories.submission_repository import SubmissionRepository
-except ImportError:
-    from api.role_required import token_required
-    from infrastructure.repositories.submission_repository import SubmissionRepository
 
-submission_bp = Blueprint('submission', __name__, url_prefix='/submissions')
+submission_bp = Blueprint(
+    "submission",
+    __name__,
+    url_prefix="/submissions",
+)
+
 submission_repo = SubmissionRepository()
 
 
-@submission_bp.route('/health', methods=['GET'])
+@submission_bp.route("/health", methods=["GET"])
 def submission_health():
-    return jsonify({'message': 'Submission router is working!'}), 200
-
-
-@submission_bp.route('', methods=['POST'])
-@token_required
-def create_submission():
-    data = request.get_json(silent=True) or {}
-
-    required_fields = ['round_id', 'title', 'image_hd_url']
-    missing = [field for field in required_fields if not data.get(field)]
-    if missing:
-        return jsonify({
-            'message': 'Missing required fields',
-            'missing_fields': missing,
-        }), 400
-
-    user_id = request.user.get('user_id')
-    if not user_id:
-        return jsonify({'message': 'User information is missing in token'}), 401
-
-    metadata = data.get('film_metadata') or {}
-    submission = submission_repo.create_submission(
-        round_id=data['round_id'],
-        user_id=user_id,
-        title=data['title'],
-        story_description=data.get('story_description', ''),
-        image_hd_url=data['image_hd_url'],
-        thumbnail_url=data.get('thumbnail_url'),
-        width_px=data.get('width_px'),
-        height_px=data.get('height_px'),
-        file_size_bytes=data.get('file_size_bytes'),
-        file_hash=data.get('file_hash'),
-        film_stock=metadata.get('film_stock'),
-        film_iso=metadata.get('film_iso'),
-        camera_body=metadata.get('camera_body'),
-        lens=metadata.get('lens'),
-        lab_name=metadata.get('lab_name'),
-        scanner_info=metadata.get('scanner_info'),
-        development_process=metadata.get('development_process', 'C-41'),
-        taken_at_location=metadata.get('taken_at_location'),
-        status=data.get('status', 'submitted'),
-    )
 
     return jsonify({
-        'message': 'Submission created successfully',
-        'submission': {
-            'id': submission.id,
-            'round_id': submission.round_id,
-            'user_id': submission.user_id,
-            'title': submission.title,
-            'story_description': submission.story_description,
-            'status': submission.status,
-            'submitted_at': submission.submitted_at,
-        }
-    }), 201
-
-
-@submission_bp.route('/<int:submission_id>', methods=['GET'])
-@token_required
-def get_submission(submission_id):
-    submission = submission_repo.get_by_id(submission_id)
-    if not submission:
-        return jsonify({'message': 'Submission not found'}), 404
-    return jsonify({
-        'id': submission.id,
-        'round_id': submission.round_id,
-        'user_id': submission.user_id,
-        'title': submission.title,
-        'story_description': submission.story_description,
-        'status': submission.status,
-        'submitted_at': submission.submitted_at,
-        'created_at': submission.created_at,
-        'updated_at': submission.updated_at,
+        "message": "Submission router is working!"
     }), 200
 
+@submission_bp.route("", methods=["POST"])
+@token_required
+def create_submission():
 
-@submission_bp.route('', methods=['GET'])
+    data = request.get_json(silent=True) or {}
+
+    required_fields = [
+        "round_id",
+        "title",
+        "image_hd_url",
+        "file_hash",
+    ]
+
+    missing = [
+        field
+        for field in required_fields
+        if not data.get(field)
+    ]
+
+    if missing:
+        return jsonify({
+            "message": "Missing required fields",
+            "missing_fields": missing,
+        }), 400
+
+    user_id = request.user.get("user_id")
+
+    if not user_id:
+        return jsonify({
+            "message": "User information is missing in token"
+        }), 401
+
+    metadata = data.get("film_metadata") or {}
+
+    # film_stock is nullable=False
+    if not metadata.get("film_stock"):
+        return jsonify({
+            "message": "Missing required field",
+            "missing_fields": [
+                "film_metadata.film_stock"
+            ],
+        }), 400
+
+    try:
+
+        submission = submission_repo.create_submission(
+            round_id=data["round_id"],
+            user_id=user_id,
+            title=data["title"],
+            image_hd_url=data["image_hd_url"],
+            file_hash=data["file_hash"],
+            story_description=data.get(
+                "story_description",
+                ""
+            ),
+            thumbnail_url=data.get(
+                "thumbnail_url"
+            ),
+            width_px=data.get(
+                "width_px"
+            ),
+            height_px=data.get(
+                "height_px"
+            ),
+            file_size_bytes=data.get(
+                "file_size_bytes"
+            ),
+            film_stock=metadata["film_stock"],
+            film_iso=metadata.get(
+                "film_iso"
+            ),
+            camera_body=metadata.get(
+                "camera_body"
+            ),
+            lens=metadata.get(
+                "lens"
+            ),
+            lab_name=metadata.get(
+                "lab_name"
+            ),
+            scanner_info=metadata.get(
+                "scanner_info"
+            ),
+            development_process=metadata.get(
+                "development_process",
+                "C-41"
+            ),
+            taken_at_location=metadata.get(
+                "taken_at_location"
+            ),
+            status=data.get(
+                "status",
+                "submitted"
+            ),
+        )
+
+        return jsonify({
+            "message": "Submission created successfully",
+            "submission": {
+                "id": submission.id,
+                "round_id": submission.round_id,
+                "user_id": submission.user_id,
+                "title": submission.title,
+                "story_description": (
+                    submission.story_description
+                ),
+                "status": submission.status,
+                "submitted_at": (
+                    submission.submitted_at
+                ),
+            },
+        }), 201
+
+    except Exception as error:
+
+        return jsonify({
+            "message": "Failed to create submission",
+            "error": str(error),
+        }), 500
+
+
+@submission_bp.route(
+    "/<int:submission_id>",
+    methods=["GET"],
+)
+@token_required
+def get_submission(submission_id):
+
+    result = submission_repo.get_by_id_with_details(
+        submission_id
+    )
+
+    if not result:
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    submission, submission_file, film_metadata = result
+
+    response = {
+        "id": submission.id,
+        "round_id": submission.round_id,
+        "user_id": submission.user_id,
+        "title": submission.title,
+        "story_description": submission.story_description,
+        "status": submission.status,
+        "final_score": float(submission.final_score) if submission.final_score is not None else None,
+        "submitted_at": submission.submitted_at.isoformat() if submission.submitted_at else None,
+        "created_at": submission.created_at.isoformat() if submission.created_at else None,
+        "updated_at": submission.updated_at.isoformat() if submission.updated_at else None,
+    }
+
+    if submission_file:
+        response["file"] = {
+            "id": submission_file.id,
+            "image_hd_url": submission_file.image_hd_url,
+            "thumbnail_url": submission_file.thumbnail_url,
+            "width_px": submission_file.width_px,
+            "height_px": submission_file.height_px,
+            "file_size_bytes": submission_file.file_size_bytes,
+            "file_hash": submission_file.file_hash,
+            "created_at": submission_file.created_at.isoformat() if submission_file.created_at else None,
+        }
+    else:
+        response["file"] = None
+
+    if film_metadata:
+        response["film_metadata"] = {
+            "film_stock": film_metadata.film_stock,
+            "film_iso": film_metadata.film_iso,
+            "camera_body": film_metadata.camera_body,
+            "lens": film_metadata.lens,
+            "lab_name": film_metadata.lab_name,
+            "scanner_info": film_metadata.scanner_info,
+            "development_process": film_metadata.development_process,
+            "taken_at_location": film_metadata.taken_at_location,
+            "created_at": film_metadata.created_at.isoformat() if film_metadata.created_at else None,
+        }
+    else:
+        response["film_metadata"] = None
+
+    return jsonify(response), 200
+
+@submission_bp.route(
+    "",
+    methods=["GET"],
+)
 @token_required
 def list_submissions():
+
     submissions = submission_repo.list()
+
     return jsonify([
         {
-            'id': item.id,
-            'round_id': item.round_id,
-            'user_id': item.user_id,
-            'title': item.title,
-            'story_description': item.story_description,
-            'status': item.status,
-            'submitted_at': item.submitted_at,
+            "id": item.id,
+            "round_id": item.round_id,
+            "user_id": item.user_id,
+            "title": item.title,
+            "story_description": (
+                item.story_description
+            ),
+            "status": item.status,
+            "final_score": item.final_score,
+            "submitted_at": item.submitted_at,
         }
         for item in submissions
     ]), 200
