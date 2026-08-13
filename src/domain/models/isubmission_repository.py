@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .submission import Submission
 
@@ -11,6 +11,10 @@ class ISubmissionRepository(ABC):
 
     @abstractmethod
     def get_by_id(self, submission_id: int) -> Optional[Submission]:
+        pass
+
+    @abstractmethod
+    def get_by_id_with_details(self, submission_id: int) -> Optional[Tuple[Submission, Optional[object], Optional[object]]]:
         pass
 
     @abstractmethod
