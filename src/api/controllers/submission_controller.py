@@ -56,7 +56,7 @@ def create_submission():
     missing = [
         field
         for field in required_fields
-        if not dat  a.get(field)
+        if not data.get(field)
     ]
 
     if missing:
