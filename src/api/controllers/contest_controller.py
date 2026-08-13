@@ -392,3 +392,4 @@ def finalize_round(round_id, contest_id=None):
     except Exception as e:
         return jsonify({'message': 'Lỗi hệ thống khi chốt điểm vòng thi', 'error': str(e)}), 500
 
+

@@ -1,252 +1,468 @@
-from typing import Optional, List
+from collections import defaultdict
+from typing import Optional
 
 try:
-    from src.infrastructure.repositories.score_repository import ScoreRepository
-    from src.infrastructure.repositories.score_feedback_repository import ScoreFeedbackRepository
-    from src.infrastructure.repositories.submission_repository import SubmissionRepository
-    from src.infrastructure.repositories.contest_repository import ContestRepository
     from src.infrastructure.models.submission_model import SubmissionModel
-    from src.infrastructure.models.criteria_model import CriteriaModel
+    from src.infrastructure.repositories.score_repository import ScoreRepository
+    from src.infrastructure.repositories.score_feedback_repository import (
+        ScoreFeedbackRepository,
+    )
+    from src.infrastructure.repositories.submission_repository import (
+        SubmissionRepository,
+    )
+    from src.infrastructure.repositories.contest_repository import (
+        ContestRepository,
+    )
 except ImportError:
-    from infrastructure.repositories.score_repository import ScoreRepository
-    from infrastructure.repositories.score_feedback_repository import ScoreFeedbackRepository
-    from infrastructure.repositories.submission_repository import SubmissionRepository
-    from infrastructure.repositories.contest_repository import ContestRepository
     from infrastructure.models.submission_model import SubmissionModel
-    from infrastructure.models.criteria_model import CriteriaModel
+    from infrastructure.repositories.score_repository import ScoreRepository
+    from infrastructure.repositories.score_feedback_repository import (
+        ScoreFeedbackRepository,
+    )
+    from infrastructure.repositories.submission_repository import (
+        SubmissionRepository,
+    )
+    from infrastructure.repositories.contest_repository import (
+        ContestRepository,
+    )
 
 
 class ScoreService:
-    def __init__(self, score_repo: Optional[ScoreRepository] = None, feedback_repo: Optional[ScoreFeedbackRepository] = None, submission_repo: Optional[SubmissionRepository] = None, contest_repo: Optional[ContestRepository] = None):
+    def __init__(
+        self,
+        score_repo: Optional[ScoreRepository] = None,
+        feedback_repo: Optional[ScoreFeedbackRepository] = None,
+        submission_repo: Optional[SubmissionRepository] = None,
+        contest_repo: Optional[ContestRepository] = None,
+    ):
         self.score_repo = score_repo or ScoreRepository()
         self.feedback_repo = feedback_repo or ScoreFeedbackRepository()
-        self.submission_repo = submission_repo or SubmissionRepository()
+        self.submission_repo = (
+            submission_repo or SubmissionRepository()
+        )
         self.contest_repo = contest_repo or ContestRepository()
 
-    def validate_score(self, criteria_id: int, score_value) -> bool:
-        # Check criteria exists and validate score within [0, max_score]
-        crit = self.contest_repo.get_criteria_by_id(criteria_id)
-        if crit is None:
-            return False
-        try:
-            score_num = float(score_value)
-        except Exception:
-            return False
-        if score_num < 0 or score_num > float(crit.max_score):
-            return False
-        return True
+    
 
-    def submit_score(self, submission_id: int, judge_id: int, criteria_id: int, score_value, comment: Optional[str] = None):
-        # Ensure submission exists
+    def validate_score(
+        self,
+        criteria_id: int,
+        score_value,
+    ) -> bool:
+        criteria = self.contest_repo.get_criteria_by_id(criteria_id)
+
+        if criteria is None:
+            return False
+
+        try:
+            score = float(score_value)
+            max_score = float(criteria.max_score)
+        except (TypeError, ValueError):
+            return False
+
+        return 0 <= score <= max_score
+
+    def submit_score(
+        self,
+        submission_id: int,
+        judge_id: int,
+        criteria_id: int,
+        score_value,
+        comment: Optional[str] = None,
+    ):
         submission = self.submission_repo.get_by_id(submission_id)
-        if not submission:
-            return None, 'submission_not_found'
 
-        # Validate criteria
-        crit = self.contest_repo.get_criteria_by_id(criteria_id)
-        if not crit:
-            return None, 'criteria_not_found'
+        if submission is None:
+            return None, "submission_not_found"
 
-        # Validate score value
+        criteria = self.contest_repo.get_criteria_by_id(criteria_id)
+
+        if criteria is None:
+            return None, "criteria_not_found"
+
         try:
-            score_num = float(score_value)
-        except Exception:
-            return None, 'invalid_score'
-        if score_num < 0 or score_num > float(crit.max_score):
-            return None, 'invalid_score'
+            score = float(score_value)
+            max_score = float(criteria.max_score)
+        except (TypeError, ValueError):
+            return None, "invalid_score"
 
-        # Create or update score
-        model = self.score_repo.create_or_update(submission_id, judge_id, criteria_id, score_num, comment)
+        if not 0 <= score <= max_score:
+            return None, "invalid_score"
 
-        # Recalculate final score for submission if desired: not modifying business rule here.
-        # If project has existing final_score calculation, it should be kept. Here we attempt a simple average across judges' weighted criteria if needed.
-        try:
-            scores = self.score_repo.list_by_submission(submission_id)
-            # calculate simple average of scores weighted by criteria weight
-            from collections import defaultdict
-            judge_scores = defaultdict(list)
-            for s in scores:
-                judge_scores[s.judge_id].append((s.criteria_id, float(s.score_value)))
+        model = self.score_repo.create_or_update(
+            submission_id=submission_id,
+            judge_id=judge_id,
+            criteria_id=criteria_id,
+            score_value=score,
+            comment=comment,
+        )
 
-            # For each judge, compute average of their scores (simple mean)
-            per_judge_avg = []
-            for j, vals in judge_scores.items():
-                vals_only = [v for (_, v) in vals]
-                if vals_only:
-                    per_judge_avg.append(sum(vals_only) / len(vals_only))
-
-            if per_judge_avg:
-                final = sum(per_judge_avg) / len(per_judge_avg)
-                submission.final_score = final
-                # persist
-                self.submission_repo.update(submission)
-        except Exception:
-            pass
+        self._recalculate_final_score(submission)
 
         return model, None
 
-    def submit_feedback(self, submission_id: int, judge_id: int, summary_feedback: str, final_recommendation: Optional[str] = None):
-        submission = self.submission_repo.get_by_id(submission_id)
-        if not submission:
-            return None, 'submission_not_found'
+    def _recalculate_final_score(
+        self,
+        submission: SubmissionModel,
+    ) -> None:
+        scores = self.score_repo.list_by_submission(submission.id)
 
-        model = self.feedback_repo.create_or_update(submission_id, judge_id, summary_feedback, final_recommendation)
-        return model, None
+        if not scores:
+            submission.final_score = None
+            self.submission_repo.update(submission)
+            return
 
-    def get_next_previous(self, submission_id: int):
-        # determine next and previous submission within same round
-        submission = self.submission_repo.get_by_id(submission_id)
-        if not submission:
-            return None, 'submission_not_found'
+        judge_scores = defaultdict(list)
 
-        # find submissions in same round ordered by id
-        try:
-            all_subs = (
-                self.submission_repo.session
-                .query(SubmissionModel)
-                .filter_by(round_id=submission.round_id)
-                .order_by(SubmissionModel.id.asc())
-                .all()
+        for score in scores:
+            criteria = self.contest_repo.get_criteria_by_id(
+                score.criteria_id
             )
-        except Exception:
-            return None, 'db_error'
 
-        ids = [s.id for s in all_subs]
-        try:
-            idx = ids.index(submission_id)
-        except ValueError:
-            return None, 'submission_not_found'
+            if criteria is None:
+                continue
 
-        prev_id = ids[idx-1] if idx > 0 else None
-        next_id = ids[idx+1] if idx < len(ids)-1 else None
+            try:
+                weight = float(criteria.weight or 0)
+                score_value = float(score.score_value)
+            except (TypeError, ValueError):
+                continue
 
-        return {'previous': prev_id, 'next': next_id}, None
+            if weight <= 0:
+                continue
+
+            judge_scores[score.judge_id].append(
+                (score_value, weight)
+            )
+
+        judge_averages = [
+            self._calculate_weighted_average(values)
+            for values in judge_scores.values()
+        ]
+
+        judge_averages = [
+            value
+            for value in judge_averages
+            if value is not None
+        ]
+
+        if judge_averages:
+            submission.final_score = (
+                sum(judge_averages) / len(judge_averages)
+            )
+        else:
+            submission.final_score = None
+
+        self.submission_repo.update(submission)
+
+    @staticmethod
+    def _calculate_weighted_average(values):
+        if not values:
+            return None
+
+        total_weight = sum(
+            weight for _, weight in values
+        )
+
+        if total_weight <= 0:
+            return None
+
+        weighted_total = sum(
+            score * weight
+            for score, weight in values
+        )
+
+        return weighted_total / total_weight
 
     def finalize_round(self, round_id: int):
         """
-        Chốt điểm một vòng thi.
-        1. Kiểm tra vòng thi có tồn tại hay không.
-        2. Kiểm tra vòng thi đã được chốt hay chưa.
-        3. Tính tổng điểm cho từng thí sinh.
-        4. Xếp hạng thí sinh theo tổng điểm từ cao xuống thấp.
-        5. Lưu/cập nhật kết quả và cập nhật trạng thái vòng thi thành FINALIZED.
-        """
-        round_obj = self.contest_repo.get_round_by_id(round_id)
-        if not round_obj:
-            return None, 'round_not_found'
+        Chốt điểm vòng thi.
 
-        if getattr(round_obj, 'status', '').upper() == 'FINALIZED':
-            return None, 'round_already_finalized'
+        Quy trình:
+        1. Kiểm tra vòng thi tồn tại.
+        2. Kiểm tra vòng đã FINALIZED chưa.
+        3. Lấy tiêu chí của vòng.
+        4. Lấy submission thuộc vòng.
+        5. Tính tổng điểm cho từng submission.
+        6. Xếp hạng từ cao xuống thấp.
+        7. Người có cùng điểm sẽ cùng hạng.
+        8. Lưu final_score cho submission.
+        9. Cập nhật trạng thái vòng thành FINALIZED.
+        10. Trả kết quả để hệ thống công bố.
+        """
+
+        round_obj = self.contest_repo.get_round_by_id(round_id)
+
+        if round_obj is None:
+            return None, "round_not_found"
+
+        status = getattr(round_obj, "status", None)
+
+        if status is not None:
+            status_value = getattr(
+                status,
+                "value",
+                status
+            )
+
+            if str(status_value).upper() == "FINALIZED":
+                return None, "round_already_finalized"
+
+        criteria_list = (
+            self.contest_repo.get_criteria_by_round_id(
+                round_id
+            )
+            or []
+        )
+
+        criteria_map = {
+            criterion.id: criterion
+            for criterion in criteria_list
+        }
 
         try:
-            from infrastructure.models.submission_model import SubmissionModel
-            from infrastructure.models.round_model import RoundModel
-        except ImportError:
-            from src.infrastructure.models.submission_model import SubmissionModel
-            from src.infrastructure.models.round_model import RoundModel
-
-        session = getattr(self.submission_repo, 'session', None) or getattr(self.contest_repo, 'session', None)
-
-        if session is not None:
+            all_submissions = self.submission_repo.list()
+        except TypeError:
             try:
-                subs = session.query(SubmissionModel).filter_by(round_id=round_id).all()
-            except Exception:
-                subs = []
-        else:
-            all_subs = self.submission_repo.list()
-            subs = [s for s in all_subs if s.round_id == round_id]
+                all_submissions = self.submission_repo.list(
+                    round_id=round_id
+                )
+            except TypeError:
+                all_submissions = []
 
-        criteria_list = self.contest_repo.get_criteria_by_round_id(round_id)
-        crit_map = {}
-        for c in criteria_list:
-            w = float(c.weight) if hasattr(c, 'weight') and c.weight is not None else 1.0
-            crit_map[c.id] = w if w > 0 else 1.0
-
-        candidates = []
-        for sub in subs:
-            scores = self.score_repo.list_by_submission(sub.id)
-            if scores:
-                from collections import defaultdict
-                judge_scores = defaultdict(list)
-                for s in scores:
-                    s_val = float(s.score_value) if s.score_value is not None else 0.0
-                    w = crit_map.get(s.criteria_id, 1.0)
-                    judge_scores[s.judge_id].append((s_val, w))
-
-                per_judge_weighted_avg = []
-                for j_id, s_list in judge_scores.items():
-                    tot_w = sum(w for (_, w) in s_list)
-                    if tot_w > 0:
-                        j_score = sum(val * w for (val, w) in s_list) / tot_w
-                    else:
-                        j_score = sum(val for (val, _) in s_list) / len(s_list)
-                    per_judge_weighted_avg.append(j_score)
-
-                if per_judge_weighted_avg:
-                    total_score = round(sum(per_judge_weighted_avg) / len(per_judge_weighted_avg), 2)
-                elif sub.final_score is not None:
-                    total_score = float(sub.final_score)
-                else:
-                    total_score = 0.0
-            elif sub.final_score is not None:
-                total_score = float(sub.final_score)
-            else:
-                total_score = 0.0
-
-            sub.final_score = total_score
-            sub.status = 'evaluated'
-            if session is not None:
-                session.add(sub)
-
-            sub_time = getattr(sub, 'submitted_at', None)
-            from datetime import datetime
-            fallback_dt = datetime.max
-            candidates.append({
-                'user_id': sub.user_id,
-                'submission_id': sub.id,
-                'total_score': total_score,
-                'submitted_at': sub_time or fallback_dt,
-            })
-
-        if session is not None:
-            try:
-                session.commit()
-            except Exception:
-                try: session.rollback()
-                except Exception: pass
-
-        candidates.sort(key=lambda x: (-x['total_score'], x['submitted_at'], x['user_id']))
+        submissions = [
+            submission
+            for submission in (all_submissions or [])
+            if getattr(submission, "round_id", None) == round_id
+        ]
 
         results = []
-        for idx, item in enumerate(candidates):
-            if idx > 0 and item['total_score'] == candidates[idx - 1]['total_score']:
-                rank = results[-1]['rank']
-            else:
-                rank = idx + 1
 
-            results.append({
-                'user_id': item['user_id'],
-                'submission_id': item['submission_id'],
-                'total_score': item['total_score'],
-                'rank': rank
-            })
+        for submission in submissions:
+            scores = self.score_repo.list_by_submission(
+                submission.id
+            ) or []
 
-        if session is not None:
-            try:
-                r_model = session.query(RoundModel).filter_by(id=round_id).first()
-                if r_model:
-                    r_model.status = 'FINALIZED'
-                    session.commit()
-            except Exception:
-                try: session.rollback()
-                except Exception: pass
-                self.contest_repo.update_round(round_id, {'status': 'FINALIZED'})
-        else:
-            self.contest_repo.update_round(round_id, {'status': 'FINALIZED'})
+            weighted_values = []
+
+            for score in scores:
+                criteria = criteria_map.get(
+                    score.criteria_id
+                )
+
+                if criteria is None:
+                    continue
+
+                try:
+                    weight = float(
+                        criteria.weight or 0
+                    )
+
+                    score_value = float(
+                        score.score_value
+                    )
+                except (TypeError, ValueError):
+                    continue
+
+                if weight <= 0:
+                    continue
+
+                weighted_values.append(
+                    (
+                        score_value,
+                        weight,
+                    )
+                )
+
+            total_score = self._calculate_weighted_average(
+                weighted_values
+            )
+
+            if total_score is None:
+                total_score = 0.0
+
+            total_score = round(total_score, 2)
+
+            submission.final_score = total_score
+
+            results.append(
+                {
+                    "user_id": submission.user_id,
+                    "submission_id": submission.id,
+                    "total_score": total_score,
+                }
+            )
+
+        results.sort(
+            key=lambda item: item["total_score"],
+            reverse=True
+        )
+
+        previous_score = None
+        current_rank = 0
+
+        for index, result in enumerate(
+            results,
+            start=1
+        ):
+            current_score = result["total_score"]
+
+            if (
+                previous_score is None
+                or current_score != previous_score
+            ):
+                current_rank = index
+
+            result["rank"] = current_rank
+
+            previous_score = current_score
+
+        for submission in submissions:
+            self.submission_repo.update(submission)
+
+        self.contest_repo.update_round(
+            round_id,
+            {
+                "status": "FINALIZED"
+            }
+        )
 
         return {
-            'message': 'Round finalized successfully',
-            'round_id': round_id,
-            'status': 'FINALIZED',
-            'results': results
+            "message": "Round finalized successfully",
+            "round_id": round_id,
+            "status": "FINALIZED",
+            "results": results,
         }, None
+
+
+    def submit_feedback(
+        self,
+        submission_id: int,
+        judge_id: int,
+        summary_feedback: str,
+        final_recommendation: Optional[str] = None,
+    ):
+        submission = self.submission_repo.get_by_id(
+            submission_id
+        )
+
+        if submission is None:
+            return None, "submission_not_found"
+
+        model = self.feedback_repo.create_or_update(
+            submission_id=submission_id,
+            judge_id=judge_id,
+            summary_feedback=summary_feedback,
+            final_recommendation=final_recommendation,
+        )
+
+        return model, None
+
+    
+
+    def _get_ordered_submissions(
+        self,
+        submission_id: int,
+    ):
+        submission = self.submission_repo.get_by_id(
+            submission_id
+        )
+
+        if submission is None:
+            return None, None, "submission_not_found"
+
+        try:
+            submissions = (
+                self.submission_repo.session
+                .query(SubmissionModel)
+                .filter_by(
+                    round_id=submission.round_id
+                )
+                .order_by(
+                    SubmissionModel.id.asc()
+                )
+                .all()
+            )
+        except Exception:
+            return None, None, "db_error"
+
+        return submission, submissions, None
+
+    @staticmethod
+    def _serialize_submission(
+        submission: SubmissionModel,
+    ):
+        return {
+            "id": submission.id,
+            "round_id": submission.round_id,
+            "user_id": submission.user_id,
+            "title": submission.title,
+            "story_description": (
+                submission.story_description
+            ),
+            "status": submission.status,
+            "final_score": (
+                float(submission.final_score)
+                if submission.final_score is not None
+                else None
+            ),
+        }
+
+    def get_next_submission(
+        self,
+        submission_id: int,
+    ):
+        return self._get_adjacent_submission(
+            submission_id,
+            direction=1,
+        )
+
+    def get_previous_submission(
+        self,
+        submission_id: int,
+    ):
+        return self._get_adjacent_submission(
+            submission_id,
+            direction=-1,
+        )
+
+    def _get_adjacent_submission(
+        self,
+        submission_id: int,
+        direction: int,
+    ):
+        submission, submissions, err = (
+            self._get_ordered_submissions(
+                submission_id
+            )
+        )
+
+        if err:
+            return None, err
+
+        current_index = next(
+            (
+                index
+                for index, item in enumerate(submissions)
+                if item.id == submission_id
+            ),
+            None,
+        )
+
+        if current_index is None:
+            return None, "submission_not_found"
+
+        target_index = current_index + direction
+
+        if (
+            target_index < 0
+            or target_index >= len(submissions)
+        ):
+            return None, None
+
+        return (
+            self._serialize_submission(
+                submissions[target_index]
+            ),
+            None,
+        )

@@ -36,3 +36,4 @@ class PermissionModel(Base):
     code = Column(String(100), nullable=False, unique=True)
     name = Column(String(100), nullable=False)
     module = Column(String(50), nullable=False)
+    
