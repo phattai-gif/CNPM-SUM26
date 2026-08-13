@@ -432,3 +432,4 @@ def list_submissions():
         }
         for item in submissions
     ]), 200
+    

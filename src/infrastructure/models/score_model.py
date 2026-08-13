@@ -79,3 +79,4 @@ class ScoreModel(Base):
         onupdate=func.now(),
         nullable=False,
     )
+    

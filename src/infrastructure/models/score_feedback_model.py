@@ -70,3 +70,4 @@ class ScoreFeedbackModel(Base):
         onupdate=func.now(),
         nullable=False,
     )
+    
