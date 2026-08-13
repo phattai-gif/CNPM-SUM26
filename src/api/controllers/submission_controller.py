@@ -1,12 +1,23 @@
 from flask import Blueprint, jsonify, request
+
 try:
-    from src.api.role_required import token_required, role_required
-    from src.infrastructure.repositories.submission_repository import SubmissionRepository
+    from src.api.role_required import (
+        token_required,
+        role_required,
+    )
+    from src.infrastructure.repositories.submission_repository import (
+        SubmissionRepository,
+    )
     from src.services.score_service import ScoreService
     from src.services.ai_detection_service import AiDetectionService
 except ImportError:
-    from api.role_required import token_required, role_required
-    from infrastructure.repositories.submission_repository import SubmissionRepository
+    from api.role_required import (
+        token_required,
+        role_required,
+    )
+    from infrastructure.repositories.submission_repository import (
+        SubmissionRepository,
+    )
     from services.score_service import ScoreService
     from services.ai_detection_service import AiDetectionService
 
@@ -45,7 +56,7 @@ def create_submission():
     missing = [
         field
         for field in required_fields
-        if not data.get(field)
+        if not dat  a.get(field)
     ]
 
     if missing:
@@ -148,23 +159,23 @@ def get_submission(submission_id):
 
     submission, submission_file, film_metadata = result
 
-    # --- Task 55: Integrate AI warning into workflow review ---
-    # When Organizer / Judge views the submission, automatically check
-    # AI warning from DB. If not exists, call AiDetectionService, save to DB.
+    # --- Task 55: Integrate AI warning vào workflow review ---
+    # Khi Giám khảo / Ban tổ chức mở xem bài thi, tự động kiểm tra
+    # cảnh báo AI từ DB. Nếu chưa có thì gọi AiDetectionService, lưu vào DB.
     ai_flag_data = None
     try:
         image_path = submission_file.image_hd_url if submission_file else None
         if image_path:
             existing_flag = submission_repo.get_ai_flag(submission_id)
             if existing_flag:
-                # Already exists in DB, fetch it
+                # Đã có trong DB, lấy ra luôn
                 ai_flag_data = {
                     "ai_score": float(existing_flag.confidence_score),
                     "risk_level": existing_flag.risk_level,
                     "status": existing_flag.status,
                 }
             else:
-                # Does not exist, call AI service to analyze and save to DB
+                # Chưa có, gọi AI service phân tích và lưu vào DB
                 ai_result = ai_detection_service.detect_ai(image_path)
                 ai_score = ai_result.get("ai_score", 0)
                 ai_message = ai_result.get("ai_message", "")
@@ -190,7 +201,7 @@ def get_submission(submission_id):
                     "status": saved_flag.status,
                 }
     except Exception:
-        # Prevent AI error from affecting the API
+        # Không để lỗi AI làm ảnh hưởng API xem bài thi
         ai_flag_data = None
     # ---------------------------------------------------------
 
@@ -268,7 +279,7 @@ def get_submission(submission_id):
     else:
         response["film_metadata"] = None
 
-    # ai_flag field for Organizer / Judge to see AI warning
+    # Trường ai_flag cho Giám khảo / Ban tổ chức thấy cảnh báo AI ngay
     response["ai_flag"] = ai_flag_data
 
     return jsonify(response), 200
