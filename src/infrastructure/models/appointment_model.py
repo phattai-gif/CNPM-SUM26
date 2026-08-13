@@ -7,7 +7,7 @@ class AppointmentModel(Base):
 
     id = Column(Integer, primary_key=True)
     consultant_id = Column(Integer, ForeignKey('consultants.id'))
-    user_id = Column(Integer,  ForeignKey('flask_user.id'))
+    user_id = Column(Integer,  ForeignKey('users.id'))
     description = Column(String(255), nullable=True)
     status = Column(String(50), nullable=False)
     start_time = Column(DateTime, nullable=False)

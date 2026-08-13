@@ -12,7 +12,7 @@ class FeedbackModel(Base):
     created_at = Column(DateTime)
     updated_at = Column(DateTime) 
     course_id = Column(Integer, ForeignKey('courses.id'))
-    user_id = Column(Integer, ForeignKey('flask_user.id'))
+    user_id = Column(Integer, ForeignKey('users.id'))
     
 #ORM : Object Relational Mapping
 # Ánh xạ đối tượng trong Python với bảng trong cơ sở dữ liệu

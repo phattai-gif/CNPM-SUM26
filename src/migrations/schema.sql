@@ -144,11 +144,10 @@ CREATE TABLE IF NOT EXISTS submission_film_metadata (
 CREATE TABLE IF NOT EXISTS judge_assignments (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     round_id BIGINT NOT NULL REFERENCES rounds(id) ON DELETE CASCADE,
-    submission_id BIGINT NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
+    submission_id BIGINT REFERENCES submissions(id) ON DELETE CASCADE,
     judge_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     status VARCHAR(20) NOT NULL DEFAULT 'assigned', -- 'assigned', 'grading', 'completed'
-    assigned_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_judge_submission UNIQUE (submission_id, judge_id)
+    assigned_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS scores (

@@ -28,6 +28,11 @@ def run_migration():
             'check': "SELECT column_name FROM information_schema.columns WHERE table_name='contests' AND column_name='rules'",
             'sql': "ALTER TABLE contests ADD COLUMN rules TEXT"
         },
+        {
+            'description': 'Drop NOT NULL constraint on judge_assignments.submission_id',
+            'check': "SELECT is_nullable FROM information_schema.columns WHERE table_name='judge_assignments' AND column_name='submission_id' AND is_nullable='YES'",
+            'sql': "ALTER TABLE judge_assignments ALTER COLUMN submission_id DROP NOT NULL"
+        },
     ]
 
     for m in migrations:
