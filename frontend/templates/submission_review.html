@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xem bài thi - Duyệt cảnh báo AI</title>
+    <style>
+      body{font-family: Arial, Helvetica, sans-serif;margin:20px}
+      .container{display:flex;gap:20px}
+      .content{flex:1;padding:16px;border:1px solid #eee}
+      .panel{width:360px;padding:16px;border:1px solid #eee}
+      .pill{display:inline-block;padding:6px 10px;border-radius:12px;font-weight:600}
+      .pill.flagged{background:#ffdddd;color:#900}
+      .warning{border-bottom:1px solid #f0f0f0;padding:8px 0}
+      .confidence{font-weight:700}
+      .snippet{background:#fafafa;border-left:3px solid #ddd;padding:8px;margin-top:8px;font-family:monospace;white-space:pre-wrap}
+      .actions{margin-top:12px}
+      button{padding:8px 12px;margin-right:8px}
+    </style>
+  </head>
+  <body>
+    <h1>Xem bài #{{ submission.id }} - {{ submission.title }}</h1>
+    <div>
+      <strong>Tác giả:</strong> {{ submission.author }} •
+      <strong>Gửi lúc:</strong> {{ submission.submitted_at }}
+      <span style="float:right">
+        {% if submission.flagged %}
+          <span class="pill flagged">Flagged</span>
+        {% else %}
+          <span class="pill">OK</span>
+        {% endif %}
+      </span>
+    </div>
+
+    <div class="container" style="margin-top:16px">
+      <div class="content">
+        <h3>Nội dung bài</h3>
+        <div>
+          {{ submission.content }}
+        </div>
+
+        <div style="margin-top:18px">
+          <h4>Attachments</h4>
+          <ul>
+            {% for a in submission.attachments %}
+              <li><a href="#">{{ a }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <h3>Cảnh báo AI</h3>
+        <div>
+          {% if ai_warnings %}
+            {% for w in ai_warnings %}
+              <div class="warning">
+                <div><strong>{{ w.label }}</strong> • <span class="confidence">{{ (w.confidence * 100)|round(1) }}%</span></div>
+                <div style="font-size:12px;color:#666">Model: {{ w.model_name }} (v{{ w.model_version }})</div>
+                <div class="snippet">{{ w.snippet }}</div>
+                <div style="margin-top:6px;font-size:13px;color:#333">{{ w.details.summary }}</div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div>Không có cảnh báo.</div>
+          {% endif %}
+        </div>
+
+        <div class="actions">
+          <form method="post" action="#">
+            <button type="button">Approve</button>
+            <button type="button">Reject</button>
+            <button type="button">Mark false-positive</button>
+          </form>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>
