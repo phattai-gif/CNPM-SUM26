@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Your Photograph - Film Photography Contest</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='submission.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="submission-wrapper">
+            <!-- Header -->
+            <header class="submission-header">
+                <h1>📸 Submit Your Photograph</h1>
+                <p class="subtitle">Share your analog film photography with the community</p>
+            </header>
+
+            <!-- Main Form -->
+            <form id="submissionForm" class="submission-form">
+                <!-- SECTION 1: Round Selection -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <span class="step-number">1</span>
+                        Select Competition
+                    </h2>
+                    <div class="form-group">
+                        <label for="roundSelect" class="form-label">
+                            Choose a Contest Round <span class="required">*</span>
+                        </label>
+                        <select id="roundSelect" name="round_id" class="form-control" required>
+                            <option value="">-- Select a round --</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                        <small class="form-text">Deadline information will appear here</small>
+                        <div id="roundInfo" class="round-info"></div>
+                    </div>
+                </section>
+
+                <!-- SECTION 2: Image Upload -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <span class="step-number">2</span>
+                        Upload Your Image
+                    </h2>
+                    
+                    <!-- Image Preview Area -->
+                    <div class="image-upload-area" id="imageUploadArea">
+                        <div class="drag-drop-zone" id="dragDropZone">
+                            <div class="upload-icon">📷</div>
+                            <h3>Drag & Drop Your Image Here</h3>
+                            <p>or</p>
+                            <label for="imageInput" class="btn-upload">
+                                Browse Files
+                            </label>
+                            <input 
+                                type="file" 
+                                id="imageInput" 
+                                name="image" 
+                                accept=".jpg,.jpeg,.png,.tiff,.bmp,.gif"
+                                style="display: none;"
+                                required
+                            >
+                            <p class="upload-hint">Supported: JPG, PNG, TIFF, BMP, GIF (Max 20MB)</p>
+                        </div>
+                    </div>
+
+                    <!-- Image Preview & Info -->
+                    <div id="imagePreview" class="image-preview" style="display: none;">
+                        <div class="preview-container">
+                            <img id="previewImage" src="" alt="Preview" class="preview-image">
+                        </div>
+                        <div class="image-info">
+                            <h4>📋 Image Information</h4>
+                            <ul id="imageInfoList" class="info-list">
+                                <li><strong>File Name:</strong> <span id="infoFileName">-</span></li>
+                                <li><strong>File Size:</strong> <span id="infoFileSize">-</span></li>
+                                <li><strong>Dimensions:</strong> <span id="infoDimensions">-</span></li>
+                                <li><strong>EXIF Data:</strong> <span id="infoExifStatus">-</span></li>
+                            </ul>
+                            <button type="button" class="btn-remove-image" id="removeImageBtn">
+                                ✕ Remove Image
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 3: Submission Details -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <span class="step-number">3</span>
+                        Submission Details
+                    </h2>
+                    
+                    <div class="form-group">
+                        <label for="titleInput" class="form-label">
+                            Title <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="titleInput" 
+                            name="title" 
+                            class="form-control"
+                            placeholder="Give your photograph a title"
+                            maxlength="200"
+                            required
+                        >
+                        <small class="form-text" id="titleCount">0/200 characters</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descriptionInput" class="form-label">
+                            Story Description
+                        </label>
+                        <textarea 
+                            id="descriptionInput" 
+                            name="story_description" 
+                            class="form-control"
+                            placeholder="Tell the story behind this photograph... (Optional)"
+                            rows="4"
+                            maxlength="1000"
+                        ></textarea>
+                        <small class="form-text" id="descriptionCount">0/1000 characters</small>
+                    </div>
+                </section>
+
+                <!-- SECTION 4: Film Metadata -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <span class="step-number">4</span>
+                        Film & Camera Metadata (Optional)
+                    </h2>
+                    
+                    <p class="section-hint">📝 Provide details about your film and camera setup. This helps verify authenticity.</p>
+
+                    <div class="metadata-grid">
+                        <div class="form-group">
+                            <label for="cameraBodies" class="form-label">Camera Body</label>
+                            <input 
+                                type="text" 
+                                id="cameraBodies" 
+                                name="camera_body" 
+                                class="form-control"
+                                placeholder="e.g., Canon EOS 5D Mark IV"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lensInput" class="form-label">Lens</label>
+                            <input 
+                                type="text" 
+                                id="lensInput" 
+                                name="lens" 
+                                class="form-control"
+                                placeholder="e.g., 50mm f/1.8"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="filmStockInput" class="form-label">Film Stock</label>
+                            <input 
+                                type="text" 
+                                id="filmStockInput" 
+                                name="film_stock" 
+                                class="form-control"
+                                placeholder="e.g., Kodak Portra 400"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="filmIsoInput" class="form-label">Film ISO</label>
+                            <input 
+                                type="number" 
+                                id="filmIsoInput" 
+                                name="film_iso" 
+                                class="form-control"
+                                placeholder="e.g., 400"
+                                min="50"
+                                max="3200"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="labNameInput" class="form-label">Lab Name</label>
+                            <input 
+                                type="text" 
+                                id="labNameInput" 
+                                name="lab_name" 
+                                class="form-control"
+                                placeholder="e.g., Local Film Lab"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="scannerInfoInput" class="form-label">Scanner Info</label>
+                            <input 
+                                type="text" 
+                                id="scannerInfoInput" 
+                                name="scanner_info" 
+                                class="form-control"
+                                placeholder="e.g., Epson Perfection V550"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="developmentProcessSelect" class="form-label">Development Process</label>
+                            <select id="developmentProcessSelect" name="development_process" class="form-control">
+                                <option value="">-- Select --</option>
+                                <option value="C-41">C-41 (Color Negative)</option>
+                                <option value="E-6">E-6 (Slide/Transparency)</option>
+                                <option value="B&W">B&W (Black & White)</option>
+                                <option value="Push">Push Processing</option>
+                                <option value="Pull">Pull Processing</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="locationInput" class="form-label">Taken at Location</label>
+                            <input 
+                                type="text" 
+                                id="locationInput" 
+                                name="taken_at_location" 
+                                class="form-control"
+                                placeholder="e.g., Downtown Park, City Name"
+                            >
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 5: Verification Status -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <span class="step-number">5</span>
+                        Verification & Validation
+                    </h2>
+
+                    <div class="verification-grid">
+                        <!-- AI Detection Status -->
+                        <div class="verification-card">
+                            <h4>🤖 AI Detection</h4>
+                            <div id="aiDetectionStatus" class="verification-status status-pending">
+                                <p>Pending image upload</p>
+                            </div>
+                        </div>
+
+                        <!-- Duplicate Detection Status -->
+                        <div class="verification-card">
+                            <h4>🔍 Duplicate Check</h4>
+                            <div id="duplicateDetectionStatus" class="verification-status status-pending">
+                                <p>Pending submission</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input 
+                                type="checkbox" 
+                                id="agreeTerms" 
+                                name="agree_terms"
+                                required
+                            >
+                            I confirm that this photograph is my original work and I have the rights to submit it
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="reset" class="btn btn-secondary" id="resetBtn">
+                        ↻ Clear Form
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        ✓ Submit Photograph
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Processing your submission...</p>
+            </div>
+
+            <!-- Success Message -->
+            <div id="successMessage" class="alert alert-success" style="display: none;">
+                <h3>✓ Submission Successful!</h3>
+                <p id="successText"></p>
+                <div class="success-actions">
+                    <button type="button" class="btn btn-primary" id="viewSubmissionBtn">
+                        View Submission
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="submitAnotherBtn">
+                        Submit Another
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="alert alert-error" style="display: none;">
+                <h3>✕ Submission Failed</h3>
+                <p id="errorText"></p>
+                <button type="button" class="btn btn-secondary" id="dismissErrorBtn">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='submission.js') }}"></script>
+</body>
+</html>

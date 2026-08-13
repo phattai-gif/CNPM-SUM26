@@ -10,6 +10,8 @@ try:
     from src.api.role_required import token_required
     from src.services.auth_service import AuthService
     from src.infrastructure.repositories.auth_repository import AuthRepository
+    from src.infrastructure.repositories.contest_repository import ContestRepository
+    from src.services.contest_service import ContestService
 except ImportError:
     from infrastructure.models.user_model import UserModel
     from infrastructure.databases.mssql import session
@@ -17,11 +19,14 @@ except ImportError:
     from api.role_required import token_required
     from services.auth_service import AuthService
     from infrastructure.repositories.auth_repository import AuthRepository
+    from infrastructure.repositories.contest_repository import ContestRepository
+    from services.contest_service import ContestService
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 # Khởi tạo repository & service dùng FactoryDatabase (PostgreSQL Supabase)
 auth_service = AuthService(AuthRepository())
+contest_service = ContestService(ContestRepository())
 
 register_request_schema = RegisterUserRequestSchema()
 register_response_schema = RegisterUserResponseSchema()
@@ -213,6 +218,13 @@ def register_page():
     return render_template('register.html')
 
 
+@auth_bp.route('/submit', methods=['GET'])
+@token_required
+def submission_page():
+    """Serve the submission form page for participants"""
+    return render_template('submission.html')
+
+
 @auth_bp.route('/me', methods=['GET'])
 @token_required
 def get_current_user():
@@ -245,3 +257,63 @@ def get_current_user():
             'role': user.role
         }
     }), 200
+
+
+@auth_bp.route('/contests', methods=['GET'])
+@token_required
+def get_active_contests():
+    """
+    Get list of active contests for participants to submit to
+    ---
+    get:
+      summary: Get active contests for submission
+      tags:
+        - Auth
+      security:
+        - Bearer: []
+      responses:
+        200:
+          description: List of active contests retrieved successfully
+        401:
+          description: Unauthorized
+    """
+    try:
+        # Get all contests
+        all_contests = contest_service.get_all_contests()
+        
+        # Filter to only active contests with rounds
+        active_contests = []
+        for contest in all_contests:
+            if hasattr(contest, 'status') and contest.status in ['active', 'ongoing']:
+                contest_dict = contest.to_dict() if hasattr(contest, 'to_dict') else {
+                    'id': contest.id,
+                    'name': getattr(contest, 'name', ''),
+                    'title': getattr(contest, 'title', ''),
+                    'description': getattr(contest, 'description', ''),
+                    'status': getattr(contest, 'status', ''),
+                }
+                
+                # Get rounds for this contest
+                if hasattr(contest, 'rounds'):
+                    rounds = []
+                    for round_obj in contest.rounds:
+                        round_dict = round_obj.to_dict() if hasattr(round_obj, 'to_dict') else {
+                            'id': round_obj.id,
+                            'name': getattr(round_obj, 'name', ''),
+                            'deadline': getattr(round_obj, 'deadline', ''),
+                            'description': getattr(round_obj, 'description', ''),
+                        }
+                        rounds.append(round_dict)
+                    contest_dict['rounds'] = rounds
+                
+                active_contests.append(contest_dict)
+        
+        return jsonify({
+            'message': 'Active contests retrieved successfully',
+            'contests': active_contests
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'message': 'Error retrieving contests',
+            'error': str(e)
+        }), 500
