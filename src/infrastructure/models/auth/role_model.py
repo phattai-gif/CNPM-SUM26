@@ -6,7 +6,8 @@ user_roles = Table(
     'user_roles',
     Base.metadata,
     Column('user_id', BigInteger, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
-    Column('role_id', BigInteger, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True)
+    Column('role_id', BigInteger, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
+    extend_existing=True
 )
 
 # Bảng trung gian Role-Permission
@@ -14,7 +15,8 @@ role_permissions = Table(
     'role_permissions',
     Base.metadata,
     Column('role_id', BigInteger, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
-    Column('permission_id', BigInteger, ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True)
+    Column('permission_id', BigInteger, ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True),
+    extend_existing=True
 )
 
 class RoleModel(Base):
@@ -34,3 +36,4 @@ class PermissionModel(Base):
     code = Column(String(100), nullable=False, unique=True)
     name = Column(String(100), nullable=False)
     module = Column(String(50), nullable=False)
+    
