@@ -14,6 +14,7 @@ from infrastructure.models.submission_file_model import (
 from infrastructure.models.film_metadata_model import (
     SubmissionFilmMetadataModel
 )
+from infrastructure.models.ai_flag_model import AIFlagModel
 
 
 class SubmissionRepository(ISubmissionRepository):
@@ -163,6 +164,59 @@ class SubmissionRepository(ISubmissionRepository):
             self.session.rollback()
             raise
 
+
+    def save_ai_flag(
+        self,
+        submission_id: int,
+        confidence_score: float,
+        risk_level: str,
+        flag_type: str = "AI_METADATA",
+        status: str = "pending",
+    ) -> AIFlagModel:
+        """Save or update AI warning flag for a submission into ai_flags table."""
+        try:
+            existing = (
+                self.session
+                .query(AIFlagModel)
+                .filter_by(submission_id=submission_id, flag_type=flag_type)
+                .first()
+            )
+            if existing:
+                existing.confidence_score = confidence_score
+                existing.risk_level = risk_level
+                existing.status = status
+                self.session.commit()
+                self.session.refresh(existing)
+                return existing
+
+            flag = AIFlagModel(
+                submission_id=submission_id,
+                flag_type=flag_type,
+                confidence_score=confidence_score,
+                risk_level=risk_level,
+                status=status,
+            )
+            self.session.add(flag)
+            self.session.commit()
+            self.session.refresh(flag)
+            return flag
+
+        except Exception:
+            self.session.rollback()
+            raise
+
+    def get_ai_flag(
+        self,
+        submission_id: int,
+        flag_type: str = "AI_METADATA",
+    ) -> Optional[AIFlagModel]:
+        """Retrieve AI warning flag information of a submission from DB."""
+        return (
+            self.session
+            .query(AIFlagModel)
+            .filter_by(submission_id=submission_id, flag_type=flag_type)
+            .first()
+        )
 
     def create_submission(
         self,
