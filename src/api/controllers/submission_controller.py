@@ -1,8 +1,23 @@
 from flask import Blueprint, jsonify, request
-from api.role_required import token_required
-from infrastructure.repositories.submission_repository import (
-    SubmissionRepository
-)
+
+try:
+    from src.api.role_required import (
+        token_required,
+        role_required,
+    )
+    from src.infrastructure.repositories.submission_repository import (
+        SubmissionRepository,
+    )
+    from src.services.score_service import ScoreService
+except ImportError:
+    from api.role_required import (
+        token_required,
+        role_required,
+    )
+    from infrastructure.repositories.submission_repository import (
+        SubmissionRepository,
+    )
+    from services.score_service import ScoreService
 
 
 submission_bp = Blueprint(
@@ -12,19 +27,19 @@ submission_bp = Blueprint(
 )
 
 submission_repo = SubmissionRepository()
+score_service = ScoreService()
 
 
 @submission_bp.route("/health", methods=["GET"])
 def submission_health():
-
     return jsonify({
         "message": "Submission router is working!"
     }), 200
 
+
 @submission_bp.route("", methods=["POST"])
 @token_required
 def create_submission():
-
     data = request.get_json(silent=True) or {}
 
     required_fields = [
@@ -55,7 +70,6 @@ def create_submission():
 
     metadata = data.get("film_metadata") or {}
 
-    # film_stock is nullable=False
     if not metadata.get("film_stock"):
         return jsonify({
             "message": "Missing required field",
@@ -65,7 +79,6 @@ def create_submission():
         }), 400
 
     try:
-
         submission = submission_repo.create_submission(
             round_id=data["round_id"],
             user_id=user_id,
@@ -74,46 +87,28 @@ def create_submission():
             file_hash=data["file_hash"],
             story_description=data.get(
                 "story_description",
-                ""
+                "",
             ),
-            thumbnail_url=data.get(
-                "thumbnail_url"
-            ),
-            width_px=data.get(
-                "width_px"
-            ),
-            height_px=data.get(
-                "height_px"
-            ),
-            file_size_bytes=data.get(
-                "file_size_bytes"
-            ),
+            thumbnail_url=data.get("thumbnail_url"),
+            width_px=data.get("width_px"),
+            height_px=data.get("height_px"),
+            file_size_bytes=data.get("file_size_bytes"),
             film_stock=metadata["film_stock"],
-            film_iso=metadata.get(
-                "film_iso"
-            ),
-            camera_body=metadata.get(
-                "camera_body"
-            ),
-            lens=metadata.get(
-                "lens"
-            ),
-            lab_name=metadata.get(
-                "lab_name"
-            ),
-            scanner_info=metadata.get(
-                "scanner_info"
-            ),
+            film_iso=metadata.get("film_iso"),
+            camera_body=metadata.get("camera_body"),
+            lens=metadata.get("lens"),
+            lab_name=metadata.get("lab_name"),
+            scanner_info=metadata.get("scanner_info"),
             development_process=metadata.get(
                 "development_process",
-                "C-41"
+                "C-41",
             ),
             taken_at_location=metadata.get(
                 "taken_at_location"
             ),
             status=data.get(
                 "status",
-                "submitted"
+                "submitted",
             ),
         )
 
@@ -129,13 +124,14 @@ def create_submission():
                 ),
                 "status": submission.status,
                 "submitted_at": (
-                    submission.submitted_at
+                    submission.submitted_at.isoformat()
+                    if submission.submitted_at
+                    else None
                 ),
             },
         }), 201
 
     except Exception as error:
-
         return jsonify({
             "message": "Failed to create submission",
             "error": str(error),
@@ -146,9 +142,8 @@ def create_submission():
     "/<int:submission_id>",
     methods=["GET"],
 )
-@token_required
+@role_required("organizer", "judge")
 def get_submission(submission_id):
-
     result = submission_repo.get_by_id_with_details(
         submission_id
     )
@@ -165,12 +160,30 @@ def get_submission(submission_id):
         "round_id": submission.round_id,
         "user_id": submission.user_id,
         "title": submission.title,
-        "story_description": submission.story_description,
+        "story_description": (
+            submission.story_description
+        ),
         "status": submission.status,
-        "final_score": float(submission.final_score) if submission.final_score is not None else None,
-        "submitted_at": submission.submitted_at.isoformat() if submission.submitted_at else None,
-        "created_at": submission.created_at.isoformat() if submission.created_at else None,
-        "updated_at": submission.updated_at.isoformat() if submission.updated_at else None,
+        "final_score": (
+            float(submission.final_score)
+            if submission.final_score is not None
+            else None
+        ),
+        "submitted_at": (
+            submission.submitted_at.isoformat()
+            if submission.submitted_at
+            else None
+        ),
+        "created_at": (
+            submission.created_at.isoformat()
+            if submission.created_at
+            else None
+        ),
+        "updated_at": (
+            submission.updated_at.isoformat()
+            if submission.updated_at
+            else None
+        ),
     }
 
     if submission_file:
@@ -180,9 +193,15 @@ def get_submission(submission_id):
             "thumbnail_url": submission_file.thumbnail_url,
             "width_px": submission_file.width_px,
             "height_px": submission_file.height_px,
-            "file_size_bytes": submission_file.file_size_bytes,
+            "file_size_bytes": (
+                submission_file.file_size_bytes
+            ),
             "file_hash": submission_file.file_hash,
-            "created_at": submission_file.created_at.isoformat() if submission_file.created_at else None,
+            "created_at": (
+                submission_file.created_at.isoformat()
+                if submission_file.created_at
+                else None
+            ),
         }
     else:
         response["file"] = None
@@ -195,9 +214,17 @@ def get_submission(submission_id):
             "lens": film_metadata.lens,
             "lab_name": film_metadata.lab_name,
             "scanner_info": film_metadata.scanner_info,
-            "development_process": film_metadata.development_process,
-            "taken_at_location": film_metadata.taken_at_location,
-            "created_at": film_metadata.created_at.isoformat() if film_metadata.created_at else None,
+            "development_process": (
+                film_metadata.development_process
+            ),
+            "taken_at_location": (
+                film_metadata.taken_at_location
+            ),
+            "created_at": (
+                film_metadata.created_at.isoformat()
+                if film_metadata.created_at
+                else None
+            ),
         }
     else:
         response["film_metadata"] = None
@@ -205,12 +232,181 @@ def get_submission(submission_id):
     return jsonify(response), 200
 
 @submission_bp.route(
+    "/<int:submission_id>/scores",
+    methods=["POST"],
+)
+@role_required("judge")
+def submit_score(submission_id):
+    data = request.get_json(silent=True) or {}
+
+    judge_id = request.user.get("user_id")
+    criteria_id = data.get("criteria_id")
+    score_value = data.get("score_value")
+    comment = data.get("comment")
+
+    if not criteria_id:
+        return jsonify({
+            "message": "criteria_id is required"
+        }), 400
+
+    if score_value is None:
+        return jsonify({
+            "message": "score_value is required"
+        }), 400
+
+    if not judge_id:
+        return jsonify({
+            "message": "Judge information is missing"
+        }), 401
+
+    model, error = score_service.submit_score(
+        submission_id=submission_id,
+        judge_id=judge_id,
+        criteria_id=criteria_id,
+        score_value=score_value,
+        comment=comment,
+    )
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    if error == "criteria_not_found":
+        return jsonify({
+            "message": "Criteria not found"
+        }), 404
+
+    if error == "invalid_score":
+        return jsonify({
+            "message": "Invalid score value"
+        }), 400
+
+    return jsonify({
+        "message": "Score saved successfully",
+        "score": {
+            "id": model.id,
+            "submission_id": model.submission_id,
+            "judge_id": model.judge_id,
+            "criteria_id": model.criteria_id,
+            "score_value": float(model.score_value),
+            "comment": model.comment,
+        },
+    }), 200
+
+@submission_bp.route(
+    "/<int:submission_id>/feedback",
+    methods=["POST"],
+)
+@role_required("judge")
+def submit_feedback(submission_id):
+    data = request.get_json(silent=True) or {}
+
+    judge_id = request.user.get("user_id")
+    summary_feedback = data.get("summary_feedback")
+    final_recommendation = data.get(
+        "final_recommendation"
+    )
+
+    if not judge_id:
+        return jsonify({
+            "message": "Judge information is missing"
+        }), 401
+
+    if not summary_feedback:
+        return jsonify({
+            "message": "summary_feedback is required"
+        }), 400
+
+    model, error = score_service.submit_feedback(
+        submission_id=submission_id,
+        judge_id=judge_id,
+        summary_feedback=summary_feedback,
+        final_recommendation=final_recommendation,
+    )
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    return jsonify({
+        "message": "Feedback saved successfully",
+        "feedback": {
+            "id": model.id,
+            "submission_id": model.submission_id,
+            "judge_id": model.judge_id,
+            "summary_feedback": model.summary_feedback,
+            "final_recommendation": (
+                model.final_recommendation
+            ),
+        },
+    }), 200
+
+@submission_bp.route(
+    "/<int:submission_id>/next",
+    methods=["GET"],
+)
+@role_required("judge")
+def get_next_submission(submission_id):
+    result, error = score_service.get_next_submission(
+        submission_id
+    )
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    if error == "db_error":
+        return jsonify({
+            "message": "Database error"
+        }), 500
+
+    if result is None:
+        return jsonify({
+            "message": "No next submission"
+        }), 404
+
+    return jsonify({
+        "submission": result
+    }), 200
+
+@submission_bp.route(
+    "/<int:submission_id>/previous",
+    methods=["GET"],
+)
+@role_required("judge")
+def get_previous_submission(submission_id):
+    result, error = score_service.get_previous_submission(
+        submission_id
+    )
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    if error == "db_error":
+        return jsonify({
+            "message": "Database error"
+        }), 500
+
+    if result is None:
+        return jsonify({
+            "message": "No previous submission"
+        }), 404
+
+    return jsonify({
+        "submission": result
+    }), 200
+
+@submission_bp.route(
     "",
     methods=["GET"],
 )
 @token_required
 def list_submissions():
-
     submissions = submission_repo.list()
 
     return jsonify([
@@ -223,8 +419,17 @@ def list_submissions():
                 item.story_description
             ),
             "status": item.status,
-            "final_score": item.final_score,
-            "submitted_at": item.submitted_at,
+            "final_score": (
+                float(item.final_score)
+                if item.final_score is not None
+                else None
+            ),
+            "submitted_at": (
+                item.submitted_at.isoformat()
+                if item.submitted_at
+                else None
+            ),
         }
         for item in submissions
     ]), 200
+    
