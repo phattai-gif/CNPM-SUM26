@@ -173,7 +173,7 @@ class SubmissionRepository(ISubmissionRepository):
         flag_type: str = "AI_METADATA",
         status: str = "pending",
     ) -> AIFlagModel:
-        """Lưu hoặc cập nhật cờ cảnh báo AI cho một bài thi vào bảng ai_flags."""
+        """Save or update AI warning flag for a submission into ai_flags table."""
         try:
             existing = (
                 self.session
@@ -210,7 +210,7 @@ class SubmissionRepository(ISubmissionRepository):
         submission_id: int,
         flag_type: str = "AI_METADATA",
     ) -> Optional[AIFlagModel]:
-        """Lấy thông tin cờ cảnh báo AI của một bài thi từ DB."""
+        """Retrieve AI warning flag information of a submission from DB."""
         return (
             self.session
             .query(AIFlagModel)
