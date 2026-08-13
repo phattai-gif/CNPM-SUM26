@@ -4,6 +4,10 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
+# Set dummy DB URL for test
+os.environ['POSTGREE_DATABASE_URL'] = 'sqlite:///:memory:'
+
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from app import create_app
