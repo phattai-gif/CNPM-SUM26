@@ -101,3 +101,34 @@ class Contest:
             'updated_at': self.updated_at.isoformat() if isinstance(self.updated_at, datetime) else self.updated_at,
             'rounds': [r.to_dict() for r in self.rounds]
         }
+
+
+class JudgeAssignment:
+    def __init__(self, id: Optional[int] = None, round_id: int = 0,
+                 submission_id: Optional[int] = None, judge_id: int = 0,
+                 status: str = 'assigned', assigned_at: Optional[datetime] = None,
+                 judge_name: Optional[str] = None, judge_email: Optional[str] = None,
+                 judge_username: Optional[str] = None):
+        self.id = id
+        self.round_id = round_id
+        self.submission_id = submission_id
+        self.judge_id = judge_id
+        self.status = status
+        self.assigned_at = assigned_at
+        self.judge_name = judge_name
+        self.judge_email = judge_email
+        self.judge_username = judge_username
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'round_id': self.round_id,
+            'submission_id': self.submission_id,
+            'judge_id': self.judge_id,
+            'status': self.status,
+            'assigned_at': self.assigned_at.isoformat() if isinstance(self.assigned_at, datetime) else self.assigned_at,
+            'judge_name': self.judge_name,
+            'judge_email': self.judge_email,
+            'judge_username': self.judge_username
+        }
+

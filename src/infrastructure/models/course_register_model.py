@@ -7,5 +7,5 @@ class CourseRegisterModel(Base):
     
     id = Column(Integer, primary_key=True)
     
-    user_id = Column(Integer, ForeignKey('flask_user.id'))
+    user_id = Column(Integer, ForeignKey('users.id'))
     course_id = Column(Integer, ForeignKey('courses.id'))
