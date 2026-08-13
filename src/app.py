@@ -20,6 +20,15 @@ def create_app():
         static_folder=str(frontend_dir / 'static'),
         static_url_path='/static',
     )
+    # Also include `src/templates` so developer templates are discoverable
+    src_templates = Path(__file__).resolve().parent / 'templates'
+    try:
+        if src_templates.exists() and hasattr(app, 'jinja_loader') and getattr(app.jinja_loader, 'searchpath', None) is not None:
+            # insert at front so src/templates takes precedence for local dev templates
+            app.jinja_loader.searchpath.insert(0, str(src_templates))
+    except Exception:
+        # safe fallback: ignore if jinja loader not available
+        pass
     app.config.from_object(Config)
     Swagger(app)
     
