@@ -121,3 +121,132 @@ class ScoreService:
         next_id = ids[idx+1] if idx < len(ids)-1 else None
 
         return {'previous': prev_id, 'next': next_id}, None
+
+    def finalize_round(self, round_id: int):
+        """
+        Chốt điểm một vòng thi.
+        1. Kiểm tra vòng thi có tồn tại hay không.
+        2. Kiểm tra vòng thi đã được chốt hay chưa.
+        3. Tính tổng điểm cho từng thí sinh.
+        4. Xếp hạng thí sinh theo tổng điểm từ cao xuống thấp.
+        5. Lưu/cập nhật kết quả và cập nhật trạng thái vòng thi thành FINALIZED.
+        """
+        round_obj = self.contest_repo.get_round_by_id(round_id)
+        if not round_obj:
+            return None, 'round_not_found'
+
+        if getattr(round_obj, 'status', '').upper() == 'FINALIZED':
+            return None, 'round_already_finalized'
+
+        try:
+            from infrastructure.models.submission_model import SubmissionModel
+            from infrastructure.models.round_model import RoundModel
+        except ImportError:
+            from src.infrastructure.models.submission_model import SubmissionModel
+            from src.infrastructure.models.round_model import RoundModel
+
+        session = getattr(self.submission_repo, 'session', None) or getattr(self.contest_repo, 'session', None)
+
+        if session is not None:
+            try:
+                subs = session.query(SubmissionModel).filter_by(round_id=round_id).all()
+            except Exception:
+                subs = []
+        else:
+            all_subs = self.submission_repo.list()
+            subs = [s for s in all_subs if s.round_id == round_id]
+
+        criteria_list = self.contest_repo.get_criteria_by_round_id(round_id)
+        crit_map = {}
+        for c in criteria_list:
+            w = float(c.weight) if hasattr(c, 'weight') and c.weight is not None else 1.0
+            crit_map[c.id] = w if w > 0 else 1.0
+
+        candidates = []
+        for sub in subs:
+            scores = self.score_repo.list_by_submission(sub.id)
+            if scores:
+                from collections import defaultdict
+                judge_scores = defaultdict(list)
+                for s in scores:
+                    s_val = float(s.score_value) if s.score_value is not None else 0.0
+                    w = crit_map.get(s.criteria_id, 1.0)
+                    judge_scores[s.judge_id].append((s_val, w))
+
+                per_judge_weighted_avg = []
+                for j_id, s_list in judge_scores.items():
+                    tot_w = sum(w for (_, w) in s_list)
+                    if tot_w > 0:
+                        j_score = sum(val * w for (val, w) in s_list) / tot_w
+                    else:
+                        j_score = sum(val for (val, _) in s_list) / len(s_list)
+                    per_judge_weighted_avg.append(j_score)
+
+                if per_judge_weighted_avg:
+                    total_score = round(sum(per_judge_weighted_avg) / len(per_judge_weighted_avg), 2)
+                elif sub.final_score is not None:
+                    total_score = float(sub.final_score)
+                else:
+                    total_score = 0.0
+            elif sub.final_score is not None:
+                total_score = float(sub.final_score)
+            else:
+                total_score = 0.0
+
+            sub.final_score = total_score
+            sub.status = 'evaluated'
+            if session is not None:
+                session.add(sub)
+
+            sub_time = getattr(sub, 'submitted_at', None)
+            from datetime import datetime
+            fallback_dt = datetime.max
+            candidates.append({
+                'user_id': sub.user_id,
+                'submission_id': sub.id,
+                'total_score': total_score,
+                'submitted_at': sub_time or fallback_dt,
+            })
+
+        if session is not None:
+            try:
+                session.commit()
+            except Exception:
+                try: session.rollback()
+                except Exception: pass
+
+        candidates.sort(key=lambda x: (-x['total_score'], x['submitted_at'], x['user_id']))
+
+        results = []
+        for idx, item in enumerate(candidates):
+            if idx > 0 and item['total_score'] == candidates[idx - 1]['total_score']:
+                rank = results[-1]['rank']
+            else:
+                rank = idx + 1
+
+            results.append({
+                'user_id': item['user_id'],
+                'submission_id': item['submission_id'],
+                'total_score': item['total_score'],
+                'rank': rank
+            })
+
+        if session is not None:
+            try:
+                r_model = session.query(RoundModel).filter_by(id=round_id).first()
+                if r_model:
+                    r_model.status = 'FINALIZED'
+                    session.commit()
+            except Exception:
+                try: session.rollback()
+                except Exception: pass
+                self.contest_repo.update_round(round_id, {'status': 'FINALIZED'})
+        else:
+            self.contest_repo.update_round(round_id, {'status': 'FINALIZED'})
+
+        return {
+            'message': 'Round finalized successfully',
+            'round_id': round_id,
+            'status': 'FINALIZED',
+            'results': results
+        }, None

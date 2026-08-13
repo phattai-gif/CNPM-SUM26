@@ -4,6 +4,7 @@ from datetime import datetime
 try:
     from src.infrastructure.repositories.contest_repository import ContestRepository
     from src.services.contest_service import ContestService
+    from src.services.score_service import ScoreService
     from src.api.schemas.contest import (
         ContestCreateRequestSchema,
         ContestUpdateRequestSchema,
@@ -17,6 +18,7 @@ try:
 except ImportError:
     from infrastructure.repositories.contest_repository import ContestRepository
     from services.contest_service import ContestService
+    from services.score_service import ScoreService
     from api.schemas.contest import (
         ContestCreateRequestSchema,
         ContestUpdateRequestSchema,
@@ -32,6 +34,7 @@ except ImportError:
 contest_bp = Blueprint('contest', __name__, url_prefix='/organizer')
 
 contest_service = ContestService(ContestRepository())
+score_service = ScoreService()
 
 contest_create_schema = ContestCreateRequestSchema()
 contest_update_schema = ContestUpdateRequestSchema()
@@ -364,3 +367,28 @@ def update_contest_configuration(contest_id):
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
         return jsonify({'message': 'Lỗi khi cập nhật cấu hình cuộc thi', 'error': str(e)}), 500
+
+
+# -------------------------------------------------------------------------
+# Finalize Round Scores API (Chốt điểm vòng thi)
+# -------------------------------------------------------------------------
+
+@contest_bp.route('/rounds/<int:round_id>/finalize', methods=['POST'])
+@contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/finalize', methods=['POST'])
+@role_required('organizer', 'admin')
+def finalize_round(round_id, contest_id=None):
+    """API Chốt điểm một vòng thi."""
+    try:
+        data, error = score_service.finalize_round(round_id)
+        if error == 'round_not_found':
+            return jsonify({'message': 'Không tìm thấy vòng thi'}), 404
+        if error == 'round_already_finalized':
+            return jsonify({'message': 'Vòng thi đã được chốt trước đó'}), 400
+
+        if error:
+            return jsonify({'message': f'Lỗi chốt điểm: {error}'}), 400
+
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'message': 'Lỗi hệ thống khi chốt điểm vòng thi', 'error': str(e)}), 500
+

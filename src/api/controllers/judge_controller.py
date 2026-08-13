@@ -4,12 +4,14 @@ try:
     from src.infrastructure.repositories.contest_repository import ContestRepository
     from src.infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
     from src.services.judge_assignment_service import JudgeAssignmentService
+    from src.services.score_service import ScoreService
     from src.api.schemas.judge import AssignJudgeRequestSchema, JudgeAssignmentResponseSchema
     from src.api.role_required import role_required, token_required
 except ImportError:
     from infrastructure.repositories.contest_repository import ContestRepository
     from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
     from services.judge_assignment_service import JudgeAssignmentService
+    from services.score_service import ScoreService
     from api.schemas.judge import AssignJudgeRequestSchema, JudgeAssignmentResponseSchema
     from api.role_required import role_required, token_required
 
@@ -20,6 +22,7 @@ judge_service = JudgeAssignmentService(
     judge_repo=JudgeAssignmentRepository(),
     contest_repo=ContestRepository()
 )
+score_service = ScoreService()
 
 assign_judge_schema = AssignJudgeRequestSchema()
 assignment_response_schema = JudgeAssignmentResponseSchema()
@@ -175,3 +178,23 @@ def get_my_assignments():
         }), 200
     except Exception as e:
         return jsonify({'message': 'Lỗi khi lấy danh sách nhiệm vụ chấm thi', 'error': str(e)}), 500
+
+
+@judge_bp.route('/rounds/<int:round_id>/finalize', methods=['POST'])
+@role_required('organizer', 'admin')
+def finalize_round_root(round_id):
+    """API Chốt điểm vòng thi (Root route /rounds/<round_id>/finalize)."""
+    try:
+        data, error = score_service.finalize_round(round_id)
+        if error == 'round_not_found':
+            return jsonify({'message': 'Không tìm thấy vòng thi'}), 404
+        if error == 'round_already_finalized':
+            return jsonify({'message': 'Vòng thi đã được chốt trước đó'}), 400
+
+        if error:
+            return jsonify({'message': f'Lỗi chốt điểm: {error}'}), 400
+
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'message': 'Lỗi hệ thống khi chốt điểm vòng thi', 'error': str(e)}), 500
+
