@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from flask import Flask
 from .config import Config
 from .api.middleware import setup_middleware
@@ -6,7 +8,13 @@ from .infrastructure.databases import init_db
 from .app_logging import setup_logging
 
 def create_app():
-    app = Flask(__name__, template_folder='templates', static_folder='static')
+    frontend_dir = Path(__file__).resolve().parent.parent / 'frontend'
+    app = Flask(
+        __name__,
+        template_folder=str(frontend_dir / 'templates'),
+        static_folder=str(frontend_dir / 'static'),
+        static_url_path='/static',
+    )
     app.config.from_object(Config)
 
     setup_logging(app)
