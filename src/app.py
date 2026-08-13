@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from flask import Flask, jsonify
 from api.routes import register_routes
 from api.swagger import spec
@@ -11,7 +13,13 @@ from flask_swagger_ui import get_swaggerui_blueprint
 
 
 def create_app():
-    app = Flask(__name__, template_folder='templates', static_folder='static')
+    frontend_dir = Path(__file__).resolve().parent.parent / 'frontend'
+    app = Flask(
+        __name__,
+        template_folder=str(frontend_dir / 'templates'),
+        static_folder=str(frontend_dir / 'static'),
+        static_url_path='/static',
+    )
     app.config.from_object(Config)
     Swagger(app)
     
