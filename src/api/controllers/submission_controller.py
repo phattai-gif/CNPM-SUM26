@@ -9,6 +9,10 @@ try:
         SubmissionRepository,
     )
     from src.services.score_service import ScoreService
+
+    from src.services.ai_detection_service import AiDetectionService
+
+
 except ImportError:
     from api.role_required import (
         token_required,
@@ -19,6 +23,10 @@ except ImportError:
     )
     from services.score_service import ScoreService
 
+    from services.ai_detection_service import AiDetectionService
+
+
+
 
 submission_bp = Blueprint(
     "submission",
@@ -27,6 +35,11 @@ submission_bp = Blueprint(
 )
 
 submission_repo = SubmissionRepository()
+
+ai_detection_service = AiDetectionService()
+
+
+
 score_service = ScoreService()
 
 
@@ -155,6 +168,52 @@ def get_submission(submission_id):
 
     submission, submission_file, film_metadata = result
 
+    # --- Task 55: Integrate AI warning vào workflow review ---
+    # Khi Giám khảo / Ban tổ chức mở xem bài thi, tự động kiểm tra
+    # cảnh báo AI từ DB. Nếu chưa có thì gọi AiDetectionService, lưu vào DB.
+    ai_flag_data = None
+    try:
+        image_path = submission_file.image_hd_url if submission_file else None
+        if image_path:
+            existing_flag = submission_repo.get_ai_flag(submission_id)
+            if existing_flag:
+                # Đã có trong DB, lấy ra luôn
+                ai_flag_data = {
+                    "ai_score": float(existing_flag.confidence_score),
+                    "risk_level": existing_flag.risk_level,
+                    "status": existing_flag.status,
+                }
+            else:
+                # Chưa có, gọi AI service phân tích và lưu vào DB
+                ai_result = ai_detection_service.detect_ai(image_path)
+                ai_score = ai_result.get("ai_score", 0)
+                ai_message = ai_result.get("ai_message", "")
+
+                if ai_score >= 70:
+                    risk_level = "high"
+                elif ai_score >= 30:
+                    risk_level = "medium"
+                else:
+                    risk_level = "safe"
+
+                saved_flag = submission_repo.save_ai_flag(
+                    submission_id=submission_id,
+                    confidence_score=ai_score,
+                    risk_level=risk_level,
+                    flag_type="AI_METADATA",
+                    status="pending",
+                )
+                ai_flag_data = {
+                    "ai_score": float(saved_flag.confidence_score),
+                    "ai_message": ai_message,
+                    "risk_level": saved_flag.risk_level,
+                    "status": saved_flag.status,
+                }
+    except Exception:
+        # Không để lỗi AI làm ảnh hưởng API xem bài thi
+        ai_flag_data = None
+    # ---------------------------------------------------------
+
     response = {
         "id": submission.id,
         "round_id": submission.round_id,
@@ -229,7 +288,181 @@ def get_submission(submission_id):
     else:
         response["film_metadata"] = None
 
+    # Trường ai_flag cho Giám khảo / Ban tổ chức thấy cảnh báo AI ngay
+    response["ai_flag"] = ai_flag_data
+
     return jsonify(response), 200
+
+
+@submission_bp.route(
+    "/<int:submission_id>/scores",
+    methods=["POST"],
+)
+@role_required("judge")
+def submit_score(submission_id):
+    data = request.get_json(silent=True) or {}
+
+    judge_id = request.user.get("user_id")
+    criteria_id = data.get("criteria_id")
+    score_value = data.get("score_value")
+    comment = data.get("comment")
+
+    if not criteria_id:
+        return jsonify({
+            "message": "criteria_id is required"
+        }), 400
+
+    if score_value is None:
+        return jsonify({
+            "message": "score_value is required"
+        }), 400
+
+    if not judge_id:
+        return jsonify({
+            "message": "Judge information is missing"
+        }), 401
+
+    model, error = score_service.submit_score(
+        submission_id=submission_id,
+        judge_id=judge_id,
+        criteria_id=criteria_id,
+        score_value=score_value,
+        comment=comment,
+    )
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    if error == "criteria_not_found":
+        return jsonify({
+            "message": "Criteria not found"
+        }), 404
+
+    if error == "invalid_score":
+        return jsonify({
+            "message": "Invalid score value"
+        }), 400
+
+    return jsonify({
+        "message": "Score saved successfully",
+        "score": {
+            "id": model.id,
+            "submission_id": model.submission_id,
+            "judge_id": model.judge_id,
+            "criteria_id": model.criteria_id,
+            "score_value": float(model.score_value),
+            "comment": model.comment,
+        },
+    }), 200
+
+@submission_bp.route(
+    "/<int:submission_id>/feedback",
+    methods=["POST"],
+)
+@role_required("judge")
+def submit_feedback(submission_id):
+    data = request.get_json(silent=True) or {}
+
+    judge_id = request.user.get("user_id")
+    summary_feedback = data.get("summary_feedback")
+    final_recommendation = data.get(
+        "final_recommendation"
+    )
+
+    if not judge_id:
+        return jsonify({
+            "message": "Judge information is missing"
+        }), 401
+
+    if not summary_feedback:
+        return jsonify({
+            "message": "summary_feedback is required"
+        }), 400
+
+    model, error = score_service.submit_feedback(
+        submission_id=submission_id,
+        judge_id=judge_id,
+        summary_feedback=summary_feedback,
+        final_recommendation=final_recommendation,
+    )
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    return jsonify({
+        "message": "Feedback saved successfully",
+        "feedback": {
+            "id": model.id,
+            "submission_id": model.submission_id,
+            "judge_id": model.judge_id,
+            "summary_feedback": model.summary_feedback,
+            "final_recommendation": (
+                model.final_recommendation
+            ),
+        },
+    }), 200
+
+@submission_bp.route(
+    "/<int:submission_id>/next",
+    methods=["GET"],
+)
+@role_required("judge")
+def get_next_submission(submission_id):
+    result, error = score_service.get_next_submission(
+        submission_id
+    )
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    if error == "db_error":
+        return jsonify({
+            "message": "Database error"
+        }), 500
+
+    if result is None:
+        return jsonify({
+            "message": "No next submission"
+        }), 404
+
+    return jsonify({
+        "submission": result
+    }), 200
+
+@submission_bp.route(
+    "/<int:submission_id>/previous",
+    methods=["GET"],
+)
+@role_required("judge")
+def get_previous_submission(submission_id):
+    result, error = score_service.get_previous_submission(
+        submission_id
+    )
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    if error == "db_error":
+        return jsonify({
+            "message": "Database error"
+        }), 500
+
+    if result is None:
+        return jsonify({
+            "message": "No previous submission"
+        }), 404
+
+    return jsonify({
+        "submission": result
+    }), 200
 
 @submission_bp.route(
     "/<int:submission_id>/scores",

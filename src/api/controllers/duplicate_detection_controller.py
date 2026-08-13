@@ -1,3 +1,5 @@
+import os
+import tempfile
 from flask import Blueprint, request, jsonify
 
 try:
@@ -20,11 +22,20 @@ def check_duplicate():
     if not new_file.filename or not existing_file.filename:
         return jsonify({'error': 'Both files must be selected'}), 400
 
-    new_path = f"/tmp/{new_file.filename}"
-    existing_path = f"/tmp/{existing_file.filename}"
+    temp_dir = tempfile.gettempdir()
+    new_path = os.path.join(temp_dir, new_file.filename)
+    existing_path = os.path.join(temp_dir, existing_file.filename)
 
     new_file.save(new_path)
     existing_file.save(existing_path)
 
-    result = service.check_duplicate(new_path, existing_path)
+    try:
+        result = service.check_duplicate(new_path, existing_path)
+    finally:
+        if os.path.exists(new_path):
+            os.remove(new_path)
+        if os.path.exists(existing_path):
+            os.remove(existing_path)
+
     return jsonify(result), 200
+
