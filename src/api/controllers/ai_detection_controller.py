@@ -1,3 +1,5 @@
+import os
+import tempfile
 from flask import Blueprint, request, jsonify
 
 try:
@@ -19,8 +21,15 @@ def check_ai_detection():
     if not file.filename:
         return jsonify({'error': 'No selected file'}), 400
 
-    temp_path = f"/tmp/{file.filename}"
+    temp_dir = tempfile.gettempdir()
+    temp_path = os.path.join(temp_dir, file.filename)
     file.save(temp_path)
 
-    result = service.detect_ai(temp_path)
+    try:
+        result = service.detect_ai(temp_path)
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
     return jsonify(result), 200
+
