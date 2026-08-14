@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
 
 try:
     from src.infrastructure.repositories.contest_repository import ContestRepository
@@ -21,6 +21,10 @@ except ImportError:
 
 
 judge_bp = Blueprint('judge', __name__)
+
+# Separate blueprint for the lightweight judge UI (Task CNPM-50)
+# Mounted at /judge so routes like /judge/1 will work without affecting existing APIs
+judge_ui_bp = Blueprint('judge_ui', __name__, url_prefix='/judge')
 
 judge_service = JudgeAssignmentService(
     judge_repo=JudgeAssignmentRepository(),
@@ -259,4 +263,71 @@ def get_my_assignments():
             'message': 'Lỗi khi lấy danh sách nhiệm vụ chấm thi',
             'error': str(e)
         }), 500
+
+
+# Simple judge grading UI for direct testing at /judge/<id>
+@judge_ui_bp.route('/<int:submission_id>', methods=['GET', 'POST'])
+def judge_grading_ui(submission_id):
+    """Render judge grading UI with mock data and safe error handling.
+    This route is intended for local testing/demo when DB/services are unavailable.
+    """
+    try:
+        # Mock submission
+        submission = {
+            'id': submission_id,
+            'title': f'Bài mẫu #{submission_id}: Bình minh trên phố cổ',
+            'author': 'Nguyễn Văn A',
+            'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
+            'camera': 'Nikon F3',
+            'film_stock': 'Kodak Portra 400',
+            'prev_id': submission_id - 1 if submission_id > 1 else None,
+            'next_id': submission_id + 1,
+        }
+
+        # Mock criteria
+        criteria_list = [
+            {'id': 1, 'name': 'Composition', 'max': 40},
+            {'id': 2, 'name': 'Exposure', 'max': 30},
+            {'id': 3, 'name': 'Creativity', 'max': 30},
+        ]
+
+        # Mock existing scores and comment (could be None)
+        existing_scores = {str(c['id']): None for c in criteria_list}
+        existing_comment = ''
+
+        if request.method == 'POST':
+            form = request.form.to_dict(flat=True)
+            existing_comment = form.get('comment', '')
+            submitted_scores = {}
+            for crit in criteria_list:
+                key = str(crit['id'])
+                val = form.get(key)
+                try:
+                    submitted_scores[key] = int(val) if val is not None and val != '' else None
+                except ValueError:
+                    submitted_scores[key] = None
+
+            # In demo mode, we don't persist; just flash and redirect to GET
+            flash('Điểm và nhận xét đã được nhận (demo).')
+            return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
+
+        return render_template('judge_grading.html', submission=submission, criteria_list=criteria_list, existing_scores=existing_scores, existing_comment=existing_comment)
+
+    except Exception as e:
+        # Safe fallback: render template with minimal data and show error message
+        fallback_submission = {
+            'id': submission_id,
+            'title': 'Không thể tải bài dự thi',
+            'author': 'N/A',
+            'image_url': None,
+            'camera': '',
+            'film_stock': '',
+            'prev_id': None,
+            'next_id': None,
+        }
+        try:
+            flash(f'Internal error while rendering judge UI: {e}')
+        except Exception:
+            pass
+        return render_template('judge_grading.html', submission=fallback_submission, criteria_list=[], existing_scores={}, existing_comment='')
         
