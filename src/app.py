@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect, url_for
 from jinja2 import ChoiceLoader, FileSystemLoader
 from api.routes import register_routes
 from api.swagger import spec
@@ -40,6 +40,31 @@ def create_app():
     
     # Đăng ký tất cả các route/blueprint
     register_routes(app)
+
+    # Ensure judge blueprint is registered (safe-guard if routes.py didn't register it)
+    try:
+        try:
+            from src.api.controllers.judge_controller import judge_bp as _judge_bp
+        except Exception:
+            from api.controllers.judge_controller import judge_bp as _judge_bp
+
+        if _judge_bp.name not in app.blueprints:
+            app.register_blueprint(_judge_bp)
+    except Exception:
+        # non-fatal: if import fails, continue; routes may already be registered
+        pass
+
+    # Ensure judge UI blueprint is registered so /judge/<id> is available
+    try:
+        try:
+            from src.api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
+        except Exception:
+            from api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
+
+        if _judge_ui_bp.name not in app.blueprints:
+            app.register_blueprint(_judge_ui_bp)
+    except Exception:
+        pass
      # Thêm Swagger UI blueprint
     SWAGGER_URL = '/docs'
     API_URL = '/swagger.json'
@@ -70,6 +95,12 @@ def create_app():
     @app.route("/swagger.json")
     def swagger_json():
         return jsonify(spec.to_dict())
+
+
+    # Short URL for judge grading UI -> redirect to public judge grading route
+    @app.route('/judge/<int:submission_id>')
+    def judge_short_link(submission_id):
+        return redirect(url_for('contest_public.public_judge_grading', submission_id=submission_id))
 
     return app
 # Run the application
