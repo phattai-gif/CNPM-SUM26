@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from flask import Flask, jsonify
+from jinja2 import ChoiceLoader, FileSystemLoader
 from api.routes import register_routes
 from api.swagger import spec
 from api.middleware import middleware
@@ -22,6 +23,20 @@ def create_app():
     )
     app.config.from_object(Config)
     Swagger(app)
+    # Ensure templates in `src/templates` are also discoverable (fallback)
+    try:
+        src_templates = str(Path(__file__).resolve().parent / 'templates')
+        # Use ChoiceLoader to combine existing loader with src/templates
+        existing_loader = getattr(app, 'jinja_loader', None)
+        loaders = []
+        # Prepend src/templates so it takes precedence
+        loaders.append(FileSystemLoader(src_templates))
+        if existing_loader:
+            loaders.append(existing_loader)
+        app.jinja_loader = ChoiceLoader(loaders)
+    except Exception:
+        # non-fatal: if jinja loaders not available, continue
+        pass
     
     # Đăng ký tất cả các route/blueprint
     register_routes(app)
