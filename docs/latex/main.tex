@@ -16,6 +16,8 @@
 \usepackage{enumitem}
 \usepackage{caption}
 \usepackage{longtable}
+\usepackage{graphicx}
+\graphicspath{{images/}}
 \usepackage{microtype}
 \usepackage{indentfirst}
 
@@ -118,6 +120,7 @@
 
 \pdfbookmark[1]{Contents}{toc}
 \begingroup
+\setcounter{tocdepth}{4}
 \renewcommand{\contentsname}{\centering Contents}
 \tableofcontents
 \endgroup
@@ -171,5 +174,6 @@ Finally, although we have worked hard to ensure accuracy, errors may still exist
 
 \input{I_Project_Introduction}
 \input{II_Project_Management_Plan}
+\input{III_Software_Requirement}
 
 \end{document}
