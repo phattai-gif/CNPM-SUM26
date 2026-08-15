@@ -18,7 +18,8 @@ class SubmissionForm {
         this.selectedImage = null;
         this.selectedImageFile = null;
         this.roundsList = [];
-        this.authToken = this.getAuthToken();
+        this.session = window.AuthSession.getSession();
+        this.authToken = this.session.token;
 
         this.init();
     }
@@ -62,30 +63,11 @@ class SubmissionForm {
     }
 
     /**
-     * Get authentication token from localStorage
-     */
-    getAuthToken() {
-        return localStorage.getItem('authToken');
-    }
-
-    /**
      * Load contest rounds from API
      */
     async loadRounds() {
         try {
-            const response = await fetch('/auth/contests', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.authToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to load rounds: ${response.statusText}`);
-            }
-
-            const data = await response.json();
+            const data = await window.apiClient.get('/auth/contests');
             
             // Extract contests and their rounds
             const contests = data.contests || [];
@@ -398,21 +380,7 @@ class SubmissionForm {
             }
 
             // Call API
-            const response = await fetch('/submissions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.authToken}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(submissionData),
-            });
-
-            const responseData = await response.json();
-
-            if (!response.ok) {
-                const errorMsg = responseData.message || `Server error: ${response.status}`;
-                throw new Error(errorMsg);
-            }
+            const responseData = await window.apiClient.post('/submissions', submissionData);
 
             // Handle success
             this.handleSubmissionSuccess(responseData);
