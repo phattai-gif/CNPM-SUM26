@@ -1,9 +1,12 @@
+import os
 from flask import Blueprint, request, jsonify
 
 try:
     from src.services.duplicate_detection_service import DuplicateDetectionService
+    from src.services.image_input_handler import ImageInputHandler
 except ImportError:
     from services.duplicate_detection_service import DuplicateDetectionService
+    from services.image_input_handler import ImageInputHandler
 
 bp = Blueprint('duplicate_detection', __name__, url_prefix='/duplicate-detection')
 service = DuplicateDetectionService()
@@ -17,14 +20,15 @@ def check_duplicate():
     new_file = request.files['new_image']
     existing_file = request.files['existing_image']
 
-    if not new_file.filename or not existing_file.filename:
-        return jsonify({'error': 'Both files must be selected'}), 400
+    try:
+        with ImageInputHandler.temp_image_context(new_file) as new_path:
+            with ImageInputHandler.temp_image_context(existing_file) as existing_path:
+                result = service.check_duplicate(new_path, existing_path)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f"Internal error during duplicate check: {str(e)}"}), 500
 
-    new_path = f"/tmp/{new_file.filename}"
-    existing_path = f"/tmp/{existing_file.filename}"
-
-    new_file.save(new_path)
-    existing_file.save(existing_path)
-
-    result = service.check_duplicate(new_path, existing_path)
     return jsonify(result), 200
+
+

@@ -12,13 +12,15 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const requestJson = async (url, payload) => {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json().catch(() => ({ message: 'Invalid server response' }));
-    return { ok: response.ok, data };
+    try {
+      const data = await window.apiClient.post(url, payload);
+      return { ok: true, data };
+    } catch (error) {
+      return {
+        ok: false,
+        data: { message: error.message || 'Invalid server response' }
+      };
+    }
   };
 
   if (loginForm) {
@@ -34,9 +36,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (data.token) {
-        localStorage.setItem('authToken', data.token);
+        window.AuthSession.setSession({
+          token: data.token,
+          user: data.user,
+          role: data.user?.role || null
+        });
       }
+
       showMessage('Login successful! Welcome, ' + (data.user?.username || username), true);
+      setTimeout(() => {
+        if (window.location.pathname === '/auth/login') {
+          window.location.href = '/';
+        }
+      }, 300);
     });
   }
 

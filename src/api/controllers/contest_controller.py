@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
+from flask import flash, redirect, url_for
 from datetime import datetime
 
 try:
@@ -33,6 +34,10 @@ except ImportError:
 
 contest_bp = Blueprint('contest', __name__, url_prefix='/organizer')
 
+# Public-facing contest pages (leaderboard, results) under /contest
+public_bp = Blueprint('contest_public', __name__, url_prefix='/contest')
+
+
 contest_service = ContestService(ContestRepository())
 score_service = ScoreService()
 
@@ -57,6 +62,93 @@ def organizer_dashboard():
     contests = contest_service.list_organizer_contests(user_id)
     contests_data = [c.to_dict() for c in contests]
     return render_template('organizer_dashboard.html', contests=contests_data)
+
+@contest_bp.route('/results', methods=['GET'])
+def results():
+    """
+    Render contest results / leaderboard (mock data).
+    """
+    # Mock leaderboard data
+    leaderboard = [
+        {'rank': 1, 'author': 'Nguyễn Thị C', 'title': 'Hoàng hôn trên sông', 'score': 97, 'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470', 'camera': 'Leica M6', 'film_stock': 'Kodak Portra 400'},
+        {'rank': 2, 'author': 'Trần Văn D', 'title': 'Bến cảng sớm mai', 'score': 92, 'image_url': 'https://images.unsplash.com/photo-1470770903676-69b98201ea1c', 'camera': 'Nikon F3', 'film_stock': 'Ilford HP5'},
+        {'rank': 3, 'author': 'Lê Văn E', 'title': 'Mưa rơi phố nhỏ', 'score': 89, 'image_url': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb', 'camera': 'Canon AE-1', 'film_stock': 'Fuji Pro 400H'},
+        {'rank': 4, 'author': 'Nguyễn Văn A', 'title': 'Bình minh trên phố cổ', 'score': 85},
+        {'rank': 5, 'author': 'Phạm Thị B', 'title': 'Ánh đèn đêm', 'score': 82},
+    ]
+
+    # Top 3 winners for highlighted section
+    winners = leaderboard[:3]
+
+    return render_template('results.html', leaderboard=leaderboard, winners=winners)
+
+
+@public_bp.route('/results', methods=['GET'])
+def public_results():
+    """
+    Public route for contest results (accessible at /contest/results).
+    Uses the same mock leaderboard data as organizer results.
+    """
+    leaderboard = [
+        {'rank': 1, 'author': 'Nguyễn Thị C', 'title': 'Hoàng hôn trên sông', 'score': 97, 'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470', 'camera': 'Leica M6', 'film_stock': 'Kodak Portra 400'},
+        {'rank': 2, 'author': 'Trần Văn D', 'title': 'Bến cảng sớm mai', 'score': 92, 'image_url': 'https://images.unsplash.com/photo-1470770903676-69b98201ea1c', 'camera': 'Nikon F3', 'film_stock': 'Ilford HP5'},
+        {'rank': 3, 'author': 'Lê Văn E', 'title': 'Mưa rơi phố nhỏ', 'score': 89, 'image_url': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb', 'camera': 'Canon AE-1', 'film_stock': 'Fuji Pro 400H'},
+        {'rank': 4, 'author': 'Nguyễn Văn A', 'title': 'Bình minh trên phố cổ', 'score': 85},
+        {'rank': 5, 'author': 'Phạm Thị B', 'title': 'Ánh đèn đêm', 'score': 82},
+    ]
+    winners = leaderboard[:3]
+    return render_template('results.html', leaderboard=leaderboard, winners=winners)
+
+
+@public_bp.route('/leaderboard', methods=['GET'])
+def public_leaderboard():
+    """Alias route for leaderboard; reuses same mock data as public_results."""
+    return public_results()
+# Public judge grading UI (Task CNPM-50)
+@public_bp.route('/judge/grading/<int:submission_id>', methods=['GET', 'POST'])
+def public_judge_grading(submission_id):
+    """
+    Public-facing judge grading UI for testing and demos.
+    Provides mock submission data and mock criteria when DB/services are unavailable.
+    Handles POST to receive scores and comment (stores nothing; flashes success).
+    """
+    # Mock submission data
+    submission = {
+        'id': submission_id,
+        'title': 'Bài mẫu: Bình minh trên phố cổ',
+        'author': 'Nguyễn Văn A',
+        'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
+        'camera': 'Nikon F3',
+        'film_stock': 'Kodak Portra 400',
+        'prev_id': submission_id - 1 if submission_id > 1 else None,
+        'next_id': submission_id + 1,
+    }
+
+    # Mock criteria list
+    criteria_list = [
+        {'id': 1, 'name': 'Composition', 'max': 40},
+        {'id': 2, 'name': 'Exposure', 'max': 30},
+        {'id': 3, 'name': 'Creativity', 'max': 30},
+    ]
+
+    if request.method == 'POST':
+        # Collect scores from form
+        form = request.form.to_dict(flat=True)
+        comment = form.pop('comment', '')
+        scores = {}
+        for crit in criteria_list:
+            key = str(crit['id'])
+            val = form.get(key)
+            try:
+                scores[key] = int(val) if val is not None and val != '' else None
+            except ValueError:
+                scores[key] = None
+
+        # In a real app we'd persist scores via ScoreService; here we just flash
+        flash('Điểm và nhận xét đã được lưu (demo).')
+        return redirect(url_for('contest_public.public_judge_grading', submission_id=submission_id))
+
+    return render_template('judge_grading.html', submission=submission, criteria_list=criteria_list)
 
 
 @contest_bp.route('/create-contest', methods=['GET'])

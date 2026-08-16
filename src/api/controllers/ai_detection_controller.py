@@ -1,9 +1,12 @@
+import os
 from flask import Blueprint, request, jsonify
 
 try:
     from src.services.ai_detection_service import AiDetectionService
+    from src.services.image_input_handler import ImageInputHandler
 except ImportError:
     from services.ai_detection_service import AiDetectionService
+    from services.image_input_handler import ImageInputHandler
 
 bp = Blueprint('ai_detection', __name__, url_prefix='/ai-detection')
 service = AiDetectionService()
@@ -16,11 +19,14 @@ def check_ai_detection():
         return jsonify({'error': 'Missing image file'}), 400
 
     file = request.files['image']
-    if not file.filename:
-        return jsonify({'error': 'No selected file'}), 400
+    try:
+        with ImageInputHandler.temp_image_context(file) as temp_path:
+            result = service.detect_ai(temp_path)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f"Internal error during image analysis: {str(e)}"}), 500
 
-    temp_path = f"/tmp/{file.filename}"
-    file.save(temp_path)
-
-    result = service.detect_ai(temp_path)
     return jsonify(result), 200
+
+

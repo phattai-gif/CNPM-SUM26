@@ -17,10 +17,11 @@ try:
     from src.infrastructure.repositories.submission_repository import (
         SubmissionRepository,
     )
-
     from src.services.score_service import (
-        ScoreService,
+    ScoreService,
     )
+
+    from src.services.ai_detection_service import AiDetectionService
 
 except ImportError:
     from api.role_required import (
@@ -40,6 +41,10 @@ except ImportError:
         ScoreService,
     )
 
+    from services.ai_detection_service import AiDetectionService
+
+
+
 
 submission_bp = Blueprint(
     "submission",
@@ -49,11 +54,14 @@ submission_bp = Blueprint(
 
 
 submission_repo = SubmissionRepository()
+
 submission_service = SubmissionService(
     submission_repo=submission_repo,
 )
-score_service = ScoreService()
 
+ai_detection_service = AiDetectionService()
+
+score_service = ScoreService()
 
 
 @submission_bp.route(
@@ -446,6 +454,52 @@ def get_submission(
         film_metadata,
     ) = result
 
+    # --- Task 55: Integrate AI warning vào workflow review ---
+    # Khi Giám khảo / Ban tổ chức mở xem bài thi, tự động kiểm tra
+    # cảnh báo AI từ DB. Nếu chưa có thì gọi AiDetectionService, lưu vào DB.
+    ai_flag_data = None
+    try:
+        image_path = submission_file.image_hd_url if submission_file else None
+        if image_path:
+            existing_flag = submission_repo.get_ai_flag(submission_id)
+            if existing_flag:
+                # Đã có trong DB, lấy ra luôn
+                ai_flag_data = {
+                    "ai_score": float(existing_flag.confidence_score),
+                    "risk_level": existing_flag.risk_level,
+                    "status": existing_flag.status,
+                }
+            else:
+                # Chưa có, gọi AI service phân tích và lưu vào DB
+                ai_result = ai_detection_service.detect_ai(image_path)
+                ai_score = ai_result.get("ai_score", 0)
+                ai_message = ai_result.get("ai_message", "")
+
+                if ai_score >= 70:
+                    risk_level = "high"
+                elif ai_score >= 30:
+                    risk_level = "medium"
+                else:
+                    risk_level = "safe"
+
+                saved_flag = submission_repo.save_ai_flag(
+                    submission_id=submission_id,
+                    confidence_score=ai_score,
+                    risk_level=risk_level,
+                    flag_type="AI_METADATA",
+                    status="pending",
+                )
+                ai_flag_data = {
+                    "ai_score": float(saved_flag.confidence_score),
+                    "ai_message": ai_message,
+                    "risk_level": saved_flag.risk_level,
+                    "status": saved_flag.status,
+                }
+    except Exception:
+        # Không để lỗi AI làm ảnh hưởng API xem bài thi
+        ai_flag_data = None
+    # ---------------------------------------------------------
+
     response = {
         "id": submission.id,
         "round_id": submission.round_id,
@@ -553,6 +607,10 @@ def get_submission(
         response
     ), 200
 
+
+    response["ai_flag"] = ai_flag_data
+
+    return jsonify(response), 200
 
 @submission_bp.route(
     "/<int:submission_id>/scores",
