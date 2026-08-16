@@ -45,7 +45,16 @@
       const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
       const role = localStorage.getItem(STORAGE_KEYS.ROLE) || user?.role || null;
 
-      return { token, user, role };
+      // Fallback: check cookies if localStorage doesn't have token
+      let finalToken = token;
+      if (!finalToken && typeof document !== 'undefined' && document.cookie) {
+        const match = document.cookie.split(';').map(s => s.trim()).find(s => s.startsWith(STORAGE_KEYS.TOKEN + '='));
+        if (match) {
+          finalToken = decodeURIComponent(match.split('=')[1] || '');
+        }
+      }
+
+      return { token: finalToken, user, role };
     },
 
     isAuthenticated() {
@@ -96,6 +105,9 @@
       }
 
       if (response.status === 401) {
+        // Unauthorized: clear session and redirect to login
+        this.logout();
+        throw new Error(payload?.message || 'Unauthorized. Please login again.');
         const error = new Error(payload?.message || 'You do not have permission for this action.');
         error.status = response.status;
         error.payload = payload;
@@ -105,7 +117,22 @@
       }
 
       if (response.status === 403) {
+        // Forbidden: also clear session and redirect
         this.logout();
+        throw new Error(payload?.message || 'Forbidden. Please login with sufficient privileges.');
+      }
+
+      if (!response.ok) {
+        let errMsg = payload?.message || `Request failed with status ${response.status}`;
+        if (payload && payload.error) {
+          try {
+            const extra = typeof payload.error === 'string' ? payload.error : JSON.stringify(payload.error);
+            errMsg = `${errMsg} - ${extra}`;
+          } catch (e) {
+            // ignore
+          }
+        }
+        throw new Error(errMsg);
         const error = new Error(payload?.message || 'You do not have permission for this action.');
         error.status = response.status;
         error.payload = payload;

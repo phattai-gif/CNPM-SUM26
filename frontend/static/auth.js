@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showMessage('Login successful! Welcome, ' + (data.user?.username || username), true);
       setTimeout(() => {
         if (window.location.pathname === '/auth/login') {
+          window.location.href = '/organizer/dashboard';
           redirectToRole(data.user?.role || window.AuthSession.getSession().role);
         }
       }, 400);
@@ -131,6 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const full_name = document.getElementById('full_name').value.trim();
       const password = document.getElementById('password').value;
       const passwordconfirm = document.getElementById('passwordconfirm').value;
+      const roleInput = document.querySelector('input[name="role"]:checked');
+      const role = roleInput ? roleInput.value : 'participant';
 
       setFormLoading(registerForm, true, 'Creating account...');
       const { ok, data } = await requestJson('/auth/signup', {
@@ -139,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         full_name,
         password,
         passwordconfirm,
+        role
       });
       setFormLoading(registerForm, false, 'Register');
 
@@ -148,6 +152,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // If backend returned token, set session and redirect appropriately
+      if (data.token) {
+        window.AuthSession.setSession({ token: data.token, user: data.user, role: data.user?.role });
+        showMessage('Registration successful! Redirecting...', true);
+        setTimeout(() => {
+          if (role === 'organizer') {
+            window.location.href = '/organizer/dashboard';
+          } else {
+            window.location.href = '/';
+          }
+        }, 300);
+        return;
+      }
+
+      showMessage('Registration successful! You can now login.', true);
       showMessage('Registration successful! Redirecting to login...', true);
       registerForm.reset();
       setTimeout(() => {

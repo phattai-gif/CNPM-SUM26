@@ -100,5 +100,52 @@
         </form>
       </div>
     </div>
+    <script src="/static/api_client.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form[action="/organizer/create-contest"]');
+        if (!form) return;
+        form.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          const title = form.querySelector('input[name="title"]').value.trim();
+          const description = form.querySelector('textarea[name="description"]').value.trim();
+          const start_date = form.querySelector('input[name="start_date"]').value.trim();
+          const end_date = form.querySelector('input[name="end_date"]').value.trim();
+
+          // Basic validation
+          if (!title) {
+            alert('Title is required');
+            return;
+          }
+          if (start_date && isNaN(Date.parse(start_date))) {
+            alert('Start date is not a valid ISO datetime');
+            return;
+          }
+          if (end_date && isNaN(Date.parse(end_date))) {
+            alert('End date is not a valid ISO datetime');
+            return;
+          }
+
+          // Ensure token exists in localStorage or cookies
+          const session = window.AuthSession.getSession();
+          if (!session.token) {
+            alert('You must be logged in to create a contest. Redirecting to login...');
+            window.location.href = '/auth/login';
+            return;
+          }
+
+          try {
+            const payload = { title, description, start_date, end_date };
+            const resp = await window.apiClient.post('/organizer/create-contest', payload);
+            // On success, redirect to dashboard
+            window.location.href = '/organizer/dashboard';
+          } catch (err) {
+            console.error('Create contest error:', err);
+            // Show detailed backend message for debugging
+            alert(err.message || 'Lỗi khi tạo cuộc thi');
+          }
+        });
+      });
+    </script>
   </body>
 </html>

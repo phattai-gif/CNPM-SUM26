@@ -123,10 +123,21 @@ def register():
     if not new_user:
         return jsonify({'message': 'Registration failed due to server error'}), 500
 
+    # Auto-generate JWT token for newly registered user (auto-login)
+    payload = {
+      'user_id': new_user.id,
+      'username': new_user.username,
+      'role': new_user.role,
+      'exp': datetime.utcnow() + timedelta(hours=24)
+    }
+    secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
+    token = jwt.encode(payload, secret_key, algorithm='HS256')
+
     result = register_response_schema.dump(new_user)
     return jsonify({
-        'message': 'User registered successfully!',
-        'user': result
+      'message': 'User registered successfully!',
+      'token': token,
+      'user': result
     }), 201
 
 
