@@ -71,6 +71,18 @@ body {
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
 }
 
+.auth-card input.input-error {
+  border-color: rgba(220, 53, 69, 0.9);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.08);
+}
+
+.field-error {
+  margin-top: 6px;
+  color: var(--danger);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .auth-card button {
   width: 100%;
   margin-top: 22px;
@@ -85,7 +97,12 @@ body {
   transition: filter 0.2s ease;
 }
 
-.auth-card button:hover {
+.auth-card button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.auth-card button:hover:not(:disabled) {
   filter: brightness(1.04);
 }
 

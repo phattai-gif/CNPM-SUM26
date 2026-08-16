@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, render_template
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -189,10 +189,10 @@ def login():
         'user_id': user.id,
         'username': user.username,
         'role': user.role,
-        'exp': datetime.utcnow() + timedelta(hours=24)
+        'exp': datetime.now(timezone.utc) + timedelta(hours=24)
     }
 
-    secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
+    secret_key = current_app.config.get('SECRET_KEY') or 'dev-secret-key-change-me-in-production-32chars'
     token = jwt.encode(payload, secret_key, algorithm='HS256')
 
     return jsonify({
