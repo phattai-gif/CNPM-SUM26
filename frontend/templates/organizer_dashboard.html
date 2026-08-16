@@ -5,38 +5,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Organizer Dashboard</title>
     <link rel="stylesheet" href="/static/auth.css">
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #f3f6fb;
+        color: #1f2937;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+
+      .page-shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 48px 20px;
+      }
+
+      .panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        padding: 28px;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 2vw, 2.4rem);
+        color: #111827;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        background: linear-gradient(135deg, #4f46e5, #2563eb);
+        color: #fff;
+        font-weight: 600;
+        transition: filter 0.2s ease;
+      }
+
+      .btn:hover { filter: brightness(1.05); }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      th, td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      thead th {
+        background: #f9fafb;
+        color: #374151;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      tbody tr:hover {
+        background: #f9fafb;
+      }
+
+      .empty-state {
+        margin: 0;
+        color: #6b7280;
+        font-size: 1rem;
+      }
+    </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Organizer Dashboard</h1>
-      <p><a href="/organizer/create-contest" class="btn">Tạo cuộc thi mới</a></p>
+    <div class="page-shell">
+      <div class="page-header">
+        <h1>Organizer Dashboard</h1>
+        <a href="/organizer/create-contest" class="btn">Create New Contest</a>
+      </div>
 
-      {% if contests and contests|length > 0 %}
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Title</th>
-              <th>Status</th>
-              <th>Start</th>
-              <th>End</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for c in contests %}
-            <tr>
-              <td>{{ c.id }}</td>
-              <td>{{ c.title }}</td>
-              <td>{{ c.status }}</td>
-              <td>{{ c.start_date or '-' }}</td>
-              <td>{{ c.end_date or '-' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p>Bạn hiện chưa có cuộc thi nào.</p>
-      {% endif %}
+      <div class="panel">
+        {% if contests and contests|length > 0 %}
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Start</th>
+                <th>End</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in contests %}
+              <tr>
+                <td>{{ c.id }}</td>
+                <td>{{ c.title }}</td>
+                <td>{{ c.status }}</td>
+                <td>{{ c.start_date or '-' }}</td>
+                <td>{{ c.end_date or '-' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="empty-state">You do not have any contests yet.</p>
+        {% endif %}
+      </div>
     </div>
   </body>
 </html>
