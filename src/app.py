@@ -42,10 +42,28 @@ def create_app():
     # Đăng ký tất cả các route/blueprint
     register_routes(app)
 
+    # Default home route
+    @app.route('/')
+    def home():
+        return jsonify({
+            'message': 'AI-powered Film Photography Contest Management API',
+            'version': '1.0.0',
+            'status': 'running',
+            'endpoints': {
+                'docs': '/docs',
+                'swagger': '/swagger.json',
+                'auth': '/auth',
+                'contests': '/contest',
+                'submissions': '/submission',
+                'ai_detection': '/ai-detection',
+                'judge': '/judge'
+            }
+        })
+
     # Ensure judge UI blueprint is registered so /judge/<id> is available
     try:
         try:
-            from src.api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
+            from api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
         except Exception:
             from api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
 
@@ -57,7 +75,7 @@ def create_app():
     # Ensure contest public blueprint is registered so /contest/results and /contest/leaderboard are available
     try:
         try:
-            from src.api.controllers.contest_controller import public_bp as _public_bp
+            from api.controllers.contest_controller import public_bp as _public_bp
         except Exception:
             from api.controllers.contest_controller import public_bp as _public_bp
 
@@ -98,7 +116,7 @@ def create_app():
     # Ensure judge blueprint is registered (safe-guard if routes.py didn't register it)
     try:
         try:
-            from src.api.controllers.judge_controller import judge_bp as _judge_bp
+            from api.controllers.judge_controller import judge_bp as _judge_bp
         except Exception:
             from api.controllers.judge_controller import judge_bp as _judge_bp
 
@@ -111,7 +129,7 @@ def create_app():
     # Ensure judge UI blueprint is registered so /judge/<id> is available
     try:
         try:
-            from src.api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
+            from api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
         except Exception:
             from api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
 
@@ -141,7 +159,7 @@ def create_app():
     with app.test_request_context():
         for rule in app.url_map.iter_rules():
             # Thêm các endpoint khác nếu cần
-            if rule.endpoint.startswith(('todo.', 'course.', 'user.', 'auth.', 'ai_detection.')):
+            if rule.endpoint.startswith(('todo.', 'user.', 'auth.', 'ai_detection.', 'contest.', 'submission.', 'judge.')):
                 view_func = app.view_functions[rule.endpoint]
                 print(f"Adding path: {rule.rule} -> {view_func}")
                 spec.path(view=view_func)

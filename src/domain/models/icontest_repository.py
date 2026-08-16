@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Any
 
 try:
-    from src.domain.contest import Contest, Round, Criteria
+    from domain.contest import Contest, Round, Criteria
 except ImportError:
     from domain.contest import Contest, Round, Criteria
 

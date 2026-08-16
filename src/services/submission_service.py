@@ -1,33 +1,14 @@
 from typing import Any, Dict, Optional, Tuple
 
-try:
-    from src.infrastructure.repositories.submission_repository import (
-        SubmissionRepository,
-    )
-    from src.services.storage_service import StorageService
-    from src.infrastructure.models.submission_model import (
-        SubmissionModel,
-    )
-    from src.infrastructure.models.submission_file_model import (
-        SubmissionFileModel,
-    )
-    from src.infrastructure.models.film_metadata_model import (
-        SubmissionFilmMetadataModel,
-    )
-except ImportError:
-    from infrastructure.repositories.submission_repository import (
-        SubmissionRepository,
-    )
-    from services.storage_service import StorageService
-    from infrastructure.models.submission_model import (
-        SubmissionModel,
-    )
-    from infrastructure.models.submission_file_model import (
-        SubmissionFileModel,
-    )
-    from infrastructure.models.film_metadata_model import (
-        SubmissionFilmMetadataModel,
-    )
+from infrastructure.repositories.submission_repository import (
+    SubmissionRepository,
+)
+from services.storage_service import StorageService
+from infrastructure.models.app import (
+    SubmissionModel,
+    SubmissionFileModel,
+    SubmissionFilmMetadataModel,
+)
 
 
 class SubmissionService:
