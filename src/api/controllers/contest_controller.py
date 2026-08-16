@@ -3,10 +3,10 @@ from flask import flash, redirect, url_for
 from datetime import datetime
 
 try:
-    from src.infrastructure.repositories.contest_repository import ContestRepository
-    from src.services.contest_service import ContestService
-    from src.services.score_service import ScoreService
-    from src.api.schemas.contest import (
+    from infrastructure.repositories.contest_repository import ContestRepository
+    from services.contest_service import ContestService
+    from services.score_service import ScoreService
+    from api.schemas.contest import (
         ContestCreateRequestSchema,
         ContestUpdateRequestSchema,
         ContestRulesUpdateRequestSchema,
@@ -15,7 +15,7 @@ try:
         RoundSchema,
         CriteriaSchema
     )
-    from src.api.role_required import role_required
+    from api.role_required import role_required
 except ImportError:
     from infrastructure.repositories.contest_repository import ContestRepository
     from services.contest_service import ContestService

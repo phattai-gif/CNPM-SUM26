@@ -1,16 +1,16 @@
 from flask import Blueprint, jsonify, request
 
 try:
-    from src.api.role_required import (
+    from api.role_required import (
         token_required,
         role_required,
     )
-    from src.infrastructure.repositories.submission_repository import (
+    from infrastructure.repositories.submission_repository import (
         SubmissionRepository,
     )
-    from src.services.score_service import ScoreService
+    from services.score_service import ScoreService
 
-    from src.services.ai_detection_service import AiDetectionService
+    from services.ai_detection_service import AiDetectionService
 
 
 except ImportError:

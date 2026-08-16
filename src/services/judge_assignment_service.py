@@ -1,9 +1,9 @@
 from typing import List, Optional
 
 try:
-    from src.domain.models.ijudge_assignment_repository import IJudgeAssignmentRepository
-    from src.domain.models.icontest_repository import IContestRepository
-    from src.domain.contest import JudgeAssignment, Contest, Round
+    from domain.models.ijudge_assignment_repository import IJudgeAssignmentRepository
+    from domain.models.icontest_repository import IContestRepository
+    from domain.contest import JudgeAssignment, Contest, Round
 except ImportError:
     from domain.models.ijudge_assignment_repository import IJudgeAssignmentRepository
     from domain.models.icontest_repository import IContestRepository
