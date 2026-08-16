@@ -9,28 +9,29 @@
 <body>
   <div class="auth-container">
     <div class="auth-card">
-      <h1>Create Account</h1>
+      <p class="eyebrow">Create your account</p>
+      <h1>Join the platform</h1>
       <form id="registerForm" novalidate>
         <label for="username">Username</label>
-        <input id="username" name="username" type="text" required autocomplete="username">
+        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Choose a username">
 
         <label for="email">Email</label>
-        <input id="email" name="email" type="email" required autocomplete="email">
+        <input id="email" name="email" type="email" required autocomplete="email" placeholder="name@example.com">
 
         <label for="full_name">Full Name</label>
-        <input id="full_name" name="full_name" type="text" autocomplete="name">
+        <input id="full_name" name="full_name" type="text" autocomplete="name" placeholder="Your full name">
 
         <label for="password">Password</label>
-        <input id="password" name="password" type="password" required autocomplete="new-password">
+        <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Create a password">
 
         <label for="passwordconfirm">Confirm Password</label>
-        <input id="passwordconfirm" name="passwordconfirm" type="password" required autocomplete="new-password">
+        <input id="passwordconfirm" name="passwordconfirm" type="password" required autocomplete="new-password" placeholder="Repeat your password">
 
         <button type="submit">Register</button>
       </form>
 
       <div id="message" class="message"></div>
-      <p class="secondary-text">Already have an account? <a href="{{ url_for('auth.login_page') }}">Login</a></p>
+      <p class="secondary-text">Already have an account? <a href="{{ url_for('auth.login_page') }}">Login here</a></p>
     </div>
   </div>
   <script src="{{ url_for('static', filename='api_client.js') }}"></script>
