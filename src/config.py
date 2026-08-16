@@ -24,13 +24,23 @@ class FactoryConfig:
 class Config:
     """Base configuration."""
 
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "a_default_secret_key"
+    SECRET_KEY = os.environ.get(
+        "SECRET_KEY"
+    ) or "dev-secret-key-change-me-in-production-32chars"
 
-    DEBUG = os.environ.get("DEBUG", "False").lower() in ["true", "1"]
+    DEBUG = os.environ.get(
+        "DEBUG",
+        "False",
+    ).lower() in ["true", "1"]
 
-    TESTING = os.environ.get("TESTING", "False").lower() in ["true", "1"]
+    TESTING = os.environ.get(
+        "TESTING",
+        "False",
+    ).lower() in ["true", "1"]
 
-    DATABASE_URI = os.environ.get("DATABASE_URI") or (
+    DATABASE_URI = os.environ.get(
+        "DATABASE_URI"
+    ) or (
         "mssql+pymssql://sa:Aa%40123456@127.0.0.1:1433/DemoFlaskApi"
     )
 
@@ -40,21 +50,16 @@ class Config:
     # Storage Service Configuration
     # =========================================================
 
-    # Supported providers:
-    # - local
-    # - cloudinary
     STORAGE_PROVIDER = os.environ.get(
         "STORAGE_PROVIDER",
         "local",
     ).lower()
 
-    # Local storage configuration
     UPLOAD_FOLDER = os.environ.get(
         "UPLOAD_FOLDER",
         "src/static/uploads",
     )
 
-    # Maximum uploaded file size: 50 MB
     MAX_CONTENT_LENGTH = int(
         os.environ.get(
             "MAX_CONTENT_LENGTH",
@@ -62,7 +67,6 @@ class Config:
         )
     )
 
-    # Base URL used by LocalStorageAdapter
     BASE_URL = os.environ.get(
         "BASE_URL",
         "http://localhost:9999",
@@ -72,11 +76,8 @@ class Config:
     # Cloudinary Configuration
     # =========================================================
 
-    # Preferred:
-    # CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
     CLOUDINARY_URL = os.environ.get("CLOUDINARY_URL")
 
-    # Alternative configuration
     CLOUDINARY_CLOUD_NAME = os.environ.get(
         "CLOUDINARY_CLOUD_NAME"
     )
@@ -88,7 +89,6 @@ class Config:
     CLOUDINARY_API_SECRET = os.environ.get(
         "CLOUDINARY_API_SECRET"
     )
-
 
 class DevelopmentConfig(Config):
     """Development configuration."""

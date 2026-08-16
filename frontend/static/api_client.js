@@ -96,17 +96,31 @@
       }
 
       if (response.status === 401) {
-        throw new Error(
-        payload?.message || 'You do not have permission for this action.');
-    }
+        const error = new Error(payload?.message || 'You do not have permission for this action.');
+        error.status = response.status;
+        error.payload = payload;
+        error.details = payload;
+        error.errors = payload?.errors || null;
+        throw error;
+      }
 
       if (response.status === 403) {
         this.logout();
-        throw new Error(payload?.message || 'You do not have permission for this action.');
+        const error = new Error(payload?.message || 'You do not have permission for this action.');
+        error.status = response.status;
+        error.payload = payload;
+        error.details = payload;
+        error.errors = payload?.errors || null;
+        throw error;
       }
 
       if (!response.ok) {
-        throw new Error(payload?.message || `Request failed with status ${response.status}`);
+        const error = new Error(payload?.message || `Request failed with status ${response.status}`);
+        error.status = response.status;
+        error.payload = payload;
+        error.details = payload;
+        error.errors = payload?.errors || null;
+        throw error;
       }
 
       return payload;
