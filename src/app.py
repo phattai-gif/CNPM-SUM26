@@ -159,7 +159,7 @@ def create_app():
     with app.test_request_context():
         for rule in app.url_map.iter_rules():
             # Thêm các endpoint khác nếu cần
-            if rule.endpoint.startswith(('todo.', 'course.', 'user.', 'auth.', 'ai_detection.')):
+            if rule.endpoint.startswith(('todo.', 'user.', 'auth.', 'ai_detection.', 'contest.', 'submission.', 'judge.')):
                 view_func = app.view_functions[rule.endpoint]
                 print(f"Adding path: {rule.rule} -> {view_func}")
                 spec.path(view=view_func)
