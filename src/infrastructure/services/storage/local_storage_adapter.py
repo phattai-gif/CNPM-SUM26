@@ -2,6 +2,7 @@ import hashlib
 import os
 import uuid
 
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 try:
@@ -24,9 +25,16 @@ class LocalStorageAdapter(IStorageAdapter):
 
     def __init__(
         self,
-        upload_folder: str = "src/static/uploads",
+        upload_folder: Optional[str] = None,
         base_url: str = "",
     ):
+        if upload_folder is None:
+            upload_folder = str(
+                Path(__file__).resolve().parents[4]
+                / "frontend"
+                / "static"
+                / "uploads"
+            )
         self.upload_folder = os.path.abspath(
             upload_folder
         )

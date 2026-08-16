@@ -1,9 +1,13 @@
 # Configuration settings for the Flask application
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+FRONTEND_UPLOAD_DIR = PROJECT_ROOT / "frontend" / "static" / "uploads"
 
 
 class FactoryConfig:
@@ -57,7 +61,7 @@ class Config:
 
     UPLOAD_FOLDER = os.environ.get(
         "UPLOAD_FOLDER",
-        "src/static/uploads",
+        str(FRONTEND_UPLOAD_DIR),
     )
 
     MAX_CONTENT_LENGTH = int(

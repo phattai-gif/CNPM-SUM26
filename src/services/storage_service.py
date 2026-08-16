@@ -2,6 +2,7 @@ import hashlib
 import io
 import os
 
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from PIL import Image
@@ -96,7 +97,12 @@ class StorageService:
         upload_folder = getattr(
             Config,
             "UPLOAD_FOLDER",
-            "src/static/uploads",
+            str(
+                Path(__file__).resolve().parents[1]
+                / "frontend"
+                / "static"
+                / "uploads"
+            ),
         )
 
         base_url = getattr(
