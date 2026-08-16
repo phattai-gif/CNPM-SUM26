@@ -11,31 +11,20 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const setFormLoading = (form, isLoading, label) => {
-    if (!form) {
-      return;
-    }
-
+    if (!form) return;
     const button = form.querySelector('button[type="submit"]');
-    if (!button) {
-      return;
-    }
+    if (!button) return;
 
     button.disabled = isLoading;
-    button.textContent = isLoading ? label : button.dataset.defaultText || label.replace(/\.\.\./g, '');
-  };
-
-  const setButtonDefaultText = (form) => {
-    const button = form?.querySelector('button[type="submit"]');
-    if (button && !button.dataset.defaultText) {
+    if (button.dataset.defaultText === undefined) {
       button.dataset.defaultText = button.textContent.trim();
     }
+
+    button.textContent = isLoading ? label : button.dataset.defaultText;
   };
 
   const clearFieldErrors = (form) => {
-    if (!form) {
-      return;
-    }
-
+    if (!form) return;
     form.querySelectorAll('.field-error').forEach((node) => node.remove());
     form.querySelectorAll('input').forEach((input) => {
       input.classList.remove('input-error');
@@ -44,39 +33,31 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const showFieldErrors = (form, payload) => {
-    if (!form || !payload) {
-      return;
-    }
-
+    if (!form || !payload) return;
     const fieldErrors = payload.errors && typeof payload.errors === 'object' ? payload.errors : {};
-    const entries = Object.entries(fieldErrors);
 
-    entries.forEach(([fieldName, errorValue]) => {
+    Object.entries(fieldErrors).forEach(([fieldName, errorValue]) => {
       const input = form.querySelector(`[name="${fieldName}"]`) || form.querySelector(`#${fieldName}`);
-      if (!input) {
-        return;
-      }
+      if (!input) return;
 
-      const normalizedMessage = Array.isArray(errorValue) ? errorValue.join(', ') : String(errorValue);
+      const message = Array.isArray(errorValue) ? errorValue.join(', ') : String(errorValue);
       input.classList.add('input-error');
-      input.setCustomValidity(normalizedMessage);
+      input.setCustomValidity(message);
 
       const errorNode = document.createElement('div');
       errorNode.className = 'field-error';
-      errorNode.textContent = normalizedMessage;
+      errorNode.textContent = message;
+      errorNode.dataset.field = fieldName;
 
-      const parent = input.parentElement || form;
-      if (parent && !parent.querySelector(`.field-error[data-field="${fieldName}"]`)) {
-        errorNode.dataset.field = fieldName;
-        parent.appendChild(errorNode);
+      const wrapper = input.parentElement || form;
+      if (!wrapper.querySelector(`.field-error[data-field="${fieldName}"]`)) {
+        wrapper.appendChild(errorNode);
       }
     });
   };
 
   const showMessage = (text, success = false) => {
-    if (!messageEl) {
-      return;
-    }
+    if (!messageEl) return;
     messageEl.textContent = text;
     messageEl.className = success ? 'message success' : 'message error';
   };
@@ -91,22 +72,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await window.apiClient.post(url, payload);
       return { ok: true, data };
     } catch (error) {
-      const details = error?.payload || error?.details || error?.response || {};
-      const responseData = details?.data || details || {};
-
+      const details = error?.payload || error?.details || {};
+      const payloadData = details?.data || details || {};
       return {
         ok: false,
         data: {
-          message: responseData.message || error.message || 'Invalid server response',
-          errors: responseData.errors || error.errors || null
-        },
-        error
+          message: payloadData.message || error.message || 'Invalid server response',
+          errors: payloadData.errors || error.errors || null
+        }
       };
     }
   };
 
   if (loginForm) {
-    setButtonDefaultText(loginForm);
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       clearFieldErrors(loginForm);
@@ -114,8 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
-      setFormLoading(loginForm, true, 'Logging in...');
 
+      setFormLoading(loginForm, true, 'Logging in...');
       const { ok, data } = await requestJson('/auth/login', { username, password });
       setFormLoading(loginForm, false, 'Login');
 
@@ -143,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (registerForm) {
-    setButtonDefaultText(registerForm);
     registerForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       clearFieldErrors(registerForm);
@@ -154,8 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const full_name = document.getElementById('full_name').value.trim();
       const password = document.getElementById('password').value;
       const passwordconfirm = document.getElementById('passwordconfirm').value;
-      setFormLoading(registerForm, true, 'Creating account...');
 
+      setFormLoading(registerForm, true, 'Creating account...');
       const { ok, data } = await requestJson('/auth/signup', {
         username,
         email,
