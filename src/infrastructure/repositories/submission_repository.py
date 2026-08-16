@@ -7,14 +7,12 @@ from domain.models.submission import Submission
 from infrastructure.databases.factory_database import (
     FactoryDatabase as db_factory
 )
-from infrastructure.models.submission_model import SubmissionModel
-from infrastructure.models.submission_file_model import (
-    SubmissionFileModel
+from infrastructure.models.app import (
+    SubmissionModel,
+    SubmissionFileModel,
+    SubmissionFilmMetadataModel,
+    AIFlagModel,
 )
-from infrastructure.models.film_metadata_model import (
-    SubmissionFilmMetadataModel
-)
-from infrastructure.models.ai_flag_model import AIFlagModel
 
 
 class SubmissionRepository(ISubmissionRepository):

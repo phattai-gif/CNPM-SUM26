@@ -3,18 +3,14 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 try:
-    from src.domain.models.icontest_repository import IContestRepository
-    from src.domain.contest import Contest, Round, Criteria
-    from src.infrastructure.models.contest_model import ContestModel
-    from src.infrastructure.models.round_model import RoundModel
-    from src.infrastructure.models.criteria_model import CriteriaModel
-    from src.infrastructure.databases.factory_database import FactoryDatabase as db_factory
+    from domain.models.icontest_repository import IContestRepository
+    from domain.contest import Contest, Round, Criteria
+    from infrastructure.models.app import ContestModel, RoundModel, CriteriaModel
+    from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 except ImportError:
     from domain.models.icontest_repository import IContestRepository
     from domain.contest import Contest, Round, Criteria
-    from infrastructure.models.contest_model import ContestModel
-    from infrastructure.models.round_model import RoundModel
-    from infrastructure.models.criteria_model import CriteriaModel
+    from infrastructure.models.app import ContestModel, RoundModel, CriteriaModel
     from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 
 
