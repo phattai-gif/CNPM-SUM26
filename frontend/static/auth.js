@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showMessage('Login successful! Welcome, ' + (data.user?.username || username), true);
       setTimeout(() => {
         if (window.location.pathname === '/auth/login') {
-          window.location.href = '/';
+          window.location.href = '/organizer/dashboard';
         }
       }, 300);
     });
@@ -60,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const full_name = document.getElementById('full_name').value.trim();
       const password = document.getElementById('password').value;
       const passwordconfirm = document.getElementById('passwordconfirm').value;
+      const roleInput = document.querySelector('input[name="role"]:checked');
+      const role = roleInput ? roleInput.value : 'participant';
 
       const { ok, data } = await requestJson('/auth/signup', {
         username,
@@ -67,10 +69,25 @@ document.addEventListener('DOMContentLoaded', () => {
         full_name,
         password,
         passwordconfirm,
+        role
       });
 
       if (!ok) {
         showMessage(data.message || 'Registration failed. Please check your input.');
+        return;
+      }
+
+      // If backend returned token, set session and redirect appropriately
+      if (data.token) {
+        window.AuthSession.setSession({ token: data.token, user: data.user, role: data.user?.role });
+        showMessage('Registration successful! Redirecting...', true);
+        setTimeout(() => {
+          if (role === 'organizer') {
+            window.location.href = '/organizer/dashboard';
+          } else {
+            window.location.href = '/';
+          }
+        }, 300);
         return;
       }
 
