@@ -22,10 +22,3 @@ class UserModel(Base):
     status = Column(String(20), nullable=False, default="active")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
->>>>>>> 790426c04c0df979b2e2951e003243881e743d3d:src/infrastructure/models/user_model.py
