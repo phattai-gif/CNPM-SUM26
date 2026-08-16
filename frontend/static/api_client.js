@@ -108,6 +108,12 @@
         // Unauthorized: clear session and redirect to login
         this.logout();
         throw new Error(payload?.message || 'Unauthorized. Please login again.');
+        const error = new Error(payload?.message || 'You do not have permission for this action.');
+        error.status = response.status;
+        error.payload = payload;
+        error.details = payload;
+        error.errors = payload?.errors || null;
+        throw error;
       }
 
       if (response.status === 403) {
@@ -127,6 +133,21 @@
           }
         }
         throw new Error(errMsg);
+        const error = new Error(payload?.message || 'You do not have permission for this action.');
+        error.status = response.status;
+        error.payload = payload;
+        error.details = payload;
+        error.errors = payload?.errors || null;
+        throw error;
+      }
+
+      if (!response.ok) {
+        const error = new Error(payload?.message || `Request failed with status ${response.status}`);
+        error.status = response.status;
+        error.payload = payload;
+        error.details = payload;
+        error.errors = payload?.errors || null;
+        throw error;
       }
 
       return payload;

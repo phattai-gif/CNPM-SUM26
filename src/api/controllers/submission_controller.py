@@ -4,44 +4,18 @@ from flask import (
     request,
 )
 
-try:
-    from src.api.role_required import (
-        token_required,
-        role_required,
-    )
-
-    from src.services.submission_service import (
-        SubmissionService,
-    )
-
-    from src.infrastructure.repositories.submission_repository import (
-        SubmissionRepository,
-    )
-    from src.services.score_service import (
-    ScoreService,
-    )
-
-    from src.services.ai_detection_service import AiDetectionService
-
-except ImportError:
-    from api.role_required import (
-        token_required,
-        role_required,
-    )
-
-    from services.submission_service import (
-        SubmissionService,
-    )
-
-    from infrastructure.repositories.submission_repository import (
-        SubmissionRepository,
-    )
-
-    from services.score_service import (
-        ScoreService,
-    )
-
-    from services.ai_detection_service import AiDetectionService
+from api.role_required import (
+    token_required,
+    role_required,
+)
+from infrastructure.repositories.submission_repository import (
+    SubmissionRepository,
+)
+from services.submission_service import (
+    SubmissionService,
+)
+from services.score_service import ScoreService
+from services.ai_detection_service import AiDetectionService
 
 
 

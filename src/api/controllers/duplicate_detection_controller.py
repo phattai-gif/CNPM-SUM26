@@ -2,8 +2,8 @@ import os
 from flask import Blueprint, request, jsonify
 
 try:
-    from src.services.duplicate_detection_service import DuplicateDetectionService
-    from src.services.image_input_handler import ImageInputHandler
+    from services.duplicate_detection_service import DuplicateDetectionService
+    from services.image_input_handler import ImageInputHandler
 except ImportError:
     from services.duplicate_detection_service import DuplicateDetectionService
     from services.image_input_handler import ImageInputHandler
