@@ -1,5 +1,3 @@
-
-
 from sqlalchemy import text
 
 from infrastructure.databases.abstract_database import AbstractDatabase

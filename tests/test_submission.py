@@ -9,7 +9,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../s
 import jwt
 from datetime import datetime, timedelta, timezone
 from app import create_app
-import api.controllers.submission_controller as submission_controller_module
+try:
+    import src.api.controllers.submission_controller as submission_controller_module
+except ImportError:
+    import api.controllers.submission_controller as submission_controller_module
+
 
 
 def generate_token(secret_key, user_id=1, username='testuser', role='organizer'):
@@ -69,7 +73,7 @@ def test_get_submission_details_success():
         created_at=datetime(2024, 1, 1, 11, 0, 2),
     )
 
-    with patch('api.controllers.submission_controller.submission_repo.get_by_id_with_details', return_value=(mock_submission, mock_file, mock_film_metadata)):
+    with patch.object(submission_controller_module.submission_repo, 'get_by_id_with_details', return_value=(mock_submission, mock_file, mock_film_metadata)):
         response = client.get(
             '/submissions/123',
             headers={'Authorization': f'Bearer {token}'}
@@ -88,11 +92,12 @@ def test_get_submission_details_not_found():
     client = app.test_client()
     token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'))
 
-    with patch('api.controllers.submission_controller.submission_repo.get_by_id_with_details', return_value=None):
+    with patch.object(submission_controller_module.submission_repo, 'get_by_id_with_details', return_value=None):
         response = client.get(
             '/submissions/999',
             headers={'Authorization': f'Bearer {token}'}
         )
+
 
     assert response.status_code == 404
     json_data = response.get_json()
