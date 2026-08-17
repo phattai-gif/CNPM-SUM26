@@ -1,14 +1,14 @@
 from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
 
 try:
-    from src.infrastructure.repositories.contest_repository import ContestRepository
-    from src.infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
-    from src.services.judge_assignment_service import JudgeAssignmentService
-    from src.api.schemas.judge import (
+    from infrastructure.repositories.contest_repository import ContestRepository
+    from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
+    from services.judge_assignment_service import JudgeAssignmentService
+    from api.schemas.judge import (
         AssignJudgeRequestSchema,
         JudgeAssignmentResponseSchema
     )
-    from src.api.role_required import role_required
+    from api.role_required import role_required
 except ImportError:
     from infrastructure.repositories.contest_repository import ContestRepository
     from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository

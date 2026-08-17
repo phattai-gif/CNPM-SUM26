@@ -2,19 +2,19 @@ from collections import defaultdict
 from typing import Optional
 
 try:
-    from src.infrastructure.models.submission_model import SubmissionModel
-    from src.infrastructure.repositories.score_repository import ScoreRepository
-    from src.infrastructure.repositories.score_feedback_repository import (
+    from infrastructure.models.app import SubmissionModel
+    from infrastructure.repositories.score_repository import ScoreRepository
+    from infrastructure.repositories.score_feedback_repository import (
         ScoreFeedbackRepository,
     )
-    from src.infrastructure.repositories.submission_repository import (
+    from infrastructure.repositories.submission_repository import (
         SubmissionRepository,
     )
-    from src.infrastructure.repositories.contest_repository import (
+    from infrastructure.repositories.contest_repository import (
         ContestRepository,
     )
 except ImportError:
-    from infrastructure.models.submission_model import SubmissionModel
+    from infrastructure.models.app import SubmissionModel
     from infrastructure.repositories.score_repository import ScoreRepository
     from infrastructure.repositories.score_feedback_repository import (
         ScoreFeedbackRepository,

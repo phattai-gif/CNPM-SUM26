@@ -4,8 +4,7 @@ from typing import Optional
 from sqlalchemy import insert, select
 from werkzeug.security import check_password_hash
 from infrastructure.databases.factory_database import FactoryDatabase as db_factory
-from infrastructure.models.user_model import UserModel
-from infrastructure.models.auth.role_model import RoleModel, user_roles
+from infrastructure.models.app import UserModel, RoleModel, user_roles
 
 
 class AuthRepository(IAuthRepository):

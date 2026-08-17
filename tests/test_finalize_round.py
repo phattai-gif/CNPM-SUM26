@@ -137,7 +137,7 @@ def test_finalize_round_forbidden_role():
 
 def test_score_calculation_and_ranking_logic():
     """Test 4 & 5: Kiểm tra tính toán tổng điểm và xếp hạng từ cao xuống thấp của ScoreService.finalize_round."""
-    from src.services.score_service import ScoreService
+    from services.score_service import ScoreService
 
     # Mock repositories
     mock_contest_repo = MagicMock()

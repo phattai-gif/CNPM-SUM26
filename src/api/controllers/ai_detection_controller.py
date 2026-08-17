@@ -2,8 +2,8 @@ import os
 from flask import Blueprint, request, jsonify
 
 try:
-    from src.services.ai_detection_service import AiDetectionService
-    from src.services.image_input_handler import ImageInputHandler
+    from services.ai_detection_service import AiDetectionService
+    from services.image_input_handler import ImageInputHandler
 except ImportError:
     from services.ai_detection_service import AiDetectionService
     from services.image_input_handler import ImageInputHandler

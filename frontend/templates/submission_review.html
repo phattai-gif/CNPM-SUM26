@@ -1,52 +1,71 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Xem bài thi - Duyệt cảnh báo AI</title>
+  <title>Review Submission - AI Warning Review</title>
 
   <style>
-    * {
-      box-sizing: border-box;
+    :root {
+      --bg: #f3f6fb;
+      --panel: #ffffff;
+      --panel-alt: #f9fafb;
+      --border: #e5e7eb;
+      --text: #111827;
+      --muted: #6b7280;
+      --primary: #4f46e5;
+      --primary-2: #2563eb;
+      --success: #198754;
+      --danger: #dc3545;
+      --warn-bg: #fff7f7;
+      --warn-border: #f0caca;
+      --warn-text: #a61b1b;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
     }
 
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Arial, Helvetica, sans-serif;
       margin: 0;
-      padding: 24px;
-      background: #f5f6f8;
-      color: #222;
+      padding: 32px 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
     }
 
     .header {
-      background: white;
-      border: 1px solid #e5e5e5;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 24px 28px;
+      margin-bottom: 24px;
     }
 
     .header h1 {
-      margin: 0 0 12px;
-      font-size: 24px;
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 2.4vw, 2.6rem);
+      color: var(--text);
     }
 
     .meta {
-      color: #555;
-      font-size: 14px;
+      color: var(--muted);
+      font-size: 0.96rem;
       line-height: 1.8;
     }
 
     .status {
       display: inline-block;
       padding: 5px 12px;
-      border-radius: 20px;
-      font-weight: 600;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
       margin-left: 8px;
     }
 
@@ -62,99 +81,106 @@
 
     .content-grid {
       display: grid;
-      grid-template-columns: 1fr 360px;
+      grid-template-columns: minmax(0, 1.6fr) 360px;
       gap: 20px;
     }
 
     .card {
-      background: white;
-      border: 1px solid #e5e5e5;
-      border-radius: 10px;
-      padding: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 22px;
     }
 
     .card h2,
     .card h3 {
       margin-top: 0;
+      color: var(--text);
     }
 
     .photo-box {
       width: 100%;
       min-height: 420px;
-      background: #f0f0f0;
-      border-radius: 8px;
+      background: #eef2f7;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #777;
+      color: var(--muted);
       margin-bottom: 20px;
+      overflow: hidden;
     }
 
     .photo-box img {
       max-width: 100%;
       max-height: 500px;
-      border-radius: 8px;
+      border-radius: 12px;
       object-fit: contain;
+      display: block;
     }
 
     .info-list {
       display: grid;
-      grid-template-columns: 150px 1fr;
-      gap: 10px;
-      font-size: 14px;
+      grid-template-columns: 160px 1fr;
+      gap: 12px 16px;
+      font-size: 0.96rem;
     }
 
     .info-label {
-      font-weight: 600;
-      color: #555;
+      font-weight: 700;
+      color: var(--muted);
     }
 
     .warning {
-      border: 1px solid #f0caca;
-      background: #fff7f7;
-      border-radius: 8px;
-      padding: 12px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 12px;
+      padding: 14px;
       margin-bottom: 12px;
     }
 
     .warning-title {
       font-weight: 700;
-      color: #a61b1b;
-      margin-bottom: 6px;
+      color: var(--warn-text);
+      margin-bottom: 8px;
     }
 
     .confidence {
       font-weight: 700;
-      color: #333;
+      color: var(--text);
     }
 
     .model {
       font-size: 12px;
-      color: #777;
+      color: var(--muted);
       margin-bottom: 8px;
     }
 
     .snippet {
       background: #f4f4f4;
-      border-left: 3px solid #ccc;
-      padding: 8px;
+      border-left: 3px solid #cbd5e1;
+      padding: 10px 12px;
       margin-top: 8px;
-      font-family: monospace;
       white-space: pre-wrap;
+      font-family: 'SFMono-Regular', Consolas, monospace;
       font-size: 12px;
+      border-radius: 8px;
     }
 
     .details {
       font-size: 13px;
-      color: #444;
+      color: #374151;
       margin-top: 8px;
+      line-height: 1.6;
     }
 
     .no-warning {
-      background: #f0faf3;
-      color: #187a3d;
-      padding: 12px;
-      border-radius: 8px;
+      background: #ecfdf5;
+      color: #065f46;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #a7f3d0;
     }
 
     .attachments {
@@ -163,11 +189,16 @@
 
     .attachments ul {
       padding-left: 20px;
+      margin: 10px 0 0;
     }
 
     .attachments a {
-      color: #1769aa;
+      color: var(--primary-2);
       text-decoration: none;
+    }
+
+    .attachments a:hover {
+      text-decoration: underline;
     }
 
     .actions {
@@ -178,29 +209,21 @@
     }
 
     button {
-      border: 0;
-      border-radius: 6px;
-      padding: 9px 14px;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 700;
+      transition: filter 0.2s ease;
     }
 
-    .approve {
-      background: #198754;
-      color: white;
-    }
+    button:hover { filter: brightness(1.04); }
 
-    .reject {
-      background: #dc3545;
-      color: white;
-    }
+    .approve { background: var(--success); color: #fff; }
+    .reject { background: var(--danger); color: #fff; }
+    .false-positive { background: #6b7280; color: #fff; }
 
-    .false-positive {
-      background: #6c757d;
-      color: white;
-    }
-
-    @media (max-width: 800px) {
+    @media (max-width: 900px) {
       .content-grid {
         grid-template-columns: 1fr;
       }
@@ -214,21 +237,12 @@
 
 <body>
   <div class="container">
-
     <div class="header">
-      <h1>
-        Xem bài #{{ submission.id }} - {{ submission.title }}
-      </h1>
-
+      <h1>View Submission #{{ submission.id }}: {{ submission.title }}</h1>
       <div class="meta">
-        <strong>Tác giả:</strong>
-        {{ submission.author }}
-
+        <strong>Author:</strong> {{ submission.author }}
         &nbsp; | &nbsp;
-
-        <strong>Gửi lúc:</strong>
-        {{ submission.submitted_at }}
-
+        <strong>Submitted At:</strong> {{ submission.submitted_at }}
         <span>
           {% if submission.flagged %}
             <span class="status flagged">FLAGGED</span>
@@ -240,35 +254,29 @@
     </div>
 
     <div class="content-grid">
-
-      <!-- Nội dung bài dự thi -->
       <main class="card">
-        <h2>Bài dự thi</h2>
+        <h2>Submission</h2>
 
         <div class="photo-box">
           {% if submission.image_url %}
-            <img
-              src="{{ submission.image_url }}"
-              alt="{{ submission.title }}"
-            >
+            <img src="{{ submission.image_url }}" alt="{{ submission.title }}">
           {% else %}
-            Không có hình ảnh
+            No image available
           {% endif %}
         </div>
 
-        <h3>Thông tin bài dự thi</h3>
-
+        <h3>Submission Details</h3>
         <div class="info-list">
-          <div class="info-label">Tiêu đề</div>
+          <div class="info-label">Title</div>
           <div>{{ submission.title }}</div>
 
-          <div class="info-label">Tác giả</div>
+          <div class="info-label">Author</div>
           <div>{{ submission.author }}</div>
 
-          <div class="info-label">Thời gian gửi</div>
+          <div class="info-label">Submitted At</div>
           <div>{{ submission.submitted_at }}</div>
 
-          <div class="info-label">Trạng thái</div>
+          <div class="info-label">Status</div>
           <div>
             {% if submission.flagged %}
               <strong style="color:#b42318;">Flagged</strong>
@@ -279,100 +287,61 @@
         </div>
 
         <div style="margin-top:20px;">
-          <h3>Nội dung</h3>
-          <div>
-            {{ submission.content }}
-          </div>
+          <h3>Submission Content</h3>
+          <div>{{ submission.content }}</div>
         </div>
 
         <div class="attachments">
           <h3>Attachments</h3>
-
           {% if submission.attachments %}
             <ul>
               {% for attachment in submission.attachments %}
                 <li>
-                  <a href="{{ attachment }}" target="_blank">
-                    {{ attachment }}
-                  </a>
+                  <a href="{{ attachment }}" target="_blank">{{ attachment }}</a>
                 </li>
               {% endfor %}
             </ul>
           {% else %}
-            <div>Không có file đính kèm.</div>
+            <div>No attachments.</div>
           {% endif %}
         </div>
       </main>
 
-      <!-- Cảnh báo AI -->
       <aside class="card">
-        <h2>Cảnh báo AI</h2>
+        <h2>AI Warning</h2>
 
         {% if ai_warnings %}
-
           {% for warning in ai_warnings %}
-
             <div class="warning">
-
-              <div class="warning-title">
-                {{ warning.label }}
-              </div>
-
+              <div class="warning-title">{{ warning.label }}</div>
               <div>
-                Độ tin cậy:
-                <span class="confidence">
-                  {{ (warning.confidence * 100)|round(1) }}%
-                </span>
+                Confidence:
+                <span class="confidence">{{ (warning.confidence * 100)|round(1) }}</span>
               </div>
-
               <div class="model">
-                Model:
-                {{ warning.model_name }}
-                (v{{ warning.model_version }})
+                Model: {{ warning.model_name }} (v{{ warning.model_version }})
               </div>
 
               {% if warning.snippet %}
-                <div class="snippet">
-                  {{ warning.snippet }}
-                </div>
+                <div class="snippet">{{ warning.snippet }}</div>
               {% endif %}
 
               {% if warning.details %}
-                <div class="details">
-                  {{ warning.details.summary }}
-                </div>
+                <div class="details">{{ warning.details.summary }}</div>
               {% endif %}
-
             </div>
-
           {% endfor %}
-
         {% else %}
-
-          <div class="no-warning">
-            Không có cảnh báo AI.
-          </div>
-
+          <div class="no-warning">No AI warnings.</div>
         {% endif %}
 
         <div class="actions">
-          <button class="approve" type="button">
-            Approve
-          </button>
-
-          <button class="reject" type="button">
-            Reject
-          </button>
-
-          <button class="false-positive" type="button">
-            Mark false-positive
-          </button>
+          <button class="approve" type="button">Approve</button>
+          <button class="reject" type="button">Reject</button>
+          <button class="false-positive" type="button">Mark false-positive</button>
         </div>
-
       </aside>
-
     </div>
-
   </div>
 </body>
 </html>

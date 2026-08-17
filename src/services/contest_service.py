@@ -2,8 +2,8 @@ import re
 from datetime import datetime
 from typing import List, Optional
 try:
-    from src.domain.models.icontest_repository import IContestRepository
-    from src.domain.contest import Contest, Round, Criteria
+    from domain.models.icontest_repository import IContestRepository
+    from domain.contest import Contest, Round, Criteria
 except ImportError:
     from domain.models.icontest_repository import IContestRepository
     from domain.contest import Contest, Round, Criteria

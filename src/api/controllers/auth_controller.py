@@ -1,26 +1,16 @@
 from flask import Blueprint, request, jsonify, current_app, render_template
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
-try:
-    from src.infrastructure.models.user_model import UserModel
-    from src.infrastructure.databases.mssql import session
-    from src.api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
-    from src.api.role_required import token_required
-    from src.services.auth_service import AuthService
-    from src.infrastructure.repositories.auth_repository import AuthRepository
-    from src.infrastructure.repositories.contest_repository import ContestRepository
-    from src.services.contest_service import ContestService
-except ImportError:
-    from infrastructure.models.user_model import UserModel
-    from infrastructure.databases.mssql import session
-    from api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
-    from api.role_required import token_required
-    from services.auth_service import AuthService
-    from infrastructure.repositories.auth_repository import AuthRepository
-    from infrastructure.repositories.contest_repository import ContestRepository
-    from services.contest_service import ContestService
+from infrastructure.models.app import UserModel
+from infrastructure.databases.mssql import session
+from api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
+from api.role_required import token_required
+from services.auth_service import AuthService
+from infrastructure.repositories.auth_repository import AuthRepository
+from infrastructure.repositories.contest_repository import ContestRepository
+from services.contest_service import ContestService
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -133,10 +123,21 @@ def register():
     if not new_user:
         return jsonify({'message': 'Registration failed due to server error'}), 500
 
+    # Auto-generate JWT token for newly registered user (auto-login)
+    payload = {
+      'user_id': new_user.id,
+      'username': new_user.username,
+      'role': new_user.role,
+      'exp': datetime.utcnow() + timedelta(hours=24)
+    }
+    secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
+    token = jwt.encode(payload, secret_key, algorithm='HS256')
+
     result = register_response_schema.dump(new_user)
     return jsonify({
-        'message': 'User registered successfully!',
-        'user': result
+      'message': 'User registered successfully!',
+      'token': token,
+      'user': result
     }), 201
 
 
@@ -189,10 +190,10 @@ def login():
         'user_id': user.id,
         'username': user.username,
         'role': user.role,
-        'exp': datetime.utcnow() + timedelta(hours=24)
+        'exp': datetime.now(timezone.utc) + timedelta(hours=24)
     }
 
-    secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
+    secret_key = current_app.config.get('SECRET_KEY') or 'dev-secret-key-change-me-in-production-32chars'
     token = jwt.encode(payload, secret_key, algorithm='HS256')
 
     return jsonify({
