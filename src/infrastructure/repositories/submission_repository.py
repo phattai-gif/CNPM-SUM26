@@ -12,6 +12,7 @@ from infrastructure.models.app import (
     SubmissionFileModel,
     SubmissionFilmMetadataModel,
     AIFlagModel,
+    AIAnalysisReportModel,
 )
 
 
@@ -215,6 +216,45 @@ class SubmissionRepository(ISubmissionRepository):
             .filter_by(submission_id=submission_id, flag_type=flag_type)
             .first()
         )
+
+    def save_ai_analysis_report(
+        self,
+        submission_id: int,
+        ai_flag_id: Optional[int],
+        ai_model_name: str,
+        ai_confidence_score: float,
+        raw_details: dict,
+    ) -> AIAnalysisReportModel:
+        """Save or update AI analysis report for a submission into ai_analysis_reports table."""
+        try:
+            existing = (
+                self.session
+                .query(AIAnalysisReportModel)
+                .filter_by(submission_id=submission_id, ai_model_name=ai_model_name)
+                .first()
+            )
+            if existing:
+                existing.ai_flag_id = ai_flag_id
+                existing.ai_confidence_score = ai_confidence_score
+                existing.raw_details = raw_details
+                self.session.commit()
+                self.session.refresh(existing)
+                return existing
+
+            report = AIAnalysisReportModel(
+                submission_id=submission_id,
+                ai_flag_id=ai_flag_id,
+                ai_model_name=ai_model_name,
+                ai_confidence_score=ai_confidence_score,
+                raw_details=raw_details,
+            )
+            self.session.add(report)
+            self.session.commit()
+            self.session.refresh(report)
+            return report
+        except Exception:
+            self.session.rollback()
+            raise
 
     def create_submission(
         self,

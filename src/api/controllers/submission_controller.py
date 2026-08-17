@@ -448,13 +448,7 @@ def get_submission(
                 ai_result = ai_detection_service.detect_ai(image_path)
                 ai_score = ai_result.get("ai_score", 0)
                 ai_message = ai_result.get("ai_message", "")
-
-                if ai_score >= 70:
-                    risk_level = "high"
-                elif ai_score >= 30:
-                    risk_level = "medium"
-                else:
-                    risk_level = "safe"
+                risk_level = ai_result.get("risk_level", "safe")
 
                 saved_flag = submission_repo.save_ai_flag(
                     submission_id=submission_id,
@@ -463,6 +457,19 @@ def get_submission(
                     flag_type="AI_METADATA",
                     status="pending",
                 )
+
+                # Save raw EXIF to AI report
+                submission_repo.save_ai_analysis_report(
+                    submission_id=submission_id,
+                    ai_flag_id=saved_flag.id,
+                    ai_model_name="EXIF Extraction Engine",
+                    ai_confidence_score=ai_score,
+                    raw_details={
+                        "exif_data": ai_result.get("exif_data", {}),
+                        "raw_exif": ai_result.get("raw_exif", {})
+                    }
+                )
+
                 ai_flag_data = {
                     "ai_score": float(saved_flag.confidence_score),
                     "ai_message": ai_message,

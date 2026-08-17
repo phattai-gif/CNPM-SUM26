@@ -13,12 +13,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../s
 # Import tất cả model để SQLAlchemy tạo đầy đủ bảng (bao gồm FK dependencies)
 from infrastructure.databases.base import Base
 from infrastructure.databases.factory_database import FactoryDatabase as db_factory
-from infrastructure.models.user_model import UserModel
-from infrastructure.models.contest_model import ContestModel
-from infrastructure.models.round_model import RoundModel
-from infrastructure.models.submission_model import SubmissionModel
-from infrastructure.models.submission_file_model import SubmissionFileModel
-from infrastructure.models.film_metadata_model import SubmissionFilmMetadataModel
+from infrastructure.models import *
+
+
 
 # AIFlagModel: SQLite không hỗ trợ BigInteger autoincrement đúng cách,
 # nên ta tạo bảng ai_flags thủ công bằng SQL raw cho mục đích test
@@ -37,7 +34,8 @@ with engine.connect() as conn:
     conn.execute(text("DROP TABLE IF EXISTS ai_flags"))
     conn.commit()
 
-Base.metadata.create_all(engine)
+# Base.metadata.create_all(engine)
+
 
 # Tạo lại bảng ai_flags với INTEGER PRIMARY KEY (SQLite autoincrement)
 with engine.connect() as conn:

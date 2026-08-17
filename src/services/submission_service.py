@@ -140,52 +140,58 @@ class SubmissionService:
                 "film_metadata.film_stock is required"
             )
 
-        return (
-            self.submission_repo.create_submission(
-                round_id=round_id,
-                user_id=user_id,
-                title=title,
-                image_hd_url=image_hd_url,
-                file_hash=file_hash,
-                story_description=(
-                    story_description
-                ),
-                thumbnail_url=thumbnail_url,
-                width_px=width_px,
-                height_px=height_px,
-                file_size_bytes=file_size_bytes,
-                film_stock=film_metadata.get(
-                    "film_stock"
-                ),
-                film_iso=film_metadata.get(
-                    "film_iso"
-                ),
-                camera_body=film_metadata.get(
-                    "camera_body"
-                ),
-                lens=film_metadata.get(
-                    "lens"
-                ),
-                lab_name=film_metadata.get(
-                    "lab_name"
-                ),
-                scanner_info=film_metadata.get(
-                    "scanner_info"
-                ),
-                development_process=(
-                    film_metadata.get(
-                        "development_process",
-                        "C-41",
-                    )
-                ),
-                taken_at_location=(
-                    film_metadata.get(
-                        "taken_at_location"
-                    )
-                ),
-                status=status,
-            )
+        submission = self.submission_repo.create_submission(
+            round_id=round_id,
+            user_id=user_id,
+            title=title,
+            image_hd_url=image_hd_url,
+            file_hash=file_hash,
+            story_description=story_description,
+            thumbnail_url=thumbnail_url,
+            width_px=width_px,
+            height_px=height_px,
+            file_size_bytes=file_size_bytes,
+            film_stock=film_metadata.get("film_stock"),
+            film_iso=film_metadata.get("film_iso"),
+            camera_body=film_metadata.get("camera_body"),
+            lens=film_metadata.get("lens"),
+            lab_name=film_metadata.get("lab_name"),
+            scanner_info=film_metadata.get("scanner_info"),
+            development_process=film_metadata.get("development_process", "C-41"),
+            taken_at_location=film_metadata.get("taken_at_location"),
+            status=status,
         )
+
+        try:
+            from services.ai_detection_service import AiDetectionService
+            ai_service = AiDetectionService()
+            ai_result = ai_service.detect_ai(image_hd_url)
+
+            ai_score = ai_result.get("ai_score", 0)
+            risk_level = ai_result.get("risk_level", "safe")
+
+            saved_flag = self.submission_repo.save_ai_flag(
+                submission_id=submission.id,
+                confidence_score=ai_score,
+                risk_level=risk_level,
+                flag_type="AI_METADATA",
+                status="pending"
+            )
+
+            self.submission_repo.save_ai_analysis_report(
+                submission_id=submission.id,
+                ai_flag_id=saved_flag.id,
+                ai_model_name="EXIF Extraction Engine",
+                ai_confidence_score=ai_score,
+                raw_details={
+                    "exif_data": ai_result.get("exif_data", {}),
+                    "raw_exif": ai_result.get("raw_exif", {})
+                }
+            )
+        except Exception:
+            pass
+
+        return submission
 
     def get_submission_by_id(
         self,
