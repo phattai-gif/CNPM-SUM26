@@ -7,13 +7,25 @@ from domain.models.submission import Submission
 from infrastructure.databases.factory_database import (
     FactoryDatabase as db_factory
 )
-from infrastructure.models.app import (
-    SubmissionModel,
-    SubmissionFileModel,
-    SubmissionFilmMetadataModel,
-    AIFlagModel,
-    AIAnalysisReportModel,
-)
+try:
+    from src.infrastructure.models.app import (
+        SubmissionModel,
+        SubmissionFileModel,
+        SubmissionFilmMetadataModel,
+        AIFlagModel,
+        AIAnalysisReportModel,
+        RoundModel,
+    )
+except ImportError:
+    from infrastructure.models.app import (
+        SubmissionModel,
+        SubmissionFileModel,
+        SubmissionFilmMetadataModel,
+        AIFlagModel,
+        AIAnalysisReportModel,
+        RoundModel,
+    )
+
 
 
 class SubmissionRepository(ISubmissionRepository):
@@ -261,13 +273,14 @@ class SubmissionRepository(ISubmissionRepository):
         round_id: int,
         user_id: int,
         title: str,
-        image_hd_url: str,
-        file_hash: str,
+        image_hd_url: Optional[str] = None,
+        file_hash: Optional[str] = None,
         story_description: str = "",
         thumbnail_url: Optional[str] = None,
         width_px: Optional[int] = None,
         height_px: Optional[int] = None,
         file_size_bytes: Optional[int] = None,
+        files_data: Optional[List[dict]] = None,
         film_stock: str = "",
         film_iso: Optional[int] = None,
         camera_body: Optional[str] = None,
@@ -280,6 +293,14 @@ class SubmissionRepository(ISubmissionRepository):
     ) -> SubmissionModel:
 
         try:
+            round_obj = (
+                self.session
+                .query(RoundModel)
+                .filter_by(id=round_id)
+                .first()
+            )
+            if not round_obj:
+                raise ValueError(f"Round with id {round_id} does not exist")
 
             submission = SubmissionModel(
                 round_id=round_id,
@@ -290,21 +311,32 @@ class SubmissionRepository(ISubmissionRepository):
             )
 
             self.session.add(submission)
-
-
             self.session.flush()
 
-            submission_file = SubmissionFileModel(
-                submission_id=submission.id,
-                image_hd_url=image_hd_url,
-                thumbnail_url=thumbnail_url,
-                width_px=width_px,
-                height_px=height_px,
-                file_size_bytes=file_size_bytes,
-                file_hash=file_hash,
-            )
+            file_list = []
+            if files_data:
+                file_list = files_data
+            elif image_hd_url and file_hash:
+                file_list = [{
+                    "image_hd_url": image_hd_url,
+                    "thumbnail_url": thumbnail_url,
+                    "width_px": width_px,
+                    "height_px": height_px,
+                    "file_size_bytes": file_size_bytes,
+                    "file_hash": file_hash,
+                }]
 
-            self.session.add(submission_file)
+            for f_info in file_list:
+                submission_file = SubmissionFileModel(
+                    submission_id=submission.id,
+                    image_hd_url=f_info["image_hd_url"],
+                    thumbnail_url=f_info.get("thumbnail_url"),
+                    width_px=f_info.get("width_px"),
+                    height_px=f_info.get("height_px"),
+                    file_size_bytes=f_info.get("file_size_bytes"),
+                    file_hash=f_info["file_hash"],
+                )
+                self.session.add(submission_file)
 
             film_metadata = SubmissionFilmMetadataModel(
                 submission_id=submission.id,
@@ -320,7 +352,6 @@ class SubmissionRepository(ISubmissionRepository):
 
             self.session.add(film_metadata)
 
-
             self.session.commit()
             self.session.refresh(submission)
 
@@ -328,4 +359,4 @@ class SubmissionRepository(ISubmissionRepository):
 
         except Exception:
             self.session.rollback()
-            raise
+            raise
