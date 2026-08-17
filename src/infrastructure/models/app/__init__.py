@@ -6,7 +6,10 @@ separate them from legacy/incomplete model files in the parent package.
 """
 
 from .app_user_model import UserModel
-from .app_role_model import RoleModel, PermissionModel, user_roles, role_permissions
+from .app_permission_model import PermissionModel
+from .app_role_model import RoleModel
+from .app_user_role_model import user_roles
+from .app_role_permission_model import role_permissions
 from .app_contest_model import ContestModel
 from .app_announcement_model import ContestAnnouncementModel
 from .app_round_model import RoundModel
