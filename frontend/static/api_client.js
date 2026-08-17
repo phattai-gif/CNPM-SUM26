@@ -45,16 +45,7 @@
       const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
       const role = localStorage.getItem(STORAGE_KEYS.ROLE) || user?.role || null;
 
-      // Fallback: check cookies if localStorage doesn't have token
-      let finalToken = token;
-      if (!finalToken && typeof document !== 'undefined' && document.cookie) {
-        const match = document.cookie.split(';').map(s => s.trim()).find(s => s.startsWith(STORAGE_KEYS.TOKEN + '='));
-        if (match) {
-          finalToken = decodeURIComponent(match.split('=')[1] || '');
-        }
-      }
-
-      return { token: finalToken, user, role };
+      return { token, user, role };
     },
 
     isAuthenticated() {
@@ -105,49 +96,17 @@
       }
 
       if (response.status === 401) {
-        // Unauthorized: clear session and redirect to login
-        this.logout();
-        throw new Error(payload?.message || 'Unauthorized. Please login again.');
-        const error = new Error(payload?.message || 'You do not have permission for this action.');
-        error.status = response.status;
-        error.payload = payload;
-        error.details = payload;
-        error.errors = payload?.errors || null;
-        throw error;
-      }
+        throw new Error(
+        payload?.message || 'You do not have permission for this action.');
+    }
 
       if (response.status === 403) {
-        // Forbidden: also clear session and redirect
         this.logout();
-        throw new Error(payload?.message || 'Forbidden. Please login with sufficient privileges.');
+        throw new Error(payload?.message || 'You do not have permission for this action.');
       }
 
       if (!response.ok) {
-        let errMsg = payload?.message || `Request failed with status ${response.status}`;
-        if (payload && payload.error) {
-          try {
-            const extra = typeof payload.error === 'string' ? payload.error : JSON.stringify(payload.error);
-            errMsg = `${errMsg} - ${extra}`;
-          } catch (e) {
-            // ignore
-          }
-        }
-        throw new Error(errMsg);
-        const error = new Error(payload?.message || 'You do not have permission for this action.');
-        error.status = response.status;
-        error.payload = payload;
-        error.details = payload;
-        error.errors = payload?.errors || null;
-        throw error;
-      }
-
-      if (!response.ok) {
-        const error = new Error(payload?.message || `Request failed with status ${response.status}`);
-        error.status = response.status;
-        error.payload = payload;
-        error.details = payload;
-        error.errors = payload?.errors || null;
-        throw error;
+        throw new Error(payload?.message || `Request failed with status ${response.status}`);
       }
 
       return payload;
@@ -167,6 +126,60 @@
           ...headers
         },
         body: JSON.stringify(body)
+      });
+    },
+
+    uploadFormData(url, formData, options = {}) {
+      const { onProgress, headers = {}, ...rest } = options;
+      const { token } = this.getSession();
+
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
+
+        Object.entries(headers).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            xhr.setRequestHeader(key, value);
+          }
+        });
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable && typeof onProgress === 'function') {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress({ percent, loaded: event.loaded, total: event.total });
+          }
+        };
+
+        xhr.onload = () => {
+          const contentType = xhr.getResponseHeader('content-type') || '';
+          let payload = null;
+
+          if (contentType.includes('application/json')) {
+            try {
+              payload = JSON.parse(xhr.responseText);
+            } catch (error) {
+              payload = null;
+            }
+          } else {
+            payload = xhr.responseText || '';
+          }
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(payload);
+            return;
+          }
+
+          reject(new Error(payload?.message || `Request failed with status ${xhr.status}`));
+        };
+
+        xhr.onerror = () => reject(new Error('Network error while uploading the file.'));
+        xhr.ontimeout = () => reject(new Error('Upload timed out.'));
+
+        xhr.send(formData);
       });
     },
 
