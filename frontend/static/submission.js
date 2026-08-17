@@ -11,15 +11,21 @@ class SubmissionForm {
         this.imageUploadArea = document.getElementById('imageUploadArea');
         this.imagePreview = document.getElementById('imagePreview');
         this.submitBtn = document.getElementById('submitBtn');
+        this.draftBtn = document.getElementById('draftBtn');
         this.loadingSpinner = document.getElementById('loadingSpinner');
         this.successMessage = document.getElementById('successMessage');
         this.errorMessage = document.getElementById('errorMessage');
-        
+        this.progressContainer = document.getElementById('uploadProgress');
+        this.progressFill = document.getElementById('progressFill');
+        this.progressText = document.getElementById('progressText');
+        this.draftStatus = document.getElementById('draftStatus');
+
         this.selectedImage = null;
         this.selectedImageFile = null;
         this.roundsList = [];
         this.session = window.AuthSession.getSession();
         this.authToken = this.session.token;
+        this.isSubmitting = false;
 
         this.init();
     }
@@ -31,6 +37,7 @@ class SubmissionForm {
         if (!this.authToken) {
             this.showError('Authentication Error', 'You must be logged in to submit. Please login first.');
             this.submitBtn.disabled = true;
+            this.draftBtn.disabled = true;
             return;
         }
 
@@ -41,7 +48,8 @@ class SubmissionForm {
         this.dragDropZone.addEventListener('drop', (e) => this.handleFileDrop(e));
 
         // Form submission
-        this.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
+        this.form.addEventListener('submit', (e) => this.handleFormSubmit(e, 'submitted'));
+        this.draftBtn.addEventListener('click', (e) => this.handleFormSubmit(e, 'draft'));
 
         // Remove image button
         document.getElementById('removeImageBtn').addEventListener('click', () => this.removeImage());
@@ -296,6 +304,7 @@ class SubmissionForm {
         this.removeImage();
         document.getElementById('titleCount').textContent = '0/200 characters';
         document.getElementById('descriptionCount').textContent = '0/1000 characters';
+        this.draftStatus.style.display = 'none';
         this.dismissError();
         this.successMessage.style.display = 'none';
     }
@@ -337,60 +346,118 @@ class SubmissionForm {
     }
 
     /**
-     * Handle form submission
+     * Handle form submission and draft save
      */
-    async handleFormSubmit(event) {
+    async handleFormSubmit(event, mode = 'submitted') {
         event.preventDefault();
 
-        if (!this.validateForm()) {
+        if (this.isSubmitting) {
             return;
         }
 
-        this.submitBtn.disabled = true;
-        this.loadingSpinner.style.display = 'flex';
+        if (mode !== 'draft' && !this.validateForm()) {
+            return;
+        }
 
-        try {
-            // Prepare form data
-            const formData = new FormData(this.form);
-            const submissionData = {
-                round_id: parseInt(formData.get('round_id')),
-                title: formData.get('title'),
-                image_hd_url: this.selectedImage, // Base64 encoded or URL
-                story_description: formData.get('story_description') || '',
-                film_metadata: {
-                    camera_body: formData.get('camera_body') || undefined,
-                    lens: formData.get('lens') || undefined,
-                    film_stock: formData.get('film_stock') || undefined,
-                    film_iso: formData.get('film_iso') ? parseInt(formData.get('film_iso')) : undefined,
-                    lab_name: formData.get('lab_name') || undefined,
-                    scanner_info: formData.get('scanner_info') || undefined,
-                    development_process: formData.get('development_process') || 'C-41',
-                    taken_at_location: formData.get('taken_at_location') || undefined,
-                }
-            };
-
-            // Remove undefined values from film_metadata
-            Object.keys(submissionData.film_metadata).forEach(key =>
-                submissionData.film_metadata[key] === undefined && delete submissionData.film_metadata[key]
+        if (mode === 'draft') {
+            const hasDraftData = Boolean(
+                this.selectedImageFile ||
+                document.getElementById('roundSelect').value ||
+                document.getElementById('titleInput').value.trim() ||
+                document.getElementById('descriptionInput').value.trim()
             );
 
-            // If no metadata provided, remove the empty object
-            if (Object.keys(submissionData.film_metadata).length === 0) {
-                delete submissionData.film_metadata;
+            if (!hasDraftData) {
+                this.showError('Draft Empty', 'Please add a title, image, or contest round before saving a draft.');
+                return;
+            }
+        }
+
+        this.isSubmitting = true;
+        this.submitBtn.disabled = true;
+        this.draftBtn.disabled = true;
+        this.loadingSpinner.style.display = 'flex';
+        this.draftStatus.style.display = 'none';
+
+        try {
+            const formData = this.buildSubmissionFormData(mode);
+            const responseData = await window.apiClient.uploadFormData('/submissions', formData, {
+                onProgress: ({ percent }) => {
+                    const label = mode === 'draft' ? 'Saving draft' : 'Uploading submission';
+                    this.showProgress(label, percent);
+                }
+            });
+
+            if (mode === 'draft') {
+                this.handleDraftSuccess(responseData);
+            } else {
+                this.handleSubmissionSuccess(responseData);
             }
 
-            // Call API
-            const responseData = await window.apiClient.post('/submissions', submissionData);
-
-            // Handle success
-            this.handleSubmissionSuccess(responseData);
-
         } catch (error) {
-            this.showError('Submission Failed', error.message || 'An unexpected error occurred');
+            this.showError(mode === 'draft' ? 'Draft Save Failed' : 'Submission Failed', error.message || 'An unexpected error occurred');
         } finally {
             this.loadingSpinner.style.display = 'none';
+            this.isSubmitting = false;
             this.submitBtn.disabled = false;
+            this.draftBtn.disabled = false;
+            this.hideProgress();
         }
+    }
+
+    buildSubmissionFormData(mode = 'submitted') {
+        const formData = new FormData();
+        const title = document.getElementById('titleInput').value.trim();
+        const description = document.getElementById('descriptionInput').value.trim();
+        const roundId = document.getElementById('roundSelect').value;
+
+        if (roundId) {
+            formData.append('round_id', roundId);
+        }
+
+        if (title) {
+            formData.append('title', title);
+        }
+
+        if (description) {
+            formData.append('story_description', description);
+        }
+
+        const metadataFields = {
+            camera_body: document.getElementById('cameraBodies').value.trim() || '',
+            lens: document.getElementById('lensInput').value.trim() || '',
+            film_stock: document.getElementById('filmStockInput').value.trim() || '',
+            film_iso: document.getElementById('filmIsoInput').value.trim() || '',
+            lab_name: document.getElementById('labNameInput').value.trim() || '',
+            scanner_info: document.getElementById('scannerInfoInput').value.trim() || '',
+            development_process: document.getElementById('developmentProcessSelect').value || 'C-41',
+            taken_at_location: document.getElementById('locationInput').value.trim() || ''
+        };
+
+        Object.entries(metadataFields).forEach(([key, value]) => {
+            if (value !== '') {
+                formData.append(key, value);
+            }
+        });
+
+        if (this.selectedImageFile) {
+            formData.append('file', this.selectedImageFile, this.selectedImageFile.name);
+        }
+
+        formData.append('status', mode === 'draft' ? 'draft' : 'submitted');
+        return formData;
+    }
+
+    showProgress(label, percent = 0) {
+        this.progressContainer.style.display = 'block';
+        this.progressFill.style.width = `${percent}%`;
+        this.progressText.textContent = `${label}: ${percent}%`;
+    }
+
+    hideProgress() {
+        this.progressContainer.style.display = 'none';
+        this.progressFill.style.width = '0%';
+        this.progressText.textContent = '0% uploaded';
     }
 
     /**
@@ -429,6 +496,20 @@ class SubmissionForm {
 
         // Store submission ID for later reference
         this.currentSubmissionId = submission.id;
+    }
+
+    /**
+     * Handle draft save success
+     */
+    handleDraftSuccess(data) {
+        const submission = data.submission || {};
+        const statusText = submission.status || 'draft';
+
+        this.draftStatus.textContent = `Draft saved successfully • Status: ${statusText}`;
+        this.draftStatus.style.display = 'block';
+        this.draftStatus.classList.add('status-success');
+        this.draftStatus.classList.remove('status-error');
+        this.form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     /**
