@@ -1,6 +1,7 @@
 ﻿"""Submission file ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from infrastructure.databases.base import Base
@@ -20,3 +21,5 @@ class SubmissionFileModel(Base):
     file_hash = Column(String(64), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    submission = relationship("SubmissionModel", back_populates="files")

@@ -25,4 +25,5 @@ class ContestModel(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationship to the user who created the contest. Table is schema-qualified as 'app.users'.
-    creator = relationship("UserModel", primaryjoin="ContestModel.created_by==UserModel.id", foreign_keys=[created_by], uselist=False)
+    creator = relationship("UserModel", primaryjoin="ContestModel.created_by==UserModel.id", foreign_keys=[created_by], uselist=False, back_populates="contests")
+    rounds = relationship("RoundModel", back_populates="contest", cascade="all, delete-orphan")
