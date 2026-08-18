@@ -1,4 +1,4 @@
-# Constants
+﻿# Constants
 
 # Define any constants used throughout the application here. 
 # For example, you might define API version, error messages, or configuration keys.

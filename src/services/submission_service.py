@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple
+﻿from typing import Any, Dict, List, Optional, Tuple
 
 from infrastructure.repositories.submission_repository import (
     SubmissionRepository,
@@ -501,3 +501,4 @@ class SubmissionService:
             self.submission_repo
             .list()
         )
+

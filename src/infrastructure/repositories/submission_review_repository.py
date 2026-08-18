@@ -1,4 +1,4 @@
-from typing import Optional, List
+﻿from typing import Optional, List
 from sqlalchemy.orm import Session
 
 from infrastructure.databases.factory_database import FactoryDatabase as db_factory
@@ -46,3 +46,4 @@ class SubmissionReviewRepository:
         self.session.commit()
         self.session.refresh(model)
         return model
+

@@ -1,4 +1,4 @@
-from collections import defaultdict
+﻿from collections import defaultdict
 from typing import Optional
 
 try:
@@ -176,19 +176,19 @@ class ScoreService:
 
     def finalize_round(self, round_id: int):
         """
-        Chốt điểm vòng thi.
+        Chá»‘t Ä‘iá»ƒm vÃ²ng thi.
 
-        Quy trình:
-        1. Kiểm tra vòng thi tồn tại.
-        2. Kiểm tra vòng đã FINALIZED chưa.
-        3. Lấy tiêu chí của vòng.
-        4. Lấy submission thuộc vòng.
-        5. Tính tổng điểm cho từng submission.
-        6. Xếp hạng từ cao xuống thấp.
-        7. Người có cùng điểm sẽ cùng hạng.
-        8. Lưu final_score cho submission.
-        9. Cập nhật trạng thái vòng thành FINALIZED.
-        10. Trả kết quả để hệ thống công bố.
+        Quy trÃ¬nh:
+        1. Kiá»ƒm tra vÃ²ng thi tá»“n táº¡i.
+        2. Kiá»ƒm tra vÃ²ng Ä‘Ã£ FINALIZED chÆ°a.
+        3. Láº¥y tiÃªu chÃ­ cá»§a vÃ²ng.
+        4. Láº¥y submission thuá»™c vÃ²ng.
+        5. TÃ­nh tá»•ng Ä‘iá»ƒm cho tá»«ng submission.
+        6. Xáº¿p háº¡ng tá»« cao xuá»‘ng tháº¥p.
+        7. NgÆ°á»i cÃ³ cÃ¹ng Ä‘iá»ƒm sáº½ cÃ¹ng háº¡ng.
+        8. LÆ°u final_score cho submission.
+        9. Cáº­p nháº­t tráº¡ng thÃ¡i vÃ²ng thÃ nh FINALIZED.
+        10. Tráº£ káº¿t quáº£ Ä‘á»ƒ há»‡ thá»‘ng cÃ´ng bá»‘.
         """
 
         round_obj = self.contest_repo.get_round_by_id(round_id)
@@ -466,3 +466,4 @@ class ScoreService:
             ),
             None,
         )
+

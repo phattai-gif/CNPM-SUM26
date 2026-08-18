@@ -1,1 +1,1 @@
-# Storage infrastructure adapters package
+﻿# Storage infrastructure adapters package

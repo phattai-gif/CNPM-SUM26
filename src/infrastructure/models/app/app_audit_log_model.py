@@ -1,4 +1,4 @@
-"""Audit log ORM model."""
+﻿"""Audit log ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, JSON, String
 from sqlalchemy.sql import func

@@ -1,4 +1,4 @@
-"""Canonical SQLAlchemy models for the application database.
+﻿"""Canonical SQLAlchemy models for the application database.
 
 This package contains the clean, schema-backed ORM definitions used to build
 and maintain the database metadata. The file names use the app_ prefix to

@@ -1,10 +1,9 @@
-from flask import Blueprint, request, jsonify, current_app, render_template
+﻿from flask import Blueprint, request, jsonify, current_app, render_template
 from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from infrastructure.models.app import UserModel
-from infrastructure.databases.mssql import session
 from api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
 from api.role_required import token_required
 from services.auth_service import AuthService
@@ -14,7 +13,7 @@ from services.contest_service import ContestService
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
-# Khởi tạo repository & service dùng FactoryDatabase (PostgreSQL Supabase)
+# Khá»Ÿi táº¡o repository & service dÃ¹ng FactoryDatabase (PostgreSQL Supabase)
 auth_service = AuthService(AuthRepository())
 contest_service = ContestService(ContestRepository())
 
@@ -109,7 +108,7 @@ def register():
     if auth_service.check_email_exist(email):
         return jsonify({'message': f'Email "{email}" is already registered.'}), 400
 
-    # Mã hóa mật khẩu
+    # MÃ£ hÃ³a máº­t kháº©u
     password_hashed = generate_password_hash(password)
 
     new_user = auth_service.register(
@@ -185,7 +184,7 @@ def login():
     if not user:
         return jsonify({'message': 'Invalid username or password'}), 401
 
-    # Tạo JWT Payload chứa thông tin User ID, Username và Role
+    # Táº¡o JWT Payload chá»©a thÃ´ng tin User ID, Username vÃ  Role
     payload = {
         'user_id': user.id,
         'username': user.username,

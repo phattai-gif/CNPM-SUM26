@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+﻿from flask import Blueprint, render_template, request, jsonify
 from api.role_required import token_required, role_required
 from services.submission_review_service import SubmissionReviewService
 from infrastructure.repositories.submission_review_repository import SubmissionReviewRepository
@@ -15,10 +15,10 @@ def submission_review(submission_id):
     """
     submission = {
         'id': submission_id,
-        'title': 'Bài mẫu: Bình minh trên phố cổ',
-        'author': 'Nguyễn Văn A',
+        'title': 'BÃ i máº«u: BÃ¬nh minh trÃªn phá»‘ cá»•',
+        'author': 'Nguyá»…n VÄƒn A',
         'submitted_at': '2026-08-14 09:00',
-        'content': 'Đây là nội dung bài dự thi mẫu. Nội dung mô tả ý tưởng và kỹ thuật.',
+        'content': 'ÄÃ¢y lÃ  ná»™i dung bÃ i dá»± thi máº«u. Ná»™i dung mÃ´ táº£ Ã½ tÆ°á»Ÿng vÃ  ká»¹ thuáº­t.',
         'attachments': ['answer.pdf'],
         'flagged': True,
         'image_url': None,

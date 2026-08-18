@@ -1,4 +1,4 @@
-"""Submission AI tag ORM model."""
+﻿"""Submission AI tag ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.sql import func

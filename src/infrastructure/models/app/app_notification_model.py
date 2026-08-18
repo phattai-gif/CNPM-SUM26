@@ -1,4 +1,4 @@
-"""Notification ORM model."""
+﻿"""Notification ORM model."""
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.sql import func

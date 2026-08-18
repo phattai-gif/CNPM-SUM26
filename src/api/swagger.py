@@ -1,7 +1,7 @@
-from apispec import APISpec
+﻿from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
-from api.schemas.auth import LoginUserRequestSchema, LoginUserResponseSchema, RigisterUserRequestSchema, RigisterUserResponseSchema
+from .schemas.auth import LoginUserRequestSchema, LoginUserResponseSchema, RigisterUserRequestSchema, RigisterUserResponseSchema
 
 spec = APISpec(
     title="AI-powered Film Photography Contest Management API",
@@ -10,7 +10,7 @@ spec = APISpec(
     plugins=[FlaskPlugin(), MarshmallowPlugin()],
 )
 
-# Đăng ký schema để tự động sinh model
+# ÄÄƒng kÃ½ schema Ä‘á»ƒ tá»± Ä‘á»™ng sinh model
 spec.components.schema("LoginUserRequest", schema=LoginUserRequestSchema)
 spec.components.schema("LoginUserResponse", schema=LoginUserResponseSchema)
 spec.components.schema("RigisterUserRequest", schema=RigisterUserRequestSchema)

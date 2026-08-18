@@ -1,4 +1,4 @@
-"""AI analysis report ORM model."""
+﻿"""AI analysis report ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, JSON, Numeric, String
 from sqlalchemy.sql import func

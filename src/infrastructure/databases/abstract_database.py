@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+﻿from abc import ABC, abstractmethod
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -15,7 +15,7 @@ class AbstractDatabase(ABC):
         if not self.database_uri:
             raise ValueError(
                 "DATABASE_URI is not configured. "
-                "Please set POSTGREE_DATABASE_URL in .env"
+                "Please set DATABASE_URI or POSTGREE_DATABASE_URL in .env"
             )
 
         self.engine = create_engine(
@@ -29,7 +29,9 @@ class AbstractDatabase(ABC):
             bind=self.engine,
         )
 
-        self.session = self.SessionLocal()
+    @property
+    def session(self):
+        return self.SessionLocal()
 
     @abstractmethod
     def init_database(self, app):

@@ -1,4 +1,4 @@
-from typing import Optional
+﻿from typing import Optional
 from sqlalchemy.orm import Session
 
 from infrastructure.databases.factory_database import FactoryDatabase as db_factory
@@ -28,3 +28,4 @@ class ContestSettingsRepository:
         self.session.commit()
         self.session.refresh(model)
         return model
+

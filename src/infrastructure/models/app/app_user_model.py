@@ -1,4 +1,4 @@
-"""User ORM model."""
+﻿"""User ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, String, Text
 from sqlalchemy.sql import func

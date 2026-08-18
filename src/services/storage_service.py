@@ -1,4 +1,4 @@
-import hashlib
+﻿import hashlib
 import io
 import os
 
@@ -8,14 +8,14 @@ from typing import Any, Dict, Optional, Tuple
 from PIL import Image
 
 try:
-    from src.config import Config
-    from src.domain.services.istorage_service import (
+    from config import Config
+    from domain.services.istorage_service import (
         IStorageAdapter,
     )
-    from src.infrastructure.services.storage.local_storage_adapter import (
+    from infrastructure.services.storage.local_storage_adapter import (
         LocalStorageAdapter,
     )
-    from src.infrastructure.services.storage.cloudinary_storage_adapter import (
+    from infrastructure.services.storage.cloudinary_storage_adapter import (
         CloudinaryStorageAdapter,
     )
 except ImportError:
@@ -314,3 +314,4 @@ class StorageService:
             "height": height,
             "sha256": sha256_hash,
         }
+

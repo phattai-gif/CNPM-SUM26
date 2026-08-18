@@ -1,4 +1,4 @@
-"""Criteria ORM model."""
+﻿"""Criteria ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy.sql import func

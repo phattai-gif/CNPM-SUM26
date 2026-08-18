@@ -1,4 +1,4 @@
-import os
+﻿import os
 
 try:
     import exifread
@@ -192,3 +192,4 @@ class AiDetectionService:
             }
         except Exception:
             return None
+

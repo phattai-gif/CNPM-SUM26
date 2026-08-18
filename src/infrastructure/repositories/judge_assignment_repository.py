@@ -1,4 +1,4 @@
-from typing import List, Optional
+﻿from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -192,3 +192,4 @@ class JudgeAssignmentRepository(IJudgeAssignmentRepository):
         except Exception:
             self._rollback_session()
             return []
+
