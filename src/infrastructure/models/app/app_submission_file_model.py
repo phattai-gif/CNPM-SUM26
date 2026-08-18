@@ -1,4 +1,4 @@
-"""Submission file ORM model."""
+﻿"""Submission file ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.sql import func

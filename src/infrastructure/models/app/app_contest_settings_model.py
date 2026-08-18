@@ -1,4 +1,4 @@
-"""Contest settings ORM model."""
+﻿"""Contest settings ORM model."""
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.sql import func

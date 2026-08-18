@@ -1,4 +1,4 @@
-import os
+﻿import os
 
 from PIL import Image
 import imagehash
@@ -59,3 +59,4 @@ class DuplicateDetectionService:
             "phash_distance": int(phash_distance),
             "ahash_distance": int(ahash_distance),
         }
+

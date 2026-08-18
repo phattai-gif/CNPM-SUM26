@@ -1,4 +1,4 @@
-from api.controllers.auth_controller import auth_bp as auth_bp
+﻿from api.controllers.auth_controller import auth_bp as auth_bp
 from api.controllers.ai_detection_controller import bp as ai_detection_bp
 from api.controllers.duplicate_detection_controller import bp as duplicate_detection_bp
 from api.controllers.submission_controller import submission_bp

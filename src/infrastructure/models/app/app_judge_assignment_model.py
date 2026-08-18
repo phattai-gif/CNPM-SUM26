@@ -1,4 +1,4 @@
-"""Judge assignment ORM model."""
+﻿"""Judge assignment ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.sql import func

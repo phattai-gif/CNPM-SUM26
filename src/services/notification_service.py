@@ -1,4 +1,4 @@
-from typing import Optional, List
+﻿from typing import Optional, List
 
 from infrastructure.repositories.notification_repository import NotificationRepository
 
@@ -22,3 +22,4 @@ class NotificationService:
 
     def mark_notification_read(self, notification_id: int):
         return self.repository.mark_as_read(notification_id)
+

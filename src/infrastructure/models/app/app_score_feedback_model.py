@@ -1,4 +1,4 @@
-"""Score feedback ORM model."""
+﻿"""Score feedback ORM model."""
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.sql import func

@@ -1,4 +1,4 @@
-import os
+﻿import os
 import tempfile
 from contextlib import contextmanager
 from PIL import Image
@@ -72,3 +72,4 @@ class ImageInputHandler:
                     os.remove(temp_path)
                 except Exception:
                     pass
+

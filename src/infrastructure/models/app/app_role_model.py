@@ -1,4 +1,4 @@
-"""Role and permission ORM models."""
+﻿"""Role and permission ORM models."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.sql import func

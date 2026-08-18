@@ -1,4 +1,4 @@
-from typing import List, Optional
+﻿from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 
@@ -375,3 +375,4 @@ class ContestRepository(IContestRepository):
         except Exception as e:
             self._rollback_session()
             raise e
+

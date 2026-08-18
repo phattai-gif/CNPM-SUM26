@@ -1,4 +1,4 @@
-"""Contest ORM model."""
+﻿"""Contest ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import relationship

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+﻿from flask import Blueprint, request, jsonify
 from api.role_required import token_required
 from services.notification_service import NotificationService
 from infrastructure.repositories.notification_repository import NotificationRepository

@@ -1,4 +1,4 @@
-import os
+﻿import os
 
 try:
     import exifread
@@ -290,4 +290,3 @@ class AiDetectionService:
             "risk_level": risk_level,
             "confidence_score": confidence_score
         }
-

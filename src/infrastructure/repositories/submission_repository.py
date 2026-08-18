@@ -1,30 +1,18 @@
-from typing import List, Optional, Tuple
+﻿from typing import List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
 from domain.models.isubmission_repository import ISubmissionRepository
 from domain.models.submission import Submission
-from infrastructure.databases.factory_database import (
-    FactoryDatabase as db_factory
+from infrastructure.databases.factory_database import FactoryDatabase as db_factory
+from infrastructure.models.app import (
+    SubmissionModel,
+    SubmissionFileModel,
+    SubmissionFilmMetadataModel,
+    AIFlagModel,
+    AIAnalysisReportModel,
+    RoundModel,
 )
-try:
-    from src.infrastructure.models.app import (
-        SubmissionModel,
-        SubmissionFileModel,
-        SubmissionFilmMetadataModel,
-        AIFlagModel,
-        AIAnalysisReportModel,
-        RoundModel,
-    )
-except ImportError:
-    from infrastructure.models.app import (
-        SubmissionModel,
-        SubmissionFileModel,
-        SubmissionFilmMetadataModel,
-        AIFlagModel,
-        AIAnalysisReportModel,
-        RoundModel,
-    )
 
 
 
@@ -359,4 +347,5 @@ class SubmissionRepository(ISubmissionRepository):
 
         except Exception:
             self.session.rollback()
-            raise
+            raise
+

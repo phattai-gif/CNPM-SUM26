@@ -1,4 +1,4 @@
-"""
+﻿"""
 Migration script: Add missing columns to database tables.
 - rounds.updated_at
 - contests.rules
@@ -12,7 +12,7 @@ src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, src_path)
 
 from sqlalchemy import text
-from infrastructure.databases.factory_database import FactoryDatabase as db_factory
+from .infrastructure.databases.factory_database import FactoryDatabase as db_factory
 
 def run_migration():
     session = db_factory.get_database('POSTGREE').session

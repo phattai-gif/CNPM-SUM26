@@ -1,4 +1,4 @@
-"""Submission review ORM model."""
+﻿"""Submission review ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.sql import func

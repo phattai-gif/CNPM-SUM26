@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple
+﻿from typing import Any, Dict, List, Optional, Tuple
 
 from infrastructure.repositories.submission_repository import (
     SubmissionRepository,
@@ -379,18 +379,9 @@ class SubmissionService:
         # =====================================================
 
         try:
-
-            try:
-
-                from src.services.ai_detection_service import (
-                    AiDetectionService,
-                )
-
-            except ImportError:
-
-                from services.ai_detection_service import (
-                    AiDetectionService,
-                )
+            from services.ai_detection_service import (
+                AiDetectionService,
+            )
 
             ai_service = (
                 AiDetectionService()
@@ -511,3 +502,4 @@ class SubmissionService:
             self.submission_repo
             .list()
         )
+

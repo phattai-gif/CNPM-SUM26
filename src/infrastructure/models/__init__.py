@@ -1,4 +1,4 @@
-"""Clean SQLAlchemy model exports for the application database.
+﻿"""Clean SQLAlchemy model exports for the application database.
 
 Only the canonical app-prefixed models are re-exported here to avoid duplicate
 ORM metadata registration from legacy model files in the parent package.

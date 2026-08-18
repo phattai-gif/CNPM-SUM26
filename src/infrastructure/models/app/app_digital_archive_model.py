@@ -1,4 +1,4 @@
-"""Digital archive exhibit ORM model."""
+﻿"""Digital archive exhibit ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.sql import func
