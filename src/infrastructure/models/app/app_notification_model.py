@@ -11,8 +11,8 @@ class NotificationModel(Base):
     __table_args__ = {"schema": "app", "extend_existing": True}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    contest_id = Column(BigInteger, ForeignKey("contests.id", ondelete="CASCADE"), nullable=True)
+    user_id = Column(BigInteger, ForeignKey("app.users.id", ondelete="CASCADE"), nullable=False)
+    contest_id = Column(BigInteger, ForeignKey("app.contests.id", ondelete="CASCADE"), nullable=True)
     title = Column(String(255), nullable=False)
     body = Column(Text, nullable=True)
     notification_type = Column(String(50), nullable=False, default="info")

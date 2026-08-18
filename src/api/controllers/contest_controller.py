@@ -80,6 +80,13 @@ def organizer_dashboard():
     return render_template('organizer_dashboard.html', contests=contests_data, organizer_id=user_id, api_token='')
 
 
+@contest_bp.route('/contest-detail', methods=['GET'])
+def organizer_contest_detail_page():
+    """Render frontend contest detail page which will fetch contest details via API."""
+    # Page itself doesn't require server-side authentication; JS will call protected API using token
+    return render_template('organizer_contest_detail.html')
+
+
 @contest_bp.route('/dashboard/metrics', methods=['GET'])
 @role_required('organizer', 'admin')
 def organizer_dashboard_metrics():
@@ -96,38 +103,40 @@ def organizer_dashboard_metrics():
         except Exception:
             from infrastructure.models.submission_model import SubmissionModel
             from infrastructure.models.judge_assignment_model import JudgeAssignmentModel
-
+        # gather round ids owned by this organizer
         all_round_ids = []
         for c in contests:
             for r in (c.rounds or []):
                 if getattr(r, 'id', None):
                     all_round_ids.append(r.id)
 
-        submissions_count = 0
-        judges_count = 0
-        if all_round_ids:
-            try:
-                submissions_count = int(session.query(SubmissionModel).filter(SubmissionModel.round_id.in_(all_round_ids)).count())
-            except Exception:
-                submissions_count = 0
-            try:
-                judges_count = int(session.query(JudgeAssignmentModel.judge_id).filter(JudgeAssignmentModel.round_id.in_(all_round_ids)).distinct().count())
-            except Exception:
-                judges_count = 0
+        # default results
+        submissions = 0
+        judges = 0
+
+        # safe COUNT queries using func.count and func.distinct
+        from sqlalchemy import func
+        try:
+            if all_round_ids:
+                submissions = int(session.query(func.count(SubmissionModel.id)).filter(SubmissionModel.round_id.in_(all_round_ids)).scalar() or 0)
+                judges = int(session.query(func.count(func.distinct(JudgeAssignmentModel.judge_id))).filter(JudgeAssignmentModel.round_id.in_(all_round_ids)).scalar() or 0)
+        except Exception:
+            submissions = 0
+            judges = 0
 
         return jsonify({
             'message': 'Metrics fetched',
-            'submissions_count': submissions_count,
-            'contests_count': total_contests,
-            'judges_count': judges_count
+            'submissions': submissions,
+            'contests': total_contests,
+            'judges': judges
         }), 200
     except Exception:
         # On any error, return zeroed metrics so frontend shows 0 instead of failing
         return jsonify({
             'message': 'Metrics fetched',
-            'submissions_count': 0,
-            'contests_count': 0,
-            'judges_count': 0
+            'submissions': 0,
+            'contests': 0,
+            'judges': 0
         }), 200
 
 

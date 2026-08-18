@@ -193,3 +193,100 @@ class AiDetectionService:
         except Exception:
             return None
 
+    @staticmethod
+    def compare_metadata_with_exif(declared_metadata: dict, exif_data: dict) -> dict:
+        """
+        Compare user declared metadata (camera_body, lens, film_iso) with extracted EXIF metadata.
+        """
+        def normalize_val(val):
+            if val is None:
+                return ""
+            s = str(val).strip().lower()
+            if s in ["", "none", "unknown", "n/a", "null", "undefined"]:
+                return ""
+            return s
+
+        def extract_digits(s):
+            return "".join(c for c in s if c.isdigit())
+
+        declared_metadata = declared_metadata or {}
+        exif_data = exif_data or {}
+
+        # 1. Compare Camera
+        user_cam = normalize_val(declared_metadata.get("camera_body"))
+        exif_cam = normalize_val(exif_data.get("camera_model"))
+        if not user_cam or not exif_cam:
+            camera_status = "insufficient data"
+        elif user_cam in exif_cam or exif_cam in user_cam:
+            camera_status = "match"
+        else:
+            camera_status = "mismatch"
+
+        # 2. Compare Lens
+        user_lens = normalize_val(declared_metadata.get("lens"))
+        exif_lens = normalize_val(exif_data.get("lens"))
+        if not user_lens or not exif_lens:
+            lens_status = "insufficient data"
+        elif user_lens in exif_lens or exif_lens in user_lens:
+            lens_status = "match"
+        else:
+            lens_status = "mismatch"
+
+        # 3. Compare ISO
+        user_iso = normalize_val(declared_metadata.get("film_iso"))
+        exif_iso = normalize_val(exif_data.get("iso"))
+        if not user_iso or not exif_iso:
+            iso_status = "insufficient data"
+        else:
+            u_digits = extract_digits(user_iso)
+            e_digits = extract_digits(exif_iso)
+            if u_digits and e_digits and u_digits == e_digits:
+                iso_status = "match"
+            elif user_iso in exif_iso or exif_iso in user_iso:
+                iso_status = "match"
+            else:
+                iso_status = "mismatch"
+
+        mismatched_fields = []
+        if camera_status == "mismatch":
+            mismatched_fields.append("camera")
+        if lens_status == "mismatch":
+            mismatched_fields.append("lens")
+        if iso_status == "mismatch":
+            mismatched_fields.append("iso")
+
+        # Determine risk level and confidence score
+        if mismatched_fields:
+            risk_level = "high"
+            confidence_score = 80.0 + 10.0 * len(mismatched_fields)
+        elif camera_status == "match" or lens_status == "match" or iso_status == "match":
+            # No mismatch, at least one match
+            risk_level = "safe"
+            confidence_score = 0.0
+        else:
+            # No mismatch, but all are insufficient data
+            risk_level = "medium"
+            confidence_score = 30.0
+
+        return {
+            "comparison": {
+                "camera": {
+                    "user": declared_metadata.get("camera_body") or "",
+                    "exif": exif_data.get("camera_model") or "Unknown",
+                    "status": camera_status
+                },
+                "lens": {
+                    "user": declared_metadata.get("lens") or "",
+                    "exif": exif_data.get("lens") or "Unknown",
+                    "status": lens_status
+                },
+                "iso": {
+                    "user": declared_metadata.get("film_iso") or "",
+                    "exif": exif_data.get("iso") or "Unknown",
+                    "status": iso_status
+                }
+            },
+            "mismatched_fields": mismatched_fields,
+            "risk_level": risk_level,
+            "confidence_score": confidence_score
+        }

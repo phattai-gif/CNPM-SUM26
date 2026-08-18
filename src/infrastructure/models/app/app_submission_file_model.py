@@ -11,7 +11,7 @@ class SubmissionFileModel(Base):
     __table_args__ = {"schema": "app", "extend_existing": True}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    submission_id = Column(BigInteger, ForeignKey("submissions.id", ondelete="CASCADE"), nullable=False)
+    submission_id = Column(BigInteger, ForeignKey("app.submissions.id", ondelete="CASCADE"), nullable=False)
     image_hd_url = Column(String(512), nullable=False)
     thumbnail_url = Column(String(512), nullable=True)
     width_px = Column(Integer, nullable=True)
