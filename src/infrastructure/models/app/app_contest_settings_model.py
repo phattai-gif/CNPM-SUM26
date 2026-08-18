@@ -11,7 +11,7 @@ class ContestSettingsModel(Base):
     __table_args__ = {"schema": "app", "extend_existing": True}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    contest_id = Column(BigInteger, ForeignKey("contests.id", ondelete="CASCADE"), nullable=False, unique=True)
+    contest_id = Column(BigInteger, ForeignKey("app.contests.id", ondelete="CASCADE"), nullable=False, unique=True)
     allow_public_vote = Column(Boolean, nullable=False, default=False)
     allow_submission = Column(Boolean, nullable=False, default=True)
     max_submission_per_user = Column(Integer, nullable=False, default=1)

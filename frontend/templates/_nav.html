@@ -1,0 +1,221 @@
+<header class="app-nav-header">
+  <style>
+    .app-nav-header {
+      background: #fff;
+      border-bottom: 1px solid #e6e6e6;
+      padding: 12px 20px;
+      margin-bottom: 18px;
+    }
+
+    .app-nav-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .app-nav-left,
+    .app-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-nav-link {
+      text-decoration: none;
+      color: #374151;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: background-color 180ms ease, color 180ms ease;
+    }
+
+    .app-nav-link:hover {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .app-nav-link.primary {
+      color: #111827;
+      font-size: 1.02rem;
+      font-weight: 700;
+    }
+
+    .app-nav-btn {
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.95rem;
+      line-height: 1.2;
+    }
+
+    .app-nav-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .app-nav-btn-outline {
+      color: #374151;
+      background: #fff;
+      border-color: #d1d5db;
+    }
+
+    .app-nav-btn-outline:hover {
+      background: #f9fafb;
+      color: #111827;
+    }
+
+    .app-nav-btn-solid {
+      color: #fff;
+      background: #2563eb;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.24);
+    }
+
+    .app-nav-btn-solid:hover {
+      background: #1d4ed8;
+    }
+
+    .app-nav-user {
+      color: #111827;
+      font-weight: 700;
+      padding: 8px 6px;
+      max-width: 230px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 768px) {
+      .app-nav-header {
+        padding: 10px 14px;
+      }
+
+      .app-nav-wrap {
+        gap: 10px;
+      }
+
+      .app-nav-left,
+      .app-nav-right {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+
+  <div class="app-nav-wrap">
+    <nav class="app-nav-left" aria-label="Điều hướng chính">
+      <a href="/contests" class="app-nav-link primary">Danh sách cuộc thi</a>
+      <a href="/leaderboard" class="app-nav-link">Bảng xếp hạng</a>
+      <a href="/organizer/dashboard" id="nav-organizer-link" class="app-nav-btn app-nav-btn-solid">Quản lý</a>
+    </nav>
+
+    <div class="app-nav-right" id="nav-right-auth">
+      <a href="/login" id="nav-login" class="app-nav-btn app-nav-btn-outline">Đăng nhập</a>
+      <a href="/register" id="nav-register" class="app-nav-btn app-nav-btn-solid">Đăng ký</a>
+
+      <span id="nav-username" class="app-nav-user is-hidden"></span>
+      <button type="button" id="nav-logout" class="app-nav-btn app-nav-btn-outline is-hidden">Đăng xuất</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const tokenKey = 'authToken';
+      const userKey = 'authUser';
+
+      const organizerLink = document.getElementById('nav-organizer-link');
+      const loginLink = document.getElementById('nav-login');
+      const registerLink = document.getElementById('nav-register');
+      const usernameLabel = document.getElementById('nav-username');
+      const logoutButton = document.getElementById('nav-logout');
+
+      function safeGetSession() {
+        if (window.AuthSession && typeof window.AuthSession.getSession === 'function') {
+          return window.AuthSession.getSession();
+        }
+
+        let user = null;
+        try {
+          user = JSON.parse(localStorage.getItem(userKey) || 'null');
+        } catch (error) {
+          user = null;
+        }
+
+        return {
+          token: localStorage.getItem(tokenKey),
+          user
+        };
+      }
+
+      function setHidden(element, hidden) {
+        if (!element) return;
+        element.classList.toggle('is-hidden', hidden);
+      }
+
+      function displayNameFromUser(user) {
+        if (!user || typeof user !== 'object') {
+          return 'Tài khoản';
+        }
+
+        return user.full_name || user.username || user.email || 'Tài khoản';
+      }
+
+      function renderByAuthState() {
+        const session = safeGetSession();
+        const isLoggedIn = Boolean(session && session.token);
+
+        setHidden(organizerLink, !isLoggedIn);
+        setHidden(loginLink, isLoggedIn);
+        setHidden(registerLink, isLoggedIn);
+        setHidden(usernameLabel, !isLoggedIn);
+        setHidden(logoutButton, !isLoggedIn);
+
+        if (isLoggedIn && usernameLabel) {
+          usernameLabel.textContent = displayNameFromUser(session.user);
+          usernameLabel.title = usernameLabel.textContent;
+        }
+      }
+
+      function clearAuthStorage() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
+        localStorage.removeItem('authRole');
+      }
+
+      if (logoutButton) {
+        logoutButton.addEventListener('click', function () {
+          if (window.AuthSession && typeof window.AuthSession.logout === 'function') {
+            window.AuthSession.logout();
+            return;
+          }
+
+          clearAuthStorage();
+          window.location.href = '/login';
+        });
+      }
+
+      renderByAuthState();
+
+      // Đồng bộ trạng thái nav khi phiên đăng nhập thay đổi ở tab khác.
+      window.addEventListener('storage', function (event) {
+        if (event.key === 'authToken' || event.key === 'authUser' || event.key === 'authRole') {
+          renderByAuthState();
+        }
+      });
+    })();
+  </script>
+</header>
