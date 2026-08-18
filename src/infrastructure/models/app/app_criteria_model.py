@@ -1,6 +1,7 @@
 ﻿"""Criteria ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Numeric, String, Text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from infrastructure.databases.base import Base
@@ -18,3 +19,5 @@ class CriteriaModel(Base):
     weight = Column(Numeric(5, 2), nullable=False, default=1.00)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     # updated_at removed: some DB deployments lack this column and cause UndefinedColumn errors
+
+    round = relationship("RoundModel", back_populates="criteria")

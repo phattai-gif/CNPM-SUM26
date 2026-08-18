@@ -1,6 +1,7 @@
 ﻿"""Submission review ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from infrastructure.databases.base import Base
@@ -18,3 +19,6 @@ class SubmissionReviewModel(Base):
     decision_reason = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    submission = relationship("SubmissionModel", foreign_keys="SubmissionReviewModel.submission_id")
+    reviewer = relationship("UserModel", foreign_keys="SubmissionReviewModel.reviewer_id")
