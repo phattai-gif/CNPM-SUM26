@@ -46,6 +46,8 @@ function renderContests(contests) {
       </tr>
     </thead>
   `;
+  // add Actions column header
+  table.querySelector('thead tr').insertAdjacentHTML('beforeend', '<th>Actions</th>');
   const tbody = document.createElement('tbody');
 
   contests.forEach(c => {
@@ -59,6 +61,22 @@ function renderContests(contests) {
       <td>${start}</td>
       <td>${end}</td>
     `;
+    const actionsTd = document.createElement('td');
+    const editLink = document.createElement('a');
+    editLink.href = `/organizer/create-contest?contest_id=${encodeURIComponent(c.id)}`;
+    editLink.textContent = 'Edit';
+    editLink.className = 'btn';
+    editLink.style = 'display:inline-block;padding:6px 10px;font-size:0.9rem;';
+
+    const manageLink = document.createElement('a');
+    // Route to frontend detail UI which loads contest detail via API (authenticated)
+    manageLink.href = `/organizer/contest-detail?contest_id=${encodeURIComponent(c.id)}`;
+    manageLink.textContent = 'View';
+    manageLink.style = 'margin-left:8px;display:inline-block;padding:6px 10px;font-size:0.9rem;text-decoration:none;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;';
+
+    actionsTd.appendChild(editLink);
+    actionsTd.appendChild(manageLink);
+    tr.appendChild(actionsTd);
     tbody.appendChild(tr);
   });
 
@@ -70,8 +88,9 @@ function renderMetrics(metrics) {
   if (!metrics) return;
   const subs = document.getElementById('overview-submissions');
   const judges = document.getElementById('overview-judges');
-  if (subs) subs.textContent = metrics.submissions_count ?? '-';
-  if (judges) judges.textContent = metrics.judges_count ?? '-';
+  // backend now returns `submissions` and `judges`
+  if (subs) subs.textContent = (metrics.submissions ?? metrics.submissions_count ?? '-') ;
+  if (judges) judges.textContent = (metrics.judges ?? metrics.judges_count ?? '-') ;
 }
 
 async function initDashboard() {

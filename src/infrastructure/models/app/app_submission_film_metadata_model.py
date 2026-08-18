@@ -10,7 +10,7 @@ class SubmissionFilmMetadataModel(Base):
     __tablename__ = "submission_film_metadata"
     __table_args__ = {"schema": "app", "extend_existing": True}
 
-    submission_id = Column(BigInteger, ForeignKey("submissions.id", ondelete="CASCADE"), primary_key=True)
+    submission_id = Column(BigInteger, ForeignKey("app.submissions.id", ondelete="CASCADE"), primary_key=True)
     film_stock = Column(String(100), nullable=False)
     film_iso = Column(Integer, nullable=True)
     camera_body = Column(String(100), nullable=True)

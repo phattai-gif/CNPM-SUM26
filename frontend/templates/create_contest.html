@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Create Contest</title>
+    <title>Contest Configuration Manager</title>
     <link rel="stylesheet" href="/static/auth.css">
     <style>
       body {
@@ -15,9 +15,9 @@
       }
 
       .page-shell {
-        max-width: 760px;
+        max-width: 1000px;
         margin: 0 auto;
-        padding: 48px 20px;
+        padding: 36px 20px;
       }
 
       .panel {
@@ -29,14 +29,21 @@
       }
 
       h1 {
-        margin: 0 0 20px;
-        font-size: clamp(2rem, 2.4vw, 2.6rem);
+        margin: 0;
+        font-size: clamp(1.7rem, 2.2vw, 2.2rem);
         color: #111827;
+      }
+
+      .subtitle {
+        margin: 8px 0 0;
+        color: #6b7280;
+        font-size: 0.95rem;
       }
 
       form {
         display: grid;
         gap: 18px;
+        margin-top: 18px;
       }
 
       label {
@@ -46,7 +53,7 @@
         font-weight: 600;
       }
 
-      input, textarea {
+      input, textarea, select {
         width: 100%;
         border: 1px solid #d1d5db;
         border-radius: 12px;
@@ -56,95 +63,620 @@
       }
 
       textarea {
-        min-height: 120px;
+        min-height: 92px;
         resize: vertical;
       }
 
+      .section-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .inline-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
       button {
-        width: 100%;
-        margin-top: 8px;
         border: none;
-        border-radius: 12px;
-        padding: 14px 16px;
+        border-radius: 10px;
+        padding: 10px 14px;
         background: linear-gradient(135deg, #4f46e5, #2563eb);
         color: #fff;
         font-weight: 700;
         cursor: pointer;
       }
+
+      .btn-secondary {
+        background: #fff;
+        color: #111827;
+        border: 1px solid #d1d5db;
+      }
+
+      .btn-danger {
+        background: #ef4444;
+      }
+
+      .btn-success {
+        background: #10b981;
+      }
+
+      .round-item {
+        border: 1px solid #e6eefc;
+        padding: 12px;
+        margin: 12px 0;
+        border-radius: 12px;
+        background: #fbfdff;
+      }
+
+      .criteria-item {
+        border: 1px dashed #d9dfe9;
+        padding: 10px;
+        border-radius: 10px;
+        margin-top: 10px;
+        background: #fff;
+      }
+
+      .muted {
+        color: #6b7280;
+        font-size: 0.9rem;
+      }
+
+      #toast {
+        display: none;
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(2, 6, 23, 0.2);
+        z-index: 1300;
+        background: #111827;
+      }
+
+      @media (max-width: 768px) {
+        .section-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
+    {% include '_nav.html' %}
     <div class="page-shell">
       <div class="panel">
-        <h1>Create New Contest</h1>
-        <form method="post" action="/organizer/create-contest">
+        <h1>Contest Configuration Manager</h1>
+        <p class="subtitle" id="modeText">Tạo hoặc chỉnh sửa contest, round, criteria trực tiếp trên giao diện.</p>
+
+        <form id="contestForm" method="post" action="/organizer/create-contest">
           <div>
             <label>Contest Title</label>
             <input type="text" name="title" required placeholder="Enter contest title" />
           </div>
+
+          <div class="section-grid">
+            <div>
+              <label>Status</label>
+              <select name="status_select">
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="ended">Ended</option>
+              </select>
+            </div>
+            <div>
+              <label>Banner Image URL</label>
+              <input type="text" name="banner_url" placeholder="https://..." />
+            </div>
+          </div>
+
           <div>
             <label>Description</label>
             <textarea name="description" placeholder="Add contest description"></textarea>
           </div>
+
           <div>
-            <label>Start Date (YYYY-MM-DDTHH:MM:SS)</label>
-            <input type="text" name="start_date" placeholder="2026-08-12T09:00:00" />
+            <label>Rules</label>
+            <textarea name="rules" placeholder="Contest rules and regulations"></textarea>
           </div>
+
+          <div class="section-grid">
+            <div>
+              <label>Categories (comma separated)</label>
+              <input type="text" name="categories" placeholder="Portrait, Landscape, Documentary" />
+            </div>
+            <div>
+              <label>Start Date (ISO)</label>
+              <input type="text" name="start_date" placeholder="2026-08-12T09:00:00" />
+            </div>
+          </div>
+
           <div>
-            <label>End Date (YYYY-MM-DDTHH:MM:SS)</label>
+            <label>End Date (ISO)</label>
             <input type="text" name="end_date" placeholder="2026-08-20T18:00:00" />
           </div>
-          <div>
-            <button type="submit">Create Contest</button>
+
+          <div class="inline-actions">
+            <button type="button" id="saveContestBtn" class="btn-success">Lưu thông tin Contest</button>
+          </div>
+
+          <hr />
+          <h3 style="margin:0;">Rounds and Criteria</h3>
+          <p class="muted" style="margin:0;">Thêm, sửa, xóa từng Round/Criteria gọi API trực tiếp.</p>
+          <div id="roundsContainer"></div>
+          <div class="inline-actions">
+            <button type="button" id="addRoundBtn" class="btn-secondary">Add Round</button>
+            <button type="button" id="resetRoundsBtn" class="btn-secondary">Reset Local View</button>
+          </div>
+
+          <div class="inline-actions">
+            <button type="submit" id="submitBtn">Save All Changes</button>
+            <button type="button" id="publishBtn" class="btn-success" style="display:none;">Publish Contest</button>
           </div>
         </form>
       </div>
     </div>
+
+    <div id="confirmModal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(2,6,23,0.5);z-index:1200;">
+      <div style="background:#fff;border-radius:12px;padding:20px;max-width:480px;width:90%;box-shadow:0 10px 30px rgba(2,6,23,0.25);">
+        <h3 style="margin:0 0 8px">Xác nhận xuất bản</h3>
+        <p style="margin:0 0 16px;color:#374151">Bạn có chắc muốn xuất bản cuộc thi này?</p>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+          <button id="confirmCancel" class="btn-secondary">Hủy</button>
+          <button id="confirmPublish" class="btn-success">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" aria-live="polite">&nbsp;</div>
+
     <script src="/static/api_client.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        const form = document.querySelector('form[action="/organizer/create-contest"]');
-        if (!form) return;
-        form.addEventListener('submit', async function (e) {
-          e.preventDefault();
-          const title = form.querySelector('input[name="title"]').value.trim();
-          const description = form.querySelector('textarea[name="description"]').value.trim();
-          const start_date = form.querySelector('input[name="start_date"]').value.trim();
-          const end_date = form.querySelector('input[name="end_date"]').value.trim();
+        const form = document.getElementById('contestForm');
+        const roundsContainer = document.getElementById('roundsContainer');
+        const addRoundBtn = document.getElementById('addRoundBtn');
+        const resetRoundsBtn = document.getElementById('resetRoundsBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const saveContestBtn = document.getElementById('saveContestBtn');
+        const modeText = document.getElementById('modeText');
 
-          // Basic validation
-          if (!title) {
-            alert('Title is required');
-            return;
-          }
-          if (start_date && isNaN(Date.parse(start_date))) {
-            alert('Start date is not a valid ISO datetime');
-            return;
-          }
-          if (end_date && isNaN(Date.parse(end_date))) {
-            alert('End date is not a valid ISO datetime');
-            return;
-          }
+        const publishBtn = document.getElementById('publishBtn');
+        const modal = document.getElementById('confirmModal');
+        const modalCancel = document.getElementById('confirmCancel');
+        const modalConfirm = document.getElementById('confirmPublish');
+        const toast = document.getElementById('toast');
 
-          // Ensure token exists in localStorage or cookies
+        const getParam = (name) => new URLSearchParams(window.location.search).get(name);
+        let activeContestId = getParam('contest_id');
+        let nextRoundIdx = 1;
+
+        function showToast(msg, ms = 2600, isError = false) {
+          toast.textContent = msg;
+          toast.style.background = isError ? '#b91c1c' : '#111827';
+          toast.style.display = 'block';
+          setTimeout(() => {
+            toast.style.display = 'none';
+          }, ms);
+        }
+
+        function setButtonLoading(btn, on, label) {
+          if (!btn) return;
+          if (!btn.dataset.defaultText) btn.dataset.defaultText = btn.textContent;
+          btn.disabled = on;
+          btn.textContent = on ? label : btn.dataset.defaultText;
+        }
+
+        function hasSession() {
           const session = window.AuthSession.getSession();
           if (!session.token) {
-            alert('You must be logged in to create a contest. Redirecting to login...');
-            window.location.href = '/auth/login';
+            showToast('Bạn cần đăng nhập để thực hiện thao tác', 2400, true);
+            setTimeout(() => {
+              window.location.href = '/auth/login';
+            }, 600);
+            return false;
+          }
+          return true;
+        }
+
+        function uiToApiStatus(status) {
+          return status === 'ended' ? 'completed' : status;
+        }
+
+        function apiToUiStatus(status) {
+          if (status === 'completed') return 'ended';
+          if (status === 'active') return 'published';
+          return status || 'draft';
+        }
+
+        function setEditModeText() {
+          if (activeContestId) {
+            modeText.textContent = `Đang chỉnh sửa cuộc thi #${activeContestId}`;
+          } else {
+            modeText.textContent = 'Tạo hoặc chỉnh sửa contest, round, criteria trực tiếp trên giao diện.';
+          }
+        }
+
+        function createCriteriaElement(rIdx, cIdx, data) {
+          const el = document.createElement('div');
+          el.className = 'criteria-item';
+          el.dataset.criteriaId = data && data.id ? String(data.id) : '';
+          el.innerHTML = `
+            <div class="section-grid" style="grid-template-columns:2fr 1fr 1fr;gap:8px;">
+              <input name="round_${rIdx}_crit_${cIdx}_name" placeholder="Criteria name" />
+              <input name="round_${rIdx}_crit_${cIdx}_max" placeholder="Max score" />
+              <input name="round_${rIdx}_crit_${cIdx}_weight" placeholder="Weight" />
+            </div>
+            <div style="margin-top:8px;">
+              <input name="round_${rIdx}_crit_${cIdx}_desc" placeholder="Criteria description" />
+            </div>
+            <div class="inline-actions" style="margin-top:8px;">
+              <button type="button" class="save-criteria btn-success">Save Criteria</button>
+              <button type="button" class="delete-criteria btn-danger">Delete Criteria</button>
+            </div>
+          `;
+
+          if (data) {
+            el.querySelector(`[name="round_${rIdx}_crit_${cIdx}_name"]`).value = data.name || '';
+            el.querySelector(`[name="round_${rIdx}_crit_${cIdx}_max"]`).value = data.max_score != null ? data.max_score : '';
+            el.querySelector(`[name="round_${rIdx}_crit_${cIdx}_weight"]`).value = data.weight != null ? data.weight : '';
+            el.querySelector(`[name="round_${rIdx}_crit_${cIdx}_desc"]`).value = data.description || '';
+          }
+
+          el.querySelector('.save-criteria').addEventListener('click', async () => {
+            try {
+              await saveCriteria(el);
+            } catch (error) {
+              showToast(error.message || 'Lưu criteria thất bại', 2800, true);
+            }
+          });
+
+          el.querySelector('.delete-criteria').addEventListener('click', async () => {
+            if (!confirm('Delete this criteria?')) return;
+            try {
+              await deleteCriteria(el);
+            } catch (error) {
+              showToast(error.message || 'Xóa criteria thất bại', 2800, true);
+            }
+          });
+
+          return el;
+        }
+
+        function createRoundElement(idx, data) {
+          const el = document.createElement('div');
+          el.className = 'round-item';
+          el.dataset.roundId = data && data.id ? String(data.id) : '';
+
+          const roundIdText = el.dataset.roundId ? `#${el.dataset.roundId}` : 'new';
+          el.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div class="muted">Round ID: <span class="round-id-label">${roundIdText}</span></div>
+              <div class="inline-actions">
+                <button type="button" class="save-round btn-success">Save Round</button>
+                <button type="button" class="delete-round btn-danger">Delete Round</button>
+              </div>
+            </div>
+
+            <div class="section-grid" style="grid-template-columns:2fr 1fr 1fr 1fr;margin-top:10px;">
+              <input name="round_${idx}_title" placeholder="Round title" />
+              <input name="round_${idx}_number" placeholder="Round number" />
+              <input name="round_${idx}_weight" placeholder="Round weight" />
+              <select name="round_${idx}_status">
+                <option value="upcoming">upcoming</option>
+                <option value="ongoing">ongoing</option>
+                <option value="completed">completed</option>
+              </select>
+            </div>
+
+            <div class="section-grid" style="margin-top:8px;">
+              <input name="round_${idx}_start" placeholder="Start date (ISO)" />
+              <input name="round_${idx}_end" placeholder="End date (ISO)" />
+            </div>
+
+            <div style="margin-top:8px;">
+              <textarea name="round_${idx}_desc" placeholder="Round description"></textarea>
+            </div>
+
+            <div style="margin-top:8px;">
+              <label>Criteria</label>
+              <div class="criteria-list"></div>
+              <div class="inline-actions" style="margin-top:8px;">
+                <button type="button" class="add-criteria btn-secondary">Add Criteria</button>
+              </div>
+            </div>
+          `;
+
+          if (data) {
+            el.querySelector(`[name="round_${idx}_title"]`).value = data.title || '';
+            el.querySelector(`[name="round_${idx}_number"]`).value = data.round_number != null ? data.round_number : '';
+            el.querySelector(`[name="round_${idx}_weight"]`).value = data.weight != null ? data.weight : '';
+            el.querySelector(`[name="round_${idx}_status"]`).value = data.status || 'upcoming';
+            el.querySelector(`[name="round_${idx}_start"]`).value = data.start_date || '';
+            el.querySelector(`[name="round_${idx}_end"]`).value = data.end_date || '';
+            el.querySelector(`[name="round_${idx}_desc"]`).value = data.description || '';
+          }
+
+          const criteriaList = el.querySelector('.criteria-list');
+          el.querySelector('.add-criteria').addEventListener('click', () => {
+            const critIndex = criteriaList.children.length + 1;
+            criteriaList.appendChild(createCriteriaElement(idx, critIndex));
+          });
+
+          el.querySelector('.save-round').addEventListener('click', async () => {
+            try {
+              await saveRound(el);
+            } catch (error) {
+              showToast(error.message || 'Lưu round thất bại', 2800, true);
+            }
+          });
+
+          el.querySelector('.delete-round').addEventListener('click', async () => {
+            if (!confirm('Delete this round?')) return;
+            try {
+              await deleteRound(el);
+            } catch (error) {
+              showToast(error.message || 'Xóa round thất bại', 2800, true);
+            }
+          });
+
+          if (data && Array.isArray(data.criteria)) {
+            data.criteria.forEach((crit, i) => {
+              criteriaList.appendChild(createCriteriaElement(idx, i + 1, crit));
+            });
+          }
+
+          return el;
+        }
+
+        function addRound(data) {
+          const el = createRoundElement(nextRoundIdx++, data);
+          roundsContainer.appendChild(el);
+          return el;
+        }
+
+        function getContestPayload() {
+          const title = form.querySelector('input[name="title"]').value.trim();
+          const description = form.querySelector('textarea[name="description"]').value.trim();
+          const rules = form.querySelector('textarea[name="rules"]').value.trim();
+          const banner_url = form.querySelector('input[name="banner_url"]').value.trim();
+          const start_date = form.querySelector('input[name="start_date"]').value.trim();
+          const end_date = form.querySelector('input[name="end_date"]').value.trim();
+          const status = uiToApiStatus(form.querySelector('select[name="status_select"]').value);
+
+          if (!title) throw new Error('Title is required');
+          if (start_date && isNaN(Date.parse(start_date))) throw new Error('Start date is not valid');
+          if (end_date && isNaN(Date.parse(end_date))) throw new Error('End date is not valid');
+
+          return { title, description, rules, banner_url, start_date, end_date, status };
+        }
+
+        async function ensureContest() {
+          if (!hasSession()) throw new Error('No auth session');
+
+          const payload = getContestPayload();
+          let response;
+          if (activeContestId) {
+            response = await window.apiClient.put(`/organizer/contests/${activeContestId}`, payload);
+          } else {
+            response = await window.apiClient.post('/organizer/contests', payload);
+          }
+
+          const resolvedId = response && response.contest && response.contest.id ? String(response.contest.id) : activeContestId;
+          if (!resolvedId) throw new Error('Missing contest id from server response');
+
+          activeContestId = resolvedId;
+          const url = new URL(window.location.href);
+          url.searchParams.set('contest_id', activeContestId);
+          window.history.replaceState({}, '', url.toString());
+
+          publishBtn.style.display = 'inline-block';
+          setEditModeText();
+          return response.contest;
+        }
+
+        async function saveRound(roundEl) {
+          await ensureContest();
+
+          const title = roundEl.querySelector('input[name$="_title"]').value.trim();
+          if (!title) throw new Error('Round title is required');
+
+          const payload = {
+            title,
+            round_number: parseInt(roundEl.querySelector('input[name$="_number"]').value || '1', 10),
+            weight: parseFloat(roundEl.querySelector('input[name$="_weight"]').value || '1'),
+            status: roundEl.querySelector('select[name$="_status"]').value,
+            start_date: roundEl.querySelector('input[name$="_start"]').value.trim() || null,
+            end_date: roundEl.querySelector('input[name$="_end"]').value.trim() || null,
+            description: roundEl.querySelector('textarea[name$="_desc"]').value.trim() || ''
+          };
+
+          let response;
+          const roundId = roundEl.dataset.roundId;
+          if (roundId) {
+            response = await window.apiClient.put(`/organizer/contests/${activeContestId}/rounds/${roundId}`, payload);
+          } else {
+            response = await window.apiClient.post(`/organizer/contests/${activeContestId}/rounds`, payload);
+          }
+
+          if (response && response.round && response.round.id) {
+            roundEl.dataset.roundId = String(response.round.id);
+            roundEl.querySelector('.round-id-label').textContent = `#${response.round.id}`;
+          }
+          showToast('Round saved');
+          return response.round;
+        }
+
+        async function deleteRound(roundEl) {
+          const roundId = roundEl.dataset.roundId;
+          if (roundId && activeContestId) {
+            await window.apiClient.delete(`/organizer/contests/${activeContestId}/rounds/${roundId}`);
+            showToast('Round deleted');
+          }
+          roundEl.remove();
+        }
+
+        async function saveCriteria(criteriaEl) {
+          const roundEl = criteriaEl.closest('.round-item');
+          if (!roundEl) throw new Error('Cannot resolve parent round');
+
+          let roundId = roundEl.dataset.roundId;
+          if (!roundId) {
+            const savedRound = await saveRound(roundEl);
+            roundId = savedRound && savedRound.id ? String(savedRound.id) : '';
+          }
+          if (!roundId) throw new Error('Missing round id');
+
+          const name = criteriaEl.querySelector('input[name*="_name"]').value.trim();
+          if (!name) throw new Error('Criteria name is required');
+
+          const payload = {
+            name,
+            description: criteriaEl.querySelector('input[name*="_desc"]').value.trim() || '',
+            max_score: parseFloat(criteriaEl.querySelector('input[name*="_max"]').value || '10'),
+            weight: parseFloat(criteriaEl.querySelector('input[name*="_weight"]').value || '1')
+          };
+
+          const criteriaId = criteriaEl.dataset.criteriaId;
+          let response;
+          if (criteriaId) {
+            response = await window.apiClient.put(`/organizer/contests/${activeContestId}/rounds/${roundId}/criteria/${criteriaId}`, payload);
+          } else {
+            response = await window.apiClient.post(`/organizer/contests/${activeContestId}/rounds/${roundId}/criteria`, payload);
+          }
+
+          if (response && response.criteria && response.criteria.id) {
+            criteriaEl.dataset.criteriaId = String(response.criteria.id);
+          }
+          showToast('Criteria saved');
+          return response.criteria;
+        }
+
+        async function deleteCriteria(criteriaEl) {
+          const roundEl = criteriaEl.closest('.round-item');
+          if (!roundEl) {
+            criteriaEl.remove();
             return;
           }
 
+          const roundId = roundEl.dataset.roundId;
+          const criteriaId = criteriaEl.dataset.criteriaId;
+          if (roundId && criteriaId && activeContestId) {
+            await window.apiClient.delete(`/organizer/contests/${activeContestId}/rounds/${roundId}/criteria/${criteriaId}`);
+            showToast('Criteria deleted');
+          }
+          criteriaEl.remove();
+        }
+
+        async function loadContest(contestId) {
+          const resp = await window.apiClient.get(`/organizer/contests/${contestId}`);
+          if (!resp || !resp.contest) return;
+
+          const contest = resp.contest;
+          form.querySelector('input[name="title"]').value = contest.title || '';
+          form.querySelector('textarea[name="description"]').value = contest.description || '';
+          form.querySelector('textarea[name="rules"]').value = contest.rules || '';
+          form.querySelector('input[name="banner_url"]').value = contest.banner_url || '';
+          form.querySelector('input[name="start_date"]').value = contest.start_date || '';
+          form.querySelector('input[name="end_date"]').value = contest.end_date || '';
+          form.querySelector('select[name="status_select"]').value = apiToUiStatus(contest.status);
+
+          roundsContainer.innerHTML = '';
+          nextRoundIdx = 1;
+          (contest.rounds || []).forEach((r) => addRound(r));
+        }
+
+        addRoundBtn.addEventListener('click', () => addRound());
+
+        resetRoundsBtn.addEventListener('click', () => {
+          roundsContainer.innerHTML = '';
+          nextRoundIdx = 1;
+          showToast('Đã reset round trên UI, dữ liệu DB chưa bị xóa');
+        });
+
+        saveContestBtn.addEventListener('click', async function () {
+          setButtonLoading(saveContestBtn, true, 'Saving...');
           try {
-            const payload = { title, description, start_date, end_date };
-            const resp = await window.apiClient.post('/organizer/create-contest', payload);
-            // On success, redirect to dashboard
-            window.location.href = '/organizer/dashboard';
-          } catch (err) {
-            console.error('Create contest error:', err);
-            // Show detailed backend message for debugging
-            alert(err.message || 'Lỗi khi tạo cuộc thi');
+            await ensureContest();
+            showToast('Contest info saved');
+          } catch (error) {
+            showToast(error.message || 'Không thể lưu contest', 2800, true);
+          } finally {
+            setButtonLoading(saveContestBtn, false);
           }
         });
+
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault();
+          setButtonLoading(submitBtn, true, 'Saving all...');
+          try {
+            await ensureContest();
+
+            const rounds = Array.from(roundsContainer.querySelectorAll('.round-item'));
+            for (const roundEl of rounds) {
+              await saveRound(roundEl);
+              const criteriaEls = Array.from(roundEl.querySelectorAll('.criteria-item'));
+              for (const criteriaEl of criteriaEls) {
+                await saveCriteria(criteriaEl);
+              }
+            }
+
+            const categories = form.querySelector('input[name="categories"]').value
+              .split(',')
+              .map((x) => x.trim())
+              .filter(Boolean);
+
+            if (categories.length && activeContestId) {
+              try {
+                await window.apiClient.put(`/organizer/contests/${activeContestId}`, { categories });
+              } catch (error) {
+                console.warn('Categories may not be supported by backend', error);
+              }
+            }
+
+            showToast('Đã lưu toàn bộ cấu hình cuộc thi');
+            setTimeout(() => {
+              window.location.href = '/organizer/dashboard';
+            }, 900);
+          } catch (error) {
+            showToast(error.message || 'Không thể lưu toàn bộ cấu hình', 3000, true);
+          } finally {
+            setButtonLoading(submitBtn, false);
+          }
+        });
+
+        function showModal() { modal.style.display = 'flex'; }
+        function hideModal() { modal.style.display = 'none'; }
+
+        publishBtn.addEventListener('click', () => showModal());
+        modalCancel.addEventListener('click', () => hideModal());
+
+        modalConfirm.addEventListener('click', async function () {
+          setButtonLoading(modalConfirm, true, 'Đang xử lý...');
+          try {
+            await ensureContest();
+            await window.apiClient.put(`/organizer/contests/${activeContestId}`, { status: 'published' });
+            form.querySelector('select[name="status_select"]').value = 'published';
+            hideModal();
+            showToast('Xuất bản cuộc thi thành công');
+          } catch (error) {
+            showToast(error.message || 'Không thể xuất bản cuộc thi', 3000, true);
+          } finally {
+            setButtonLoading(modalConfirm, false);
+          }
+        });
+
+        if (activeContestId) {
+          publishBtn.style.display = 'inline-block';
+          setEditModeText();
+          loadContest(activeContestId).catch((error) => {
+            showToast(error.message || 'Không tải được contest', 3000, true);
+          });
+        } else {
+          setEditModeText();
+        }
       });
     </script>
   </body>

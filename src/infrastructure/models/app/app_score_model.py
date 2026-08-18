@@ -14,9 +14,9 @@ class ScoreModel(Base):
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    submission_id = Column(BigInteger, ForeignKey("submissions.id", ondelete="CASCADE"), nullable=False)
-    judge_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    criteria_id = Column(BigInteger, ForeignKey("criteria.id", ondelete="CASCADE"), nullable=False)
+    submission_id = Column(BigInteger, ForeignKey("app.submissions.id", ondelete="CASCADE"), nullable=False)
+    judge_id = Column(BigInteger, ForeignKey("app.users.id", ondelete="CASCADE"), nullable=False)
+    criteria_id = Column(BigInteger, ForeignKey("app.criteria.id", ondelete="CASCADE"), nullable=False)
     score_value = Column(Numeric(5, 2), nullable=False)
     comment = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

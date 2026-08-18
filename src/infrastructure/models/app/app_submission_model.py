@@ -14,8 +14,8 @@ class SubmissionModel(Base):
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    round_id = Column(BigInteger, ForeignKey("rounds.id", ondelete="CASCADE"), nullable=False)
-    user_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    round_id = Column(BigInteger, ForeignKey("app.rounds.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(BigInteger, ForeignKey("app.users.id", ondelete="CASCADE"), nullable=False)
     title = Column(String(255), nullable=False)
     story_description = Column(Text, nullable=True)
     status = Column(String(20), nullable=False, default="submitted")
