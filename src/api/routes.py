@@ -1,7 +1,11 @@
-﻿from api.controllers.auth_controller import auth_bp as auth_bp
+from api.controllers.auth_controller import auth_bp as auth_bp
 from api.controllers.ai_detection_controller import bp as ai_detection_bp
 from api.controllers.duplicate_detection_controller import bp as duplicate_detection_bp
-from api.controllers.submission_controller import submission_bp
+from api.controllers.submission_controller import (
+    submission_bp,
+    get_organizer_contest_submissions,
+    get_judge_assignment_submissions,
+)
 from api.controllers.submission_review_controller import bp as submission_review_bp
 from api.controllers.contest_controller import contest_bp, public_bp as contest_public_bp
 from api.controllers.judge_controller import judge_bp
@@ -246,8 +250,9 @@ def register_routes(app):
                 print("Lỗi truy vấn Submissions:", e)
                 return jsonify({'message': 'Error', 'error': str(e), 'submissions': []}), 500
 
-        app.add_url_rule('/organizer/contests/<int:contest_id>/submissions', 'org_contest_submissions', api_get_contest_submissions_organizer, methods=['GET'])
-        app.add_url_rule('/api/contests/<int:contest_id>/submissions', 'api_contest_submissions', api_get_contest_submissions_organizer, methods=['GET'])
+        app.add_url_rule('/organizer/contests/<int:contest_id>/submissions', 'org_contest_submissions', get_organizer_contest_submissions, methods=['GET'])
+        app.add_url_rule('/api/contests/<int:contest_id>/submissions', 'api_contest_submissions', get_organizer_contest_submissions, methods=['GET'])
+        app.add_url_rule('/judge/assignments/<int:assignment_id>/submissions', 'judge_assignment_submissions', get_judge_assignment_submissions, methods=['GET'])
 
     except Exception:
         pass
