@@ -402,15 +402,24 @@ class SubmissionService:
                 )
             )
 
-            ai_score = ai_result.get(
-                "ai_score",
-                0,
+            comparison_result = ai_service.compare_metadata_with_exif(
+                film_metadata,
+                ai_result.get("exif_data", {})
             )
 
-            risk_level = ai_result.get(
-                "risk_level",
-                "safe",
+            ai_score = max(
+                ai_result.get("ai_score", 0),
+                comparison_result.get("confidence_score", 0)
             )
+
+            base_risk = ai_result.get("risk_level", "safe")
+            comp_risk = comparison_result.get("risk_level", "safe")
+            if "high" in [base_risk, comp_risk]:
+                risk_level = "high"
+            elif "medium" in [base_risk, comp_risk]:
+                risk_level = "medium"
+            else:
+                risk_level = "safe"
 
             saved_flag = (
                 self.submission_repo
@@ -457,6 +466,7 @@ class SubmissionService:
                             {},
                         )
                     ),
+                    "metadata_comparison": comparison_result,
                 },
             )
 

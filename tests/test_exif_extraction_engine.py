@@ -164,11 +164,79 @@ def test_database_persistence():
     print("[PASS] Passed: Successfully persisted and retrieved raw EXIF & structured data from DB.")
 
 
+def test_metadata_comparison():
+    print("\n" + "=" * 60)
+    print("TEST 3: METADATA COMPARISON (FE05.2)")
+    print("=" * 60)
+
+    service = AiDetectionService()
+
+    # 1. Match scenario
+    declared = {
+        "camera_body": "Nikon F3",
+        "lens": "50mm f/1.4",
+        "film_iso": 400
+    }
+    exif = {
+        "camera_model": "Nikon F3",
+        "lens": "50mm f/1.4",
+        "iso": "400"
+    }
+    res = service.compare_metadata_with_exif(declared, exif)
+    print("Match result:", res)
+    assert res["comparison"]["camera"]["status"] == "match"
+    assert res["comparison"]["lens"]["status"] == "match"
+    assert res["comparison"]["iso"]["status"] == "match"
+    assert res["risk_level"] == "safe"
+    assert res["confidence_score"] == 0.0
+
+    # 2. Mismatch scenario
+    declared_mismatch = {
+        "camera_body": "Canon AE-1",
+        "lens": "50mm",
+        "film_iso": 400
+    }
+    exif_mismatch = {
+        "camera_model": "Nikon F3",
+        "lens": "50mm f/1.4",
+        "iso": "100"
+    }
+    res_mismatch = service.compare_metadata_with_exif(declared_mismatch, exif_mismatch)
+    print("Mismatch result:", res_mismatch)
+    assert res_mismatch["comparison"]["camera"]["status"] == "mismatch"
+    assert res_mismatch["comparison"]["lens"]["status"] == "match"  # 50mm is in 50mm f/1.4
+    assert res_mismatch["comparison"]["iso"]["status"] == "mismatch"
+    assert "camera" in res_mismatch["mismatched_fields"]
+    assert "iso" in res_mismatch["mismatched_fields"]
+    assert res_mismatch["risk_level"] == "high"
+
+    # 3. Insufficient data scenario
+    declared_empty = {
+        "camera_body": "",
+        "lens": None,
+        "film_iso": None
+    }
+    exif_empty = {
+        "camera_model": "Unknown",
+        "lens": "Unknown",
+        "iso": "Unknown"
+    }
+    res_empty = service.compare_metadata_with_exif(declared_empty, exif_empty)
+    print("Empty result:", res_empty)
+    assert res_empty["comparison"]["camera"]["status"] == "insufficient data"
+    assert res_empty["comparison"]["lens"]["status"] == "insufficient data"
+    assert res_empty["comparison"]["iso"]["status"] == "insufficient data"
+    assert res_empty["risk_level"] == "medium"
+
+    print("[PASS] Passed: Correctly classified and handled metadata comparison scenarios.")
+
+
 def main():
     setup_test_db()
     try:
         test_exif_extraction_and_risk_level()
         test_database_persistence()
+        test_metadata_comparison()
         print("\nAll EXIF Engine verification tests passed successfully!")
     finally:
         try:
@@ -187,3 +255,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
