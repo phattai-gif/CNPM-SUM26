@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Fix missing columns in Supabase schema to match ORM models."""
 
 from pathlib import Path
@@ -51,11 +51,11 @@ for table, column, col_type in migrations:
         if not exists:
             print(f"  Adding {table}.{column} ...")
             cur.execute(f"ALTER TABLE app.{table} ADD COLUMN {column} {col_type}")
-            print(f"    ✓ Added {table}.{column}")
+            print(f"    âœ“ Added {table}.{column}")
         else:
             print(f"  Skipping {table}.{column} (already exists)")
     except Exception as e:
-        print(f"  ✗ Error on {table}.{column}: {e}")
+        print(f"  âœ— Error on {table}.{column}: {e}")
 
 conn.commit()
 
@@ -70,4 +70,4 @@ for row in cur.fetchall():
     print(f"  {row[0]}.{row[1]}")
 
 conn.close()
-print("\n✓ Database schema sync complete!")
+print("\nâœ“ Database schema sync complete!")
