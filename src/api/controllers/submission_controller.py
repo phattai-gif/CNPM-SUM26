@@ -2,7 +2,6 @@ from flask import (
     Blueprint,
     jsonify,
     request,
-    render_template,
 )
 
 import io
@@ -628,42 +627,6 @@ def create_submission():
         }), 500
 
 
-
-# -------------------------------------------------------------------------
-# Participant Portfolio & Submission Detail Routes
-# -------------------------------------------------------------------------
-
-@submission_bp.route("/my-submissions", methods=["GET"])
-@submission_bp.route("/me", methods=["GET"])
-@token_required
-def get_my_submissions():
-    """Retrieve all submissions belonging to the currently logged in participant."""
-    user_id = request.user.get("user_id")
-    if not user_id:
-        return jsonify({"message": "User information is missing in token"}), 401
-
-    submissions_list = submission_service.get_my_submissions(user_id=user_id)
-    return jsonify({
-        "message": "My submissions retrieved successfully",
-        "submissions": submissions_list,
-        "count": len(submissions_list),
-    }), 200
-
-
-@submission_bp.route("/my", methods=["GET"])
-@submission_bp.route("/my-submissions-ui", methods=["GET"])
-def my_submissions_ui():
-    """Render the My Submissions / Portfolio page."""
-    return render_template("my_submissions.html")
-
-
-@submission_bp.route("/detail/<int:submission_id>", methods=["GET"])
-@submission_bp.route("/<int:submission_id>/ui", methods=["GET"])
-def submission_detail_ui(submission_id):
-    """Render the Submission Details page."""
-    return render_template("submission_detail.html", submission_id=submission_id)
-
-
 # ============================================================
 # UPDATE DRAFT SUBMISSION
 # MULTIPART/FORM-DATA or JSON
@@ -1085,204 +1048,10 @@ def submit_submission(submission_id):
 # GET SUBMISSION DETAIL
 # ============================================================
 
-
 @submission_bp.route(
     "/<int:submission_id>",
     methods=["GET"],
 )
-
-@token_required
-def get_submission(
-    submission_id,
-):
-    """
-    Retrieve submission details.
-    Accessible by: Owner participant, judges, organizers, and admins.
-    """
-    user_id = request.user.get("user_id")
-    user_role = request.user.get("role", "participant")
-
-    try:
-        # First try rich details
-        detail = submission_service.get_submission_detail(
-            submission_id=submission_id,
-            user_id=user_id,
-            role=user_role,
-        )
-    except PermissionError as pe:
-        return jsonify({"message": str(pe)}), 403
-
-    if not detail:
-        # Fallback to basic get_submission_by_id if full details not found or mocked
-        result = submission_service.get_submission_by_id(submission_id)
-        if not result:
-            return jsonify({"message": "Submission not found"}), 404
-
-        submission, submission_file, film_metadata = result
-
-        # Check access permission
-        if user_role == "participant" and submission.user_id != user_id:
-            return jsonify({"message": "Access forbidden: You can only view your own submission details."}), 403
-
-        # Check / save AI flag
-        ai_flag_data = None
-        try:
-            image_path = submission_file.image_hd_url if submission_file else None
-            if image_path:
-                existing_flag = submission_repo.get_ai_flag(submission_id)
-                if existing_flag:
-                    ai_flag_data = {
-                        "ai_score": float(existing_flag.confidence_score),
-                        "risk_level": existing_flag.risk_level,
-                        "status": existing_flag.status,
-                    }
-                else:
-                    ai_result = ai_detection_service.detect_ai(image_path)
-                    ai_score = ai_result.get("ai_score", 0)
-                    ai_message = ai_result.get("ai_message", "")
-                    risk_level = ai_result.get("risk_level", "safe")
-
-                    saved_flag = submission_repo.save_ai_flag(
-                        submission_id=submission_id,
-                        confidence_score=ai_score,
-                        risk_level=risk_level,
-                        flag_type="AI_METADATA",
-                        status="pending",
-                    )
-                    ai_flag_data = {
-                        "ai_score": float(saved_flag.confidence_score),
-                        "ai_message": ai_message,
-                        "risk_level": saved_flag.risk_level,
-                        "status": saved_flag.status,
-                    }
-        except Exception:
-            ai_flag_data = None
-
-        response = {
-            "id": submission.id,
-            "round_id": submission.round_id,
-            "user_id": submission.user_id,
-            "title": submission.title,
-            "story_description": submission.story_description,
-            "status": submission.status,
-            "final_score": float(submission.final_score) if submission.final_score is not None else None,
-            "submitted_at": submission.submitted_at.isoformat() if submission.submitted_at else None,
-            "created_at": submission.created_at.isoformat() if submission.created_at else None,
-            "updated_at": submission.updated_at.isoformat() if submission.updated_at else None,
-            "file": {
-                "id": submission_file.id,
-                "image_hd_url": submission_file.image_hd_url,
-                "thumbnail_url": submission_file.thumbnail_url or submission_file.image_hd_url,
-                "width_px": submission_file.width_px,
-                "height_px": submission_file.height_px,
-                "file_size_bytes": submission_file.file_size_bytes,
-                "file_hash": submission_file.file_hash,
-                "created_at": submission_file.created_at.isoformat() if submission_file.created_at else None,
-            } if submission_file else None,
-            "film_metadata": {
-                "film_stock": film_metadata.film_stock,
-                "film_iso": film_metadata.film_iso,
-                "camera_body": film_metadata.camera_body,
-                "lens": film_metadata.lens,
-                "lab_name": film_metadata.lab_name,
-                "scanner_info": film_metadata.scanner_info,
-                "development_process": film_metadata.development_process,
-                "taken_at_location": film_metadata.taken_at_location,
-                "created_at": film_metadata.created_at.isoformat() if film_metadata.created_at else None,
-            } if film_metadata else None,
-            "ai_flag": ai_flag_data,
-        }
-        return jsonify(response), 200
-
-    return jsonify(detail), 200
-
-
-@submission_bp.route(
-    "/<int:submission_id>",
-    methods=["PUT", "PATCH"],
-)
-@token_required
-def update_submission(submission_id):
-    """
-    Update a draft submission.
-    Allows editing title, story description, film metadata, competition round,
-    and optionally uploading a replacement image file.
-    """
-    user_id = request.user.get("user_id")
-    if not user_id:
-        return jsonify({"message": "User information is missing in token"}), 401
-
-    image_file = request.files.get("file") if request.files else None
-    data = request.form if request.form else (request.get_json(silent=True) or {})
-
-    # Extract film metadata fields
-    film_metadata = {}
-    if "film_metadata" in data and isinstance(data["film_metadata"], dict):
-        film_metadata = data["film_metadata"]
-    else:
-        for field in [
-            "film_stock",
-            "film_iso",
-            "camera_body",
-            "lens",
-            "lab_name",
-            "scanner_info",
-            "development_process",
-            "taken_at_location",
-        ]:
-            if field in data and data[field] is not None:
-                film_metadata[field] = data[field]
-
-    try:
-        file_bytes = image_file.read() if image_file else None
-        filename = image_file.filename if image_file else None
-        content_type = image_file.content_type if image_file else "image/jpeg"
-
-        updated = submission_service.update_draft_submission(
-            submission_id=submission_id,
-            user_id=user_id,
-            title=data.get("title"),
-            story_description=data.get("story_description"),
-            round_id=int(data["round_id"]) if data.get("round_id") else None,
-            status=data.get("status"),
-            film_metadata=film_metadata if film_metadata else None,
-            file_bytes=file_bytes,
-            filename=filename,
-            content_type=content_type,
-            image_hd_url=data.get("image_hd_url"),
-            file_hash=data.get("file_hash"),
-            thumbnail_url=data.get("thumbnail_url"),
-            width_px=data.get("width_px"),
-            height_px=data.get("height_px"),
-            file_size_bytes=data.get("file_size_bytes"),
-        )
-
-        return jsonify({
-            "message": "Submission updated successfully",
-            "submission": {
-                "id": updated.id,
-                "title": updated.title,
-                "status": updated.status,
-                "round_id": updated.round_id,
-                "story_description": updated.story_description,
-                "submitted_at": (
-                    updated.submitted_at.isoformat()
-                    if updated.submitted_at
-                    else None
-                ),
-                "updated_at": (
-                    updated.updated_at.isoformat()
-                    if updated.updated_at
-                    else None
-                ),
-            },
-        }), 200
-
-    except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500
-
 @role_required(
     "organizer",
     "judge",
@@ -1489,12 +1258,9 @@ def get_submission(submission_id):
 
         ai_flag_data = None
 
-    except PermissionError as pe:
-        return jsonify({"message": str(pe)}), 403
-    except ValueError as ve:
-        return jsonify({"message": str(ve)}), 400
-    except Exception as e:
-        return jsonify({"message": f"Failed to update submission: {str(e)}"}), 500
+    response["ai_flag"] = ai_flag_data
+
+    return jsonify(response), 200
 
 
 # ============================================================
@@ -1554,6 +1320,16 @@ def submit_score(submission_id):
                 "Judge information is missing"
             )
         }), 401
+
+    user_role = request.user.get("role", "judge")
+    if hasattr(score_service, "is_judge_assigned") and not score_service.is_judge_assigned(
+        submission_id=submission_id,
+        judge_id=judge_id,
+        user_role=user_role,
+    ):
+        return jsonify({
+            "message": "Judge is not assigned to this submission"
+        }), 403
 
     model, error = (
         score_service
@@ -1649,6 +1425,16 @@ def submit_feedback(submission_id):
             )
         }), 400
 
+    user_role = request.user.get("role", "judge")
+    if hasattr(score_service, "is_judge_assigned") and not score_service.is_judge_assigned(
+        submission_id=submission_id,
+        judge_id=judge_id,
+        user_role=user_role,
+    ):
+        return jsonify({
+            "message": "Judge is not assigned to this submission"
+        }), 403
+
     model, error = (
         score_service
         .submit_feedback(
@@ -1680,6 +1466,46 @@ def submit_feedback(submission_id):
             ),
             "final_recommendation": (
                 model.final_recommendation
+            ),
+        },
+    }), 200
+
+
+# ============================================================
+# CALCULATE SUBMISSION SCORE
+# ============================================================
+
+@submission_bp.route(
+    "/<int:submission_id>/calculate-score",
+    methods=["POST"],
+)
+@token_required
+def calculate_submission_score(submission_id):
+
+    user_role = request.user.get("role")
+    if user_role not in ["organizer", "admin", "judge"]:
+        return jsonify({
+            "message": "Forbidden access"
+        }), 403
+
+    submission, error = (
+        score_service
+        .calculate_submission_score(submission_id)
+    )
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    return jsonify({
+        "message": "Submission score calculated successfully",
+        "submission": {
+            "id": submission.id,
+            "final_score": (
+                float(submission.final_score)
+                if submission.final_score is not None
+                else None
             ),
         },
     }), 200
