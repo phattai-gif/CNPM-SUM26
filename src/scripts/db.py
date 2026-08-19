@@ -2,9 +2,9 @@
 """Database commands for initializing the schema and demo data.
 
 Usage:
-    python scripts/db.py init-schema
-    python scripts/db.py seed
-    python scripts/db.py init
+    python src/scripts/db.py init-schema
+    python src/scripts/db.py seed
+    python src/scripts/db.py init
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 load_dotenv(ROOT / ".env")
 load_dotenv(ROOT / "src" / ".env")
