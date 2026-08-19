@@ -307,6 +307,7 @@ def test_post_submission_missing_file():
         'round_id': '1',
         'title': 'Missing File Entry',
         'film_stock': 'Kodak Portra 400',
+        'status': 'submitted',
     }
 
     res = client.post(
@@ -355,39 +356,367 @@ def test_post_submission_round_not_exists(tmp_path):
     assert 'Round with id 99999 does not exist' in res_data['message']
 
 
-# Test 6 — Transaction rollback simulation
-def test_post_submission_transaction_rollback():
-    mock_session = MagicMock()
+# --------------------------------------------------------------------------
+# Task: Xây dựng API lưu nháp và gửi chính thức bài dự thi - Tests
+# --------------------------------------------------------------------------
 
-    def mock_add(obj):
-        if obj.__class__.__name__ == 'SubmissionFilmMetadataModel':
-            raise RuntimeError("Database constraint failure during metadata creation")
+def test_create_draft_success():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
 
-    mock_session.add.side_effect = mock_add
+    mock_submission = MockObject(
+        id=101,
+        round_id=1,
+        user_id=10,
+        title="Draft Title",
+        story_description="Draft Description",
+        status="draft",
+        submitted_at=None,
+    )
 
-    repo = SubmissionRepository(session=mock_session)
-    mock_session.query.return_value.filter_by.return_value.first.return_value = MockObject(id=1)
+    mock_repo = MagicMock()
+    mock_repo.create_submission.return_value = mock_submission
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
 
-    try:
-        repo.create_submission(
-            round_id=1,
-            user_id=1,
-            title="Rollback Test",
-            files_data=[{
-                "image_hd_url": "https://example.com/test.jpg",
-                "thumbnail_url": "https://example.com/thumb.jpg",
-                "file_hash": "hash123",
-            }],
-            film_stock="Kodak Portra 400",
-        )
-        assert False, "Should raise RuntimeError"
-    except RuntimeError as e:
-        assert "Database constraint failure" in str(e)
+    data = {
+        'round_id': '1',
+        'title': 'Draft Title',
+        'description': 'Draft Description',
+        'status': 'draft',
+    }
 
-    assert mock_session.rollback.called
+    res = client.post(
+        '/submissions',
+        data=data,
+        content_type='multipart/form-data',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 201
+    res_data = res.get_json()
+    assert res_data['submission']['status'] == 'draft'
+    assert mock_repo.create_submission.called
+
+
+def test_create_incomplete_draft_success():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_submission = MockObject(
+        id=102,
+        round_id=1,
+        user_id=10,
+        title="",
+        story_description="",
+        status="draft",
+        submitted_at=None,
+    )
+
+    mock_repo = MagicMock()
+    mock_repo.create_submission.return_value = mock_submission
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    data = {
+        'round_id': '1',
+    }
+
+    res = client.post(
+        '/submissions',
+        data=data,
+        content_type='multipart/form-data',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 201
+    res_data = res.get_json()
+    assert res_data['submission']['status'] == 'draft'
+
+
+def test_update_draft_owner_success():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_submission = MockObject(
+        id=101,
+        round_id=1,
+        user_id=10,
+        title="Updated Draft Title",
+        story_description="Updated Description",
+        status="draft",
+    )
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id.return_value = MockObject(id=101, user_id=10, status="draft")
+    mock_repo.update_draft.return_value = mock_submission
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    data = {
+        'title': 'Updated Draft Title',
+        'description': 'Updated Description',
+    }
+
+    res = client.put(
+        '/submissions/101',
+        data=data,
+        content_type='multipart/form-data',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 200
+    res_data = res.get_json()
+    assert res_data['submission']['title'] == 'Updated Draft Title'
+
+
+def test_update_draft_other_user_forbidden():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=99)
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id.return_value = MockObject(id=101, user_id=10, status="draft")
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.put(
+        '/submissions/101',
+        data={'title': 'Hacker Update'},
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 403
+
+
+def test_update_submission_submitted_error():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id.return_value = MockObject(id=101, user_id=10, status="submitted")
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.put(
+        '/submissions/101',
+        data={'title': 'Try Update Submitted'},
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 400
+
+
+def test_update_submission_flagged_error():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id.return_value = MockObject(id=101, user_id=10, status="flagged")
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.put(
+        '/submissions/101',
+        data={'title': 'Try Update Flagged'},
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 400
+
+
+def test_update_submission_evaluated_error():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id.return_value = MockObject(id=101, user_id=10, status="evaluated")
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.put(
+        '/submissions/101',
+        data={'title': 'Try Update Evaluated'},
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 400
+
+
+def test_submit_draft_owner_success():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_sub = MockObject(id=101, user_id=10, status="draft", title="Official Entry")
+    mock_file = MockObject(id=1, image_hd_url="https://example.com/hd.jpg")
+    mock_meta = MockObject(film_stock="Kodak Portra 400")
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id_with_details.return_value = (mock_sub, mock_file, mock_meta)
+    mock_repo.update_status.return_value = MockObject(id=101, status="submitted")
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.post(
+        '/submissions/101/submit',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 200
+    res_data = res.get_json()
+    assert res_data['message'] == "Submission submitted successfully"
+    assert res_data['submission']['status'] == "submitted"
+
+
+def test_submit_not_found():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id_with_details.return_value = None
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.post(
+        '/submissions/999/submit',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 404
+
+
+def test_submit_other_user_forbidden():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=99)
+
+    mock_sub = MockObject(id=101, user_id=10, status="draft", title="Official Entry")
+    mock_file = MockObject(id=1, image_hd_url="https://example.com/hd.jpg")
+    mock_meta = MockObject(film_stock="Kodak Portra 400")
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id_with_details.return_value = (mock_sub, mock_file, mock_meta)
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.post(
+        '/submissions/101/submit',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 403
+
+
+def test_submit_already_submitted_error():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_sub = MockObject(id=101, user_id=10, status="submitted", title="Official Entry")
+    mock_file = MockObject(id=1, image_hd_url="https://example.com/hd.jpg")
+    mock_meta = MockObject(film_stock="Kodak Portra 400")
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id_with_details.return_value = (mock_sub, mock_file, mock_meta)
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.post(
+        '/submissions/101/submit',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 400
+
+
+def test_submit_flagged_error():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_sub = MockObject(id=101, user_id=10, status="flagged", title="Official Entry")
+    mock_file = MockObject(id=1, image_hd_url="https://example.com/hd.jpg")
+    mock_meta = MockObject(film_stock="Kodak Portra 400")
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id_with_details.return_value = (mock_sub, mock_file, mock_meta)
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.post(
+        '/submissions/101/submit',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 400
+
+
+def test_submit_evaluated_error():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_sub = MockObject(id=101, user_id=10, status="evaluated", title="Official Entry")
+    mock_file = MockObject(id=1, image_hd_url="https://example.com/hd.jpg")
+    mock_meta = MockObject(film_stock="Kodak Portra 400")
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id_with_details.return_value = (mock_sub, mock_file, mock_meta)
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.post(
+        '/submissions/101/submit',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 400
+
+
+def test_submit_missing_required_data_error():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+
+    mock_sub = MockObject(id=101, user_id=10, status="draft", title="")
+    mock_file = MockObject(id=1, image_hd_url="https://example.com/hd.jpg")
+    mock_meta = MockObject(film_stock="Kodak Portra 400")
+
+    mock_repo = MagicMock()
+    mock_repo.get_by_id_with_details.return_value = (mock_sub, mock_file, mock_meta)
+
+    custom_svc = SubmissionService(submission_repo=mock_repo)
+    patch_controller_attr('submission_service', custom_svc)
+
+    res = client.post(
+        '/submissions/101/submit',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert res.status_code == 400
 
 
 if __name__ == '__main__':
     test_get_submission_details_success()
     test_get_submission_details_not_found()
     print('Submission detail tests passed')
+
