@@ -6,6 +6,7 @@ from flask import (
 
 import io
 import os
+import json
 
 from PIL import Image
 
@@ -64,6 +65,218 @@ score_service = ScoreService()
 
 
 # ============================================================
+# HELPERS
+# ============================================================
+
+def _get_user_id():
+    return request.user.get("user_id")
+
+
+def _serialize_submission(submission):
+    return {
+        "id": submission.id,
+        "round_id": submission.round_id,
+        "user_id": submission.user_id,
+        "title": submission.title,
+        "story_description": getattr(
+            submission,
+            "story_description",
+            None,
+        ),
+        "status": submission.status,
+        "final_score": (
+            float(submission.final_score)
+            if getattr(submission, "final_score", None) is not None
+            else None
+        ),
+        "submitted_at": (
+            submission.submitted_at.isoformat()
+            if getattr(submission, "submitted_at", None)
+            else None
+        ),
+        "created_at": (
+            submission.created_at.isoformat()
+            if getattr(submission, "created_at", None)
+            else None
+        ),
+        "updated_at": (
+            submission.updated_at.isoformat()
+            if getattr(submission, "updated_at", None)
+            else None
+        ),
+    }
+
+
+def _validate_image_file(file_obj):
+    """
+    Validate uploaded image and return:
+
+        file_bytes,
+        filename,
+        content_type
+
+    or raise ValueError.
+    """
+
+    if not file_obj:
+        raise ValueError("No image file provided")
+
+    filename = file_obj.filename or ""
+
+    if not filename:
+        raise ValueError("Filename is required")
+
+    content_type = (
+        file_obj.content_type or ""
+    ).lower()
+
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise ValueError(
+            "Invalid file type"
+        )
+
+    extension = os.path.splitext(
+        filename
+    )[1].lower()
+
+    if extension not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError(
+            "Invalid file extension"
+        )
+
+    try:
+        file_bytes = file_obj.read()
+    except Exception as error:
+        raise ValueError(
+            f"Failed to read file {filename}: {error}"
+        )
+
+    if not file_bytes:
+        raise ValueError(
+            f"File content is empty for {filename}"
+        )
+
+    try:
+        image = Image.open(
+            io.BytesIO(file_bytes)
+        )
+        image.verify()
+    except Exception:
+        raise ValueError(
+            f"Invalid image file for {filename}"
+        )
+
+    return (
+        file_bytes,
+        filename,
+        content_type,
+    )
+
+
+def _collect_uploaded_files():
+    """
+    Collect all uploaded files from multipart/form-data.
+    """
+
+    uploaded_files = []
+
+    for key in request.files:
+        file_objects = request.files.getlist(key)
+
+        for file_obj in file_objects:
+            if (
+                file_obj
+                and file_obj.filename
+            ):
+                uploaded_files.append(file_obj)
+
+    return uploaded_files
+
+
+def _parse_film_metadata(data):
+    """
+    Parse film_metadata from JSON + individual fields.
+    """
+
+    film_metadata = {}
+
+    film_metadata_json = data.get(
+        "film_metadata"
+    )
+
+    if film_metadata_json:
+
+        try:
+            parsed_metadata = (
+                json.loads(film_metadata_json)
+                if isinstance(
+                    film_metadata_json,
+                    str,
+                )
+                else film_metadata_json
+            )
+
+        except (
+            ValueError,
+            TypeError,
+        ):
+            raise ValueError(
+                "film_metadata must be valid JSON"
+            )
+
+        if not isinstance(
+            parsed_metadata,
+            dict,
+        ):
+            raise ValueError(
+                "film_metadata must be a JSON object"
+            )
+
+        film_metadata.update(
+            parsed_metadata
+        )
+
+    metadata_fields = {
+        "film_stock": data.get("film_stock"),
+        "film_iso": data.get("film_iso"),
+        "camera_body": data.get("camera_body"),
+        "lens": data.get("lens"),
+        "lab_name": data.get("lab_name"),
+        "scanner_info": data.get("scanner_info"),
+        "development_process": data.get(
+            "development_process"
+        ),
+        "taken_at_location": data.get(
+            "taken_at_location"
+        ),
+    }
+
+    for key, value in metadata_fields.items():
+
+        if value is not None:
+            film_metadata[key] = value
+
+    if (
+        "film_iso" in film_metadata
+        and film_metadata["film_iso"] is not None
+    ):
+
+        try:
+            film_metadata["film_iso"] = int(
+                film_metadata["film_iso"]
+            )
+        except (
+            ValueError,
+            TypeError,
+        ):
+            raise ValueError(
+                "film_iso must be an integer"
+            )
+
+    return film_metadata
+
+
+# ============================================================
 # HEALTH CHECK
 # ============================================================
 
@@ -96,83 +309,15 @@ def upload_submission_image():
             "message": "No image file provided"
         }), 400
 
-    if not image_file.filename:
-        return jsonify({
-            "message": "Filename is required"
-        }), 400
-
-    filename = image_file.filename
-
-    # --------------------------------------------------------
-    # Validate MIME type
-    # --------------------------------------------------------
-
-    content_type = (
-        image_file.content_type or ""
-    ).lower()
-
-    if content_type not in ALLOWED_IMAGE_TYPES:
-        return jsonify({
-            "message": "Invalid file type",
-            "allowed_types": [
-                "image/jpeg",
-                "image/png",
-                "image/webp",
-            ],
-        }), 400
-
-    # --------------------------------------------------------
-    # Validate extension
-    # --------------------------------------------------------
-
-    extension = os.path.splitext(
-        filename
-    )[1].lower()
-
-    if extension not in ALLOWED_IMAGE_EXTENSIONS:
-        return jsonify({
-            "message": "Invalid file extension",
-            "allowed_extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp",
-            ],
-        }), 400
-
     try:
 
-        file_bytes = image_file.read()
-
-        if not file_bytes:
-            return jsonify({
-                "message": "File content is empty"
-            }), 400
-
-        # ----------------------------------------------------
-        # Validate actual image
-        # ----------------------------------------------------
-
-        try:
-
-            image = Image.open(
-                io.BytesIO(file_bytes)
-            )
-
-            image.verify()
-
-        except Exception:
-
-            return jsonify({
-                "message": (
-                    f"Invalid image file "
-                    f"for {filename}"
-                ),
-            }), 400
-
-        # ----------------------------------------------------
-        # Upload
-        # ----------------------------------------------------
+        (
+            file_bytes,
+            filename,
+            content_type,
+        ) = _validate_image_file(
+            image_file
+        )
 
         storage_info = (
             submission_service
@@ -204,7 +349,6 @@ def upload_submission_image():
 
 # ============================================================
 # CREATE SUBMISSION
-# MULTIPART/FORM-DATA
 # ============================================================
 
 @submission_bp.route(
@@ -214,11 +358,7 @@ def upload_submission_image():
 @token_required
 def create_submission():
 
-    # --------------------------------------------------------
-    # Get user from token
-    # --------------------------------------------------------
-
-    user_id = request.user.get("user_id")
+    user_id = _get_user_id()
 
     if not user_id:
         return jsonify({
@@ -228,18 +368,10 @@ def create_submission():
             )
         }), 401
 
-    # --------------------------------------------------------
-    # Form data
-    # --------------------------------------------------------
-
     data = request.form
 
     round_id = data.get("round_id")
     title = data.get("title")
-
-    # --------------------------------------------------------
-    # Validate round_id
-    # --------------------------------------------------------
 
     if not round_id:
         return jsonify({
@@ -247,30 +379,28 @@ def create_submission():
         }), 400
 
     try:
-
         round_id = int(round_id)
-
-    except (ValueError, TypeError):
-
+    except (
+        ValueError,
+        TypeError,
+    ):
         return jsonify({
             "message": "round_id must be an integer"
         }), 400
-
-    # --------------------------------------------------------
-    # Status
-    # --------------------------------------------------------
 
     status = data.get(
         "status",
         "draft",
     )
 
-    if status not in [
+    allowed_statuses = [
         "draft",
         "submitted",
         "flagged",
         "evaluated",
-    ]:
+    ]
+
+    if status not in allowed_statuses:
         return jsonify({
             "message": "Invalid status"
         }), 400
@@ -283,14 +413,9 @@ def create_submission():
             "message": "Forbidden status transition"
         }), 403
 
-    # --------------------------------------------------------
-    # Validate title
-    # --------------------------------------------------------
-
     if status == "submitted":
 
         if not title or not title.strip():
-
             return jsonify({
                 "message": "title is required"
             }), 400
@@ -300,27 +425,11 @@ def create_submission():
     elif title:
         title = title.strip()
 
-    # ========================================================
-    # GET FILES
-    # ========================================================
-
-    uploaded_files = []
-
-    for key in request.files:
-
-        file_objects = request.files.getlist(key)
-
-        for file_obj in file_objects:
-
-            if (
-                file_obj
-                and file_obj.filename
-            ):
-                uploaded_files.append(file_obj)
-
     # --------------------------------------------------------
-    # At least one image for official submit
+    # FILES
     # --------------------------------------------------------
+
+    uploaded_files = _collect_uploaded_files()
 
     if (
         status == "submitted"
@@ -330,83 +439,52 @@ def create_submission():
             "message": "No image file provided"
         }), 400
 
-    # ========================================================
-    # FILM METADATA
-    # ========================================================
+    files_list = []
 
-    film_metadata = {}
-
-    # --------------------------------------------------------
-    # JSON metadata
-    # --------------------------------------------------------
-
-    film_metadata_json = data.get(
-        "film_metadata"
-    )
-
-    if film_metadata_json:
+    for file_obj in uploaded_files:
 
         try:
 
-            import json
-
-            parsed_metadata = json.loads(
-                film_metadata_json
+            (
+                file_bytes,
+                filename,
+                content_type,
+            ) = _validate_image_file(
+                file_obj
             )
 
-            if isinstance(
-                parsed_metadata,
-                dict,
-            ):
-                film_metadata.update(
-                    parsed_metadata
-                )
+            files_list.append({
+                "file_bytes": file_bytes,
+                "filename": filename,
+                "content_type": content_type,
+            })
 
-        except (
-            ValueError,
-            TypeError,
-        ):
+        except ValueError as error:
 
             return jsonify({
-                "message": (
-                    "film_metadata must be valid JSON"
-                )
+                "message": str(error)
             }), 400
 
     # --------------------------------------------------------
-    # Individual metadata fields
+    # FILM METADATA
     # --------------------------------------------------------
 
-    metadata_fields = {
-        "film_stock": data.get("film_stock"),
-        "film_iso": data.get("film_iso"),
-        "camera_body": data.get("camera_body"),
-        "lens": data.get("lens"),
-        "lab_name": data.get("lab_name"),
-        "scanner_info": data.get("scanner_info"),
-        "development_process": (
-            data.get("development_process")
-            or "C-41"
-        ),
-        "taken_at_location": (
-            data.get("taken_at_location")
-        ),
-    }
+    try:
 
-    for key, value in metadata_fields.items():
+        film_metadata = _parse_film_metadata(
+            data
+        )
 
-        if value is not None:
-            film_metadata[key] = value
+    except ValueError as error:
 
-    # --------------------------------------------------------
-    # film_stock required for official submit
-    # --------------------------------------------------------
+        return jsonify({
+            "message": str(error)
+        }), 400
 
     if (
         status == "submitted"
         and not film_metadata.get("film_stock")
     ):
-
         return jsonify({
             "message": "Missing required field",
             "missing_fields": [
@@ -414,154 +492,15 @@ def create_submission():
             ],
         }), 400
 
+    if (
+        "development_process"
+        not in film_metadata
+    ):
+        film_metadata["development_process"] = "C-41"
+
     # --------------------------------------------------------
-    # film_iso
+    # DESCRIPTION
     # --------------------------------------------------------
-
-    film_iso = film_metadata.get("film_iso")
-
-    if film_iso is not None:
-
-        try:
-
-            film_metadata["film_iso"] = int(
-                film_iso
-            )
-
-        except (
-            ValueError,
-            TypeError,
-        ):
-
-            return jsonify({
-                "message": (
-                    "film_iso must be an integer"
-                )
-            }), 400
-
-    # ========================================================
-    # READ FILES + VALIDATE FILE TYPE
-    # ========================================================
-
-    files_list = []
-
-    for file_obj in uploaded_files:
-
-        # ----------------------------------------------------
-        # Validate filename
-        # ----------------------------------------------------
-
-        filename = file_obj.filename or ""
-
-        if not filename:
-            return jsonify({
-                "message": "Filename is required"
-            }), 400
-
-        # ----------------------------------------------------
-        # Validate MIME type
-        # ----------------------------------------------------
-
-        content_type = (
-            file_obj.content_type or ""
-        ).lower()
-
-        if content_type not in ALLOWED_IMAGE_TYPES:
-
-            return jsonify({
-                "message": "Invalid file type",
-                "allowed_types": [
-                    "image/jpeg",
-                    "image/png",
-                    "image/webp",
-                ],
-            }), 400
-
-        # ----------------------------------------------------
-        # Validate extension
-        # ----------------------------------------------------
-
-        extension = os.path.splitext(
-            filename
-        )[1].lower()
-
-        if extension not in ALLOWED_IMAGE_EXTENSIONS:
-
-            return jsonify({
-                "message": "Invalid file extension",
-                "allowed_extensions": [
-                    ".jpg",
-                    ".jpeg",
-                    ".png",
-                    ".webp",
-                ],
-            }), 400
-
-        # ----------------------------------------------------
-        # Read file
-        # ----------------------------------------------------
-
-        try:
-
-            file_bytes = file_obj.read()
-
-        except Exception as error:
-
-            return jsonify({
-                "message": (
-                    f"Failed to read file "
-                    f"{filename}"
-                ),
-                "error": str(error),
-            }), 400
-
-        # ----------------------------------------------------
-        # Check empty file
-        # ----------------------------------------------------
-
-        if not file_bytes:
-
-            return jsonify({
-                "message": (
-                    f"File content is empty "
-                    f"for {filename}"
-                ),
-            }), 400
-
-        # ----------------------------------------------------
-        # Validate actual image
-        # ----------------------------------------------------
-
-        try:
-
-            image = Image.open(
-                io.BytesIO(file_bytes)
-            )
-
-            image.verify()
-
-        except Exception:
-
-            return jsonify({
-                "message": (
-                    f"Invalid image file "
-                    f"for {filename}"
-                ),
-            }), 400
-
-        # ----------------------------------------------------
-        # Add validated file
-        # ----------------------------------------------------
-
-        files_list.append({
-            "file_bytes": file_bytes,
-            "filename": filename,
-            "content_type": content_type,
-        })
-
-    # ========================================================
-    # OTHER FIELDS
-    # ========================================================
 
     description = (
         data.get("description")
@@ -571,9 +510,9 @@ def create_submission():
         )
     )
 
-    # ========================================================
-    # CREATE SUBMISSION
-    # ========================================================
+    # --------------------------------------------------------
+    # CREATE
+    # --------------------------------------------------------
 
     try:
 
@@ -594,21 +533,9 @@ def create_submission():
             "message": (
                 "Submission created successfully"
             ),
-            "submission": {
-                "id": submission.id,
-                "round_id": submission.round_id,
-                "user_id": submission.user_id,
-                "title": submission.title,
-                "story_description": (
-                    submission.story_description
-                ),
-                "status": submission.status,
-                "submitted_at": (
-                    submission.submitted_at.isoformat()
-                    if submission.submitted_at
-                    else None
-                ),
-            },
+            "submission": _serialize_submission(
+                submission
+            ),
         }), 201
 
     except ValueError as error:
@@ -616,6 +543,12 @@ def create_submission():
         return jsonify({
             "message": str(error)
         }), 400
+
+    except PermissionError as error:
+
+        return jsonify({
+            "message": str(error)
+        }), 403
 
     except Exception as error:
 
@@ -629,7 +562,6 @@ def create_submission():
 
 # ============================================================
 # UPDATE DRAFT SUBMISSION
-# MULTIPART/FORM-DATA or JSON
 # ============================================================
 
 @submission_bp.route(
@@ -639,7 +571,7 @@ def create_submission():
 @token_required
 def update_submission(submission_id):
 
-    user_id = request.user.get("user_id")
+    user_id = _get_user_id()
 
     if not user_id:
         return jsonify({
@@ -649,13 +581,19 @@ def update_submission(submission_id):
             )
         }), 401
 
+    # --------------------------------------------------------
+    # REQUEST DATA
+    # --------------------------------------------------------
+
     if request.is_json:
-        data = request.get_json() or {}
+        data = request.get_json(
+            silent=True
+        ) or {}
     else:
         data = request.form
 
     # --------------------------------------------------------
-    # Title
+    # TITLE
     # --------------------------------------------------------
 
     title = data.get("title")
@@ -665,245 +603,87 @@ def update_submission(submission_id):
         title = title.strip()
 
         if not title:
-
             return jsonify({
                 "message": "title is required"
             }), 400
 
-    description = (
-        data.get("description")
-        or data.get("story_description")
-    )
+    # --------------------------------------------------------
+    # DESCRIPTION
+    # --------------------------------------------------------
 
-    # ========================================================
+    if data.get("description") is not None:
+
+        description = data.get(
+            "description"
+        )
+
+    else:
+
+        description = data.get(
+            "story_description"
+        )
+
+    # --------------------------------------------------------
     # FILES
-    # ========================================================
-
-    uploaded_files = []
-
-    for key in request.files:
-
-        file_objects = request.files.getlist(key)
-
-        for file_obj in file_objects:
-
-            if (
-                file_obj
-                and file_obj.filename
-            ):
-                uploaded_files.append(file_obj)
+    # --------------------------------------------------------
 
     files_list = []
 
+    uploaded_files = _collect_uploaded_files()
+
     for file_obj in uploaded_files:
 
-        # ----------------------------------------------------
-        # Validate filename
-        # ----------------------------------------------------
-
-        filename = file_obj.filename or ""
-
-        if not filename:
-            return jsonify({
-                "message": "Filename is required"
-            }), 400
-
-        # ----------------------------------------------------
-        # Validate MIME type
-        # ----------------------------------------------------
-
-        content_type = (
-            file_obj.content_type or ""
-        ).lower()
-
-        if content_type not in ALLOWED_IMAGE_TYPES:
-
-            return jsonify({
-                "message": "Invalid file type",
-                "allowed_types": [
-                    "image/jpeg",
-                    "image/png",
-                    "image/webp",
-                ],
-            }), 400
-
-        # ----------------------------------------------------
-        # Validate extension
-        # ----------------------------------------------------
-
-        extension = os.path.splitext(
-            filename
-        )[1].lower()
-
-        if extension not in ALLOWED_IMAGE_EXTENSIONS:
-
-            return jsonify({
-                "message": "Invalid file extension",
-                "allowed_extensions": [
-                    ".jpg",
-                    ".jpeg",
-                    ".png",
-                    ".webp",
-                ],
-            }), 400
-
-        # ----------------------------------------------------
-        # Read file
-        # ----------------------------------------------------
-
         try:
 
-            file_bytes = file_obj.read()
-
-        except Exception as error:
-
-            return jsonify({
-                "message": (
-                    f"Failed to read file "
-                    f"{filename}"
-                ),
-                "error": str(error),
-            }), 400
-
-        # ----------------------------------------------------
-        # Empty file
-        # ----------------------------------------------------
-
-        if not file_bytes:
-
-            return jsonify({
-                "message": (
-                    f"File content is empty "
-                    f"for {filename}"
-                ),
-            }), 400
-
-        # ----------------------------------------------------
-        # Validate actual image
-        # ----------------------------------------------------
-
-        try:
-
-            image = Image.open(
-                io.BytesIO(file_bytes)
+            (
+                file_bytes,
+                filename,
+                content_type,
+            ) = _validate_image_file(
+                file_obj
             )
 
-            image.verify()
+            files_list.append({
+                "file_bytes": file_bytes,
+                "filename": filename,
+                "content_type": content_type,
+            })
 
-        except Exception:
+        except ValueError as error:
 
             return jsonify({
-                "message": (
-                    f"Invalid image file "
-                    f"for {filename}"
-                ),
+                "message": str(error)
             }), 400
 
-        # ----------------------------------------------------
-        # Add validated file
-        # ----------------------------------------------------
-
-        files_list.append({
-            "file_bytes": file_bytes,
-            "filename": filename,
-            "content_type": content_type,
-        })
-
-    # ========================================================
+    # --------------------------------------------------------
     # FILM METADATA
-    # ========================================================
-
-    film_metadata = {}
-
-    film_metadata_json = data.get(
-        "film_metadata"
-    )
-
-    if film_metadata_json:
-
-        try:
-
-            import json
-
-            parsed_metadata = (
-                json.loads(
-                    film_metadata_json
-                )
-                if isinstance(
-                    film_metadata_json,
-                    str,
-                )
-                else film_metadata_json
-            )
-
-            if isinstance(
-                parsed_metadata,
-                dict,
-            ):
-                film_metadata.update(
-                    parsed_metadata
-                )
-
-        except (
-            ValueError,
-            TypeError,
-        ):
-
-            return jsonify({
-                "message": (
-                    "film_metadata must be valid JSON"
-                )
-            }), 400
-
-    metadata_fields = {
-        "film_stock": data.get("film_stock"),
-        "film_iso": data.get("film_iso"),
-        "camera_body": data.get("camera_body"),
-        "lens": data.get("lens"),
-        "lab_name": data.get("lab_name"),
-        "scanner_info": data.get("scanner_info"),
-        "development_process": (
-            data.get("development_process")
-        ),
-        "taken_at_location": (
-            data.get("taken_at_location")
-        ),
-    }
-
-    for key, value in metadata_fields.items():
-
-        if value is not None:
-            film_metadata[key] = value
-
-    # --------------------------------------------------------
-    # film_iso
     # --------------------------------------------------------
 
-    if (
-        "film_iso" in film_metadata
-        and film_metadata["film_iso"] is not None
-    ):
+    try:
 
-        try:
+        film_metadata = _parse_film_metadata(
+            data
+        )
 
-            film_metadata["film_iso"] = int(
-                film_metadata["film_iso"]
-            )
+    except ValueError as error:
 
-        except (
-            ValueError,
-            TypeError,
-        ):
+        return jsonify({
+            "message": str(error)
+        }), 400
 
-            return jsonify({
-                "message": (
-                    "film_iso must be an integer"
-                )
-            }), 400
-
-    # ========================================================
+    # --------------------------------------------------------
     # UPDATE
-    # ========================================================
+    #
+    # IMPORTANT:
+    #
+    # Use update_draft(), not update_draft_submission().
+    #
+    # This matches the current SubmissionService /
+    # SubmissionRepository flow and the unit test:
+    #
+    # mock_repo.update_draft.return_value = ...
+    #
+    # --------------------------------------------------------
 
     try:
 
@@ -914,11 +694,7 @@ def update_submission(submission_id):
                 user_id=user_id,
                 title=title,
                 story_description=description,
-                files=(
-                    files_list
-                    if files_list
-                    else None
-                ),
+                files=files_list,
                 film_metadata=(
                     film_metadata
                     if film_metadata
@@ -927,20 +703,18 @@ def update_submission(submission_id):
             )
         )
 
+        if updated_sub is None:
+            return jsonify({
+                "message": "Submission not found"
+            }), 404
+
         return jsonify({
             "message": (
                 "Submission draft updated successfully"
             ),
-            "submission": {
-                "id": updated_sub.id,
-                "round_id": updated_sub.round_id,
-                "user_id": updated_sub.user_id,
-                "title": updated_sub.title,
-                "story_description": (
-                    updated_sub.story_description
-                ),
-                "status": updated_sub.status,
-            },
+            "submission": _serialize_submission(
+                updated_sub
+            ),
         }), 200
 
     except PermissionError as error:
@@ -984,7 +758,7 @@ def update_submission(submission_id):
 @token_required
 def submit_submission(submission_id):
 
-    user_id = request.user.get("user_id")
+    user_id = _get_user_id()
 
     if not user_id:
         return jsonify({
@@ -1055,6 +829,7 @@ def submit_submission(submission_id):
 @role_required(
     "organizer",
     "judge",
+    "participant",
 )
 def get_submission(submission_id):
 
@@ -1074,10 +849,6 @@ def get_submission(submission_id):
             "error": str(error),
         }), 500
 
-    # --------------------------------------------------------
-    # Not found
-    # --------------------------------------------------------
-
     if not result:
 
         return jsonify({
@@ -1092,9 +863,27 @@ def get_submission(submission_id):
             film_metadata,
         ) = result
 
-        # ====================================================
-        # BASIC SUBMISSION DATA
-        # ====================================================
+        # ----------------------------------------------------
+        # PARTICIPANT OWNERSHIP
+        # ----------------------------------------------------
+
+        if request.user.get("role") == "participant":
+
+            if (
+                submission.user_id
+                != request.user.get("user_id")
+            ):
+
+                return jsonify({
+                    "message": (
+                        "You are not allowed "
+                        "to view this submission"
+                    )
+                }), 403
+
+        # ----------------------------------------------------
+        # BASIC DATA
+        # ----------------------------------------------------
 
         response = {
             "id": submission.id,
@@ -1106,9 +895,7 @@ def get_submission(submission_id):
             ),
             "status": submission.status,
             "final_score": (
-                float(
-                    submission.final_score
-                )
+                float(submission.final_score)
                 if submission.final_score is not None
                 else None
             ),
@@ -1129,9 +916,9 @@ def get_submission(submission_id):
             ),
         }
 
-        # ====================================================
+        # ----------------------------------------------------
         # FILE
-        # ====================================================
+        # ----------------------------------------------------
 
         if submission_file:
 
@@ -1166,9 +953,9 @@ def get_submission(submission_id):
 
             response["file"] = None
 
-        # ====================================================
+        # ----------------------------------------------------
         # FILM METADATA
-        # ====================================================
+        # ----------------------------------------------------
 
         if film_metadata:
 
@@ -1218,13 +1005,9 @@ def get_submission(submission_id):
             "error": str(error),
         }), 500
 
-    # ========================================================
+    # --------------------------------------------------------
     # AI FLAG
-    #
-    # AI IS OPTIONAL.
-    # AI FAILURE MUST NOT BREAK
-    # SUBMISSION DETAIL API.
-    # ========================================================
+    # --------------------------------------------------------
 
     ai_flag_data = None
 
@@ -1252,9 +1035,6 @@ def get_submission(submission_id):
             }
 
     except Exception:
-
-        # AI failure is ignored.
-        # Submission detail must still work.
 
         ai_flag_data = None
 
@@ -1321,14 +1101,28 @@ def submit_score(submission_id):
             )
         }), 401
 
-    user_role = request.user.get("role", "judge")
-    if hasattr(score_service, "is_judge_assigned") and not score_service.is_judge_assigned(
-        submission_id=submission_id,
-        judge_id=judge_id,
-        user_role=user_role,
+    user_role = request.user.get(
+        "role",
+        "judge",
+    )
+
+    if (
+        hasattr(
+            score_service,
+            "is_judge_assigned",
+        )
+        and not score_service.is_judge_assigned(
+            submission_id=submission_id,
+            judge_id=judge_id,
+            user_role=user_role,
+        )
     ):
+
         return jsonify({
-            "message": "Judge is not assigned to this submission"
+            "message": (
+                "Judge is not assigned "
+                "to this submission"
+            )
         }), 403
 
     model, error = (
@@ -1425,14 +1219,28 @@ def submit_feedback(submission_id):
             )
         }), 400
 
-    user_role = request.user.get("role", "judge")
-    if hasattr(score_service, "is_judge_assigned") and not score_service.is_judge_assigned(
-        submission_id=submission_id,
-        judge_id=judge_id,
-        user_role=user_role,
+    user_role = request.user.get(
+        "role",
+        "judge",
+    )
+
+    if (
+        hasattr(
+            score_service,
+            "is_judge_assigned",
+        )
+        and not score_service.is_judge_assigned(
+            submission_id=submission_id,
+            judge_id=judge_id,
+            user_role=user_role,
+        )
     ):
+
         return jsonify({
-            "message": "Judge is not assigned to this submission"
+            "message": (
+                "Judge is not assigned "
+                "to this submission"
+            )
         }), 403
 
     model, error = (
@@ -1483,23 +1291,34 @@ def submit_feedback(submission_id):
 def calculate_submission_score(submission_id):
 
     user_role = request.user.get("role")
-    if user_role not in ["organizer", "admin", "judge"]:
+
+    if user_role not in [
+        "organizer",
+        "admin",
+        "judge",
+    ]:
+
         return jsonify({
             "message": "Forbidden access"
         }), 403
 
     submission, error = (
         score_service
-        .calculate_submission_score(submission_id)
+        .calculate_submission_score(
+            submission_id
+        )
     )
 
     if error == "submission_not_found":
+
         return jsonify({
             "message": "Submission not found"
         }), 404
 
     return jsonify({
-        "message": "Submission score calculated successfully",
+        "message": (
+            "Submission score calculated successfully"
+        ),
         "submission": {
             "id": submission.id,
             "final_score": (
@@ -1541,7 +1360,10 @@ def get_next_submission(submission_id):
             "message": "Database error"
         }), 500
 
-    if result is None or result.get("next") is None:
+    if (
+        result is None
+        or result.get("next") is None
+    ):
 
         return jsonify({
             "message": "No next submission"
@@ -1644,9 +1466,13 @@ def list_submissions():
 
 
 # ============================================================
-# LIST SUBMISSIONS BY ROLE
+# LIST MY SUBMISSIONS
 # ============================================================
 
+@submission_bp.route(
+    "/my-submissions",
+    methods=["GET"],
+)
 @submission_bp.route(
     "/my",
     methods=["GET"],
@@ -1654,86 +1480,176 @@ def list_submissions():
 @token_required
 def get_my_submissions():
 
-    user_id = request.user.get("user_id")
+    user_id = _get_user_id()
 
     if not user_id:
+
         return jsonify({
-            "message": "User information is missing in token"
+            "message": (
+                "User information is missing "
+                "in token"
+            )
         }), 401
 
-    round_id_param = request.args.get("round_id")
+    round_id_param = request.args.get(
+        "round_id"
+    )
+
     round_id = None
 
     if round_id_param is not None:
+
         try:
-            round_id = int(round_id_param)
-        except (ValueError, TypeError):
+
+            round_id = int(
+                round_id_param
+            )
+
+        except (
+            ValueError,
+            TypeError,
+        ):
+
             return jsonify({
                 "message": "Invalid round_id"
             }), 400
 
-    status = request.args.get("status")
+    status = request.args.get(
+        "status"
+    )
 
-    if status and status not in [
+    allowed_statuses = [
         "draft",
         "submitted",
         "flagged",
         "evaluated",
-    ]:
+    ]
+
+    if (
+        status
+        and status not in allowed_statuses
+    ):
+
         return jsonify({
             "message": "Invalid status"
         }), 400
 
-    ai_flag = request.args.get("ai_flag")
+    ai_flag = request.args.get(
+        "ai_flag"
+    )
 
     if ai_flag and ai_flag not in [
         "safe",
         "medium",
         "high",
     ]:
+
         return jsonify({
             "message": "Invalid ai_flag"
         }), 400
 
     try:
-        data = submission_service.get_my_submissions(
-            user_id=user_id,
-            round_id=round_id,
-            status=status,
-            ai_flag=ai_flag,
+
+        data = (
+            submission_service
+            .get_my_submissions(
+                user_id=user_id,
+                round_id=round_id,
+                status=status,
+                ai_flag=ai_flag,
+            )
         )
-        return jsonify(data), 200
+
+        if isinstance(data, dict):
+
+            response_data = {
+                "message": (
+                    "My submissions "
+                    "retrieved successfully"
+                ),
+                **data,
+            }
+
+        else:
+
+            response_data = {
+                "message": (
+                    "My submissions "
+                    "retrieved successfully"
+                ),
+                "submissions": data,
+            }
+
+        return jsonify(
+            response_data
+        ), 200
 
     except Exception as error:
+
         return jsonify({
-            "message": "Failed to get my submissions",
+            "message": (
+                "Failed to get my submissions"
+            ),
             "error": str(error),
         }), 500
 
 
-@role_required("organizer", "admin")
-def get_organizer_contest_submissions(contest_id):
+# ============================================================
+# ORGANIZER CONTEST SUBMISSIONS
+# ============================================================
 
-    user_id = request.user.get("user_id")
-    user_role = request.user.get("role")
+@submission_bp.route(
+    "/contest/<int:contest_id>",
+    methods=["GET"],
+)
+@role_required(
+    "organizer",
+    "admin",
+)
+def get_organizer_contest_submissions(
+    contest_id
+):
+
+    user_id = _get_user_id()
+    user_role = request.user.get(
+        "role"
+    )
 
     if not user_id:
+
         return jsonify({
-            "message": "User information is missing in token"
+            "message": (
+                "User information is missing "
+                "in token"
+            )
         }), 401
 
-    round_id_param = request.args.get("round_id")
+    round_id_param = request.args.get(
+        "round_id"
+    )
+
     round_id = None
 
     if round_id_param is not None:
+
         try:
-            round_id = int(round_id_param)
-        except (ValueError, TypeError):
+
+            round_id = int(
+                round_id_param
+            )
+
+        except (
+            ValueError,
+            TypeError,
+        ):
+
             return jsonify({
                 "message": "Invalid round_id"
             }), 400
 
-    status = request.args.get("status")
+    status = request.args.get(
+        "status"
+    )
 
     if status and status not in [
         "draft",
@@ -1741,72 +1657,120 @@ def get_organizer_contest_submissions(contest_id):
         "flagged",
         "evaluated",
     ]:
+
         return jsonify({
             "message": "Invalid status"
         }), 400
 
-    ai_flag = request.args.get("ai_flag")
+    ai_flag = request.args.get(
+        "ai_flag"
+    )
 
     if ai_flag and ai_flag not in [
         "safe",
         "medium",
         "high",
     ]:
+
         return jsonify({
             "message": "Invalid ai_flag"
         }), 400
 
     try:
-        data = submission_service.get_organizer_submissions(
-            contest_id=contest_id,
-            user_id=user_id,
-            user_role=user_role,
-            round_id=round_id,
-            status=status,
-            ai_flag=ai_flag,
+
+        data = (
+            submission_service
+            .get_organizer_submissions(
+                contest_id=contest_id,
+                user_id=user_id,
+                user_role=user_role,
+                round_id=round_id,
+                status=status,
+                ai_flag=ai_flag,
+            )
         )
+
         return jsonify(data), 200
 
     except ValueError as error:
+
         return jsonify({
             "message": str(error)
         }), 404
 
     except PermissionError as error:
+
         return jsonify({
             "message": str(error)
         }), 403
 
     except Exception as error:
+
         return jsonify({
-            "message": "Failed to get organizer contest submissions",
+            "message": (
+                "Failed to get organizer "
+                "contest submissions"
+            ),
             "error": str(error),
         }), 500
 
 
-@role_required("judge", "admin")
-def get_judge_assignment_submissions(assignment_id):
+# ============================================================
+# JUDGE ASSIGNMENT SUBMISSIONS
+# ============================================================
 
-    user_id = request.user.get("user_id")
-    user_role = request.user.get("role")
+@submission_bp.route(
+    "/assignments/<int:assignment_id>",
+    methods=["GET"],
+)
+@role_required(
+    "judge",
+    "admin",
+)
+def get_judge_assignment_submissions(
+    assignment_id
+):
+
+    user_id = _get_user_id()
+    user_role = request.user.get(
+        "role"
+    )
 
     if not user_id:
+
         return jsonify({
-            "message": "User information is missing in token"
+            "message": (
+                "User information is missing "
+                "in token"
+            )
         }), 401
 
-    round_id_param = request.args.get("round_id")
+    round_id_param = request.args.get(
+        "round_id"
+    )
+
     round_id = None
 
     if round_id_param is not None:
+
         try:
-            round_id = int(round_id_param)
-        except (ValueError, TypeError):
+
+            round_id = int(
+                round_id_param
+            )
+
+        except (
+            ValueError,
+            TypeError,
+        ):
+
             return jsonify({
                 "message": "Invalid round_id"
             }), 400
 
-    status = request.args.get("status")
+    status = request.args.get(
+        "status"
+    )
 
     if status and status not in [
         "draft",
@@ -1814,46 +1778,59 @@ def get_judge_assignment_submissions(assignment_id):
         "flagged",
         "evaluated",
     ]:
+
         return jsonify({
             "message": "Invalid status"
         }), 400
 
-    ai_flag = request.args.get("ai_flag")
+    ai_flag = request.args.get(
+        "ai_flag"
+    )
 
     if ai_flag and ai_flag not in [
         "safe",
         "medium",
         "high",
     ]:
+
         return jsonify({
             "message": "Invalid ai_flag"
         }), 400
 
     try:
-        data = submission_service.get_judge_assignment_submissions(
-            assignment_id=assignment_id,
-            user_id=user_id,
-            user_role=user_role,
-            round_id=round_id,
-            status=status,
-            ai_flag=ai_flag,
+
+        data = (
+            submission_service
+            .get_judge_assignment_submissions(
+                assignment_id=assignment_id,
+                user_id=user_id,
+                user_role=user_role,
+                round_id=round_id,
+                status=status,
+                ai_flag=ai_flag,
+            )
         )
+
         return jsonify(data), 200
 
     except ValueError as error:
+
         return jsonify({
             "message": str(error)
         }), 404
 
     except PermissionError as error:
+
         return jsonify({
             "message": str(error)
         }), 403
 
     except Exception as error:
+
         return jsonify({
-            "message": "Failed to get judge assignment submissions",
+            "message": (
+                "Failed to get judge "
+                "assignment submissions"
+            ),
             "error": str(error),
         }), 500
-
-        
