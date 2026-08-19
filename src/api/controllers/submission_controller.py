@@ -1581,4 +1581,219 @@ def list_submissions():
             ),
             "error": str(error),
         }), 500
+
+
+# ============================================================
+# LIST SUBMISSIONS BY ROLE
+# ============================================================
+
+@submission_bp.route(
+    "/my",
+    methods=["GET"],
+)
+@token_required
+def get_my_submissions():
+
+    user_id = request.user.get("user_id")
+
+    if not user_id:
+        return jsonify({
+            "message": "User information is missing in token"
+        }), 401
+
+    round_id_param = request.args.get("round_id")
+    round_id = None
+
+    if round_id_param is not None:
+        try:
+            round_id = int(round_id_param)
+        except (ValueError, TypeError):
+            return jsonify({
+                "message": "Invalid round_id"
+            }), 400
+
+    status = request.args.get("status")
+
+    if status and status not in [
+        "draft",
+        "submitted",
+        "flagged",
+        "evaluated",
+    ]:
+        return jsonify({
+            "message": "Invalid status"
+        }), 400
+
+    ai_flag = request.args.get("ai_flag")
+
+    if ai_flag and ai_flag not in [
+        "safe",
+        "medium",
+        "high",
+    ]:
+        return jsonify({
+            "message": "Invalid ai_flag"
+        }), 400
+
+    try:
+        data = submission_service.get_my_submissions(
+            user_id=user_id,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
+        )
+        return jsonify(data), 200
+
+    except Exception as error:
+        return jsonify({
+            "message": "Failed to get my submissions",
+            "error": str(error),
+        }), 500
+
+
+@role_required("organizer", "admin")
+def get_organizer_contest_submissions(contest_id):
+
+    user_id = request.user.get("user_id")
+    user_role = request.user.get("role")
+
+    if not user_id:
+        return jsonify({
+            "message": "User information is missing in token"
+        }), 401
+
+    round_id_param = request.args.get("round_id")
+    round_id = None
+
+    if round_id_param is not None:
+        try:
+            round_id = int(round_id_param)
+        except (ValueError, TypeError):
+            return jsonify({
+                "message": "Invalid round_id"
+            }), 400
+
+    status = request.args.get("status")
+
+    if status and status not in [
+        "draft",
+        "submitted",
+        "flagged",
+        "evaluated",
+    ]:
+        return jsonify({
+            "message": "Invalid status"
+        }), 400
+
+    ai_flag = request.args.get("ai_flag")
+
+    if ai_flag and ai_flag not in [
+        "safe",
+        "medium",
+        "high",
+    ]:
+        return jsonify({
+            "message": "Invalid ai_flag"
+        }), 400
+
+    try:
+        data = submission_service.get_organizer_submissions(
+            contest_id=contest_id,
+            user_id=user_id,
+            user_role=user_role,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
+        )
+        return jsonify(data), 200
+
+    except ValueError as error:
+        return jsonify({
+            "message": str(error)
+        }), 404
+
+    except PermissionError as error:
+        return jsonify({
+            "message": str(error)
+        }), 403
+
+    except Exception as error:
+        return jsonify({
+            "message": "Failed to get organizer contest submissions",
+            "error": str(error),
+        }), 500
+
+
+@role_required("judge", "admin")
+def get_judge_assignment_submissions(assignment_id):
+
+    user_id = request.user.get("user_id")
+    user_role = request.user.get("role")
+
+    if not user_id:
+        return jsonify({
+            "message": "User information is missing in token"
+        }), 401
+
+    round_id_param = request.args.get("round_id")
+    round_id = None
+
+    if round_id_param is not None:
+        try:
+            round_id = int(round_id_param)
+        except (ValueError, TypeError):
+            return jsonify({
+                "message": "Invalid round_id"
+            }), 400
+
+    status = request.args.get("status")
+
+    if status and status not in [
+        "draft",
+        "submitted",
+        "flagged",
+        "evaluated",
+    ]:
+        return jsonify({
+            "message": "Invalid status"
+        }), 400
+
+    ai_flag = request.args.get("ai_flag")
+
+    if ai_flag and ai_flag not in [
+        "safe",
+        "medium",
+        "high",
+    ]:
+        return jsonify({
+            "message": "Invalid ai_flag"
+        }), 400
+
+    try:
+        data = submission_service.get_judge_assignment_submissions(
+            assignment_id=assignment_id,
+            user_id=user_id,
+            user_role=user_role,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
+        )
+        return jsonify(data), 200
+
+    except ValueError as error:
+        return jsonify({
+            "message": str(error)
+        }), 404
+
+    except PermissionError as error:
+        return jsonify({
+            "message": str(error)
+        }), 403
+
+    except Exception as error:
+        return jsonify({
+            "message": "Failed to get judge assignment submissions",
+            "error": str(error),
+        }), 500
+
         

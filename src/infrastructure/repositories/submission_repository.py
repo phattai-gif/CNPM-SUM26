@@ -8,7 +8,28 @@ from domain.models.submission import Submission
 from infrastructure.databases.factory_database import (
     FactoryDatabase as db_factory
 )
-
+try:
+    from src.infrastructure.models.app import (
+        SubmissionModel,
+        SubmissionFileModel,
+        SubmissionFilmMetadataModel,
+        AIFlagModel,
+        AIAnalysisReportModel,
+        RoundModel,
+        ContestModel,
+        JudgeAssignmentModel,
+    )
+except ImportError:
+    from infrastructure.models.app import (
+        SubmissionModel,
+        SubmissionFileModel,
+        SubmissionFilmMetadataModel,
+        AIFlagModel,
+        AIAnalysisReportModel,
+        RoundModel,
+        ContestModel,
+        JudgeAssignmentModel,
+    )
 from infrastructure.models.app import (
     SubmissionModel,
     SubmissionFileModel,
@@ -833,5 +854,132 @@ class SubmissionRepository(ISubmissionRepository):
         except Exception:
             self.session.rollback()
             raise
+
+    # =========================================================
+    # ROLE-BASED LIST SUBMISSIONS & FILTERS
+    # =========================================================
+
+    def _enrich_submissions_with_details(
+        self, submissions: List[SubmissionModel]
+    ) -> List[Tuple[SubmissionModel, Optional[SubmissionFileModel], Optional[SubmissionFilmMetadataModel], Optional[AIFlagModel]]]:
+        results = []
+        for sub in submissions:
+            sub_file = (
+                self.session.query(SubmissionFileModel)
+                .filter_by(submission_id=sub.id)
+                .first()
+            )
+            sub_meta = (
+                self.session.query(SubmissionFilmMetadataModel)
+                .filter_by(submission_id=sub.id)
+                .first()
+            )
+            sub_ai = (
+                self.session.query(AIFlagModel)
+                .filter_by(submission_id=sub.id)
+                .first()
+            )
+            results.append((sub, sub_file, sub_meta, sub_ai))
+        return results
+
+    def get_participant_submissions(
+        self,
+        user_id: int,
+        round_id: Optional[int] = None,
+        status: Optional[str] = None,
+        ai_flag: Optional[str] = None,
+    ) -> List[Tuple[SubmissionModel, Optional[SubmissionFileModel], Optional[SubmissionFilmMetadataModel], Optional[AIFlagModel]]]:
+        query = self.session.query(SubmissionModel).filter(
+            SubmissionModel.user_id == user_id
+        )
+
+        if round_id is not None:
+            query = query.filter(SubmissionModel.round_id == round_id)
+
+        if status:
+            query = query.filter(SubmissionModel.status == status)
+
+        if ai_flag:
+            query = query.join(
+                AIFlagModel, AIFlagModel.submission_id == SubmissionModel.id
+            ).filter(AIFlagModel.risk_level == ai_flag)
+
+        query = query.order_by(
+            SubmissionModel.submitted_at.desc(), SubmissionModel.id.desc()
+        )
+        submissions = query.distinct().all()
+        return self._enrich_submissions_with_details(submissions)
+
+    def get_organizer_submissions(
+        self,
+        contest_id: int,
+        round_id: Optional[int] = None,
+        status: Optional[str] = None,
+        ai_flag: Optional[str] = None,
+    ) -> List[Tuple[SubmissionModel, Optional[SubmissionFileModel], Optional[SubmissionFilmMetadataModel], Optional[AIFlagModel]]]:
+        query = (
+            self.session.query(SubmissionModel)
+            .join(RoundModel, SubmissionModel.round_id == RoundModel.id)
+            .filter(RoundModel.contest_id == contest_id)
+        )
+
+        if round_id is not None:
+            query = query.filter(SubmissionModel.round_id == round_id)
+
+        if status:
+            query = query.filter(SubmissionModel.status == status)
+
+        if ai_flag:
+            query = query.join(
+                AIFlagModel, AIFlagModel.submission_id == SubmissionModel.id
+            ).filter(AIFlagModel.risk_level == ai_flag)
+
+        query = query.order_by(
+            SubmissionModel.submitted_at.desc(), SubmissionModel.id.desc()
+        )
+        submissions = query.distinct().all()
+        return self._enrich_submissions_with_details(submissions)
+
+    def get_judge_assignment_submissions(
+        self,
+        assignment_id: int,
+        round_id: Optional[int] = None,
+        status: Optional[str] = None,
+        ai_flag: Optional[str] = None,
+    ) -> Optional[List[Tuple[SubmissionModel, Optional[SubmissionFileModel], Optional[SubmissionFilmMetadataModel], Optional[AIFlagModel]]]]:
+        assignment = (
+            self.session.query(JudgeAssignmentModel)
+            .filter_by(id=assignment_id)
+            .first()
+        )
+        if not assignment:
+            return None
+
+        if assignment.submission_id is not None:
+            query = self.session.query(SubmissionModel).filter(
+                SubmissionModel.id == assignment.submission_id
+            )
+        else:
+            query = self.session.query(SubmissionModel).filter(
+                SubmissionModel.round_id == assignment.round_id
+            )
+
+        if round_id is not None:
+            query = query.filter(SubmissionModel.round_id == round_id)
+
+        if status:
+            query = query.filter(SubmissionModel.status == status)
+
+        if ai_flag:
+            query = query.join(
+                AIFlagModel, AIFlagModel.submission_id == SubmissionModel.id
+            ).filter(AIFlagModel.risk_level == ai_flag)
+
+        query = query.order_by(
+            SubmissionModel.submitted_at.desc(), SubmissionModel.id.desc()
+        )
+        submissions = query.distinct().all()
+        return self._enrich_submissions_with_details(submissions)
+
         
         
