@@ -286,6 +286,43 @@ CREATE TABLE IF NOT EXISTS app.audit_logs (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Compatibility for older deployments that created submission_reviews partially.
+ALTER TABLE app.submission_reviews
+    ADD COLUMN IF NOT EXISTS submission_id BIGINT REFERENCES app.submissions(id) ON DELETE CASCADE,
+    ADD COLUMN IF NOT EXISTS reviewer_id BIGINT REFERENCES app.users(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS review_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    ADD COLUMN IF NOT EXISTS review_notes TEXT,
+    ADD COLUMN IF NOT EXISTS decision_reason TEXT;
+
+ALTER TABLE app.contest_settings
+    ADD COLUMN IF NOT EXISTS contest_id BIGINT REFERENCES app.contests(id) ON DELETE CASCADE,
+    ADD COLUMN IF NOT EXISTS allow_public_vote BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS allow_submission BOOLEAN NOT NULL DEFAULT TRUE,
+    ADD COLUMN IF NOT EXISTS max_submission_per_user INT NOT NULL DEFAULT 1,
+    ADD COLUMN IF NOT EXISTS scoring_mode VARCHAR(50) NOT NULL DEFAULT 'weighted',
+    ADD COLUMN IF NOT EXISTS judges_visible BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS announcement_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE app.ai_flags
+    ADD COLUMN IF NOT EXISTS review_notes VARCHAR(512),
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE app.contest_announcements
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE app.digital_archive_exhibits
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE app.judge_assignments
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE app.score_feedbacks
+    ADD COLUMN IF NOT EXISTS summary_feedback TEXT NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS final_recommendation VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
 -- INDEXES HỖ TRỢ TRUY VẤN CỰC NHANH
 CREATE INDEX IF NOT EXISTS idx_film_metadata_stock ON app.submission_film_metadata(film_stock);
 CREATE INDEX IF NOT EXISTS idx_film_metadata_camera ON app.submission_film_metadata(camera_body);

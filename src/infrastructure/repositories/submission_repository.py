@@ -9,24 +9,14 @@ from infrastructure.databases.factory_database import (
     FactoryDatabase as db_factory
 )
 
-try:
-    from src.infrastructure.models.app import (
-        SubmissionModel,
-        SubmissionFileModel,
-        SubmissionFilmMetadataModel,
-        AIFlagModel,
-        AIAnalysisReportModel,
-        RoundModel,
-    )
-except ImportError:
-    from infrastructure.models.app import (
-        SubmissionModel,
-        SubmissionFileModel,
-        SubmissionFilmMetadataModel,
-        AIFlagModel,
-        AIAnalysisReportModel,
-        RoundModel,
-    )
+from infrastructure.models.app import (
+    SubmissionModel,
+    SubmissionFileModel,
+    SubmissionFilmMetadataModel,
+    AIFlagModel,
+    AIAnalysisReportModel,
+    RoundModel,
+)
 
 
 class SubmissionRepository(ISubmissionRepository):
