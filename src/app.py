@@ -93,6 +93,18 @@ def create_app():
     def results_short():
         return redirect(url_for('contest_public.public_results'))
 
+    @app.route('/my-submissions')
+    def my_submissions_page():
+        return render_template('my_submissions.html')
+
+    @app.route('/my-submissions/<int:submission_id>')
+    def my_submission_detail_page(submission_id):
+        return render_template('submission_detail.html', submission_id=submission_id)
+
+    @app.route('/submit')
+    def submit_page():
+        return render_template('submission.html')
+
     # Direct leaderboard route with mock data to guarantee registration
     @app.route('/leaderboard-demo')
     def leaderboard_demo():

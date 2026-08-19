@@ -215,3 +215,109 @@ class SubmissionService:
 
     def list_submissions(self):
         return self.submission_repo.list()
+
+    def get_my_submissions(self, user_id: int):
+        """Retrieve all submissions belonging to the given participant."""
+        return self.submission_repo.get_my_submissions(user_id=user_id)
+
+    def get_submission_detail(
+        self,
+        submission_id: int,
+        user_id: Optional[int] = None,
+        role: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve complete submission details.
+        Enforces access control: Participants can only view their own submissions.
+        Judges, organizers, and admins can view any submission.
+        """
+        data = self.submission_repo.get_submission_full_details(submission_id)
+        if not data:
+            return None
+
+        # Check authorization
+        if role == "participant" and user_id is not None:
+            if data["user_id"] != user_id:
+                raise PermissionError("Access forbidden: You can only view your own submission details.")
+
+        return data
+
+    def update_draft_submission(
+        self,
+        submission_id: int,
+        user_id: int,
+        title: Optional[str] = None,
+        story_description: Optional[str] = None,
+        round_id: Optional[int] = None,
+        status: Optional[str] = None,
+        film_metadata: Optional[Dict[str, Any]] = None,
+        file_bytes: Optional[bytes] = None,
+        filename: Optional[str] = None,
+        content_type: Optional[str] = "image/jpeg",
+        image_hd_url: Optional[str] = None,
+        file_hash: Optional[str] = None,
+        thumbnail_url: Optional[str] = None,
+        width_px: Optional[int] = None,
+        height_px: Optional[int] = None,
+        file_size_bytes: Optional[int] = None,
+    ) -> SubmissionModel:
+        """Update an existing draft submission, optionally uploading a new replacement image."""
+        if file_bytes and len(file_bytes) > 0 and filename:
+            storage_info = self.storage_service.upload_image(
+                file_bytes=file_bytes,
+                filename=filename,
+                content_type=content_type or "image/jpeg",
+            )
+            image_hd_url = storage_info["hd_url"]
+            thumbnail_url = storage_info["thumbnail_url"]
+            file_hash = storage_info["sha256"]
+            width_px = storage_info["width"]
+            height_px = storage_info["height"]
+            file_size_bytes = storage_info["file_size"]
+
+        submission = self.submission_repo.update_draft_submission(
+            submission_id=submission_id,
+            user_id=user_id,
+            title=title,
+            story_description=story_description,
+            round_id=round_id,
+            status=status,
+            film_metadata=film_metadata,
+            image_hd_url=image_hd_url,
+            thumbnail_url=thumbnail_url,
+            file_hash=file_hash,
+            width_px=width_px,
+            height_px=height_px,
+            file_size_bytes=file_size_bytes,
+        )
+
+        # If updated to submitted, trigger AI detection analysis if image exists
+        if status == "submitted" and image_hd_url:
+            try:
+                from services.ai_detection_service import AiDetectionService
+                ai_service = AiDetectionService()
+                ai_result = ai_service.detect_ai(image_hd_url)
+                ai_score = ai_result.get("ai_score", 0)
+                risk_level = ai_result.get("risk_level", "safe")
+
+                saved_flag = self.submission_repo.save_ai_flag(
+                    submission_id=submission.id,
+                    confidence_score=ai_score,
+                    risk_level=risk_level,
+                    flag_type="AI_METADATA",
+                    status="pending",
+                )
+                self.submission_repo.save_ai_analysis_report(
+                    submission_id=submission.id,
+                    ai_flag_id=saved_flag.id,
+                    ai_model_name="EXIF Extraction Engine",
+                    ai_confidence_score=ai_score,
+                    raw_details={
+                        "exif_data": ai_result.get("exif_data", {}),
+                        "raw_exif": ai_result.get("raw_exif", {}),
+                    },
+                )
+            except Exception:
+                pass
+
+        return submission
