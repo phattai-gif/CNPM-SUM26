@@ -68,6 +68,9 @@ class AuthRepository(IAuthRepository):
             if not user_obj:
                 return None
 
+            if user_obj.status != 'active':
+                return None
+
             # Kiá»ƒm tra máº­t kháº©u mÃ£ hÃ³a vá»›i check_password_hash
             if not check_password_hash(user_obj.password_hash, auth.password):
                 return None

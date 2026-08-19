@@ -1,6 +1,10 @@
 ﻿from functools import wraps
 from flask import request, jsonify, current_app
 import jwt
+from sqlalchemy import select
+
+from infrastructure.databases.factory_database import FactoryDatabase as db_factory
+from infrastructure.models.app import RoleModel, UserModel, user_roles
 
 
 def token_required(f):
@@ -26,6 +30,19 @@ def token_required(f):
                 'username': payload.get('username'),
                 'role': payload.get('role', 'participant')
             }
+
+            session = db_factory.get_database('POSTGREE').session
+            user = session.query(UserModel).filter_by(id=request.user['user_id']).first()
+            if user and user.status != 'active':
+                return jsonify({'message': 'User account is locked or no longer exists.'}), 401
+            if user:
+                current_role = session.execute(
+                    select(RoleModel.code)
+                    .select_from(user_roles)
+                    .join(RoleModel, user_roles.c.role_id == RoleModel.id)
+                    .where(user_roles.c.user_id == user.id)
+                ).scalar()
+                request.user['role'] = current_role or 'participant'
         except jwt.ExpiredSignatureError:
             return jsonify({'message': 'Token has expired! Please login again.'}), 401
         except jwt.InvalidTokenError:

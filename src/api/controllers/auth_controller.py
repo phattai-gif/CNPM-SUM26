@@ -11,6 +11,8 @@ from infrastructure.repositories.auth_repository import AuthRepository
 from infrastructure.repositories.contest_repository import ContestRepository
 from services.contest_service import ContestService
 
+PUBLIC_SIGNUP_ROLES = {'participant'}
+
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 # Khá»Ÿi táº¡o repository & service dÃ¹ng FactoryDatabase (PostgreSQL Supabase)
@@ -98,6 +100,11 @@ def register():
     passwordconfirm = data.get('passwordconfirm')
     full_name = data.get('full_name')
     role = data.get('role', 'participant').lower()
+
+    if role not in PUBLIC_SIGNUP_ROLES:
+        return jsonify({
+            'message': 'Public registration only allows the participant role.'
+        }), 403
 
     if password != passwordconfirm:
         return jsonify({'message': 'Passwords do not match'}), 400

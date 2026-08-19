@@ -15,6 +15,7 @@ from api.controllers.contest_controller import (
 from api.controllers.judge_controller import judge_bp
 from api.controllers.notification_controller import notification_bp
 from api.controllers.contest_settings_controller import contest_settings_bp
+from api.controllers.admin_controller import admin_bp
 
 
 def register_routes(app):
@@ -37,6 +38,7 @@ def register_routes(app):
     # Business domain blueprints
     app.register_blueprint(notification_bp)
     app.register_blueprint(contest_settings_bp)
+    app.register_blueprint(admin_bp)
 
     # Public UI routes and SPA fallback
     from flask import redirect, url_for, render_template, jsonify, request
