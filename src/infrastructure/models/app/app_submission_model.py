@@ -1,6 +1,7 @@
 ﻿"""Submission ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Numeric, String, Text, UniqueConstraint
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from infrastructure.databases.base import Base
@@ -23,3 +24,10 @@ class SubmissionModel(Base):
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    round = relationship("RoundModel", back_populates="submissions")
+    user = relationship("UserModel", back_populates="submissions")
+    files = relationship("SubmissionFileModel", back_populates="submission", cascade="all, delete-orphan")
+    film_metadata = relationship("SubmissionFilmMetadataModel", back_populates="submission", uselist=False, cascade="all, delete-orphan")
+    scores = relationship("ScoreModel", back_populates="submission", cascade="all, delete-orphan")
+    ai_flags = relationship("AIFlagModel", back_populates="submission", cascade="all, delete-orphan")

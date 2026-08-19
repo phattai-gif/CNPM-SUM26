@@ -1,6 +1,7 @@
 ﻿"""Submission film metadata ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from infrastructure.databases.base import Base
@@ -21,3 +22,5 @@ class SubmissionFilmMetadataModel(Base):
     taken_at_location = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    submission = relationship("SubmissionModel", back_populates="film_metadata")

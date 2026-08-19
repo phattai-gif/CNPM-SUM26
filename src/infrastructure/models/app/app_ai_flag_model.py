@@ -1,6 +1,7 @@
 ﻿"""AI flag ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Numeric, String
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from infrastructure.databases.base import Base
@@ -21,3 +22,7 @@ class AIFlagModel(Base):
     review_notes = Column(String(512), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    submission = relationship("SubmissionModel", back_populates="ai_flags")
+    analysis_report = relationship("AIAnalysisReportModel", back_populates="ai_flag", uselist=False, cascade="all, delete-orphan")
+    reviewed_by_user = relationship("UserModel", back_populates="reviewed_ai_flags", foreign_keys="AIFlagModel.reviewed_by")

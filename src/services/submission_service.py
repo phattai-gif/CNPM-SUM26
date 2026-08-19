@@ -383,7 +383,7 @@ class SubmissionService:
             try:
 
                 try:
-                    from src.services.ai_detection_service import (
+                    from services.ai_detection_service import (
                         AiDetectionService,
                     )
                 except ImportError:
@@ -819,7 +819,7 @@ class SubmissionService:
             try:
 
                 try:
-                    from src.services.ai_detection_service import (
+                    from services.ai_detection_service import (
                         AiDetectionService,
                     )
                 except ImportError:

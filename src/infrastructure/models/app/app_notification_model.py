@@ -1,6 +1,7 @@
 ﻿"""Notification ORM model."""
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from infrastructure.databases.base import Base
@@ -19,3 +20,6 @@ class NotificationModel(Base):
     is_read = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     read_at = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("UserModel", foreign_keys="NotificationModel.user_id")
+    contest = relationship("ContestModel", foreign_keys="NotificationModel.contest_id")

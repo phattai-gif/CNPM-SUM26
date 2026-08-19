@@ -41,10 +41,17 @@ class AuthRepository(IAuthRepository):
             role_code = auth.role if auth.role else 'participant'
             role_obj = self.session.query(RoleModel).filter_by(code=role_code).first()
 
-            if role_obj:
-                # GÃ¡n role vÃ o báº£ng user_roles
-                stmt = insert(user_roles).values(user_id=new_user.id, role_id=role_obj.id)
-                self.session.execute(stmt)
+            if role_obj is None:
+                role_obj = RoleModel(
+                    code=role_code,
+                    name=role_code.replace('_', ' ').title(),
+                    description=f'Default {role_code} role',
+                )
+                self.session.add(role_obj)
+                self.session.flush()
+
+            stmt = insert(user_roles).values(user_id=new_user.id, role_id=role_obj.id)
+            self.session.execute(stmt)
 
             self.session.commit()
             auth.id = new_user.id

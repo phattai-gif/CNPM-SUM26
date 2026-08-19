@@ -97,12 +97,7 @@ def organizer_dashboard_metrics():
         total_contests = len(contests)
         # Use repository session to compute totals across contests' rounds
         session = contest_service.repository.session
-        try:
-            from src.infrastructure.models.submission_model import SubmissionModel
-            from src.infrastructure.models.judge_assignment_model import JudgeAssignmentModel
-        except Exception:
-            from infrastructure.models.submission_model import SubmissionModel
-            from infrastructure.models.judge_assignment_model import JudgeAssignmentModel
+        from infrastructure.models.app import SubmissionModel, JudgeAssignmentModel
         # gather round ids owned by this organizer
         all_round_ids = []
         for c in contests:
@@ -163,7 +158,7 @@ def organizer_dashboard_seed():
         round_obj = contest_service.create_round(contest.id, round_data, user_id=user_id)
 
         # Create sample submissions using SubmissionService
-        from src.services.submission_service import SubmissionService
+        from services.submission_service import SubmissionService
         submission_service = SubmissionService()
 
         sample_image = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470'
@@ -327,13 +322,7 @@ def list_contests():
     # Enhance with submissions_count and judges_count per contest
     try:
         session = contest_service.repository.session
-        # import models with fallback
-        try:
-            from src.infrastructure.models.submission_model import SubmissionModel
-            from src.infrastructure.models.judge_assignment_model import JudgeAssignmentModel
-        except Exception:
-            from infrastructure.models.submission_model import SubmissionModel
-            from infrastructure.models.judge_assignment_model import JudgeAssignmentModel
+        from infrastructure.models.app import SubmissionModel, JudgeAssignmentModel
 
         contests_out = []
         for c in contests:
@@ -642,9 +631,9 @@ def finalize_round(round_id, contest_id=None):
     try:
         data, error = score_service.finalize_round(round_id)
         if error == 'round_not_found':
-            return jsonify({'message': 'KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi'}), 404
+            return jsonify({'message': 'Không tìm thấy vòng thi'}), 404
         if error == 'round_already_finalized':
-            return jsonify({'message': 'VÃ²ng thi Ä‘Ã£ Ä‘Æ°á»£c chá»‘t trÆ°á»›c Ä‘Ã³'}), 400
+            return jsonify({'message': 'Vòng thi đã được chốt trước đó'}), 400
 
         if error:
             return jsonify({'message': f'Lá»—i chá»‘t Ä‘iá»ƒm: {error}'}), 400

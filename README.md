@@ -74,6 +74,23 @@
      Truy câp http://localhost:6868/docs
      Truy câp http://localhost:9999/docs
 
+## Initialize database and demo data
+
+Set `DATABASE_URI` or `POSTGREE_DATABASE_URL` in `.env`, then run these commands from the project root:
+
+```bash
+python src/scripts/db.py init-schema
+python src/scripts/db.py seed
+```
+
+To run both steps at once:
+
+```bash
+python src/scripts/db.py init
+```
+
+The seed command is idempotent. It creates the roles `admin`, `organizer`, `judge`, and `participant`, demo accounts, one published contest, one open round, three criteria, a participant submission, judge assignment and score data, plus AI detection data. All demo accounts use the password `Demo@12345`.
+
 
 
 ## Create file .env in folder /src/.env

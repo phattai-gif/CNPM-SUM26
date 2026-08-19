@@ -8,7 +8,6 @@ from domain.models.submission import Submission
 from infrastructure.databases.factory_database import (
     FactoryDatabase as db_factory
 )
-
 try:
     from src.infrastructure.models.app import (
         SubmissionModel,
@@ -31,6 +30,14 @@ except ImportError:
         ContestModel,
         JudgeAssignmentModel,
     )
+from infrastructure.models.app import (
+    SubmissionModel,
+    SubmissionFileModel,
+    SubmissionFilmMetadataModel,
+    AIFlagModel,
+    AIAnalysisReportModel,
+    RoundModel,
+)
 
 
 class SubmissionRepository(ISubmissionRepository):

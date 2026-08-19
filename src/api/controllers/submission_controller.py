@@ -1464,7 +1464,7 @@ def get_next_submission(submission_id):
 
     result, error = (
         score_service
-        .get_next_submission(
+        .get_next_previous(
             submission_id
         )
     )
@@ -1481,15 +1481,13 @@ def get_next_submission(submission_id):
             "message": "Database error"
         }), 500
 
-    if result is None:
+    if result is None or result.get("next") is None:
 
         return jsonify({
             "message": "No next submission"
         }), 404
 
-    return jsonify({
-        "submission": result
-    }), 200
+    return jsonify(result), 200
 
 
 # ============================================================

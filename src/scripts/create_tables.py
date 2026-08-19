@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script to initialize DB schema by creating all tables.
-Usage: python3 scripts/create_tables.py
+Usage: python3 src/scripts/create_tables.py
 
 This script imports the app factory which will initialize the database
 engine via the project's FactoryDatabase and then calls SQLAlchemy
@@ -12,7 +12,7 @@ from pathlib import Path
 import sys
 
 # ensure project root on path
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'src'))
 
 try:
