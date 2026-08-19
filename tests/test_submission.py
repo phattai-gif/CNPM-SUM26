@@ -715,8 +715,372 @@ def test_submit_missing_required_data_error():
     assert res.status_code == 400
 
 
+    assert res.status_code == 400
+
+
+# ==============================================================================
+# Task: Role-based Submission List APIs (25 Required Test Cases)
+# ==============================================================================
+
+# PARTICIPANT TESTS (1-6)
+
+def test_1_participant_get_own_submissions():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    mock_svc = MagicMock()
+    mock_svc.get_my_submissions.return_value = {
+        "submissions": [{"id": 1, "user_id": 10, "title": "My Photo"}],
+        "total": 1
+    }
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/submissions/my', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['total'] == 1
+    assert data['submissions'][0]['user_id'] == 10
+    mock_svc.get_my_submissions.assert_called_with(user_id=10, round_id=None, status=None, ai_flag=None)
+
+
+def test_2_participant_cannot_get_others_submissions():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    mock_svc = MagicMock()
+    mock_svc.get_my_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/submissions/my?user_id=99', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_my_submissions.assert_called_with(user_id=10, round_id=None, status=None, ai_flag=None)
+
+
+def test_3_participant_filter_round():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    mock_svc = MagicMock()
+    mock_svc.get_my_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/submissions/my?round_id=2', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_my_submissions.assert_called_with(user_id=10, round_id=2, status=None, ai_flag=None)
+
+
+def test_4_participant_filter_status():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    mock_svc = MagicMock()
+    mock_svc.get_my_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/submissions/my?status=submitted', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_my_submissions.assert_called_with(user_id=10, round_id=None, status='submitted', ai_flag=None)
+
+
+def test_5_participant_filter_ai_flag():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    mock_svc = MagicMock()
+    mock_svc.get_my_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/submissions/my?ai_flag=high', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_my_submissions.assert_called_with(user_id=10, round_id=None, status=None, ai_flag='high')
+
+
+def test_6_participant_empty_submissions():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    mock_svc = MagicMock()
+    mock_svc.get_my_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/submissions/my', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['submissions'] == []
+    assert data['total'] == 0
+
+
+# ORGANIZER TESTS (7-11)
+
+def test_7_organizer_get_contest_submissions_success():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=5, role='organizer')
+
+    mock_svc = MagicMock()
+    mock_svc.get_organizer_submissions.return_value = {
+        "submissions": [{"id": 10, "title": "Contest Entry"}],
+        "total": 1
+    }
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/organizer/contests/1/submissions', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['total'] == 1
+
+
+def test_8_organizer_cannot_get_other_contest_submissions():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=5, role='organizer')
+
+    mock_svc = MagicMock()
+    mock_svc.get_organizer_submissions.side_effect = PermissionError("Forbidden")
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/organizer/contests/99/submissions', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 403
+
+
+def test_9_organizer_filter_round():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=5, role='organizer')
+
+    mock_svc = MagicMock()
+    mock_svc.get_organizer_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/organizer/contests/1/submissions?round_id=2', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_organizer_submissions.assert_called_with(
+        contest_id=1, user_id=5, user_role='organizer', round_id=2, status=None, ai_flag=None
+    )
+
+
+def test_10_organizer_filter_status():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=5, role='organizer')
+
+    mock_svc = MagicMock()
+    mock_svc.get_organizer_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/organizer/contests/1/submissions?status=submitted', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_organizer_submissions.assert_called_with(
+        contest_id=1, user_id=5, user_role='organizer', round_id=None, status='submitted', ai_flag=None
+    )
+
+
+def test_11_organizer_filter_ai_flag():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=5, role='organizer')
+
+    mock_svc = MagicMock()
+    mock_svc.get_organizer_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/organizer/contests/1/submissions?ai_flag=high', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_organizer_submissions.assert_called_with(
+        contest_id=1, user_id=5, user_role='organizer', round_id=None, status=None, ai_flag='high'
+    )
+
+
+# JUDGE TESTS (12-17)
+
+def test_12_judge_get_assignment_submissions_success():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=7, role='judge')
+
+    mock_svc = MagicMock()
+    mock_svc.get_judge_assignment_submissions.return_value = {
+        "submissions": [{"id": 20, "title": "Assigned Photo"}],
+        "total": 1
+    }
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/judge/assignments/1/submissions', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['total'] == 1
+
+
+def test_13_judge_cannot_get_other_assignment_submissions():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=7, role='judge')
+
+    mock_svc = MagicMock()
+    mock_svc.get_judge_assignment_submissions.side_effect = PermissionError("Forbidden")
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/judge/assignments/99/submissions', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 403
+
+
+def test_14_judge_cannot_use_other_judge_id_for_assignment():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=7, role='judge')
+
+    mock_svc = MagicMock()
+    mock_svc.get_judge_assignment_submissions.side_effect = PermissionError("Forbidden")
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/judge/assignments/2/submissions?judge_id=88', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 403
+    mock_svc.get_judge_assignment_submissions.assert_called_with(
+        assignment_id=2, user_id=7, user_role='judge', round_id=None, status=None, ai_flag=None
+    )
+
+
+def test_15_judge_filter_round():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=7, role='judge')
+
+    mock_svc = MagicMock()
+    mock_svc.get_judge_assignment_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/judge/assignments/1/submissions?round_id=2', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_judge_assignment_submissions.assert_called_with(
+        assignment_id=1, user_id=7, user_role='judge', round_id=2, status=None, ai_flag=None
+    )
+
+
+def test_16_judge_filter_status():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=7, role='judge')
+
+    mock_svc = MagicMock()
+    mock_svc.get_judge_assignment_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/judge/assignments/1/submissions?status=submitted', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_judge_assignment_submissions.assert_called_with(
+        assignment_id=1, user_id=7, user_role='judge', round_id=None, status='submitted', ai_flag=None
+    )
+
+
+def test_17_judge_filter_ai_flag():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=7, role='judge')
+
+    mock_svc = MagicMock()
+    mock_svc.get_judge_assignment_submissions.return_value = {"submissions": [], "total": 0}
+    patch_controller_attr('submission_service', mock_svc)
+
+    res = client.get('/judge/assignments/1/submissions?ai_flag=high', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    mock_svc.get_judge_assignment_submissions.assert_called_with(
+        assignment_id=1, user_id=7, user_role='judge', round_id=None, status=None, ai_flag='high'
+    )
+
+
+# AUTH TESTS (18-22)
+
+def test_18_no_token_unauthorized():
+    app = create_app()
+    client = app.test_client()
+
+    res = client.get('/submissions/my')
+    assert res.status_code == 401
+
+    res = client.get('/organizer/contests/1/submissions')
+    assert res.status_code == 401
+
+    res = client.get('/judge/assignments/1/submissions')
+    assert res.status_code == 401
+
+
+def test_19_participant_cannot_call_organizer_api():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    res = client.get('/organizer/contests/1/submissions', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 403
+
+
+def test_20_participant_cannot_call_judge_api():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    res = client.get('/judge/assignments/1/submissions', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 403
+
+
+def test_21_judge_cannot_call_organizer_api():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=7, role='judge')
+
+    res = client.get('/organizer/contests/1/submissions', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 403
+
+
+def test_22_organizer_cannot_call_judge_api():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=5, role='organizer')
+
+    res = client.get('/judge/assignments/1/submissions', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 403
+
+
+# VALIDATION TESTS (23-25)
+
+def test_23_invalid_round_id():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    res = client.get('/submissions/my?round_id=invalid_id', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 400
+    assert res.get_json()['message'] == 'Invalid round_id'
+
+
+def test_24_invalid_status():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    res = client.get('/submissions/my?status=unknown_status', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 400
+    assert res.get_json()['message'] == 'Invalid status'
+
+
+def test_25_invalid_ai_flag():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10, role='participant')
+
+    res = client.get('/submissions/my?ai_flag=ultra_high', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 400
+    assert res.get_json()['message'] == 'Invalid ai_flag'
+
+
 if __name__ == '__main__':
     test_get_submission_details_success()
     test_get_submission_details_not_found()
     print('Submission detail tests passed')
+
 

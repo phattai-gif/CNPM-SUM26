@@ -10,6 +10,9 @@ from infrastructure.models.app import (
     SubmissionModel,
     SubmissionFileModel,
     SubmissionFilmMetadataModel,
+    AIFlagModel,
+    ContestModel,
+    JudgeAssignmentModel,
 )
 
 
@@ -1007,7 +1010,7 @@ class SubmissionService:
             .list()
         )
 
-    def _run_duplicate_check_and_flag(
+def _run_duplicate_check_and_flag(
         self,
         submission,
         file_bytes: bytes,
@@ -1054,3 +1057,187 @@ class SubmissionService:
         except Exception as e:
             # Duplicate checking is optional/should not block main flow
             print(f"Warning: duplicate check failed: {e}")
+
+    # =========================================================
+    # ROLE-BASED SUBMISSION LISTING & FORMATTING
+    # =========================================================
+
+    def _format_submission_dict(
+        self,
+        submission: SubmissionModel,
+        submission_file: Optional[SubmissionFileModel] = None,
+        film_metadata: Optional[SubmissionFilmMetadataModel] = None,
+        ai_flag: Optional[AIFlagModel] = None,
+    ) -> Dict[str, Any]:
+        item = {
+            "id": submission.id,
+            "round_id": submission.round_id,
+            "user_id": submission.user_id,
+            "title": submission.title,
+            "story_description": submission.story_description,
+            "status": submission.status,
+            "final_score": (
+                float(submission.final_score)
+                if submission.final_score is not None
+                else None
+            ),
+            "submitted_at": (
+                submission.submitted_at.isoformat()
+                if submission.submitted_at
+                else None
+            ),
+            "created_at": (
+                submission.created_at.isoformat()
+                if submission.created_at
+                else None
+            ),
+            "updated_at": (
+                submission.updated_at.isoformat()
+                if submission.updated_at
+                else None
+            ),
+            "file": None,
+            "film_metadata": None,
+            "ai_flag": None,
+        }
+
+        if submission_file:
+            item["file"] = {
+                "id": submission_file.id,
+                "image_hd_url": submission_file.image_hd_url,
+                "thumbnail_url": submission_file.thumbnail_url,
+                "width_px": submission_file.width_px,
+                "height_px": submission_file.height_px,
+                "file_size_bytes": submission_file.file_size_bytes,
+                "file_hash": submission_file.file_hash,
+                "created_at": (
+                    submission_file.created_at.isoformat()
+                    if submission_file.created_at
+                    else None
+                ),
+            }
+
+        if film_metadata:
+            item["film_metadata"] = {
+                "film_stock": film_metadata.film_stock,
+                "film_iso": film_metadata.film_iso,
+                "camera_body": film_metadata.camera_body,
+                "lens": film_metadata.lens,
+                "lab_name": film_metadata.lab_name,
+                "scanner_info": film_metadata.scanner_info,
+                "development_process": film_metadata.development_process,
+                "taken_at_location": film_metadata.taken_at_location,
+                "created_at": (
+                    film_metadata.created_at.isoformat()
+                    if film_metadata.created_at
+                    else None
+                ),
+            }
+
+        if ai_flag:
+            item["ai_flag"] = {
+                "ai_score": (
+                    float(ai_flag.confidence_score)
+                    if ai_flag.confidence_score is not None
+                    else None
+                ),
+                "risk_level": ai_flag.risk_level,
+                "status": ai_flag.status,
+            }
+
+        return item
+
+    def get_my_submissions(
+        self,
+        user_id: int,
+        round_id: Optional[int] = None,
+        status: Optional[str] = None,
+        ai_flag: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        rows = self.submission_repo.get_participant_submissions(
+            user_id=user_id,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
+        )
+        submissions = [
+            self._format_submission_dict(sub, file_obj, meta_obj, ai_obj)
+            for sub, file_obj, meta_obj, ai_obj in rows
+        ]
+        return {
+            "submissions": submissions,
+            "total": len(submissions),
+        }
+
+    def get_organizer_submissions(
+        self,
+        contest_id: int,
+        user_id: int,
+        user_role: str,
+        round_id: Optional[int] = None,
+        status: Optional[str] = None,
+        ai_flag: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        contest = (
+            self.submission_repo.session.query(ContestModel)
+            .filter_by(id=contest_id)
+            .first()
+        )
+        if not contest:
+            raise ValueError("Contest not found")
+
+        if user_role != "admin" and contest.created_by != user_id:
+            raise PermissionError("Forbidden")
+
+        rows = self.submission_repo.get_organizer_submissions(
+            contest_id=contest_id,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
+        )
+        submissions = [
+            self._format_submission_dict(sub, file_obj, meta_obj, ai_obj)
+            for sub, file_obj, meta_obj, ai_obj in rows
+        ]
+        return {
+            "submissions": submissions,
+            "total": len(submissions),
+        }
+
+    def get_judge_assignment_submissions(
+        self,
+        assignment_id: int,
+        user_id: int,
+        user_role: str,
+        round_id: Optional[int] = None,
+        status: Optional[str] = None,
+        ai_flag: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        assignment = (
+            self.submission_repo.session.query(JudgeAssignmentModel)
+            .filter_by(id=assignment_id)
+            .first()
+        )
+        if not assignment:
+            raise ValueError("Assignment not found")
+
+        if user_role != "admin" and assignment.judge_id != user_id:
+            raise PermissionError("Forbidden")
+
+        rows = self.submission_repo.get_judge_assignment_submissions(
+            assignment_id=assignment_id,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
+        )
+        if rows is None:
+            raise ValueError("Assignment not found")
+
+        submissions = [
+            self._format_submission_dict(sub, file_obj, meta_obj, ai_obj)
+            for sub, file_obj, meta_obj, ai_obj in rows
+        ]
+        return {
+            "submissions": submissions,
+            "total": len(submissions),
+        }
