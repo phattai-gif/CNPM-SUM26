@@ -1,4 +1,5 @@
 ﻿from collections import defaultdict
+import sys
 from typing import Optional
 
 try:
@@ -41,8 +42,6 @@ class ScoreService:
             submission_repo or SubmissionRepository()
         )
         self.contest_repo = contest_repo or ContestRepository()
-
-    
 
     def validate_score(
         self,
@@ -426,6 +425,37 @@ class ScoreService:
             direction=-1,
         )
 
+    def get_next_previous(self, submission_id: int):
+        submission, submissions, error = self._get_ordered_submissions(
+            submission_id
+        )
+        if error:
+            return None, error
+
+        current_index = next(
+            (
+                index
+                for index, item in enumerate(submissions)
+                if item.id == submission_id
+            ),
+            None,
+        )
+        if current_index is None:
+            return None, "submission_not_found"
+
+        return {
+            "previous": (
+                submissions[current_index - 1].id
+                if current_index > 0
+                else None
+            ),
+            "next": (
+                submissions[current_index + 1].id
+                if current_index < len(submissions) - 1
+                else None
+            ),
+        }, None
+
     def _get_adjacent_submission(
         self,
         submission_id: int,
@@ -466,4 +496,7 @@ class ScoreService:
             ),
             None,
         )
+
+
+    sys.modules.setdefault("src.services.score_service", sys.modules[__name__])
 

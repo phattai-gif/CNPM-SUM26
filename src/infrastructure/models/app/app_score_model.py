@@ -25,4 +25,4 @@ class ScoreModel(Base):
 
     submission = relationship("SubmissionModel", back_populates="scores")
     judge = relationship("UserModel", back_populates="submitted_scores", foreign_keys="ScoreModel.judge_id")
-    criterion = relationship("CriteriaModel", foreign_keys="CriteriaModel.id")
+    criterion = relationship("CriteriaModel", foreign_keys=[criteria_id])

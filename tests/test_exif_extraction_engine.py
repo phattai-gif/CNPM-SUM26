@@ -1,5 +1,6 @@
 import os
 import sys
+import pytest
 
 # Set SQLite in-memory database for testing
 # Set SQLite file-based database for testing to ensure session sharing
@@ -22,11 +23,17 @@ from services.ai_detection_service import AiDetectionService
 from infrastructure.repositories.submission_repository import SubmissionRepository
 
 
+@pytest.fixture(autouse=True)
 def setup_test_db():
     """Initializes SQLite with only the necessary tables for EXIF testing."""
     engine = db_factory.get_database("POSTGREE").engine
     
     needed_tables = ["submissions", "ai_flags", "ai_analysis_reports"]
+    from sqlalchemy import Integer, MetaData
+    with engine.begin() as connection:
+        for name in reversed(needed_tables):
+            connection.execute(text(f'DROP TABLE IF EXISTS "{name}"'))
+    test_metadata = MetaData()
     for name in needed_tables:
         table = None
         for key, t in Base.metadata.tables.items():
@@ -34,13 +41,12 @@ def setup_test_db():
                 table = t
                 break
         if table is not None:
-            table.schema = None
+            table = table.to_metadata(test_metadata, schema=None)
             table.foreign_keys.clear()
             # Clear constraints pointing to other schemas/tables
             table.constraints = {c for c in table.constraints if c.__class__.__name__ != "ForeignKeyConstraint"}
             
             # Map BigInteger 'id' columns to Integer for SQLite autoincrement support
-            from sqlalchemy import Integer
             for col in table.columns:
                 if col.primary_key and col.name == "id":
                     col.type = Integer()
