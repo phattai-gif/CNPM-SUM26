@@ -130,12 +130,12 @@
     },
 
     uploadFormData(url, formData, options = {}) {
-      const { onProgress, headers = {}, ...rest } = options;
+      const { onProgress, headers = {}, method = 'POST', ...rest } = options;
       const { token } = this.getSession();
 
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', url, true);
+        xhr.open(method.toUpperCase(), url, true);
 
         if (token) {
           xhr.setRequestHeader('Authorization', `Bearer ${token}`);

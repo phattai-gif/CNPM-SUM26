@@ -4,9 +4,11 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(Path(__file__).resolve().parent / ".env")
 load_dotenv()
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_UPLOAD_DIR = PROJECT_ROOT / "frontend" / "static" / "uploads"
 
 

@@ -26,6 +26,8 @@ class SubmissionForm {
         this.session = window.AuthSession.getSession();
         this.authToken = this.session.token;
         this.isSubmitting = false;
+        this.draftId = new URLSearchParams(window.location.search).get('draft_id') || new URLSearchParams(window.location.search).get('id') || null;
+        this.hasExistingImage = false;
 
         this.init();
     }
@@ -39,6 +41,10 @@ class SubmissionForm {
             this.submitBtn.disabled = true;
             this.draftBtn.disabled = true;
             return;
+        }
+
+        if (this.draftId) {
+            this.setupDraftMode();
         }
 
         // File input events
@@ -70,6 +76,27 @@ class SubmissionForm {
         this.loadRounds();
     }
 
+    setupDraftMode() {
+        const header = document.querySelector('.submission-header');
+        if (header) {
+            const banner = document.createElement('div');
+            banner.className = 'draft-edit-notice';
+            banner.style.cssText = 'background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #f8fafc; padding: 14px 20px; border-radius: 12px; margin-top: 16px; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between;';
+            banner.innerHTML = `
+                <div>
+                    <strong>📝 Đang chỉnh sửa bản nháp #${this.draftId}</strong>
+                    <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 4px;">Bạn có thể cập nhật thông số hoặc nộp bài thi chính thức.</div>
+                </div>
+                <a href="/my-submissions" style="color: #f59e0b; font-weight: 700; text-decoration: underline; font-size: 0.85rem;">Quay lại danh sách</a>
+            `;
+            header.appendChild(banner);
+        }
+
+        if (this.submitBtn) this.submitBtn.textContent = '✓ Cập Nhật & Nộp Bài';
+        if (this.draftBtn) this.draftBtn.textContent = '💾 Cập Nhật Bản Nháp';
+        if (this.imageInput) this.imageInput.removeAttribute('required');
+    }
+
     /**
      * Load contest rounds from API
      */
@@ -96,9 +123,89 @@ class SubmissionForm {
             });
             
             this.populateRoundSelect();
+            if (this.draftId) {
+                await this.loadDraftData();
+            }
         } catch (error) {
             console.warn('Could not load rounds:', error);
-            // Continue anyway - user can manually enter round_id if needed
+            if (this.draftId) {
+                await this.loadDraftData();
+            }
+        }
+    }
+
+    /**
+     * Load draft data from API and populate form
+     */
+    async loadDraftData() {
+        if (!this.draftId) return;
+        try {
+            const data = await window.apiClient.get(`/submissions/${this.draftId}`);
+            if (!data) return;
+
+            // Populate round selection
+            if (data.round_id) {
+                const roundSelect = document.getElementById('roundSelect');
+                if (roundSelect) {
+                    roundSelect.value = data.round_id;
+                    this.updateRoundInfo(data.round_id);
+                }
+            }
+
+            // Populate Title
+            if (data.title) {
+                const titleInput = document.getElementById('titleInput');
+                if (titleInput) {
+                    titleInput.value = data.title;
+                    const count = document.getElementById('titleCount');
+                    if (count) count.textContent = `${data.title.length}/200 characters`;
+                }
+            }
+
+            // Populate Story
+            if (data.story_description) {
+                const descInput = document.getElementById('descriptionInput');
+                if (descInput) {
+                    descInput.value = data.story_description;
+                    const count = document.getElementById('descriptionCount');
+                    if (count) count.textContent = `${data.story_description.length}/1000 characters`;
+                }
+            }
+
+            // Populate Film Metadata
+            const meta = data.film_metadata || {};
+            if (meta.camera_body) document.getElementById('cameraBodies').value = meta.camera_body;
+            if (meta.lens) document.getElementById('lensInput').value = meta.lens;
+            if (meta.film_stock) document.getElementById('filmStockInput').value = meta.film_stock;
+            if (meta.film_iso) document.getElementById('filmIsoInput').value = meta.film_iso;
+            if (meta.lab_name) document.getElementById('labNameInput').value = meta.lab_name;
+            if (meta.scanner_info) document.getElementById('scannerInfoInput').value = meta.scanner_info;
+            if (meta.development_process) document.getElementById('developmentProcessSelect').value = meta.development_process;
+            if (meta.taken_at_location) document.getElementById('locationInput').value = meta.taken_at_location;
+
+            // Populate Image Preview if exists
+            const file = data.file || {};
+            const imageSrc = file.image_hd_url || file.thumbnail_url;
+            if (imageSrc) {
+                this.selectedImage = imageSrc;
+                this.hasExistingImage = true;
+
+                const previewImage = document.getElementById('previewImage');
+                const infoFileName = document.getElementById('infoFileName');
+                const infoFileSize = document.getElementById('infoFileSize');
+                const infoDimensions = document.getElementById('infoDimensions');
+
+                previewImage.src = imageSrc;
+                infoFileName.textContent = 'Ảnh đã tải lên trước đó';
+                infoFileSize.textContent = file.file_size_bytes ? this.formatFileSize(file.file_size_bytes) : '-';
+                infoDimensions.textContent = (file.width_px && file.height_px) ? `${file.width_px} × ${file.height_px} px` : '-';
+
+                this.imageUploadArea.style.display = 'none';
+                this.imagePreview.style.display = 'block';
+                if (this.imageInput) this.imageInput.removeAttribute('required');
+            }
+        } catch (error) {
+            console.warn('Could not load draft submission details:', error);
         }
     }
 
@@ -281,9 +388,13 @@ class SubmissionForm {
     removeImage() {
         this.selectedImage = null;
         this.selectedImageFile = null;
+        this.hasExistingImage = false;
         this.imageInput.value = '';
         this.imageUploadArea.style.display = 'block';
         this.imagePreview.style.display = 'none';
+        if (!this.draftId) {
+            this.imageInput.setAttribute('required', 'required');
+        }
     }
 
     /**
@@ -321,8 +432,8 @@ class SubmissionForm {
             errors.push('Please select a competition round');
         }
 
-        // Check image
-        if (!this.selectedImage) {
+        // Check image (allow existing image when editing a draft)
+        if (!this.selectedImage && !this.hasExistingImage) {
             errors.push('Please upload an image');
         }
 
@@ -362,6 +473,7 @@ class SubmissionForm {
         if (mode === 'draft') {
             const hasDraftData = Boolean(
                 this.selectedImageFile ||
+                this.hasExistingImage ||
                 document.getElementById('roundSelect').value ||
                 document.getElementById('titleInput').value.trim() ||
                 document.getElementById('descriptionInput').value.trim()
@@ -381,7 +493,11 @@ class SubmissionForm {
 
         try {
             const formData = this.buildSubmissionFormData(mode);
-            const responseData = await window.apiClient.uploadFormData('/submissions', formData, {
+            const url = this.draftId ? `/submissions/${this.draftId}` : '/submissions';
+            const method = this.draftId ? 'PUT' : 'POST';
+
+            const responseData = await window.apiClient.uploadFormData(url, formData, {
+                method,
                 onProgress: ({ percent }) => {
                     const label = mode === 'draft' ? 'Saving draft' : 'Uploading submission';
                     this.showProgress(label, percent);
