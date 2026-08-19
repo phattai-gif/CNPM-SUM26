@@ -1,4 +1,4 @@
-"""Digital archive exhibit ORM model."""
+﻿"""Digital archive exhibit ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.sql import func
@@ -14,8 +14,8 @@ class DigitalArchiveExhibitModel(Base):
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    contest_id = Column(BigInteger, ForeignKey("contests.id", ondelete="CASCADE"), nullable=False)
-    submission_id = Column(BigInteger, ForeignKey("submissions.id", ondelete="CASCADE"), nullable=False)
+    contest_id = Column(BigInteger, ForeignKey("app.contests.id", ondelete="CASCADE"), nullable=False)
+    submission_id = Column(BigInteger, ForeignKey("app.submissions.id", ondelete="CASCADE"), nullable=False)
     award_title = Column(String(100), nullable=True)
     display_order = Column(Integer, default=0)
     views_count = Column(Integer, default=0)

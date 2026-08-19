@@ -1,4 +1,4 @@
-from typing import Optional
+﻿from typing import Optional
 
 from infrastructure.repositories.contest_settings_repository import ContestSettingsRepository
 
@@ -12,3 +12,4 @@ class ContestSettingsService:
 
     def create_or_update_settings(self, contest_id: int, **kwargs):
         return self.repository.create_or_update(contest_id, **kwargs)
+

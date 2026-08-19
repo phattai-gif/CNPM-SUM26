@@ -226,3 +226,4 @@ __marimo__/
 *.sqlite
 *.sqlite3
 src/static/uploads/
+frontend/static/uploads/

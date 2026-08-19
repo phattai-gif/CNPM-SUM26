@@ -1,10 +1,11 @@
-"""Clean SQLAlchemy model exports for the application database.
+﻿"""Clean SQLAlchemy model exports for the application database.
 
 Only the canonical app-prefixed models are re-exported here to avoid duplicate
 ORM metadata registration from legacy model files in the parent package.
 """
 
 from .app import *  # noqa: F401,F403
+from .registry import CORE_BIZ_REGISTRY, ORM_REGISTRY
 
 __all__ = [
     "UserModel",
@@ -30,4 +31,6 @@ __all__ = [
     "ContestSettingsModel",
     "NotificationModel",
     "SubmissionReviewModel",
+    "ORM_REGISTRY",
+    "CORE_BIZ_REGISTRY",
 ] 

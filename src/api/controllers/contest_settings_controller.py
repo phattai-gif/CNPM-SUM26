@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+﻿from flask import Blueprint, request, jsonify
 from api.role_required import token_required, role_required
 from services.contest_settings_service import ContestSettingsService
 from infrastructure.repositories.contest_settings_repository import ContestSettingsRepository

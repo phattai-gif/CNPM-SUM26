@@ -1,4 +1,4 @@
-"""Score feedback ORM model."""
+﻿"""Score feedback ORM model."""
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.sql import func
@@ -14,8 +14,8 @@ class ScoreFeedbackModel(Base):
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    submission_id = Column(BigInteger, ForeignKey("submissions.id", ondelete="CASCADE"), nullable=False)
-    judge_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    submission_id = Column(BigInteger, ForeignKey("app.submissions.id", ondelete="CASCADE"), nullable=False)
+    judge_id = Column(BigInteger, ForeignKey("app.users.id", ondelete="CASCADE"), nullable=False)
     general_comment = Column(Text, nullable=True)
     is_finalized = Column(Boolean, nullable=False, default=False)
     summary_feedback = Column(Text, nullable=False)

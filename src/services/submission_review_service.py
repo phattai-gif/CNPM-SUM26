@@ -1,4 +1,4 @@
-from typing import Optional
+﻿from typing import Optional
 
 from infrastructure.repositories.submission_review_repository import SubmissionReviewRepository
 
@@ -30,3 +30,4 @@ class SubmissionReviewService:
             review_notes=review_notes,
             decision_reason=decision_reason,
         )
+

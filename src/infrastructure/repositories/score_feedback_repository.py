@@ -1,4 +1,4 @@
-from typing import Optional
+﻿from typing import Optional
 from sqlalchemy.orm import Session
 
 try:
@@ -49,3 +49,4 @@ class ScoreFeedbackRepository:
         except Exception:
             self.session.rollback()
             raise
+

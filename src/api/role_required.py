@@ -1,15 +1,15 @@
-from functools import wraps
+﻿from functools import wraps
 from flask import request, jsonify, current_app
 import jwt
 
 
 def token_required(f):
-    """Decorator kiểm tra JWT Token hợp lệ"""
+    """Decorator kiá»ƒm tra JWT Token há»£p lá»‡"""
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
 
-        # Lấy token từ Authorization Header
+        # Láº¥y token tá»« Authorization Header
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
             if auth_header.startswith('Bearer '):
@@ -37,7 +37,7 @@ def token_required(f):
 
 
 def role_required(*allowed_roles):
-    """Decorator kiểm tra JWT Token và xác thực Vai trò (Role) của người dùng"""
+    """Decorator kiá»ƒm tra JWT Token vÃ  xÃ¡c thá»±c Vai trÃ² (Role) cá»§a ngÆ°á»i dÃ¹ng"""
     def decorator(f):
         @wraps(f)
         @token_required

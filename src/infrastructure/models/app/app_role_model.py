@@ -1,4 +1,4 @@
-"""Role and permission ORM models."""
+﻿"""Role and permission ORM models."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.sql import func
@@ -16,7 +16,7 @@ class RoleModel(Base):
     code = Column(String(50), nullable=False, unique=True)
     name = Column(String(100), nullable=False)
     description = Column(String(255), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    # created_at column removed to match existing DB schema (some DBs lack this column)
 
 
 class PermissionModel(Base):
@@ -29,14 +29,14 @@ class PermissionModel(Base):
     code = Column(String(100), nullable=False, unique=True)
     name = Column(String(100), nullable=False)
     module = Column(String(50), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    # created_at column removed to match existing DB schema (some DBs lack this column)
 
 
 user_roles = Table(
     "user_roles",
     Base.metadata,
-    Column("user_id", BigInteger, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
-    Column("role_id", BigInteger, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
+    Column("user_id", BigInteger, ForeignKey("app.users.id", ondelete="CASCADE"), primary_key=True),
+    Column("role_id", BigInteger, ForeignKey("app.roles.id", ondelete="CASCADE"), primary_key=True),
     schema="app",
     extend_existing=True,
 )
@@ -45,8 +45,8 @@ user_roles = Table(
 role_permissions = Table(
     "role_permissions",
     Base.metadata,
-    Column("role_id", BigInteger, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
-    Column("permission_id", BigInteger, ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
+    Column("role_id", BigInteger, ForeignKey("app.roles.id", ondelete="CASCADE"), primary_key=True),
+    Column("permission_id", BigInteger, ForeignKey("app.permissions.id", ondelete="CASCADE"), primary_key=True),
     schema="app",
     extend_existing=True,
 )

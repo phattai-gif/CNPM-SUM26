@@ -1,4 +1,4 @@
-# Configuration settings for the Flask application
+﻿# Configuration settings for the Flask application
 
 import os
 from pathlib import Path
@@ -46,8 +46,8 @@ class Config:
 
     DATABASE_URI = os.environ.get(
         "DATABASE_URI"
-    ) or (
-        "mssql+pymssql://sa:Aa%40123456@127.0.0.1:1433/DemoFlaskApi"
+    ) or os.environ.get(
+        "POSTGREE_DATABASE_URL"
     )
 
     CORS_HEADERS = "Content-Type"
@@ -113,8 +113,8 @@ class TestingConfig(Config):
 
     DATABASE_URI = os.environ.get(
         "DATABASE_URI"
-    ) or (
-        "mssql+pymssql://sa:Aa%40123456@127.0.0.1:1433/DemoFlaskApi"
+    ) or os.environ.get(
+        "POSTGREE_DATABASE_URL"
     )
 
 
@@ -123,8 +123,8 @@ class ProductionConfig(Config):
 
     DATABASE_URI = os.environ.get(
         "DATABASE_URI"
-    ) or (
-        "mssql+pymssql://sa:Aa%40123456@127.0.0.1:1433/DemoFlaskApi"
+    ) or os.environ.get(
+        "POSTGREE_DATABASE_URL"
     )
 
 

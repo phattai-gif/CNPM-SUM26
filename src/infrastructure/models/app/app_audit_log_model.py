@@ -1,4 +1,4 @@
-"""Audit log ORM model."""
+﻿"""Audit log ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, JSON, String
 from sqlalchemy.sql import func
@@ -11,7 +11,7 @@ class AuditLogModel(Base):
     __table_args__ = {"schema": "app", "extend_existing": True}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(BigInteger, ForeignKey("app.users.id", ondelete="SET NULL"), nullable=True)
     action = Column(String(100), nullable=False)
     entity_name = Column(String(50), nullable=False)
     entity_id = Column(BigInteger, nullable=False)

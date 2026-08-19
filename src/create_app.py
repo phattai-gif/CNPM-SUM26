@@ -1,11 +1,13 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 from flask import Flask
-from .config import Config
-from .api.middleware import setup_middleware
-from .api.routes import register_routes
-from .infrastructure.databases import init_db
-from .app_logging import setup_logging
+
+from config import Config
+from api.middleware import setup_middleware
+from api.routes import register_routes
+from infrastructure.databases import init_db
+from app_logging import setup_logging
+
 
 def create_app():
     frontend_dir = Path(__file__).resolve().parent.parent / 'frontend'
@@ -17,7 +19,7 @@ def create_app():
     )
     app.config.from_object(Config)
 
-    setup_logging(app)
+    setup_logging()
     init_db(app)
     setup_middleware(app)
     register_routes(app)

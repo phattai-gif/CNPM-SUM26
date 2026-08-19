@@ -1,4 +1,4 @@
-"""Submission AI tag ORM model."""
+﻿"""Submission AI tag ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.sql import func
@@ -14,7 +14,7 @@ class SubmissionAITagModel(Base):
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    submission_id = Column(BigInteger, ForeignKey("submissions.id", ondelete="CASCADE"), nullable=False)
+    submission_id = Column(BigInteger, ForeignKey("app.submissions.id", ondelete="CASCADE"), nullable=False)
     tag_name = Column(String(50), nullable=False)
     confidence = Column(Numeric(5, 2), default=90.00)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

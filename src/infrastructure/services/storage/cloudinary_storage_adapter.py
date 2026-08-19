@@ -1,10 +1,10 @@
-import io
+﻿import io
 import os
 
 from typing import Any, Dict, Optional
 
 try:
-    from src.domain.services.istorage_service import (
+    from domain.services.istorage_service import (
         IStorageAdapter,
     )
 except ImportError:

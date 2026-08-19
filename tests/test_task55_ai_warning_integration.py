@@ -2,12 +2,19 @@ import os
 import sys
 import io
 import contextlib
+import atexit
+import tempfile
+from pathlib import Path
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 # Dùng SQLite file để test độc lập, không cần PostgreSQL
-os.environ['POSTGREE_DATABASE_URL'] = 'sqlite:///./test_task55.db'
+DB_FILE = Path(tempfile.gettempdir()) / (
+    f'flask_clean_architecture_task55_{os.getpid()}.db'
+)
+DB_FILE.unlink(missing_ok=True)
+os.environ['POSTGREE_DATABASE_URL'] = f'sqlite:///{DB_FILE.as_posix()}'
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 # Import tất cả model để SQLAlchemy tạo đầy đủ bảng (bao gồm FK dependencies)
@@ -16,10 +23,19 @@ from infrastructure.databases.factory_database import FactoryDatabase as db_fact
 from infrastructure.models import *
 
 
+def cleanup_test_database():
+    try:
+        db_factory.get_database("POSTGREE").engine.dispose()
+    finally:
+        DB_FILE.unlink(missing_ok=True)
+
+
+atexit.register(cleanup_test_database)
+
+
 
 # AIFlagModel: SQLite không hỗ trợ BigInteger autoincrement đúng cách,
 # nên ta tạo bảng ai_flags thủ công bằng SQL raw cho mục đích test
-from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 from sqlalchemy import text
 
 engine = db_factory.get_database("POSTGREE").engine

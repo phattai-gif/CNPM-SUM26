@@ -1,6 +1,7 @@
-"""Round ORM model."""
+﻿"""Round ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from infrastructure.databases.base import Base
@@ -11,7 +12,7 @@ class RoundModel(Base):
     __table_args__ = {"schema": "app", "extend_existing": True}
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    contest_id = Column(BigInteger, ForeignKey("contests.id", ondelete="CASCADE"), nullable=False)
+    contest_id = Column(BigInteger, ForeignKey("app.contests.id", ondelete="CASCADE"), nullable=False)
     round_number = Column(Integer, nullable=False, default=1)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
@@ -21,3 +22,7 @@ class RoundModel(Base):
     status = Column(String(20), nullable=False, default="upcoming")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    contest = relationship("ContestModel", back_populates="rounds")
+    criteria = relationship("CriteriaModel", back_populates="round", cascade="all, delete-orphan")
+    submissions = relationship("SubmissionModel", back_populates="round", cascade="all, delete-orphan")

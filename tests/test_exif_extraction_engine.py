@@ -1,5 +1,6 @@
 import os
 import sys
+import pytest
 
 # Set SQLite in-memory database for testing
 # Set SQLite file-based database for testing to ensure session sharing
@@ -22,11 +23,17 @@ from services.ai_detection_service import AiDetectionService
 from infrastructure.repositories.submission_repository import SubmissionRepository
 
 
+@pytest.fixture(autouse=True)
 def setup_test_db():
     """Initializes SQLite with only the necessary tables for EXIF testing."""
     engine = db_factory.get_database("POSTGREE").engine
     
     needed_tables = ["submissions", "ai_flags", "ai_analysis_reports"]
+    from sqlalchemy import Integer, MetaData
+    with engine.begin() as connection:
+        for name in reversed(needed_tables):
+            connection.execute(text(f'DROP TABLE IF EXISTS "{name}"'))
+    test_metadata = MetaData()
     for name in needed_tables:
         table = None
         for key, t in Base.metadata.tables.items():
@@ -34,13 +41,12 @@ def setup_test_db():
                 table = t
                 break
         if table is not None:
-            table.schema = None
+            table = table.to_metadata(test_metadata, schema=None)
             table.foreign_keys.clear()
             # Clear constraints pointing to other schemas/tables
             table.constraints = {c for c in table.constraints if c.__class__.__name__ != "ForeignKeyConstraint"}
             
             # Map BigInteger 'id' columns to Integer for SQLite autoincrement support
-            from sqlalchemy import Integer
             for col in table.columns:
                 if col.primary_key and col.name == "id":
                     col.type = Integer()
@@ -164,11 +170,79 @@ def test_database_persistence():
     print("[PASS] Passed: Successfully persisted and retrieved raw EXIF & structured data from DB.")
 
 
+def test_metadata_comparison():
+    print("\n" + "=" * 60)
+    print("TEST 3: METADATA COMPARISON (FE05.2)")
+    print("=" * 60)
+
+    service = AiDetectionService()
+
+    # 1. Match scenario
+    declared = {
+        "camera_body": "Nikon F3",
+        "lens": "50mm f/1.4",
+        "film_iso": 400
+    }
+    exif = {
+        "camera_model": "Nikon F3",
+        "lens": "50mm f/1.4",
+        "iso": "400"
+    }
+    res = service.compare_metadata_with_exif(declared, exif)
+    print("Match result:", res)
+    assert res["comparison"]["camera"]["status"] == "match"
+    assert res["comparison"]["lens"]["status"] == "match"
+    assert res["comparison"]["iso"]["status"] == "match"
+    assert res["risk_level"] == "safe"
+    assert res["confidence_score"] == 0.0
+
+    # 2. Mismatch scenario
+    declared_mismatch = {
+        "camera_body": "Canon AE-1",
+        "lens": "50mm",
+        "film_iso": 400
+    }
+    exif_mismatch = {
+        "camera_model": "Nikon F3",
+        "lens": "50mm f/1.4",
+        "iso": "100"
+    }
+    res_mismatch = service.compare_metadata_with_exif(declared_mismatch, exif_mismatch)
+    print("Mismatch result:", res_mismatch)
+    assert res_mismatch["comparison"]["camera"]["status"] == "mismatch"
+    assert res_mismatch["comparison"]["lens"]["status"] == "match"  # 50mm is in 50mm f/1.4
+    assert res_mismatch["comparison"]["iso"]["status"] == "mismatch"
+    assert "camera" in res_mismatch["mismatched_fields"]
+    assert "iso" in res_mismatch["mismatched_fields"]
+    assert res_mismatch["risk_level"] == "high"
+
+    # 3. Insufficient data scenario
+    declared_empty = {
+        "camera_body": "",
+        "lens": None,
+        "film_iso": None
+    }
+    exif_empty = {
+        "camera_model": "Unknown",
+        "lens": "Unknown",
+        "iso": "Unknown"
+    }
+    res_empty = service.compare_metadata_with_exif(declared_empty, exif_empty)
+    print("Empty result:", res_empty)
+    assert res_empty["comparison"]["camera"]["status"] == "insufficient data"
+    assert res_empty["comparison"]["lens"]["status"] == "insufficient data"
+    assert res_empty["comparison"]["iso"]["status"] == "insufficient data"
+    assert res_empty["risk_level"] == "medium"
+
+    print("[PASS] Passed: Correctly classified and handled metadata comparison scenarios.")
+
+
 def main():
     setup_test_db()
     try:
         test_exif_extraction_and_risk_level()
         test_database_persistence()
+        test_metadata_comparison()
         print("\nAll EXIF Engine verification tests passed successfully!")
     finally:
         try:
@@ -187,3 +261,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+﻿from marshmallow import Schema, fields, validate
 
 VALID_ROLES = ['admin', 'organizer', 'participant', 'judge']
 

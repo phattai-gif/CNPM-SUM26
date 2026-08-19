@@ -1,4 +1,4 @@
-# Error handling logic for the Flask application
+﻿# Error handling logic for the Flask application
 
 from flask import jsonify
 

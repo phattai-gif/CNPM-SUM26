@@ -1,4 +1,4 @@
-class Todo:
+﻿class Todo:
     def __init__(self, id: int, title: str, description: str, status: str, created_at, updated_at):
         self.id = id
         self.title = title
