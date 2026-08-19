@@ -1,4 +1,4 @@
-﻿import os
+import os
 from flask import Blueprint, request, jsonify
 
 try:
@@ -14,16 +14,21 @@ service = DuplicateDetectionService()
 
 @bp.route('/check', methods=['POST'])
 def check_duplicate():
-    if 'new_image' not in request.files or 'existing_image' not in request.files:
-        return jsonify({'error': 'Both new_image and existing_image are required'}), 400
+    if 'new_image' not in request.files:
+        return jsonify({'error': 'new_image is required'}), 400
 
     new_file = request.files['new_image']
-    existing_file = request.files['existing_image']
+    existing_file = request.files.get('existing_image')
 
     try:
-        with ImageInputHandler.temp_image_context(new_file) as new_path:
-            with ImageInputHandler.temp_image_context(existing_file) as existing_path:
-                result = service.check_duplicate(new_path, existing_path)
+        if existing_file:
+            with ImageInputHandler.temp_image_context(new_file) as new_path:
+                with ImageInputHandler.temp_image_context(existing_file) as existing_path:
+                    result = service.check_duplicate(new_path, existing_path)
+        else:
+            new_image_bytes = new_file.read()
+            new_file.seek(0)
+            result = service.check_duplicate_against_database(new_image_bytes)
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:

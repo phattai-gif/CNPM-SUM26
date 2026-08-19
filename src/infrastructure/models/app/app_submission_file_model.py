@@ -1,4 +1,4 @@
-﻿"""Submission file ORM model."""
+"""Submission file ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
@@ -19,6 +19,8 @@ class SubmissionFileModel(Base):
     height_px = Column(Integer, nullable=True)
     file_size_bytes = Column(BigInteger, nullable=True)
     file_hash = Column(String(64), nullable=False)
+    phash = Column(String(64), nullable=True)
+    ahash = Column(String(64), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

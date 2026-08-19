@@ -335,6 +335,7 @@ class SubmissionRepository(ISubmissionRepository):
         ai_model_name: str,
         ai_confidence_score: float,
         raw_details: dict,
+        similarity_matched_submission_id: Optional[int] = None,
     ) -> AIAnalysisReportModel:
         """
         Save or update AI analysis report
@@ -367,6 +368,10 @@ class SubmissionRepository(ISubmissionRepository):
                     raw_details
                 )
 
+                existing.similarity_matched_submission_id = (
+                    similarity_matched_submission_id
+                )
+
                 self.session.commit()
                 self.session.refresh(existing)
 
@@ -379,6 +384,7 @@ class SubmissionRepository(ISubmissionRepository):
                 ai_model_name=ai_model_name,
                 ai_confidence_score=ai_confidence_score,
                 raw_details=raw_details,
+                similarity_matched_submission_id=similarity_matched_submission_id,
             )
 
             self.session.add(report)
@@ -507,6 +513,8 @@ class SubmissionRepository(ISubmissionRepository):
                     file_hash=f_info[
                         "file_hash"
                     ],
+                    phash=f_info.get("phash"),
+                    ahash=f_info.get("ahash"),
                 )
 
                 self.session.add(
@@ -667,6 +675,8 @@ class SubmissionRepository(ISubmissionRepository):
                                     "file_hash"
                                 ]
                             ),
+                            phash=f_info.get("phash"),
+                            ahash=f_info.get("ahash"),
                         )
                     )
 

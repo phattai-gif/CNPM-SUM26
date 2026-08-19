@@ -98,6 +98,9 @@ class SubmissionService:
 
         files_data = []
 
+        from services.duplicate_detection_service import DuplicateDetectionService
+        dup_service = DuplicateDetectionService()
+
         # =====================================================
         # UPLOAD MULTIPLE FILES
         # =====================================================
@@ -136,6 +139,9 @@ class SubmissionService:
                     )
                 )
 
+                phash_val = dup_service.calculate_phash_from_bytes(file_bytes_item)
+                ahash_val = dup_service.calculate_ahash_from_bytes(file_bytes_item)
+
                 files_data.append(
                     {
                         "image_hd_url": (
@@ -158,6 +164,8 @@ class SubmissionService:
                         "file_size_bytes": (
                             storage_info["file_size"]
                         ),
+                        "phash": str(phash_val) if phash_val else None,
+                        "ahash": str(ahash_val) if ahash_val else None,
                     }
                 )
 
@@ -183,6 +191,9 @@ class SubmissionService:
                 )
             )
 
+            phash_val = dup_service.calculate_phash_from_bytes(file_bytes)
+            ahash_val = dup_service.calculate_ahash_from_bytes(file_bytes)
+
             files_data.append(
                 {
                     "image_hd_url": (
@@ -205,6 +216,8 @@ class SubmissionService:
                     "file_size_bytes": (
                         storage_info["file_size"]
                     ),
+                    "phash": str(phash_val) if phash_val else None,
+                    "ahash": str(ahash_val) if ahash_val else None,
                 }
             )
 
@@ -549,6 +562,19 @@ class SubmissionService:
                 # Submission creation must still succeed.
                 pass
 
+            # Run duplicate similarity check
+            try:
+                first_bytes = None
+                if files and len(files) > 0:
+                    first_bytes = files[0].get("file_bytes")
+                elif file_bytes:
+                    first_bytes = file_bytes
+
+                if first_bytes and status != "draft":
+                    self._run_duplicate_check_and_flag(submission, first_bytes)
+            except Exception:
+                pass
+
         return submission
 
     # =========================================================
@@ -609,6 +635,9 @@ class SubmissionService:
 
         files_data = []
 
+        from services.duplicate_detection_service import DuplicateDetectionService
+        dup_service = DuplicateDetectionService()
+
         if files:
 
             for file_item in files:
@@ -647,6 +676,9 @@ class SubmissionService:
                     )
                 )
 
+                phash_val = dup_service.calculate_phash_from_bytes(file_bytes_item)
+                ahash_val = dup_service.calculate_ahash_from_bytes(file_bytes_item)
+
                 files_data.append(
                     {
                         "image_hd_url": (
@@ -669,6 +701,8 @@ class SubmissionService:
                         "file_size_bytes": (
                             storage_info["file_size"]
                         ),
+                        "phash": str(phash_val) if phash_val else None,
+                        "ahash": str(ahash_val) if ahash_val else None,
                     }
                 )
 
@@ -909,6 +943,32 @@ class SubmissionService:
                 # AI failure must not block submission.
                 pass
 
+            # Run duplicate similarity check
+            try:
+                local_path = submission_file.image_hd_url
+                if local_path.startswith("http://") or local_path.startswith("https://") or local_path.startswith("/static/uploads/"):
+                    if "/static/uploads/" in local_path:
+                        filename = local_path.split("/static/uploads/")[-1]
+                        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+                        local_path = os.path.join(project_root, "frontend", "static", "uploads", filename)
+                    else:
+                        try:
+                            import urllib.request
+                            import tempfile
+                            suffix = os.path.splitext(local_path.split("?")[0])[1].lower() or ".jpg"
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+                                urllib.request.urlretrieve(submission_file.image_hd_url, temp_file.name)
+                                local_path = temp_file.name
+                        except Exception:
+                            pass
+
+                if os.path.exists(local_path):
+                    with open(local_path, "rb") as f:
+                        file_bytes = f.read()
+                    self._run_duplicate_check_and_flag(updated_submission, file_bytes)
+            except Exception:
+                pass
+
         return updated_submission
 
     # =========================================================
@@ -949,6 +1009,54 @@ class SubmissionService:
             self.submission_repo
             .list()
         )
+
+def _run_duplicate_check_and_flag(
+        self,
+        submission,
+        file_bytes: bytes,
+    ):
+        try:
+            from services.duplicate_detection_service import DuplicateDetectionService
+            dup_service = DuplicateDetectionService()
+            dup_result = dup_service.check_duplicate_against_database(
+                new_image_bytes=file_bytes,
+                exclude_submission_id=submission.id,
+                session=self.submission_repo.session
+            )
+
+            similarity = dup_result.get("similarity_score", 0.0)
+            is_dup = dup_result.get("is_duplicate", False)
+
+            if is_dup:
+                risk_level = "high"
+                status = "pending"
+            elif similarity >= 70.0:
+                risk_level = "medium"
+                status = "pending"
+            else:
+                risk_level = "safe"
+                status = "clear"
+
+            saved_flag = self.submission_repo.save_ai_flag(
+                submission_id=submission.id,
+                confidence_score=similarity,
+                risk_level=risk_level,
+                flag_type="duplicate_similarity",
+                status=status,
+            )
+
+            matched_sub_id = dup_result.get("matched_submission_id")
+            self.submission_repo.save_ai_analysis_report(
+                submission_id=submission.id,
+                ai_flag_id=saved_flag.id,
+                ai_model_name="Duplicate Detection Engine",
+                ai_confidence_score=similarity,
+                raw_details=dup_result,
+                similarity_matched_submission_id=matched_sub_id,
+            )
+        except Exception as e:
+            # Duplicate checking is optional/should not block main flow
+            print(f"Warning: duplicate check failed: {e}")
 
     # =========================================================
     # ROLE-BASED SUBMISSION LISTING & FORMATTING
