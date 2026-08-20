@@ -1877,3 +1877,94 @@ def get_judge_assignment_submissions(
             ),
             "error": str(error),
         }), 500
+
+
+# ============================================================
+# MODERATOR DASHBOARD: LIST FLAGGED SUBMISSIONS
+# ============================================================
+
+@submission_bp.route(
+    "/flagged",
+    methods=["GET"],
+)
+@role_required(
+    "organizer",
+    "admin",
+)
+def get_flagged_submissions():
+
+    status = request.args.get("status")
+
+    if status and status not in [
+        "pending",
+        "confirmed violation",
+        "dismissed",
+    ]:
+        return jsonify({
+            "message": "Invalid status"
+        }), 400
+
+    try:
+        data = submission_service.get_flagged_submissions(status=status)
+        return jsonify(data), 200
+
+    except Exception as error:
+        return jsonify({
+            "message": "Failed to get flagged submissions",
+            "error": str(error),
+        }), 500
+
+
+# ============================================================
+# MODERATOR DASHBOARD: UPDATE FLAG STATUS
+# ============================================================
+
+@submission_bp.route(
+    "/flags/<int:flag_id>/status",
+    methods=["PUT", "PATCH"],
+)
+@role_required(
+    "organizer",
+    "admin",
+)
+def update_flag_status(flag_id):
+
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form
+
+    status = data.get("status")
+
+    if not status:
+        return jsonify({
+            "message": "status is required"
+        }), 400
+
+    if status not in [
+        "pending",
+        "confirmed violation",
+        "dismissed",
+    ]:
+        return jsonify({
+            "message": "Invalid status"
+        }), 400
+
+    try:
+        flag = submission_service.update_flag_status(flag_id, status)
+        
+        if not flag:
+            return jsonify({
+                "message": "Flag not found"
+            }), 404
+            
+        return jsonify({
+            "message": "Flag status updated successfully",
+            "flag": flag,
+        }), 200
+
+    except Exception as error:
+        return jsonify({
+            "message": "Failed to update flag status",
+            "error": str(error),
+        }), 500

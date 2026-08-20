@@ -309,6 +309,107 @@ class SubmissionRepository(ISubmissionRepository):
             .first()
         )
 
+    def get_all_ai_flags(
+        self,
+        submission_id: int,
+    ) -> List[AIFlagModel]:
+        
+        return (
+            self.session
+            .query(AIFlagModel)
+            .filter(
+                AIFlagModel.submission_id
+                == submission_id,
+            )
+            .all()
+        )
+
+    def update_ai_flag_status(
+        self,
+        flag_id: int,
+        status: str,
+    ) -> Optional[AIFlagModel]:
+        
+        try:
+            flag = (
+                self.session
+                .query(AIFlagModel)
+                .filter(
+                    AIFlagModel.id == flag_id
+                )
+                .first()
+            )
+
+            if not flag:
+                return None
+
+            flag.status = status
+            self.session.commit()
+            self.session.refresh(flag)
+            
+            return flag
+        except Exception:
+            self.session.rollback()
+            raise
+
+    def get_flagged_submissions(
+        self,
+        status: Optional[str] = None,
+    ) -> List[
+        Tuple[
+            SubmissionModel,
+            Optional[SubmissionFileModel],
+            Optional[SubmissionFilmMetadataModel],
+            List[AIFlagModel],
+        ]
+    ]:
+        
+        query = (
+            self.session
+            .query(SubmissionModel)
+            .join(
+                AIFlagModel,
+                AIFlagModel.submission_id == SubmissionModel.id
+            )
+        )
+        
+        if status:
+            query = query.filter(AIFlagModel.status == status)
+            
+        submissions = (
+            query
+            .order_by(SubmissionModel.submitted_at.desc(), SubmissionModel.id.desc())
+            .distinct()
+            .all()
+        )
+        
+        results = []
+        for submission in submissions:
+            submission_file = (
+                self.session
+                .query(SubmissionFileModel)
+                .filter(SubmissionFileModel.submission_id == submission.id)
+                .first()
+            )
+
+            film_metadata = (
+                self.session
+                .query(SubmissionFilmMetadataModel)
+                .filter(SubmissionFilmMetadataModel.submission_id == submission.id)
+                .first()
+            )
+
+            ai_flags = self.get_all_ai_flags(submission.id)
+
+            results.append((
+                submission,
+                submission_file,
+                film_metadata,
+                ai_flags,
+            ))
+            
+        return results
+
     # =========================================================
     # AI ANALYSIS REPORT
     # =========================================================
@@ -843,7 +944,7 @@ class SubmissionRepository(ISubmissionRepository):
             SubmissionModel,
             Optional[SubmissionFileModel],
             Optional[SubmissionFilmMetadataModel],
-            Optional[AIFlagModel],
+            List[AIFlagModel],
         ]
     ]:
 
@@ -874,22 +975,14 @@ class SubmissionRepository(ISubmissionRepository):
                 .first()
             )
 
-            ai_flag = (
-                self.session
-                .query(AIFlagModel)
-                .filter(
-                    AIFlagModel.submission_id
-                    == submission.id
-                )
-                .first()
-            )
+            ai_flags = self.get_all_ai_flags(submission.id)
 
             results.append(
                 (
                     submission,
                     submission_file,
                     film_metadata,
-                    ai_flag,
+                    ai_flags,
                 )
             )
 
@@ -910,7 +1003,7 @@ class SubmissionRepository(ISubmissionRepository):
             SubmissionModel,
             Optional[SubmissionFileModel],
             Optional[SubmissionFilmMetadataModel],
-            Optional[AIFlagModel],
+            List[AIFlagModel],
         ]
     ]:
 
@@ -980,7 +1073,7 @@ class SubmissionRepository(ISubmissionRepository):
             SubmissionModel,
             Optional[SubmissionFileModel],
             Optional[SubmissionFilmMetadataModel],
-            Optional[AIFlagModel],
+            List[AIFlagModel],
         ]
     ]:
 
@@ -1056,7 +1149,7 @@ class SubmissionRepository(ISubmissionRepository):
                 SubmissionModel,
                 Optional[SubmissionFileModel],
                 Optional[SubmissionFilmMetadataModel],
-                Optional[AIFlagModel],
+                List[AIFlagModel],
             ]
         ]
     ]:

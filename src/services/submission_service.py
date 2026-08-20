@@ -1169,15 +1169,25 @@ class SubmissionService:
         Dict[str, Any]
     ]:
 
-        data = (
+        result = (
             self.submission_repo
-            .get_submission_full_details(
+            .get_by_id_with_details(
                 submission_id
             )
         )
 
-        if not data:
+        if not result:
             return None
+            
+        submission, submission_file, film_metadata = result
+        ai_flags = self.submission_repo.get_all_ai_flags(submission_id)
+
+        data = self._format_submission_dict(
+            submission,
+            submission_file,
+            film_metadata,
+            ai_flags
+        )
 
         if (
             role == "participant"
@@ -1535,8 +1545,8 @@ class SubmissionService:
         film_metadata: Optional[
             SubmissionFilmMetadataModel
         ] = None,
-        ai_flag: Optional[
-            AIFlagModel
+        ai_flags: Optional[
+            List[AIFlagModel]
         ] = None,
     ) -> Dict[str, Any]:
 
@@ -1574,7 +1584,7 @@ class SubmissionService:
             ),
             "file": None,
             "film_metadata": None,
-            "ai_flag": None,
+            "ai_flags": [],
         }
 
         if submission_file:
@@ -1646,24 +1656,21 @@ class SubmissionService:
                 ),
             }
 
-        if ai_flag:
-
-            item["ai_flag"] = {
-                "ai_score": (
-                    float(
-                        ai_flag.confidence_score
-                    )
-                    if ai_flag.confidence_score
-                    is not None
-                    else None
-                ),
-                "risk_level": (
-                    ai_flag.risk_level
-                ),
-                "status": (
-                    ai_flag.status
-                ),
-            }
+        if ai_flags:
+            item["ai_flags"] = [
+                {
+                    "id": flag.id,
+                    "flag_type": flag.flag_type,
+                    "ai_score": (
+                        float(flag.confidence_score)
+                        if flag.confidence_score is not None
+                        else None
+                    ),
+                    "risk_level": flag.risk_level,
+                    "status": flag.status,
+                }
+                for flag in ai_flags
+            ]
 
         return item
 
@@ -1846,4 +1853,62 @@ class SubmissionService:
         return {
             "submissions": submissions,
             "total": len(submissions),
+        }
+
+    # =========================================================
+    # MODERATOR DASHBOARD
+    # =========================================================
+
+    def get_flagged_submissions(
+        self,
+        status: Optional[str] = None,
+    ) -> Dict[str, Any]:
+
+        rows = (
+            self.submission_repo
+            .get_flagged_submissions(
+                status=status,
+            )
+        )
+
+        submissions = [
+            self._format_submission_dict(
+                sub,
+                file_obj,
+                meta_obj,
+                ai_objs,
+            )
+            for (
+                sub,
+                file_obj,
+                meta_obj,
+                ai_objs,
+            ) in rows
+        ]
+
+        return {
+            "submissions": submissions,
+            "total": len(submissions),
+        }
+        
+    def update_flag_status(
+        self,
+        flag_id: int,
+        status: str,
+    ) -> Optional[Dict[str, Any]]:
+        
+        flag = self.submission_repo.update_ai_flag_status(flag_id, status)
+        if not flag:
+            return None
+            
+        return {
+            "id": flag.id,
+            "flag_type": flag.flag_type,
+            "ai_score": (
+                float(flag.confidence_score)
+                if flag.confidence_score is not None
+                else None
+            ),
+            "risk_level": flag.risk_level,
+            "status": flag.status,
         }
