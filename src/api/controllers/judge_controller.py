@@ -42,9 +42,34 @@ def list_available_judges():
     try:
         judges = judge_service.get_available_judges()
 
+        judges_with_stats = []
+        for judge in judges:
+            assignments = judge_service.get_judge_assignments(
+                judge_id=judge.get('id')
+            )
+
+            round_ids = {
+                assignment.round_id
+                for assignment in assignments
+                if getattr(assignment, 'round_id', None) is not None
+            }
+            submission_ids = {
+                assignment.submission_id
+                for assignment in assignments
+                if getattr(assignment, 'submission_id', None) is not None
+            }
+
+            judge_item = dict(judge)
+            judge_item['stats'] = {
+                'assigned_rounds': len(round_ids),
+                'assigned_submissions': len(submission_ids),
+                'total_assignments': len(assignments)
+            }
+            judges_with_stats.append(judge_item)
+
         return jsonify({
             'message': 'Láº¥y danh sÃ¡ch giÃ¡m kháº£o thÃ nh cÃ´ng',
-            'judges': judges
+            'judges': judges_with_stats
         }), 200
 
     except Exception as e:
