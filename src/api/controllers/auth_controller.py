@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, jsonify, current_app, render_template
+from flask import Blueprint, request, jsonify, current_app, render_template
 from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -261,9 +261,88 @@ def get_current_user():
             'username': user.username,
             'email': user.email,
             'full_name': user.full_name,
-            'role': user.role
+            'role': user.role,
+            'avatar_url': getattr(user, 'avatar_url', None),
+            'bio': getattr(user, 'bio', None),
+            'created_at': getattr(user, 'created_at', None)
         }
     }), 200
+
+
+@auth_bp.route('/profile', methods=['PUT', 'PATCH'])
+@token_required
+def update_profile():
+    return update_current_user()
+
+
+@auth_bp.route('/me', methods=['PUT', 'PATCH'])
+@token_required
+def update_current_user():
+    """
+    Update logged-in user profile
+    ---
+    put:
+      summary: Update user profile (full_name, bio, avatar_url)
+      tags:
+        - Auth
+      security:
+        - Bearer: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                bio:
+                  type: string
+                avatar_url:
+                  type: string
+      responses:
+        200:
+          description: Profile updated successfully
+        400:
+          description: Validation error
+        401:
+          description: Unauthorized
+    """
+    user_id = request.user.get('user_id')
+    data = request.get_json(silent=True) or {}
+
+    full_name = data.get('full_name')
+    bio = data.get('bio')
+    avatar_url = data.get('avatar_url')
+
+    updated_user = auth_service.update_profile(
+        user_id=user_id,
+        full_name=full_name,
+        bio=bio,
+        avatar_url=avatar_url
+    )
+
+    if not updated_user:
+        return jsonify({'message': 'Failed to update user profile'}), 400
+
+    return jsonify({
+        'message': 'Profile updated successfully',
+        'user': {
+            'id': updated_user.id,
+            'username': updated_user.username,
+            'email': updated_user.email,
+            'full_name': updated_user.full_name,
+            'role': updated_user.role,
+            'avatar_url': updated_user.avatar_url,
+            'bio': updated_user.bio,
+            'created_at': updated_user.created_at
+        }
+    }), 200
+
+
+@auth_bp.route('/profile', methods=['GET'])
+def profile_page():
+    """Serve the user profile and portfolio page"""
+    return render_template('profile.html')
 
 
 @auth_bp.route('/contests', methods=['GET'])

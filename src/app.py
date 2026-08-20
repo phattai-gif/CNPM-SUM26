@@ -1,9 +1,9 @@
-﻿from pathlib import Path
+from pathlib import Path
 from create_app import create_app
 
 
+from pathlib import Path
 from flask import Flask, jsonify, redirect, url_for, render_template
-from flask import Flask, jsonify, redirect, url_for
 from jinja2 import ChoiceLoader, FileSystemLoader
 from api.routes import register_routes
 from api.swagger import spec
@@ -102,6 +102,14 @@ def create_app():
     @app.route('/my-submissions/<int:submission_id>')
     def my_submission_detail_page(submission_id):
         return render_template('submission_detail.html', submission_id=submission_id)
+
+    @app.route('/profile')
+    def profile_page_root():
+        return render_template('profile.html')
+
+    @app.route('/portfolio')
+    def portfolio_page_redirect():
+        return redirect(url_for('profile_page_root'))
 
     @app.route('/submit')
     def submit_page():

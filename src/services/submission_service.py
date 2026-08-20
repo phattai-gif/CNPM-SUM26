@@ -851,6 +851,9 @@ class SubmissionService:
             )
         )
 
+    def update_draft_submission(self, *args, **kwargs):
+        return self.update_draft(*args, **kwargs)
+
     # =========================================================
     # SUBMIT DRAFT
     # =========================================================
@@ -1155,6 +1158,10 @@ class SubmissionService:
                 submission_id
             )
         )
+
+
+    def list_submissions(self):
+        return self.submission_repo.list()
 
     # =========================================================
     # GET SUBMISSION DETAIL
