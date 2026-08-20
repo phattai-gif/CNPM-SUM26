@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+
+load_dotenv()
 from pathlib import Path
 
 from flask import Flask, jsonify, redirect, url_for, render_template
