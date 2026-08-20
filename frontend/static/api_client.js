@@ -129,6 +129,60 @@
       });
     },
 
+    uploadFormData(url, formData, options = {}) {
+      const { onProgress, headers = {}, method = 'POST', ...rest } = options;
+      const { token } = this.getSession();
+
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open(method.toUpperCase(), url, true);
+
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
+
+        Object.entries(headers).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            xhr.setRequestHeader(key, value);
+          }
+        });
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable && typeof onProgress === 'function') {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress({ percent, loaded: event.loaded, total: event.total });
+          }
+        };
+
+        xhr.onload = () => {
+          const contentType = xhr.getResponseHeader('content-type') || '';
+          let payload = null;
+
+          if (contentType.includes('application/json')) {
+            try {
+              payload = JSON.parse(xhr.responseText);
+            } catch (error) {
+              payload = null;
+            }
+          } else {
+            payload = xhr.responseText || '';
+          }
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(payload);
+            return;
+          }
+
+          reject(new Error(payload?.message || `Request failed with status ${xhr.status}`));
+        };
+
+        xhr.onerror = () => reject(new Error('Network error while uploading the file.'));
+        xhr.ontimeout = () => reject(new Error('Upload timed out.'));
+
+        xhr.send(formData);
+      });
+    },
+
     put(url, body = {}, options = {}) {
       const { headers = {}, ...rest } = options;
       return this.request(url, {

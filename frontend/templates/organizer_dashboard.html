@@ -5,38 +5,329 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Organizer Dashboard</title>
     <link rel="stylesheet" href="/static/auth.css">
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #f3f6fb;
+        color: #1f2937;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+
+      .page-shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 48px 20px;
+      }
+
+      .panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        padding: 28px;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 2vw, 2.4rem);
+        color: #111827;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        background: linear-gradient(135deg, #4f46e5, #2563eb);
+        color: #fff;
+        font-weight: 600;
+        transition: filter 0.2s ease;
+      }
+
+      .btn:hover { filter: brightness(1.05); }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      th, td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      thead th {
+        background: #f9fafb;
+        color: #374151;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      tbody tr:hover {
+        background: #f9fafb;
+      }
+
+      .empty-state {
+        margin: 0;
+        color: #6b7280;
+        font-size: 1rem;
+      }
+
+      .manager-grid {
+        display: grid;
+        grid-template-columns: minmax(280px, 360px) 1fr;
+        gap: 18px;
+        margin-top: 24px;
+      }
+
+      .manager-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #fcfdff;
+        padding: 18px;
+      }
+
+      .manager-card h2,
+      .manager-card h3 {
+        margin: 0 0 12px;
+        font-size: 1.05rem;
+      }
+
+      .manager-stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .field-label {
+        display: block;
+        margin-bottom: 6px;
+        color: #374151;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .field-input {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+        background: #fff;
+      }
+
+      .muted {
+        color: #6b7280;
+        font-size: 0.92rem;
+      }
+
+      .judge-list,
+      .assignment-list {
+        display: grid;
+        gap: 10px;
+        max-height: 480px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .judge-card,
+      .assignment-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+        padding: 12px;
+      }
+
+      .judge-card-top,
+      .assignment-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .judge-stats {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      .stat-pill {
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #3730a3;
+        padding: 4px 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+      }
+
+      .action-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      .btn-outline {
+        background: #fff;
+        color: #374151;
+        border: 1px solid #d1d5db;
+      }
+
+      .btn-danger {
+        background: #dc2626;
+      }
+
+      .btn-sm {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        border-radius: 10px;
+      }
+
+      .toast {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 1200;
+        min-width: 260px;
+        max-width: 360px;
+        border-radius: 12px;
+        padding: 12px 14px;
+        color: #fff;
+        background: #111827;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.2);
+        display: none;
+      }
+
+      @media (max-width: 960px) {
+        .manager-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Organizer Dashboard</h1>
-      <p><a href="/organizer/create-contest" class="btn">Tạo cuộc thi mới</a></p>
+    {% include '_nav.html' %}
+    <div class="page-shell">
+      <div class="page-header">
+        <h1>Organizer Dashboard</h1>
+        <a href="/organizer/create-contest" class="btn">Create New Contest</a>
+      </div>
 
-      {% if contests and contests|length > 0 %}
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Title</th>
-              <th>Status</th>
-              <th>Start</th>
-              <th>End</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for c in contests %}
-            <tr>
-              <td>{{ c.id }}</td>
-              <td>{{ c.title }}</td>
-              <td>{{ c.status }}</td>
-              <td>{{ c.start_date or '-' }}</td>
-              <td>{{ c.end_date or '-' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p>Bạn hiện chưa có cuộc thi nào.</p>
-      {% endif %}
+      <div id="dashboard" class="panel" data-organizer-id="{{ organizer_id }}" data-api-token="{{ api_token }}">
+        <div id="overview" style="margin-bottom:18px; display:flex; gap:18px;">
+          <div style="flex:0 0 180px; background:#f9fafb; padding:12px; border-radius:8px; text-align:center;">
+            <div style="font-size:0.9rem; color:#6b7280;">Submissions</div>
+            <div id="overview-submissions" style="font-weight:600; font-size:1.4rem;">—</div>
+          </div>
+          <div style="flex:0 0 180px; background:#f9fafb; padding:12px; border-radius:8px; text-align:center;">
+            <div style="font-size:0.9rem; color:#6b7280;">Judges</div>
+            <div id="overview-judges" style="font-weight:600; font-size:1.4rem;">—</div>
+          </div>
+        </div>
+
+        <div id="error" class="text-danger" style="margin-bottom:12px;"></div>
+
+        <div id="contests-list">
+          {% if contests and contests|length > 0 %}
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Start</th>
+                  <th>End</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in contests %}
+                <tr>
+                  <td>{{ c.id }}</td>
+                  <td>{{ c.title }}</td>
+                  <td>{{ c.status }}</td>
+                  <td>{{ c.start_date or '-' }}</td>
+                  <td>{{ c.end_date or '-' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p class="empty-state">You do not have any contests yet.</p>
+          {% endif %}
+        </div>
+
+        <div class="manager-grid">
+          <section class="manager-card manager-stack" aria-labelledby="judge-assignment-title">
+            <div>
+              <h2 id="judge-assignment-title">Phân công Judge theo Round</h2>
+              <p class="muted">Chọn cuộc thi, round và gán một hoặc nhiều judge trực tiếp từ dashboard.</p>
+            </div>
+
+            <div>
+              <label class="field-label" for="contest-select">Cuộc thi</label>
+              <select id="contest-select" class="field-input"></select>
+            </div>
+
+            <div>
+              <label class="field-label" for="round-select">Round</label>
+              <select id="round-select" class="field-input"></select>
+            </div>
+
+            <div class="action-row">
+              <button id="assign-selected-btn" class="btn">Gán Judge đã chọn</button>
+              <button id="refresh-judge-manager-btn" class="btn btn-outline">Làm mới</button>
+            </div>
+
+            <div id="judge-manager-summary" class="muted">Chưa chọn round.</div>
+          </section>
+
+          <section class="manager-stack">
+            <div class="manager-card">
+              <div class="judge-card-top">
+                <div>
+                  <h3>Judge khả dụng</h3>
+                  <p class="muted" style="margin:0;">Hiển thị workload hiện tại của từng judge.</p>
+                </div>
+              </div>
+              <div id="available-judges" class="judge-list">
+                <p class="empty-state">Đang tải judge...</p>
+              </div>
+            </div>
+
+            <div class="manager-card">
+              <div class="judge-card-top">
+                <div>
+                  <h3>Judge đã gán cho Round</h3>
+                  <p class="muted" style="margin:0;">Có thể gỡ assignment ngay tại đây.</p>
+                </div>
+              </div>
+              <div id="round-assignments" class="assignment-list">
+                <p class="empty-state">Chọn round để xem assignment.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
+    <div id="dashboard-toast" class="toast" aria-live="polite"></div>
+    <script src="/static/api_client.js"></script>
+    <script src="/static/js/organizer_dashboard.js"></script>
   </body>
 </html>

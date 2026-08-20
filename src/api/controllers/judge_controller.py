@@ -1,14 +1,14 @@
-from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
+﻿from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
 
 try:
-    from src.infrastructure.repositories.contest_repository import ContestRepository
-    from src.infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
-    from src.services.judge_assignment_service import JudgeAssignmentService
-    from src.api.schemas.judge import (
+    from infrastructure.repositories.contest_repository import ContestRepository
+    from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
+    from services.judge_assignment_service import JudgeAssignmentService
+    from api.schemas.judge import (
         AssignJudgeRequestSchema,
         JudgeAssignmentResponseSchema
     )
-    from src.api.role_required import role_required
+    from api.role_required import role_required
 except ImportError:
     from infrastructure.repositories.contest_repository import ContestRepository
     from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
@@ -38,18 +38,43 @@ assignment_response_schema = JudgeAssignmentResponseSchema()
 @judge_bp.route('/organizer/judges', methods=['GET'])
 @role_required('organizer', 'admin')
 def list_available_judges():
-    """API Lấy danh sách giám khảo khả dụng để phân công."""
+    """API Láº¥y danh sÃ¡ch giÃ¡m kháº£o kháº£ dá»¥ng Ä‘á»ƒ phÃ¢n cÃ´ng."""
     try:
         judges = judge_service.get_available_judges()
 
+        judges_with_stats = []
+        for judge in judges:
+            assignments = judge_service.get_judge_assignments(
+                judge_id=judge.get('id')
+            )
+
+            round_ids = {
+                assignment.round_id
+                for assignment in assignments
+                if getattr(assignment, 'round_id', None) is not None
+            }
+            submission_ids = {
+                assignment.submission_id
+                for assignment in assignments
+                if getattr(assignment, 'submission_id', None) is not None
+            }
+
+            judge_item = dict(judge)
+            judge_item['stats'] = {
+                'assigned_rounds': len(round_ids),
+                'assigned_submissions': len(submission_ids),
+                'total_assignments': len(assignments)
+            }
+            judges_with_stats.append(judge_item)
+
         return jsonify({
-            'message': 'Lấy danh sách giám khảo thành công',
-            'judges': judges
+            'message': 'Láº¥y danh sÃ¡ch giÃ¡m kháº£o thÃ nh cÃ´ng',
+            'judges': judges_with_stats
         }), 200
 
     except Exception as e:
         return jsonify({
-            'message': 'Lỗi khi lấy danh sách giám khảo',
+            'message': 'Lá»—i khi láº¥y danh sÃ¡ch giÃ¡m kháº£o',
             'error': str(e)
         }), 500
 
@@ -60,7 +85,7 @@ def list_available_judges():
 )
 @role_required('organizer', 'admin')
 def assign_judge_to_round(contest_id, round_id):
-    """API Phân công giám khảo vào vòng thi hoặc bài thi cụ thể."""
+    """API PhÃ¢n cÃ´ng giÃ¡m kháº£o vÃ o vÃ²ng thi hoáº·c bÃ i thi cá»¥ thá»ƒ."""
     
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -71,7 +96,7 @@ def assign_judge_to_round(contest_id, round_id):
 
     if errors:
         return jsonify({
-            'message': 'Dữ liệu phân công không hợp lệ',
+            'message': 'Dá»¯ liá»‡u phÃ¢n cÃ´ng khÃ´ng há»£p lá»‡',
             'errors': errors
         }), 400
 
@@ -80,7 +105,7 @@ def assign_judge_to_round(contest_id, round_id):
     submission_id = data.get('submission_id')
 
     try:
-        # Phân công nhiều giám khảo
+        # PhÃ¢n cÃ´ng nhiá»u giÃ¡m kháº£o
         if judge_ids:
             assignments = judge_service.batch_assign_judges_to_round(
                 contest_id=contest_id,
@@ -93,8 +118,8 @@ def assign_judge_to_round(contest_id, round_id):
 
             return jsonify({
                 'message': (
-                    f'Đã phân công {len(assignments)} '
-                    'giám khảo vào vòng thi thành công'
+                    f'ÄÃ£ phÃ¢n cÃ´ng {len(assignments)} '
+                    'giÃ¡m kháº£o vÃ o vÃ²ng thi thÃ nh cÃ´ng'
                 ),
                 'assignments': [
                     assignment.to_dict()
@@ -112,7 +137,7 @@ def assign_judge_to_round(contest_id, round_id):
         )
 
         return jsonify({
-            'message': 'Phân công giám khảo thành công',
+            'message': 'PhÃ¢n cÃ´ng giÃ¡m kháº£o thÃ nh cÃ´ng',
             'assignment': assignment.to_dict()
         }), 201
 
@@ -128,7 +153,7 @@ def assign_judge_to_round(contest_id, round_id):
 
     except Exception as e:
         return jsonify({
-            'message': 'Lỗi khi phân công giám khảo',
+            'message': 'Lá»—i khi phÃ¢n cÃ´ng giÃ¡m kháº£o',
             'error': str(e)
         }), 500
 
@@ -139,7 +164,7 @@ def assign_judge_to_round(contest_id, round_id):
 )
 @role_required('organizer', 'admin')
 def get_round_judges(contest_id, round_id):
-    """API Lấy danh sách giám khảo đã được phân công trong vòng thi."""
+    """API Láº¥y danh sÃ¡ch giÃ¡m kháº£o Ä‘Ã£ Ä‘Æ°á»£c phÃ¢n cÃ´ng trong vÃ²ng thi."""
 
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -154,8 +179,8 @@ def get_round_judges(contest_id, round_id):
 
         return jsonify({
             'message': (
-                'Lấy danh sách giám khảo được '
-                'phân công thành công'
+                'Láº¥y danh sÃ¡ch giÃ¡m kháº£o Ä‘Æ°á»£c '
+                'phÃ¢n cÃ´ng thÃ nh cÃ´ng'
             ),
             'assignments': [
                 assignment.to_dict()
@@ -175,7 +200,7 @@ def get_round_judges(contest_id, round_id):
 
     except Exception as e:
         return jsonify({
-            'message': 'Lỗi khi lấy danh sách giám khảo',
+            'message': 'Lá»—i khi láº¥y danh sÃ¡ch giÃ¡m kháº£o',
             'error': str(e)
         }), 500
 
@@ -186,7 +211,7 @@ def get_round_judges(contest_id, round_id):
 )
 @role_required('organizer', 'admin')
 def remove_judge_from_round(contest_id, round_id, judge_id):
-    """API Hủy phân công giám khảo khỏi vòng thi."""
+    """API Há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o khá»i vÃ²ng thi."""
 
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -207,12 +232,12 @@ def remove_judge_from_round(contest_id, round_id, judge_id):
 
         if success:
             return jsonify({
-                'message': 'Hủy phân công giám khảo thành công'
+                'message': 'Há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o thÃ nh cÃ´ng'
             }), 200
 
         return jsonify({
             'message': (
-                'Không tìm thấy phân công giám khảo để hủy'
+                'KhÃ´ng tÃ¬m tháº¥y phÃ¢n cÃ´ng giÃ¡m kháº£o Ä‘á»ƒ há»§y'
             )
         }), 404
 
@@ -228,7 +253,7 @@ def remove_judge_from_round(contest_id, round_id, judge_id):
 
     except Exception as e:
         return jsonify({
-            'message': 'Lỗi khi hủy phân công giám khảo',
+            'message': 'Lá»—i khi há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o',
             'error': str(e)
         }), 500
 
@@ -239,7 +264,7 @@ def remove_judge_from_round(contest_id, round_id, judge_id):
 )
 @role_required('judge', 'admin')
 def get_my_assignments():
-    """API Dành cho giám khảo xem các nhiệm vụ chấm thi."""
+    """API DÃ nh cho giÃ¡m kháº£o xem cÃ¡c nhiá»‡m vá»¥ cháº¥m thi."""
 
     user_id = request.user.get('user_id')
 
@@ -250,7 +275,7 @@ def get_my_assignments():
 
         return jsonify({
             'message': (
-                'Lấy danh sách nhiệm vụ chấm thi thành công'
+                'Láº¥y danh sÃ¡ch nhiá»‡m vá»¥ cháº¥m thi thÃ nh cÃ´ng'
             ),
             'assignments': [
                 assignment.to_dict()
@@ -260,7 +285,7 @@ def get_my_assignments():
 
     except Exception as e:
         return jsonify({
-            'message': 'Lỗi khi lấy danh sách nhiệm vụ chấm thi',
+            'message': 'Lá»—i khi láº¥y danh sÃ¡ch nhiá»‡m vá»¥ cháº¥m thi',
             'error': str(e)
         }), 500
 
@@ -275,8 +300,8 @@ def judge_grading_ui(submission_id):
         # Mock submission
         submission = {
             'id': submission_id,
-            'title': f'Bài mẫu #{submission_id}: Bình minh trên phố cổ',
-            'author': 'Nguyễn Văn A',
+            'title': f'BÃ i máº«u #{submission_id}: BÃ¬nh minh trÃªn phá»‘ cá»•',
+            'author': 'Nguyá»…n VÄƒn A',
             'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
             'camera': 'Nikon F3',
             'film_stock': 'Kodak Portra 400',
@@ -308,7 +333,7 @@ def judge_grading_ui(submission_id):
                     submitted_scores[key] = None
 
             # In demo mode, we don't persist; just flash and redirect to GET
-            flash('Điểm và nhận xét đã được nhận (demo).')
+            flash('Äiá»ƒm vÃ  nháº­n xÃ©t Ä‘Ã£ Ä‘Æ°á»£c nháº­n (demo).')
             return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
 
         return render_template('judge_grading.html', submission=submission, criteria_list=criteria_list, existing_scores=existing_scores, existing_comment=existing_comment)
@@ -317,7 +342,7 @@ def judge_grading_ui(submission_id):
         # Safe fallback: render template with minimal data and show error message
         fallback_submission = {
             'id': submission_id,
-            'title': 'Không thể tải bài dự thi',
+            'title': 'KhÃ´ng thá»ƒ táº£i bÃ i dá»± thi',
             'author': 'N/A',
             'image_url': None,
             'camera': '',

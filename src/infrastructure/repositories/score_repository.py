@@ -1,11 +1,11 @@
-from typing import Optional, List
+﻿from typing import Optional, List
 from sqlalchemy.orm import Session
 
 try:
-    from src.infrastructure.models.score_model import ScoreModel
-    from src.infrastructure.databases.factory_database import FactoryDatabase as db_factory
+    from infrastructure.models.app import ScoreModel
+    from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 except ImportError:
-    from infrastructure.models.score_model import ScoreModel
+    from infrastructure.models.app import ScoreModel
     from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 
 
@@ -58,3 +58,4 @@ class ScoreRepository:
             .filter_by(submission_id=submission_id)
             .all()
         )
+

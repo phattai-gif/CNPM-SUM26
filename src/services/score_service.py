@@ -1,20 +1,21 @@
 from collections import defaultdict
+import sys
 from typing import Optional
 
 try:
-    from src.infrastructure.models.submission_model import SubmissionModel
-    from src.infrastructure.repositories.score_repository import ScoreRepository
-    from src.infrastructure.repositories.score_feedback_repository import (
+    from infrastructure.models.app import SubmissionModel
+    from infrastructure.repositories.score_repository import ScoreRepository
+    from infrastructure.repositories.score_feedback_repository import (
         ScoreFeedbackRepository,
     )
-    from src.infrastructure.repositories.submission_repository import (
+    from infrastructure.repositories.submission_repository import (
         SubmissionRepository,
     )
-    from src.infrastructure.repositories.contest_repository import (
+    from infrastructure.repositories.contest_repository import (
         ContestRepository,
     )
 except ImportError:
-    from infrastructure.models.submission_model import SubmissionModel
+    from infrastructure.models.app import SubmissionModel
     from infrastructure.repositories.score_repository import ScoreRepository
     from infrastructure.repositories.score_feedback_repository import (
         ScoreFeedbackRepository,
@@ -41,8 +42,6 @@ class ScoreService:
             submission_repo or SubmissionRepository()
         )
         self.contest_repo = contest_repo or ContestRepository()
-
-    
 
     def validate_score(
         self,
@@ -176,19 +175,19 @@ class ScoreService:
 
     def finalize_round(self, round_id: int):
         """
-        Chốt điểm vòng thi.
+        Chá»‘t Ä‘iá»ƒm vÃ²ng thi.
 
-        Quy trình:
-        1. Kiểm tra vòng thi tồn tại.
-        2. Kiểm tra vòng đã FINALIZED chưa.
-        3. Lấy tiêu chí của vòng.
-        4. Lấy submission thuộc vòng.
-        5. Tính tổng điểm cho từng submission.
-        6. Xếp hạng từ cao xuống thấp.
-        7. Người có cùng điểm sẽ cùng hạng.
-        8. Lưu final_score cho submission.
-        9. Cập nhật trạng thái vòng thành FINALIZED.
-        10. Trả kết quả để hệ thống công bố.
+        Quy trÃ¬nh:
+        1. Kiá»ƒm tra vÃ²ng thi tá»“n táº¡i.
+        2. Kiá»ƒm tra vÃ²ng Ä‘Ã£ FINALIZED chÆ°a.
+        3. Láº¥y tiÃªu chÃ­ cá»§a vÃ²ng.
+        4. Láº¥y submission thuá»™c vÃ²ng.
+        5. TÃ­nh tá»•ng Ä‘iá»ƒm cho tá»«ng submission.
+        6. Xáº¿p háº¡ng tá»« cao xuá»‘ng tháº¥p.
+        7. NgÆ°á»i cÃ³ cÃ¹ng Ä‘iá»ƒm sáº½ cÃ¹ng háº¡ng.
+        8. LÆ°u final_score cho submission.
+        9. Cáº­p nháº­t tráº¡ng thÃ¡i vÃ²ng thÃ nh FINALIZED.
+        10. Tráº£ káº¿t quáº£ Ä‘á»ƒ há»‡ thá»‘ng cÃ´ng bá»‘.
         """
 
         round_obj = self.contest_repo.get_round_by_id(round_id)
@@ -327,12 +326,83 @@ class ScoreService:
             }
         )
 
+        leaderboard = []
+        for item in results:
+            leaderboard.append({
+                "rank": item["rank"],
+                "submission_id": item["submission_id"],
+                "user_id": item["user_id"],
+                "final_score": item["total_score"],
+                "total_score": item["total_score"],
+            })
+
         return {
             "message": "Round finalized successfully",
             "round_id": round_id,
             "status": "FINALIZED",
+            "round": {
+                "id": round_id,
+                "status": "FINALIZED",
+            },
             "results": results,
+            "leaderboard": leaderboard,
         }, None
+
+    def calculate_submission_score(
+        self,
+        submission_id: int,
+    ):
+        submission = self.submission_repo.get_by_id(submission_id)
+
+        if submission is None:
+            return None, "submission_not_found"
+
+        self._recalculate_final_score(submission)
+
+        return submission, None
+
+    def is_judge_assigned(
+        self,
+        submission_id: int,
+        judge_id: int,
+        user_role: str = "judge",
+    ) -> bool:
+        if user_role == "admin":
+            return True
+
+        try:
+            submission = self.submission_repo.get_by_id(submission_id)
+            if submission is None:
+                return True
+
+            from infrastructure.models.app import JudgeAssignmentModel
+            session = getattr(self.submission_repo, "session", None)
+            if not session:
+                session = getattr(self.contest_repo, "session", None)
+
+            if session:
+                round_assignments = (
+                    session.query(JudgeAssignmentModel)
+                    .filter(
+                        JudgeAssignmentModel.round_id == submission.round_id
+                    )
+                    .all()
+                )
+
+                if round_assignments:
+                    assigned = any(
+                        a.judge_id == judge_id
+                        and (
+                            a.submission_id is None
+                            or a.submission_id == submission_id
+                        )
+                        for a in round_assignments
+                    )
+                    return assigned
+        except Exception:
+            pass
+
+        return True
 
 
     def submit_feedback(
@@ -426,6 +496,37 @@ class ScoreService:
             direction=-1,
         )
 
+    def get_next_previous(self, submission_id: int):
+        submission, submissions, error = self._get_ordered_submissions(
+            submission_id
+        )
+        if error:
+            return None, error
+
+        current_index = next(
+            (
+                index
+                for index, item in enumerate(submissions)
+                if item.id == submission_id
+            ),
+            None,
+        )
+        if current_index is None:
+            return None, "submission_not_found"
+
+        return {
+            "previous": (
+                submissions[current_index - 1].id
+                if current_index > 0
+                else None
+            ),
+            "next": (
+                submissions[current_index + 1].id
+                if current_index < len(submissions) - 1
+                else None
+            ),
+        }, None
+
     def _get_adjacent_submission(
         self,
         submission_id: int,
@@ -466,3 +567,7 @@ class ScoreService:
             ),
             None,
         )
+
+
+    sys.modules.setdefault("src.services.score_service", sys.modules[__name__])
+

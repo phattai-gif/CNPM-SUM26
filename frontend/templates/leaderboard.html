@@ -1,46 +1,148 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bảng xếp hạng - Leaderboard</title>
+  <title>Leaderboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background:#f8f9fa; padding:24px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
-    .winners { display:flex; gap:16px; margin-bottom:20px; }
-    .winner { background:white; border-radius:8px; padding:12px; box-shadow:0 1px 6px rgba(0,0,0,0.06); flex:1; }
-    .winner img { width:100%; height:160px; object-fit:cover; border-radius:6px; }
-    .leaderboard { background:white; padding:16px; border-radius:8px; box-shadow:0 1px 6px rgba(0,0,0,0.06); }
-    .rank-badge { width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; font-weight:700; }
-    .rank-1 { background:gold; color:#000; }
-    .rank-2 { background:silver; color:#000; }
-    .rank-3 { background:#cd7f32; color:#fff; }
+    body {
+      margin: 0;
+      background: #f3f6fb;
+      color: #1f2937;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      padding: 32px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 2.4vw, 2.8rem);
+      color: #111827;
+    }
+
+    .text-muted {
+      color: #6b7280 !important;
+    }
+
+    .winners {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .winner {
+      background: #fff;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      border: 1px solid #e5e7eb;
+    }
+
+    .winner img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-top: 10px;
+      display: block;
+    }
+
+    .winner-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .rank-badge {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .rank-1 { background: gold; color: #111827; }
+    .rank-2 { background: silver; color: #111827; }
+    .rank-3 { background: #cd7f32; color: #fff; }
+
+    .leaderboard {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .leaderboard h3 {
+      margin: 0 0 16px;
+      font-size: 1.25rem;
+      color: #111827;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    thead th {
+      background: #f9fafb;
+      color: #374151;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    tbody tr:hover {
+      background: #f9fafb;
+    }
   </style>
 </head>
 <body>
+  {% include '_nav.html' %}
   <div class="container">
-    <h1 class="mb-3">Bảng xếp hạng</h1>
-    <p class="text-muted">Bảng xếp hạng cuối cùng và các tác phẩm đạt giải.</p>
+    <div class="page-header">
+      <h1>Leaderboard</h1>
+      <p class="text-muted mb-0">Final standings and award-winning entries.</p>
+    </div>
 
     <section class="winners">
       {% for w in winners %}
       <div class="winner">
-        <div style="display:flex;gap:10px;align-items:center;">
+        <div class="winner-top">
           <div class="rank-badge {% if loop.index==1 %}rank-1{% elif loop.index==2 %}rank-2{% elif loop.index==3 %}rank-3{% endif %}">{{ w.rank }}</div>
           <div>
-            <div style="font-weight:700">{{ w.title }}</div>
+            <div style="font-weight:700; color:#111827;">{{ w.title }}</div>
             <div class="text-muted small">{{ w.author }}</div>
           </div>
         </div>
-        <div style="margin-top:10px;">
+        <div>
           {% if w.image_url %}
             <img src="{{ w.image_url }}" alt="{{ w.title }}">
           {% endif %}
         </div>
-        <div style="margin-top:8px; font-size:14px;">
-          <div><strong>Máy ảnh:</strong> {{ w.camera or '-' }}</div>
-          <div><strong>Loại phim:</strong> {{ w.film_stock or '-' }}</div>
-          <div><strong>Tổng điểm:</strong> {{ w.score }}</div>
+        <div style="margin-top:12px; font-size:14px; line-height:1.8; color:#374151;">
+          <div><strong>Camera:</strong> {{ w.camera or '-' }}</div>
+          <div><strong>Film Type:</strong> {{ w.film_stock or '-' }}</div>
+          <div><strong>Total Score:</strong> {{ w.score }}</div>
         </div>
       </div>
       {% endfor %}
@@ -52,10 +154,10 @@
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>Hạng</th>
-              <th>Tác giả</th>
-              <th>Tên bài</th>
-              <th class="text-end">Tổng điểm</th>
+              <th>Rank</th>
+              <th>Author</th>
+              <th>Title</th>
+              <th class="text-end">Total Score</th>
             </tr>
           </thead>
           <tbody>

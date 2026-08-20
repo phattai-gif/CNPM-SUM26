@@ -1,4 +1,4 @@
-# Middleware functions for processing requests and responses
+﻿# Middleware functions for processing requests and responses
 
 from flask import request, jsonify
 

@@ -1,21 +1,17 @@
-from typing import List, Optional
+﻿from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 try:
-    from src.domain.models.ijudge_assignment_repository import IJudgeAssignmentRepository
-    from src.domain.contest import JudgeAssignment
-    from src.infrastructure.models.judge_assignment_model import JudgeAssignmentModel
-    from src.infrastructure.models.user_model import UserModel
-    from src.infrastructure.models.auth.role_model import RoleModel, user_roles
-    from src.infrastructure.databases.factory_database import FactoryDatabase as db_factory
+    from domain.models.ijudge_assignment_repository import IJudgeAssignmentRepository
+    from domain.contest import JudgeAssignment
+    from infrastructure.models.app import JudgeAssignmentModel, UserModel, RoleModel, user_roles
+    from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 except ImportError:
     from domain.models.ijudge_assignment_repository import IJudgeAssignmentRepository
     from domain.contest import JudgeAssignment
-    from infrastructure.models.judge_assignment_model import JudgeAssignmentModel
-    from infrastructure.models.user_model import UserModel
-    from infrastructure.models.auth.role_model import RoleModel, user_roles
+    from infrastructure.models.app import JudgeAssignmentModel, UserModel, RoleModel, user_roles
     from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 
 
@@ -116,7 +112,7 @@ class JudgeAssignmentRepository(IJudgeAssignmentRepository):
             self._rollback_session()
             results = (
                 self.session.query(JudgeAssignmentModel, UserModel)
-                .join(UserModel, JudgeAssignmentModel.judge_id == UserModel.id)
+                .outerjoin(UserModel, JudgeAssignmentModel.judge_id == UserModel.id)
                 .filter(JudgeAssignmentModel.round_id == round_id)
                 .all()
             )
@@ -185,7 +181,7 @@ class JudgeAssignmentRepository(IJudgeAssignmentRepository):
             self._rollback_session()
             results = (
                 self.session.query(JudgeAssignmentModel, UserModel)
-                .join(UserModel, JudgeAssignmentModel.judge_id == UserModel.id)
+                .outerjoin(UserModel, JudgeAssignmentModel.judge_id == UserModel.id)
                 .filter(JudgeAssignmentModel.judge_id == judge_id)
                 .all()
             )
@@ -196,3 +192,4 @@ class JudgeAssignmentRepository(IJudgeAssignmentRepository):
         except Exception:
             self._rollback_session()
             return []
+

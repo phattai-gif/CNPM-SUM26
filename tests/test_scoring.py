@@ -117,3 +117,63 @@ def test_next_previous_not_found():
     with patch('api.controllers.submission_controller.score_service.get_next_previous', return_value=(None, 'submission_not_found')):
         res = client.get('/submissions/999/next', headers={'Authorization': f'Bearer {token}'})
     assert res.status_code == 404
+
+
+def test_calculate_submission_score_success():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), role='organizer')
+    mock_sub = MockObj(id=10, final_score=8.45)
+    with patch('api.controllers.submission_controller.score_service.calculate_submission_score', return_value=(mock_sub, None)):
+        res = client.post('/submissions/10/calculate-score', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['submission']['id'] == 10
+    assert data['submission']['final_score'] == 8.45
+
+
+def test_calculate_submission_score_not_found():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), role='organizer')
+    with patch('api.controllers.submission_controller.score_service.calculate_submission_score', return_value=(None, 'submission_not_found')):
+        res = client.post('/submissions/999/calculate-score', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 404
+
+
+def test_submit_score_missing_criteria_id():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'))
+    res = client.post('/submissions/1/scores', json={'score_value': 8.5}, headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 400
+    assert 'criteria_id is required' in res.get_json()['message']
+
+
+def test_submit_score_missing_score_value():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'))
+    res = client.post('/submissions/1/scores', json={'criteria_id': 2}, headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 400
+    assert 'score_value is required' in res.get_json()['message']
+
+
+def test_submit_feedback_missing_summary():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'))
+    res = client.post('/submissions/1/feedback', json={'final_recommendation': 'approve'}, headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 400
+    assert 'summary_feedback is required' in res.get_json()['message']
+
+
+def test_submit_score_judge_not_assigned():
+    app = create_app()
+    client = app.test_client()
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=99)
+    with patch('api.controllers.submission_controller.score_service.is_judge_assigned', return_value=False):
+        res = client.post('/submissions/1/scores', json={'criteria_id': 2, 'score_value': 8.5}, headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 403
+    assert 'not assigned' in res.get_json()['message']
+

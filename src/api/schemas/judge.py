@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate, ValidationError, validates_schema
+﻿from marshmallow import Schema, fields, validate, ValidationError, validates_schema
 
 
 class AssignJudgeRequestSchema(Schema):
@@ -10,7 +10,7 @@ class AssignJudgeRequestSchema(Schema):
     @validates_schema
     def validate_judge_fields(self, data, **kwargs):
         if not data.get('judge_id') and not data.get('judge_ids'):
-            raise ValidationError("Cần truyền judge_id hoặc danh sách judge_ids.", field_name="judge_id")
+            raise ValidationError("Cáº§n truyá»n judge_id hoáº·c danh sÃ¡ch judge_ids.", field_name="judge_id")
 
 
 class JudgeAssignmentResponseSchema(Schema):

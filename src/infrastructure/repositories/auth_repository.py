@@ -1,11 +1,12 @@
-from domain.models.iauth_repository import IAuthRepository
-from domain.models.auth import Auth
-from typing import Optional
+﻿from typing import Optional
+
 from sqlalchemy import insert, select
 from werkzeug.security import check_password_hash
+
+from domain.models.iauth_repository import IAuthRepository
+from domain.models.auth import Auth
 from infrastructure.databases.factory_database import FactoryDatabase as db_factory
-from infrastructure.models.user_model import UserModel
-from infrastructure.models.auth.role_model import RoleModel, user_roles
+from infrastructure.models.app import UserModel, RoleModel, user_roles
 
 
 class AuthRepository(IAuthRepository):
@@ -25,7 +26,7 @@ class AuthRepository(IAuthRepository):
 
     def register(self, auth: Auth) -> Optional[Auth]:
         try:
-            # 1. Tạo user mới trong bảng users
+            # 1. Tạo user mới trong bảng User
             new_user = UserModel(
                 username=auth.username,
                 email=auth.email,
@@ -34,16 +35,23 @@ class AuthRepository(IAuthRepository):
                 status='active'
             )
             self.session.add(new_user)
-            self.session.flush()  # Lấy id mới sinh
+            self.session.flush()  # Lấy ID của user mới
 
-            # 2. Tìm role_id tương ứng với role code (mặc định: 'participant')
+            # 2. Tìm role_id tương ứng với role_code, mặc định là "participant"
             role_code = auth.role if auth.role else 'participant'
             role_obj = self.session.query(RoleModel).filter_by(code=role_code).first()
 
-            if role_obj:
-                # Gán role vào bảng user_roles
-                stmt = insert(user_roles).values(user_id=new_user.id, role_id=role_obj.id)
-                self.session.execute(stmt)
+            if role_obj is None:
+                role_obj = RoleModel(
+                    code=role_code,
+                    name=role_code.replace('_', ' ').title(),
+                    description=f'Default {role_code} role',
+                )
+                self.session.add(role_obj)
+                self.session.flush()
+
+            stmt = insert(user_roles).values(user_id=new_user.id, role_id=role_obj.id)
+            self.session.execute(stmt)
 
             self.session.commit()
             auth.id = new_user.id
@@ -58,6 +66,9 @@ class AuthRepository(IAuthRepository):
             # Tìm user theo username
             user_obj = self.session.query(UserModel).filter_by(username=auth.username).first()
             if not user_obj:
+                return None
+
+            if user_obj.status != 'active':
                 return None
 
             # Kiểm tra mật khẩu mã hóa với check_password_hash
@@ -109,3 +120,4 @@ class AuthRepository(IAuthRepository):
         except Exception as e:
             print(f"Error fetching user by id: {e}")
             return None
+

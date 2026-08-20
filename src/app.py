@@ -1,4 +1,6 @@
-from pathlib import Path
+﻿from pathlib import Path
+from create_app import create_app
+
 
 from flask import Flask, jsonify, redirect, url_for, render_template
 from flask import Flask, jsonify, redirect, url_for
@@ -42,10 +44,28 @@ def create_app():
     # Đăng ký tất cả các route/blueprint
     register_routes(app)
 
+    # Default home route
+    @app.route('/')
+    def home():
+        return jsonify({
+            'message': 'AI-powered Film Photography Contest Management API',
+            'version': '1.0.0',
+            'status': 'running',
+            'endpoints': {
+                'docs': '/docs',
+                'swagger': '/swagger.json',
+                'auth': '/auth',
+                'contests': '/contest',
+                'submissions': '/submission',
+                'ai_detection': '/ai-detection',
+                'judge': '/judge'
+            }
+        })
+
     # Ensure judge UI blueprint is registered so /judge/<id> is available
     try:
         try:
-            from src.api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
+            from api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
         except Exception:
             from api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
 
@@ -57,7 +77,7 @@ def create_app():
     # Ensure contest public blueprint is registered so /contest/results and /contest/leaderboard are available
     try:
         try:
-            from src.api.controllers.contest_controller import public_bp as _public_bp
+            from api.controllers.contest_controller import public_bp as _public_bp
         except Exception:
             from api.controllers.contest_controller import public_bp as _public_bp
 
@@ -74,6 +94,18 @@ def create_app():
     @app.route('/results')
     def results_short():
         return redirect(url_for('contest_public.public_results'))
+
+    @app.route('/my-submissions')
+    def my_submissions_page():
+        return render_template('my_submissions.html')
+
+    @app.route('/my-submissions/<int:submission_id>')
+    def my_submission_detail_page(submission_id):
+        return render_template('submission_detail.html', submission_id=submission_id)
+
+    @app.route('/submit')
+    def submit_page():
+        return render_template('submission.html')
 
     # Direct leaderboard route with mock data to guarantee registration
     @app.route('/leaderboard-demo')
@@ -98,7 +130,7 @@ def create_app():
     # Ensure judge blueprint is registered (safe-guard if routes.py didn't register it)
     try:
         try:
-            from src.api.controllers.judge_controller import judge_bp as _judge_bp
+            from api.controllers.judge_controller import judge_bp as _judge_bp
         except Exception:
             from api.controllers.judge_controller import judge_bp as _judge_bp
 
@@ -111,7 +143,7 @@ def create_app():
     # Ensure judge UI blueprint is registered so /judge/<id> is available
     try:
         try:
-            from src.api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
+            from api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
         except Exception:
             from api.controllers.judge_controller import judge_ui_bp as _judge_ui_bp
 
@@ -141,7 +173,7 @@ def create_app():
     with app.test_request_context():
         for rule in app.url_map.iter_rules():
             # Thêm các endpoint khác nếu cần
-            if rule.endpoint.startswith(('todo.', 'course.', 'user.', 'auth.', 'ai_detection.')):
+            if rule.endpoint.startswith(('todo.', 'user.', 'auth.', 'ai_detection.', 'contest.', 'submission.', 'judge.')):
                 view_func = app.view_functions[rule.endpoint]
                 print(f"Adding path: {rule.rule} -> {view_func}")
                 spec.path(view=view_func)
@@ -162,3 +194,6 @@ def create_app():
 if __name__ == '__main__':
     app = create_app()
     app.run(host='0.0.0.0', port=9999, debug=True)
+
+
+app = create_app()

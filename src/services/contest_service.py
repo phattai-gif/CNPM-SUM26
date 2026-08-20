@@ -1,9 +1,9 @@
-import re
+﻿import re
 from datetime import datetime
 from typing import List, Optional
 try:
-    from src.domain.models.icontest_repository import IContestRepository
-    from src.domain.contest import Contest, Round, Criteria
+    from domain.models.icontest_repository import IContestRepository
+    from domain.contest import Contest, Round, Criteria
 except ImportError:
     from domain.models.icontest_repository import IContestRepository
     from domain.contest import Contest, Round, Criteria
@@ -32,12 +32,12 @@ class ContestService:
         if user_role == 'admin':
             return
         if contest.created_by != user_id:
-            raise PermissionError("Bạn không có quyền thao tác trên cuộc thi này.")
+            raise PermissionError("Báº¡n khÃ´ng cÃ³ quyá»n thao tÃ¡c trÃªn cuá»™c thi nÃ y.")
 
     def create_contest(self, data: dict, user_id: int) -> Contest:
         title = data.get('title')
         if not title:
-            raise ValueError("Tiêu đề cuộc thi không được để trống.")
+            raise ValueError("TiÃªu Ä‘á» cuá»™c thi khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.")
 
         slug = data.get('slug')
         if not slug:
@@ -47,7 +47,7 @@ class ContestService:
         end_date = self._parse_datetime(data.get('end_date'))
 
         if start_date and end_date and end_date < start_date:
-            raise ValueError("Thời gian kết thúc phải sau thời gian bắt đầu.")
+            raise ValueError("Thá»i gian káº¿t thÃºc pháº£i sau thá»i gian báº¯t Ä‘áº§u.")
 
         contest = Contest(
             title=title,
@@ -71,7 +71,7 @@ class ContestService:
     def update_contest(self, contest_id: int, data: dict, user_id: int, user_role: str = 'organizer') -> Contest:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         updates = {}
@@ -88,7 +88,7 @@ class ContestService:
         new_start = updates.get('start_date', contest.start_date)
         new_end = updates.get('end_date', contest.end_date)
         if new_start and new_end and new_end < new_start:
-            raise ValueError("Thời gian kết thúc phải sau thời gian bắt đầu.")
+            raise ValueError("Thá»i gian káº¿t thÃºc pháº£i sau thá»i gian báº¯t Ä‘áº§u.")
 
         updated = self.repository.update_contest(contest_id, updates)
         return updated
@@ -96,7 +96,7 @@ class ContestService:
     def update_rules(self, contest_id: int, rules: str, user_id: int, user_role: str = 'organizer') -> Contest:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         return self.repository.update_rules(contest_id, rules)
@@ -104,7 +104,7 @@ class ContestService:
     def delete_contest(self, contest_id: int, user_id: int, user_role: str = 'organizer') -> bool:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         return self.repository.delete_contest(contest_id)
@@ -112,12 +112,12 @@ class ContestService:
     def create_round(self, contest_id: int, data: dict, user_id: int, user_role: str = 'organizer') -> Round:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         title = data.get('title')
         if not title:
-            raise ValueError("Tên vòng thi không được để trống.")
+            raise ValueError("TÃªn vÃ²ng thi khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.")
 
         start_date = self._parse_datetime(data.get('start_date'))
         end_date = self._parse_datetime(data.get('end_date'))
@@ -148,12 +148,12 @@ class ContestService:
     def update_round(self, contest_id: int, round_id: int, data: dict, user_id: int, user_role: str = 'organizer') -> Round:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         round_obj = self.repository.get_round_by_id(round_id)
         if not round_obj or round_obj.contest_id != contest_id:
-            raise ValueError("Không tìm thấy vòng thi thuộc cuộc thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi thuá»™c cuá»™c thi nÃ y.")
 
         updates = {}
         for field in ['title', 'description', 'round_number', 'weight', 'status']:
@@ -170,28 +170,28 @@ class ContestService:
     def delete_round(self, contest_id: int, round_id: int, user_id: int, user_role: str = 'organizer') -> bool:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         round_obj = self.repository.get_round_by_id(round_id)
         if not round_obj or round_obj.contest_id != contest_id:
-            raise ValueError("Không tìm thấy vòng thi thuộc cuộc thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi thuá»™c cuá»™c thi nÃ y.")
 
         return self.repository.delete_round(round_id)
 
     def create_criteria(self, contest_id: int, round_id: int, data: dict, user_id: int, user_role: str = 'organizer') -> Criteria:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         round_obj = self.repository.get_round_by_id(round_id)
         if not round_obj or round_obj.contest_id != contest_id:
-            raise ValueError("Không tìm thấy vòng thi thuộc cuộc thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi thuá»™c cuá»™c thi nÃ y.")
 
         name = data.get('name')
         if not name:
-            raise ValueError("Tên tiêu chí không được để trống.")
+            raise ValueError("TÃªn tiÃªu chÃ­ khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.")
 
         criteria_obj = Criteria(
             round_id=round_id,
@@ -205,16 +205,16 @@ class ContestService:
     def update_criteria(self, contest_id: int, round_id: int, criteria_id: int, data: dict, user_id: int, user_role: str = 'organizer') -> Criteria:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         round_obj = self.repository.get_round_by_id(round_id)
         if not round_obj or round_obj.contest_id != contest_id:
-            raise ValueError("Không tìm thấy vòng thi thuộc cuộc thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi thuá»™c cuá»™c thi nÃ y.")
 
         crit_obj = self.repository.get_criteria_by_id(criteria_id)
         if not crit_obj or crit_obj.round_id != round_id:
-            raise ValueError("Không tìm thấy tiêu chí chấm điểm thuộc vòng thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm thuá»™c vÃ²ng thi nÃ y.")
 
         updates = {}
         for field in ['name', 'description', 'max_score', 'weight']:
@@ -226,26 +226,27 @@ class ContestService:
     def delete_criteria(self, contest_id: int, round_id: int, criteria_id: int, user_id: int, user_role: str = 'organizer') -> bool:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         round_obj = self.repository.get_round_by_id(round_id)
         if not round_obj or round_obj.contest_id != contest_id:
-            raise ValueError("Không tìm thấy vòng thi thuộc cuộc thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi thuá»™c cuá»™c thi nÃ y.")
 
         crit_obj = self.repository.get_criteria_by_id(criteria_id)
         if not crit_obj or crit_obj.round_id != round_id:
-            raise ValueError("Không tìm thấy tiêu chí chấm điểm thuộc vòng thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm thuá»™c vÃ²ng thi nÃ y.")
 
         return self.repository.delete_criteria(criteria_id)
 
     def update_contest_configuration(self, contest_id: int, config_data: dict, user_id: int, user_role: str = 'organizer') -> Contest:
         contest = self.repository.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         rules = config_data.get('rules')
         rounds_data = config_data.get('rounds')
 
         return self.repository.update_contest_configuration(contest_id, rules, rounds_data)
+

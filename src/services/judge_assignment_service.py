@@ -1,9 +1,9 @@
-from typing import List, Optional
+﻿from typing import List, Optional
 
 try:
-    from src.domain.models.ijudge_assignment_repository import IJudgeAssignmentRepository
-    from src.domain.models.icontest_repository import IContestRepository
-    from src.domain.contest import JudgeAssignment, Contest, Round
+    from domain.models.ijudge_assignment_repository import IJudgeAssignmentRepository
+    from domain.models.icontest_repository import IContestRepository
+    from domain.contest import JudgeAssignment, Contest, Round
 except ImportError:
     from domain.models.ijudge_assignment_repository import IJudgeAssignmentRepository
     from domain.models.icontest_repository import IContestRepository
@@ -19,7 +19,7 @@ class JudgeAssignmentService:
         if user_role == 'admin':
             return
         if contest.created_by != user_id:
-            raise PermissionError("Bạn không có quyền thao tác trên cuộc thi này.")
+            raise PermissionError("Báº¡n khÃ´ng cÃ³ quyá»n thao tÃ¡c trÃªn cuá»™c thi nÃ y.")
 
     def assign_judge_to_round(
         self,
@@ -32,12 +32,12 @@ class JudgeAssignmentService:
     ) -> JudgeAssignment:
         contest = self.contest_repo.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         round_obj = self.contest_repo.get_round_by_id(round_id)
         if not round_obj or round_obj.contest_id != contest_id:
-            raise ValueError("Không tìm thấy vòng thi thuộc cuộc thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi thuá»™c cuá»™c thi nÃ y.")
 
         return self.judge_repo.assign_judge(
             round_id=round_id,
@@ -56,12 +56,12 @@ class JudgeAssignmentService:
     ) -> List[JudgeAssignment]:
         contest = self.contest_repo.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         round_obj = self.contest_repo.get_round_by_id(round_id)
         if not round_obj or round_obj.contest_id != contest_id:
-            raise ValueError("Không tìm thấy vòng thi thuộc cuộc thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi thuá»™c cuá»™c thi nÃ y.")
 
         assigned_list = []
         for j_id in judge_ids:
@@ -83,12 +83,12 @@ class JudgeAssignmentService:
     ) -> List[JudgeAssignment]:
         contest = self.contest_repo.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         round_obj = self.contest_repo.get_round_by_id(round_id)
         if not round_obj or round_obj.contest_id != contest_id:
-            raise ValueError("Không tìm thấy vòng thi thuộc cuộc thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi thuá»™c cuá»™c thi nÃ y.")
 
         return self.judge_repo.get_assignments_by_round(round_id)
 
@@ -103,12 +103,12 @@ class JudgeAssignmentService:
     ) -> bool:
         contest = self.contest_repo.get_contest_by_id(contest_id)
         if not contest:
-            raise ValueError("Không tìm thấy cuộc thi.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y cuá»™c thi.")
         self._check_ownership(contest, user_id, user_role)
 
         round_obj = self.contest_repo.get_round_by_id(round_id)
         if not round_obj or round_obj.contest_id != contest_id:
-            raise ValueError("Không tìm thấy vòng thi thuộc cuộc thi này.")
+            raise ValueError("KhÃ´ng tÃ¬m tháº¥y vÃ²ng thi thuá»™c cuá»™c thi nÃ y.")
 
         return self.judge_repo.remove_judge_assignment(round_id, judge_id, submission_id)
 
@@ -117,3 +117,4 @@ class JudgeAssignmentService:
 
     def get_judge_assignments(self, judge_id: int) -> List[JudgeAssignment]:
         return self.judge_repo.get_assignments_by_judge(judge_id)
+

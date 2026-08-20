@@ -1,11 +1,11 @@
-from typing import Optional
+﻿from typing import Optional
 from sqlalchemy.orm import Session
 
 try:
-    from src.infrastructure.models.score_feedback_model import ScoreFeedbackModel
-    from src.infrastructure.databases.factory_database import FactoryDatabase as db_factory
+    from infrastructure.models.app import ScoreFeedbackModel
+    from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 except ImportError:
-    from infrastructure.models.score_feedback_model import ScoreFeedbackModel
+    from infrastructure.models.app import ScoreFeedbackModel
     from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 
 
@@ -49,3 +49,4 @@ class ScoreFeedbackRepository:
         except Exception:
             self.session.rollback()
             raise
+

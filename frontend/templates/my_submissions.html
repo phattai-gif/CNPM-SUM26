@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Dự Thi Của Tôi - Analog Film Photography Contest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='my_submissions.css') }}">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <span class="brand-icon">🎞️</span>
+                    <span class="brand-text">ANALOG<span>CONTEST</span></span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="/my-submissions" class="nav-link active">Bài Dự Thi Của Tôi</a>
+                <a href="/submit" class="nav-link">Nộp Bài Mới</a>
+                <a href="/leaderboard" class="nav-link">Bảng Xếp Hạng</a>
+                <a href="/results" class="nav-link">Kết Quả</a>
+            </div>
+            <div class="nav-user" id="navUserSection">
+                <div class="user-chip" id="userChip">
+                    <div class="user-avatar" id="userAvatar">📸</div>
+                    <span class="user-name" id="userName">Participant</span>
+                </div>
+                <button type="button" class="btn-logout" id="logoutBtn" title="Đăng xuất">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Hero Header Section -->
+            <header class="portfolio-header">
+                <div class="header-left">
+                    <div class="badge-tag">Participant Portfolio</div>
+                    <h1 class="page-title">Bài Dự Thi Của Tôi</h1>
+                    <p class="page-desc">Quản lý các tác phẩm nhiếp ảnh phim analog của bạn, theo dõi kết quả thẩm định, nhận xét của ban giám khảo và kiểm tra tính xác thực.</p>
+                </div>
+                <div class="header-right">
+                    <a href="/submit" class="btn-primary-action">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        Nộp Tác Phẩm Mới
+                    </a>
+                </div>
+            </header>
+
+            <!-- Stats Bar -->
+            <section class="stats-overview">
+                <div class="stat-card">
+                    <div class="stat-icon icon-total">📁</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statTotal">0</span>
+                        <span class="stat-label">Tổng bài thi</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-submitted">🚀</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statSubmitted">0</span>
+                        <span class="stat-label">Đã nộp chính thức</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-draft">📝</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statDraft">0</span>
+                        <span class="stat-label">Bản nháp (Draft)</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-graded">🏆</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statGraded">0</span>
+                        <span class="stat-label">Đã có điểm</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filter & Search Toolbar -->
+            <section class="toolbar-section">
+                <div class="filter-tabs" id="filterTabs">
+                    <button class="filter-tab active" data-filter="all">Tất Cả (<span id="countAll">0</span>)</button>
+                    <button class="filter-tab" data-filter="submitted">Đã Nộp (<span id="countSubmitted">0</span>)</button>
+                    <button class="filter-tab" data-filter="draft">Bản Nháp (<span id="countDraft">0</span>)</button>
+                    <button class="filter-tab" data-filter="graded">Đã Chấm Điểm (<span id="countGraded">0</span>)</button>
+                </div>
+                <div class="search-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="searchInput" placeholder="Tìm theo tiêu đề, cuộc thi...">
+                </div>
+            </section>
+
+            <!-- Loading State -->
+            <div class="loading-state" id="loadingState">
+                <div class="spinner"></div>
+                <p>Đang tải dữ liệu bài dự thi từ cơ sở dữ liệu...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-icon">🎞️</div>
+                <h3>Chưa có bài dự thi nào</h3>
+                <p id="emptyMessage">Bạn chưa nộp hoặc lưu bản nháp tác phẩm nào. Hãy tham gia cuộc thi ngay hôm nay!</p>
+                <a href="/submit" class="btn-primary-action">
+                    <span>+</span> Nộp Bài Thi Đầu Tiên
+                </a>
+            </div>
+
+            <!-- Submissions Gallery Grid -->
+            <div class="submissions-grid" id="submissionsGrid">
+                <!-- Cards will be populated dynamically via JavaScript -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Global Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='api_client.js') }}"></script>
+    <script src="{{ url_for('static', filename='my_submissions.js') }}"></script>
+</body>
+</html>

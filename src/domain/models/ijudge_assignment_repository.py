@@ -1,9 +1,9 @@
-from abc import ABC, abstractmethod
+﻿from abc import ABC, abstractmethod
 from typing import List, Optional, Any
 from datetime import datetime
 
 try:
-    from src.domain.contest import JudgeAssignment
+    from domain.contest import JudgeAssignment
 except ImportError:
     from domain.contest import JudgeAssignment
 
