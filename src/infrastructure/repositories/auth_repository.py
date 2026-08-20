@@ -1,4 +1,4 @@
-﻿from typing import Optional
+from typing import Optional
 
 from sqlalchemy import insert, select
 from werkzeug.security import check_password_hash
@@ -112,9 +112,46 @@ class AuthRepository(IAuthRepository):
                 passwordcomfirm='',
                 email=user_obj.email,
                 role=role_code,
-                full_name=user_obj.full_name
+                full_name=user_obj.full_name,
+                avatar_url=getattr(user_obj, 'avatar_url', None),
+                bio=getattr(user_obj, 'bio', None),
+                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None
             )
         except Exception as e:
             print(f"Error fetching user by id: {e}")
+            return None
+
+    def update_profile(self, user_id: int, full_name: Optional[str] = None, bio: Optional[str] = None, avatar_url: Optional[str] = None) -> Optional[Auth]:
+        try:
+            user_obj = self.session.query(UserModel).filter_by(id=user_id).first()
+            if not user_obj:
+                return None
+
+            if full_name is not None:
+                user_obj.full_name = full_name
+            if bio is not None:
+                user_obj.bio = bio
+            if avatar_url is not None:
+                user_obj.avatar_url = avatar_url
+
+            self.session.commit()
+            self.session.refresh(user_obj)
+
+            role_code = self.get_user_role(user_id) or 'participant'
+            return Auth(
+                id=user_obj.id,
+                username=user_obj.username,
+                password='',
+                passwordcomfirm='',
+                email=user_obj.email,
+                role=role_code,
+                full_name=user_obj.full_name,
+                avatar_url=user_obj.avatar_url,
+                bio=user_obj.bio,
+                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None
+            )
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error updating user profile: {e}")
             return None
 

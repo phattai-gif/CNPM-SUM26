@@ -64,6 +64,14 @@ def register_routes(app):
         app.add_url_rule('/register', 'register', lambda: render_template('register.html'))
     except Exception:
         pass
+    try:
+        app.add_url_rule('/profile', 'profile_page', lambda: render_template('profile.html'))
+    except Exception:
+        pass
+    try:
+        app.add_url_rule('/portfolio', 'portfolio_page', lambda: redirect('/profile'))
+    except Exception:
+        pass
 
     # redirect legacy /explore to /contests
     try:

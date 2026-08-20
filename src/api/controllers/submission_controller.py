@@ -633,8 +633,7 @@ def create_submission():
 # Participant Portfolio & Submission Detail Routes
 # -------------------------------------------------------------------------
 
-@submission_bp.route("/my-submissions", methods=["GET"])
-@submission_bp.route("/me", methods=["GET"])
+@submission_bp.route("/my", methods=["GET"])
 @token_required
 def get_my_submissions():
     """Retrieve all submissions belonging to the currently logged in participant."""
@@ -642,15 +641,67 @@ def get_my_submissions():
     if not user_id:
         return jsonify({"message": "User information is missing in token"}), 401
 
-    submissions_list = submission_service.get_my_submissions(user_id=user_id)
-    return jsonify({
-        "message": "My submissions retrieved successfully",
-        "submissions": submissions_list,
-        "count": len(submissions_list),
-    }), 200
+    round_id_param = request.args.get("round_id")
+    round_id = None
+    if round_id_param is not None:
+        try:
+            round_id = int(round_id_param)
+        except (ValueError, TypeError):
+            return jsonify({"message": "Invalid round_id"}), 400
+
+    status = request.args.get("status")
+    if status and status not in [
+        "draft",
+        "submitted",
+        "flagged",
+        "evaluated",
+        "under_review",
+        "graded",
+        "approved",
+        "rejected",
+    ]:
+        return jsonify({"message": "Invalid status"}), 400
+
+    ai_flag = request.args.get("ai_flag")
+    if ai_flag and ai_flag not in ["safe", "medium", "high"]:
+        return jsonify({"message": "Invalid ai_flag"}), 400
+
+    try:
+        data = submission_service.get_my_submissions(
+            user_id=user_id,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
+        )
+        if isinstance(data, dict):
+            return jsonify(data), 200
+        elif isinstance(data, list):
+            return jsonify({
+                "message": "My submissions retrieved successfully",
+                "submissions": data,
+                "count": len(data),
+                "total": len(data),
+            }), 200
+        return jsonify(data), 200
+    except Exception as error:
+        return jsonify({
+            "message": "Failed to get my submissions",
+            "error": str(error),
+        }), 500
 
 
-@submission_bp.route("/my", methods=["GET"])
+@submission_bp.route("/my-submissions", methods=["GET"])
+@token_required
+def get_my_submissions_alias():
+    return get_my_submissions()
+
+
+@submission_bp.route("/me", methods=["GET"])
+@token_required
+def get_my_submissions_me():
+    return get_my_submissions()
+
+
 @submission_bp.route("/my-submissions-ui", methods=["GET"])
 def my_submissions_ui():
     """Render the My Submissions / Portfolio page."""
@@ -658,6 +709,10 @@ def my_submissions_ui():
 
 
 @submission_bp.route("/detail/<int:submission_id>", methods=["GET"])
+def submission_detail_ui_detail(submission_id):
+    return render_template("submission_detail.html", submission_id=submission_id)
+
+
 @submission_bp.route("/<int:submission_id>/ui", methods=["GET"])
 def submission_detail_ui(submission_id):
     """Render the Submission Details page."""
@@ -943,10 +998,9 @@ def update_submission(submission_id):
     # ========================================================
 
     try:
-
-        updated_sub = (
-            submission_service
-            .update_draft(
+        update_method = getattr(submission_service, 'update_draft_submission', None) or submission_service.update_draft
+        try:
+            updated_sub = update_method(
                 submission_id=submission_id,
                 user_id=user_id,
                 title=title,
@@ -962,21 +1016,27 @@ def update_submission(submission_id):
                     else None
                 ),
             )
-        )
+        except TypeError:
+            updated_sub = update_method(
+                submission_id=submission_id,
+                user_id=user_id,
+                title=title,
+                story_description=description,
+            )
 
         return jsonify({
             "message": (
-                "Submission draft updated successfully"
+                "Submission updated successfully"
             ),
             "submission": {
-                "id": updated_sub.id,
-                "round_id": updated_sub.round_id,
-                "user_id": updated_sub.user_id,
-                "title": updated_sub.title,
+                "id": getattr(updated_sub, "id", submission_id),
+                "round_id": getattr(updated_sub, "round_id", None),
+                "user_id": getattr(updated_sub, "user_id", user_id),
+                "title": getattr(updated_sub, "title", title),
                 "story_description": (
-                    updated_sub.story_description
+                    getattr(updated_sub, "story_description", description)
                 ),
-                "status": updated_sub.status,
+                "status": getattr(updated_sub, "status", "draft"),
             },
         }), 200
 
@@ -1001,7 +1061,8 @@ def update_submission(submission_id):
         }), 400
 
     except Exception as error:
-
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "message": (
                 "Failed to update submission draft"
@@ -1195,306 +1256,6 @@ def get_submission(
         return jsonify(response), 200
 
     return jsonify(detail), 200
-
-
-@submission_bp.route(
-    "/<int:submission_id>",
-    methods=["PUT", "PATCH"],
-)
-@token_required
-def update_submission(submission_id):
-    """
-    Update a draft submission.
-    Allows editing title, story description, film metadata, competition round,
-    and optionally uploading a replacement image file.
-    """
-    user_id = request.user.get("user_id")
-    if not user_id:
-        return jsonify({"message": "User information is missing in token"}), 401
-
-    image_file = request.files.get("file") if request.files else None
-    data = request.form if request.form else (request.get_json(silent=True) or {})
-
-    # Extract film metadata fields
-    film_metadata = {}
-    if "film_metadata" in data and isinstance(data["film_metadata"], dict):
-        film_metadata = data["film_metadata"]
-    else:
-        for field in [
-            "film_stock",
-            "film_iso",
-            "camera_body",
-            "lens",
-            "lab_name",
-            "scanner_info",
-            "development_process",
-            "taken_at_location",
-        ]:
-            if field in data and data[field] is not None:
-                film_metadata[field] = data[field]
-
-    try:
-        file_bytes = image_file.read() if image_file else None
-        filename = image_file.filename if image_file else None
-        content_type = image_file.content_type if image_file else "image/jpeg"
-
-        updated = submission_service.update_draft_submission(
-            submission_id=submission_id,
-            user_id=user_id,
-            title=data.get("title"),
-            story_description=data.get("story_description"),
-            round_id=int(data["round_id"]) if data.get("round_id") else None,
-            status=data.get("status"),
-            film_metadata=film_metadata if film_metadata else None,
-            file_bytes=file_bytes,
-            filename=filename,
-            content_type=content_type,
-            image_hd_url=data.get("image_hd_url"),
-            file_hash=data.get("file_hash"),
-            thumbnail_url=data.get("thumbnail_url"),
-            width_px=data.get("width_px"),
-            height_px=data.get("height_px"),
-            file_size_bytes=data.get("file_size_bytes"),
-        )
-
-        return jsonify({
-            "message": "Submission updated successfully",
-            "submission": {
-                "id": updated.id,
-                "title": updated.title,
-                "status": updated.status,
-                "round_id": updated.round_id,
-                "story_description": updated.story_description,
-                "submitted_at": (
-                    updated.submitted_at.isoformat()
-                    if updated.submitted_at
-                    else None
-                ),
-                "updated_at": (
-                    updated.updated_at.isoformat()
-                    if updated.updated_at
-                    else None
-                ),
-            },
-        }), 200
-
-    except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500
-
-@role_required(
-    "organizer",
-    "judge",
-)
-def get_submission(submission_id):
-
-    try:
-
-        result = (
-            submission_service
-            .get_submission_by_id(
-                submission_id
-            )
-        )
-
-    except Exception as error:
-
-        return jsonify({
-            "message": "Failed to get submission",
-            "error": str(error),
-        }), 500
-
-    # --------------------------------------------------------
-    # Not found
-    # --------------------------------------------------------
-
-    if not result:
-
-        return jsonify({
-            "message": "Submission not found"
-        }), 404
-
-    try:
-
-        (
-            submission,
-            submission_file,
-            film_metadata,
-        ) = result
-
-        # ====================================================
-        # BASIC SUBMISSION DATA
-        # ====================================================
-
-        response = {
-            "id": submission.id,
-            "round_id": submission.round_id,
-            "user_id": submission.user_id,
-            "title": submission.title,
-            "story_description": (
-                submission.story_description
-            ),
-            "status": submission.status,
-            "final_score": (
-                float(
-                    submission.final_score
-                )
-                if submission.final_score is not None
-                else None
-            ),
-            "submitted_at": (
-                submission.submitted_at.isoformat()
-                if submission.submitted_at
-                else None
-            ),
-            "created_at": (
-                submission.created_at.isoformat()
-                if submission.created_at
-                else None
-            ),
-            "updated_at": (
-                submission.updated_at.isoformat()
-                if submission.updated_at
-                else None
-            ),
-        }
-
-        # ====================================================
-        # FILE
-        # ====================================================
-
-        if submission_file:
-
-            response["file"] = {
-                "id": submission_file.id,
-                "image_hd_url": (
-                    submission_file.image_hd_url
-                ),
-                "thumbnail_url": (
-                    submission_file.thumbnail_url
-                ),
-                "width_px": (
-                    submission_file.width_px
-                ),
-                "height_px": (
-                    submission_file.height_px
-                ),
-                "file_size_bytes": (
-                    submission_file.file_size_bytes
-                ),
-                "file_hash": (
-                    submission_file.file_hash
-                ),
-                "created_at": (
-                    submission_file.created_at.isoformat()
-                    if submission_file.created_at
-                    else None
-                ),
-            }
-
-        else:
-
-            response["file"] = None
-
-        # ====================================================
-        # FILM METADATA
-        # ====================================================
-
-        if film_metadata:
-
-            response["film_metadata"] = {
-                "film_stock": (
-                    film_metadata.film_stock
-                ),
-                "film_iso": (
-                    film_metadata.film_iso
-                ),
-                "camera_body": (
-                    film_metadata.camera_body
-                ),
-                "lens": (
-                    film_metadata.lens
-                ),
-                "lab_name": (
-                    film_metadata.lab_name
-                ),
-                "scanner_info": (
-                    film_metadata.scanner_info
-                ),
-                "development_process": (
-                    film_metadata.development_process
-                ),
-                "taken_at_location": (
-                    film_metadata.taken_at_location
-                ),
-                "created_at": (
-                    film_metadata.created_at.isoformat()
-                    if film_metadata.created_at
-                    else None
-                ),
-            }
-
-        else:
-
-            response["film_metadata"] = None
-
-    except Exception as error:
-
-        return jsonify({
-            "message": (
-                "Failed to serialize "
-                "submission details"
-            ),
-            "error": str(error),
-        }), 500
-
-    # ========================================================
-    # AI FLAG
-    #
-    # AI IS OPTIONAL.
-    # AI FAILURE MUST NOT BREAK
-    # SUBMISSION DETAIL API.
-    # ========================================================
-
-    ai_flag_data = None
-
-    try:
-
-        existing_flag = (
-            submission_repo
-            .get_ai_flag(
-                submission_id
-            )
-        )
-
-        if existing_flag:
-
-            ai_flag_data = {
-                "ai_score": float(
-                    existing_flag.confidence_score
-                ),
-                "risk_level": (
-                    existing_flag.risk_level
-                ),
-                "status": (
-                    existing_flag.status
-                ),
-            }
-
-    except Exception:
-
-        # AI failure is ignored.
-        # Submission detail must still work.
-
-        ai_flag_data = None
-
-    except PermissionError as pe:
-        return jsonify({"message": str(pe)}), 403
-    except ValueError as ve:
-        return jsonify({"message": str(ve)}), 400
-    except Exception as e:
-        return jsonify({"message": f"Failed to update submission: {str(e)}"}), 500
 
 
 # ============================================================
@@ -1813,74 +1574,6 @@ def list_submissions():
             "message": (
                 "Failed to list submissions"
             ),
-            "error": str(error),
-        }), 500
-
-
-# ============================================================
-# LIST SUBMISSIONS BY ROLE
-# ============================================================
-
-@submission_bp.route(
-    "/my",
-    methods=["GET"],
-)
-@token_required
-def get_my_submissions():
-
-    user_id = request.user.get("user_id")
-
-    if not user_id:
-        return jsonify({
-            "message": "User information is missing in token"
-        }), 401
-
-    round_id_param = request.args.get("round_id")
-    round_id = None
-
-    if round_id_param is not None:
-        try:
-            round_id = int(round_id_param)
-        except (ValueError, TypeError):
-            return jsonify({
-                "message": "Invalid round_id"
-            }), 400
-
-    status = request.args.get("status")
-
-    if status and status not in [
-        "draft",
-        "submitted",
-        "flagged",
-        "evaluated",
-    ]:
-        return jsonify({
-            "message": "Invalid status"
-        }), 400
-
-    ai_flag = request.args.get("ai_flag")
-
-    if ai_flag and ai_flag not in [
-        "safe",
-        "medium",
-        "high",
-    ]:
-        return jsonify({
-            "message": "Invalid ai_flag"
-        }), 400
-
-    try:
-        data = submission_service.get_my_submissions(
-            user_id=user_id,
-            round_id=round_id,
-            status=status,
-            ai_flag=ai_flag,
-        )
-        return jsonify(data), 200
-
-    except Exception as error:
-        return jsonify({
-            "message": "Failed to get my submissions",
             "error": str(error),
         }), 500
 

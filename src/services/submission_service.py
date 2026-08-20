@@ -701,6 +701,9 @@ class SubmissionService:
             )
         )
 
+    def update_draft_submission(self, *args, **kwargs):
+        return self.update_draft(*args, **kwargs)
+
     # =========================================================
     # SUBMIT DRAFT
     # =========================================================
@@ -939,10 +942,6 @@ class SubmissionService:
 
     def list_submissions(self):
         return self.submission_repo.list()
-
-    def get_my_submissions(self, user_id: int):
-        """Retrieve all submissions belonging to the given participant."""
-        return self.submission_repo.get_my_submissions(user_id=user_id)
 
     def get_submission_detail(
         self,
