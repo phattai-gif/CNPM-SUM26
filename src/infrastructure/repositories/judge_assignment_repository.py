@@ -112,7 +112,7 @@ class JudgeAssignmentRepository(IJudgeAssignmentRepository):
             self._rollback_session()
             results = (
                 self.session.query(JudgeAssignmentModel, UserModel)
-                .join(UserModel, JudgeAssignmentModel.judge_id == UserModel.id)
+                .outerjoin(UserModel, JudgeAssignmentModel.judge_id == UserModel.id)
                 .filter(JudgeAssignmentModel.round_id == round_id)
                 .all()
             )
@@ -181,7 +181,7 @@ class JudgeAssignmentRepository(IJudgeAssignmentRepository):
             self._rollback_session()
             results = (
                 self.session.query(JudgeAssignmentModel, UserModel)
-                .join(UserModel, JudgeAssignmentModel.judge_id == UserModel.id)
+                .outerjoin(UserModel, JudgeAssignmentModel.judge_id == UserModel.id)
                 .filter(JudgeAssignmentModel.judge_id == judge_id)
                 .all()
             )

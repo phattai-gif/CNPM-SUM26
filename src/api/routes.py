@@ -35,6 +35,7 @@ from api.controllers.contest_settings_controller import (
 )
 from api.controllers.moderator_controller import moderator_bp
 from api.role_required import role_required
+from api.controllers.admin_controller import admin_bp
 
 
 def register_routes(app):
@@ -66,6 +67,7 @@ def register_routes(app):
     app.register_blueprint(contest_settings_bp)
     app.register_blueprint(score_bp)
     app.register_blueprint(moderator_bp)
+    app.register_blueprint(admin_bp)
 
     # ============================================================
     # PUBLIC UI ROUTES
