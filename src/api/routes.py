@@ -34,6 +34,7 @@ from api.controllers.contest_settings_controller import (
     contest_settings_bp,
 )
 from api.controllers.moderator_controller import moderator_bp
+from api.role_required import role_required
 from api.controllers.admin_controller import admin_bp
 
 
@@ -140,6 +141,16 @@ def register_routes(app):
             lambda contest_id: render_template(
                 "contest_public_detail.html"
             ),
+        )
+    except Exception:
+        pass
+
+    # Judge review center page
+    try:
+        app.add_url_rule(
+            "/judge/review",
+            "judge_review_center",
+            lambda: render_template("submission_review.html"),
         )
     except Exception:
         pass
@@ -380,6 +391,173 @@ def register_routes(app):
             "/judge/assignments/<int:assignment_id>/submissions",
             "judge_assignment_submissions",
             get_judge_assignment_submissions,
+            methods=["GET"],
+        )
+
+        @role_required("judge", "admin")
+        def judge_review_submission_detail(submission_id):
+            from infrastructure.databases.factory_database import (
+                FactoryDatabase,
+            )
+            from infrastructure.models.app import (
+                CriteriaModel,
+                JudgeAssignmentModel,
+                SubmissionFileModel,
+                SubmissionFilmMetadataModel,
+                SubmissionModel,
+            )
+
+            session = (
+                FactoryDatabase
+                .get_database("POSTGREE")
+                .session
+            )
+
+            submission = (
+                session
+                .query(SubmissionModel)
+                .filter_by(id=submission_id)
+                .first()
+            )
+
+            if not submission:
+                return jsonify({
+                    "message": "Submission not found"
+                }), 404
+
+            user_id = request.user.get("user_id")
+            user_role = request.user.get("role")
+
+            if user_role != "admin":
+                assignment = (
+                    session
+                    .query(JudgeAssignmentModel)
+                    .filter(
+                        JudgeAssignmentModel.round_id == submission.round_id,
+                        JudgeAssignmentModel.judge_id == user_id,
+                    )
+                    .all()
+                )
+
+                is_allowed = any(
+                    item.submission_id is None
+                    or item.submission_id == submission.id
+                    for item in assignment
+                )
+
+                if not is_allowed:
+                    return jsonify({
+                        "message": "Forbidden"
+                    }), 403
+
+            submission_file = (
+                session
+                .query(SubmissionFileModel)
+                .filter_by(submission_id=submission.id)
+                .first()
+            )
+            film_metadata = (
+                session
+                .query(SubmissionFilmMetadataModel)
+                .filter_by(submission_id=submission.id)
+                .first()
+            )
+            criteria_models = (
+                session
+                .query(CriteriaModel)
+                .filter_by(round_id=submission.round_id)
+                .order_by(CriteriaModel.id.asc())
+                .all()
+            )
+            round_submissions = (
+                session
+                .query(SubmissionModel)
+                .filter_by(round_id=submission.round_id)
+                .order_by(SubmissionModel.id.asc())
+                .all()
+            )
+
+            ordered_ids = [item.id for item in round_submissions]
+            current_index = ordered_ids.index(submission.id)
+            previous_submission_id = (
+                ordered_ids[current_index - 1]
+                if current_index > 0
+                else None
+            )
+            next_submission_id = (
+                ordered_ids[current_index + 1]
+                if current_index < len(ordered_ids) - 1
+                else None
+            )
+
+            return jsonify({
+                "submission": {
+                    "id": submission.id,
+                    "round_id": submission.round_id,
+                    "status": submission.status,
+                    "image_url": (
+                        submission_file.image_hd_url
+                        if submission_file
+                        else None
+                    ),
+                    "metadata": {
+                        "camera_body": (
+                            film_metadata.camera_body
+                            if film_metadata
+                            else None
+                        ),
+                        "lens": (
+                            film_metadata.lens
+                            if film_metadata
+                            else None
+                        ),
+                        "film_stock": (
+                            film_metadata.film_stock
+                            if film_metadata
+                            else None
+                        ),
+                        "film_iso": (
+                            film_metadata.film_iso
+                            if film_metadata
+                            else None
+                        ),
+                        "development_process": (
+                            film_metadata.development_process
+                            if film_metadata
+                            else None
+                        ),
+                        "width_px": (
+                            submission_file.width_px
+                            if submission_file
+                            else None
+                        ),
+                        "height_px": (
+                            submission_file.height_px
+                            if submission_file
+                            else None
+                        ),
+                    },
+                },
+                "criteria": [
+                    {
+                        "id": criteria.id,
+                        "name": criteria.name,
+                        "description": criteria.description,
+                        "max_score": float(criteria.max_score),
+                        "weight": float(criteria.weight),
+                    }
+                    for criteria in criteria_models
+                ],
+                "navigation": {
+                    "previous_submission_id": previous_submission_id,
+                    "next_submission_id": next_submission_id,
+                },
+            }), 200
+
+        app.add_url_rule(
+            "/api/judge/submissions/<int:submission_id>/review-detail",
+            "judge_review_submission_detail",
+            judge_review_submission_detail,
             methods=["GET"],
         )
 
