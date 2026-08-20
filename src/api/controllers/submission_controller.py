@@ -650,7 +650,6 @@ def get_my_submissions():
     }), 200
 
 
-@submission_bp.route("/my", methods=["GET"])
 @submission_bp.route("/my-submissions-ui", methods=["GET"])
 def my_submissions_ui():
     """Render the My Submissions / Portfolio page."""
@@ -943,6 +942,26 @@ def update_submission(submission_id):
     # ========================================================
 
     try:
+        if request.is_json:
+            updated_sub = submission_service.update_draft_submission(
+                submission_id=submission_id,
+                user_id=user_id,
+                title=title,
+                story_description=description,
+                round_id=int(data["round_id"]) if data.get("round_id") else None,
+                status=data.get("status"),
+                film_metadata=film_metadata or None,
+            )
+            return jsonify({
+                "message": "Submission updated successfully",
+                "submission": {
+                    "id": updated_sub.id,
+                    "title": updated_sub.title,
+                    "status": updated_sub.status,
+                    "round_id": updated_sub.round_id,
+                    "story_description": updated_sub.story_description,
+                },
+            }), 200
 
         updated_sub = (
             submission_service
@@ -1197,12 +1216,7 @@ def get_submission(
     return jsonify(detail), 200
 
 
-@submission_bp.route(
-    "/<int:submission_id>",
-    methods=["PUT", "PATCH"],
-)
-@token_required
-def update_submission(submission_id):
+def update_submission_alternate(submission_id):
     """
     Update a draft submission.
     Allows editing title, story description, film metadata, competition round,
@@ -1826,7 +1840,7 @@ def list_submissions():
     methods=["GET"],
 )
 @token_required
-def get_my_submissions():
+def get_my_submissions_by_role():
 
     user_id = request.user.get("user_id")
 

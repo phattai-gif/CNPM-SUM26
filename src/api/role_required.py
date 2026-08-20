@@ -35,14 +35,6 @@ def token_required(f):
             user = session.query(UserModel).filter_by(id=request.user['user_id']).first()
             if user and user.status != 'active':
                 return jsonify({'message': 'User account is locked or no longer exists.'}), 401
-            if user:
-                current_role = session.execute(
-                    select(RoleModel.code)
-                    .select_from(user_roles)
-                    .join(RoleModel, user_roles.c.role_id == RoleModel.id)
-                    .where(user_roles.c.user_id == user.id)
-                ).scalar()
-                request.user['role'] = current_role or 'participant'
         except jwt.ExpiredSignatureError:
             return jsonify({'message': 'Token has expired! Please login again.'}), 401
         except jwt.InvalidTokenError:
@@ -60,6 +52,18 @@ def role_required(*allowed_roles):
         @token_required
         def decorated(*args, **kwargs):
             user_role = request.user.get('role')
+            if user_role == 'admin' and allowed_roles == ('admin',):
+                session = db_factory.get_database('POSTGREE').session
+                user_id = request.user.get('user_id')
+                user = session.query(UserModel).filter_by(id=user_id).first()
+                if user:
+                    user_role = session.execute(
+                        select(RoleModel.code)
+                        .select_from(user_roles)
+                        .join(RoleModel, user_roles.c.role_id == RoleModel.id)
+                        .where(user_roles.c.user_id == user.id)
+                    ).scalar() or 'participant'
+                    request.user['role'] = user_role
             if allowed_roles and user_role not in allowed_roles:
                 return jsonify({
                     'message': f'Access forbidden! Role "{user_role}" is not authorized for this resource.',

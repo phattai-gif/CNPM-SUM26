@@ -26,7 +26,7 @@ class AuthRepository(IAuthRepository):
 
     def register(self, auth: Auth) -> Optional[Auth]:
         try:
-            # 1. Táº¡o user má»›i trong báº£ng users
+            # 1. Tạo user mới trong bảng User
             new_user = UserModel(
                 username=auth.username,
                 email=auth.email,
@@ -35,9 +35,9 @@ class AuthRepository(IAuthRepository):
                 status='active'
             )
             self.session.add(new_user)
-            self.session.flush()  # Láº¥y id má»›i sinh
+            self.session.flush()  # Lấy ID của user mới
 
-            # 2. TÃ¬m role_id tÆ°Æ¡ng á»©ng vá»›i role code (máº·c Ä‘á»‹nh: 'participant')
+            # 2. Tìm role_id tương ứng với role_code, mặc định là "participant"
             role_code = auth.role if auth.role else 'participant'
             role_obj = self.session.query(RoleModel).filter_by(code=role_code).first()
 
@@ -63,7 +63,7 @@ class AuthRepository(IAuthRepository):
 
     def login(self, auth: Auth) -> Optional[Auth]:
         try:
-            # TÃ¬m user theo username
+            # Tìm user theo username
             user_obj = self.session.query(UserModel).filter_by(username=auth.username).first()
             if not user_obj:
                 return None
@@ -71,11 +71,11 @@ class AuthRepository(IAuthRepository):
             if user_obj.status != 'active':
                 return None
 
-            # Kiá»ƒm tra máº­t kháº©u mÃ£ hÃ³a vá»›i check_password_hash
+            # Kiểm tra mật khẩu mã hóa với check_password_hash
             if not check_password_hash(user_obj.password_hash, auth.password):
                 return None
 
-            # Láº¥y role code cá»§a user
+            # Lấy role code của user
             role_code = self.get_user_role(user_obj.id) or 'participant'
 
             auth.id = user_obj.id

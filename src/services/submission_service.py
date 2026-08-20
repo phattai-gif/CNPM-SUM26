@@ -1118,7 +1118,7 @@ class SubmissionService:
             .list()
         )
 
-def _run_duplicate_check_and_flag(
+    def _run_duplicate_check_and_flag(
         self,
         submission,
         file_bytes: bytes,
