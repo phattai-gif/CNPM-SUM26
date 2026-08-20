@@ -96,7 +96,6 @@ def test_get_submission_details_success():
         created_at=datetime(2024, 1, 1, 11, 0, 2),
     )
 
-<<<<<<< HEAD
     with patch.object(submission_controller_module.submission_service, 'get_submission_by_id', return_value=(mock_submission, mock_file, mock_film_metadata)), \
          patch.object(submission_controller_module.submission_repo, 'get_by_id_with_details', return_value=(mock_submission, mock_file, mock_film_metadata)), \
          patch.object(submission_controller_module.submission_service, 'get_submission_detail', return_value=None):
@@ -104,7 +103,6 @@ def test_get_submission_details_success():
             '/submissions/123',
             headers={'Authorization': f'Bearer {token}'}
         )
-=======
     mock_repo = MagicMock()
     mock_repo.get_by_id_with_details.return_value = (mock_submission, mock_file, mock_film_metadata)
     mock_repo.get_ai_flag.return_value = None
@@ -114,7 +112,7 @@ def test_get_submission_details_success():
         '/submissions/123',
         headers={'Authorization': f'Bearer {token}'}
     )
->>>>>>> origin/main
+
 
     if response.status_code != 200:
         print(f"DEBUG status={response.status_code}, data={response.get_json()}")
@@ -131,7 +129,6 @@ def test_get_submission_details_not_found():
     client = app.test_client()
     token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'))
 
-<<<<<<< HEAD
     with patch.object(submission_controller_module.submission_service, 'get_submission_by_id', return_value=None), \
          patch.object(submission_controller_module.submission_repo, 'get_by_id_with_details', return_value=None), \
          patch.object(submission_controller_module.submission_service, 'get_submission_detail', return_value=None):
@@ -140,7 +137,7 @@ def test_get_submission_details_not_found():
             headers={'Authorization': f'Bearer {token}'}
         )
 
-=======
+
     mock_repo = MagicMock()
     mock_repo.get_by_id_with_details.return_value = None
     patch_controller_attr('submission_repo', mock_repo)
@@ -150,7 +147,6 @@ def test_get_submission_details_not_found():
         headers={'Authorization': f'Bearer {token}'}
     )
 
->>>>>>> origin/main
     assert response.status_code == 404
     json_data = response.get_json()
     assert json_data['message'] == 'Submission not found'
