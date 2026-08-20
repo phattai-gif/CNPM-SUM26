@@ -1,4 +1,4 @@
-﻿from collections import defaultdict
+from collections import defaultdict
 import sys
 from typing import Optional
 
@@ -326,12 +326,83 @@ class ScoreService:
             }
         )
 
+        leaderboard = []
+        for item in results:
+            leaderboard.append({
+                "rank": item["rank"],
+                "submission_id": item["submission_id"],
+                "user_id": item["user_id"],
+                "final_score": item["total_score"],
+                "total_score": item["total_score"],
+            })
+
         return {
             "message": "Round finalized successfully",
             "round_id": round_id,
             "status": "FINALIZED",
+            "round": {
+                "id": round_id,
+                "status": "FINALIZED",
+            },
             "results": results,
+            "leaderboard": leaderboard,
         }, None
+
+    def calculate_submission_score(
+        self,
+        submission_id: int,
+    ):
+        submission = self.submission_repo.get_by_id(submission_id)
+
+        if submission is None:
+            return None, "submission_not_found"
+
+        self._recalculate_final_score(submission)
+
+        return submission, None
+
+    def is_judge_assigned(
+        self,
+        submission_id: int,
+        judge_id: int,
+        user_role: str = "judge",
+    ) -> bool:
+        if user_role == "admin":
+            return True
+
+        try:
+            submission = self.submission_repo.get_by_id(submission_id)
+            if submission is None:
+                return True
+
+            from infrastructure.models.app import JudgeAssignmentModel
+            session = getattr(self.submission_repo, "session", None)
+            if not session:
+                session = getattr(self.contest_repo, "session", None)
+
+            if session:
+                round_assignments = (
+                    session.query(JudgeAssignmentModel)
+                    .filter(
+                        JudgeAssignmentModel.round_id == submission.round_id
+                    )
+                    .all()
+                )
+
+                if round_assignments:
+                    assigned = any(
+                        a.judge_id == judge_id
+                        and (
+                            a.submission_id is None
+                            or a.submission_id == submission_id
+                        )
+                        for a in round_assignments
+                    )
+                    return assigned
+        except Exception:
+            pass
+
+        return True
 
 
     def submit_feedback(

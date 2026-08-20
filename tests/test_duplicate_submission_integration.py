@@ -5,6 +5,7 @@ import contextlib
 import atexit
 import tempfile
 from pathlib import Path
+from sqlalchemy.orm import close_all_sessions
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -23,9 +24,14 @@ from infrastructure.models import *
 
 def cleanup_test_database():
     try:
-        db_factory.get_database("POSTGREE").engine.dispose()
+        database = db_factory.get_database("POSTGREE")
+        close_all_sessions()
+        database.engine.dispose()
     finally:
-        DB_FILE.unlink(missing_ok=True)
+        try:
+            DB_FILE.unlink(missing_ok=True)
+        except PermissionError:
+            pass
 
 atexit.register(cleanup_test_database)
 
