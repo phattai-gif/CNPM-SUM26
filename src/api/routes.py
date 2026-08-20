@@ -34,6 +34,7 @@ from api.controllers.contest_settings_controller import (
     contest_settings_bp,
 )
 from api.controllers.moderator_controller import moderator_bp
+from api.controllers.admin_controller import admin_bp
 
 
 def register_routes(app):
@@ -65,6 +66,7 @@ def register_routes(app):
     app.register_blueprint(contest_settings_bp)
     app.register_blueprint(score_bp)
     app.register_blueprint(moderator_bp)
+    app.register_blueprint(admin_bp)
 
     # ============================================================
     # PUBLIC UI ROUTES
