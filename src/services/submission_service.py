@@ -49,6 +49,23 @@ class SubmissionService:
             or StorageService()
         )
 
+    def _validate_round_status_for_submission(self, round_id: int):
+        if not round_id:
+            return
+        session = getattr(self.submission_repo, "session", None)
+        if session:
+            try:
+                from infrastructure.models.app import RoundModel
+                round_obj = session.query(RoundModel).filter_by(id=round_id).first()
+                if round_obj:
+                    status_str = (round_obj.status or "").lower()
+                    if status_str != "ongoing":
+                        raise ValueError(f"Cannot submit to round with status '{round_obj.status}'")
+            except ValueError:
+                raise
+            except Exception:
+                pass
+
     # =========================================================
     # HASH HELPERS
     # =========================================================
@@ -200,6 +217,9 @@ class SubmissionService:
         film_metadata = (
             film_metadata or {}
         )
+
+        if status != "draft":
+            self._validate_round_status_for_submission(round_id)
 
         files_data: List[
             Dict[str, Any]
@@ -889,6 +909,8 @@ class SubmissionService:
                 "Cannot submit submission that is not in draft status"
             )
 
+        self._validate_round_status_for_submission(submission.round_id)
+
         if (
             not submission.title
             or not submission.title.strip()
@@ -1273,6 +1295,77 @@ class SubmissionService:
             file_size_bytes = (
                 storage_info["file_size"]
             )
+        # -----------------------------------------------------
+        # Validate Round status before submitting a draft
+        # -----------------------------------------------------
+        #
+        # A participant may edit a draft regardless of the
+        # Round status, but the draft must only be converted
+        # to "submitted" while the Round is "ongoing".
+        #
+        # This prevents bypassing the submission restriction
+        # through the update-draft endpoint.
+        # -----------------------------------------------------
+
+        if status == "submitted":
+
+            target_round_id = round_id
+
+            # If round_id is not provided, use the submission's
+            # existing round.
+            if target_round_id is None:
+                existing_submission = (
+                    self.submission_repo
+                    .get_by_id(submission_id)
+                )
+
+                if not existing_submission:
+                    raise ValueError(
+                        "Submission not found"
+                    )
+
+                target_round_id = (
+                    existing_submission.round_id
+                )
+
+            self._validate_round_status_for_submission(
+                target_round_id
+            )
+
+        submission = (
+            self.submission_repo
+            .update_draft_submission(
+                submission_id=submission_id,
+                user_id=user_id,
+                title=title,
+                story_description=(
+                    story_description
+                ),
+                round_id=round_id,
+                status=status,
+                film_metadata=(
+                    film_metadata
+                ),
+                image_hd_url=(
+                    image_hd_url
+                ),
+                thumbnail_url=(
+                    thumbnail_url
+                ),
+                file_hash=(
+                    file_hash
+                ),
+                width_px=(
+                    width_px
+                ),
+                height_px=(
+                    height_px
+                ),
+                file_size_bytes=(
+                    file_size_bytes
+                ),
+            )
+        )
 
         submission = (
             self.submission_repo
