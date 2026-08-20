@@ -142,6 +142,8 @@ CREATE TABLE IF NOT EXISTS app.submission_files (
     height_px INT,
     file_size_bytes BIGINT,
     file_hash VARCHAR(64) NOT NULL,
+    phash VARCHAR(64),
+    ahash VARCHAR(64),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -322,6 +324,10 @@ ALTER TABLE app.score_feedbacks
     ADD COLUMN IF NOT EXISTS summary_feedback TEXT NOT NULL DEFAULT '',
     ADD COLUMN IF NOT EXISTS final_recommendation VARCHAR(50),
     ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE app.submission_files
+    ADD COLUMN IF NOT EXISTS phash VARCHAR(64),
+    ADD COLUMN IF NOT EXISTS ahash VARCHAR(64);
 
 -- INDEXES HỖ TRỢ TRUY VẤN CỰC NHANH
 CREATE INDEX IF NOT EXISTS idx_film_metadata_stock ON app.submission_film_metadata(film_stock);

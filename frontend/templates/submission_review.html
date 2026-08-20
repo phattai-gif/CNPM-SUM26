@@ -3,23 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Review Submission - AI Warning Review</title>
-
+  <title>Judge Review Center</title>
   <style>
     :root {
       --bg: #f3f6fb;
       --panel: #ffffff;
-      --panel-alt: #f9fafb;
       --border: #e5e7eb;
       --text: #111827;
       --muted: #6b7280;
-      --primary: #4f46e5;
-      --primary-2: #2563eb;
-      --success: #198754;
-      --danger: #dc3545;
-      --warn-bg: #fff7f7;
-      --warn-border: #f0caca;
-      --warn-text: #a61b1b;
+      --primary: #2563eb;
       --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
     }
 
@@ -27,321 +19,550 @@
 
     body {
       margin: 0;
-      padding: 32px 20px;
+      padding: 28px 18px;
       background: var(--bg);
       color: var(--text);
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    .container {
-      max-width: 1280px;
+    .page {
+      max-width: 1380px;
       margin: 0 auto;
     }
 
-    .header {
+    .hero, .panel {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 18px;
       box-shadow: var(--shadow);
-      padding: 24px 28px;
-      margin-bottom: 24px;
     }
 
-    .header h1 {
-      margin: 0 0 10px;
-      font-size: clamp(1.8rem, 2.4vw, 2.6rem);
-      color: var(--text);
+    .hero {
+      padding: 22px 24px;
+      margin-bottom: 18px;
     }
 
-    .meta {
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.6rem, 2.3vw, 2.2rem);
+    }
+
+    .hero p {
+      margin: 0;
       color: var(--muted);
-      font-size: 0.96rem;
-      line-height: 1.8;
     }
 
-    .status {
-      display: inline-block;
-      padding: 5px 12px;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      margin-left: 8px;
-    }
-
-    .flagged {
-      background: #ffe1e1;
-      color: #b42318;
-    }
-
-    .ok {
-      background: #dcfae6;
-      color: #187a3d;
-    }
-
-    .content-grid {
+    .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.6fr) 360px;
-      gap: 20px;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
     }
 
-    .card {
-      background: var(--panel);
+    .sidebar,
+    .detail {
+      min-height: 720px;
+    }
+
+    .sidebar {
+      padding: 18px;
+    }
+
+    .detail {
+      padding: 20px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .assignment-card,
+    .submission-card,
+    .criteria-card {
       border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 22px;
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px 14px;
     }
 
-    .card h2,
-    .card h3 {
-      margin-top: 0;
-      color: var(--text);
+    .assignment-card.active,
+    .submission-card.active {
+      border-color: #93c5fd;
+      background: #eff6ff;
+    }
+
+    .submission-card button,
+    .assignment-card button,
+    .nav-button,
+    .ghost-button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .ghost-button {
+      background: #fff;
+      color: #374151;
+      border: 1px solid var(--border);
+    }
+
+    .nav-button {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .nav-button[disabled],
+    .ghost-button[disabled] {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) 360px;
+      gap: 18px;
     }
 
     .photo-box {
-      width: 100%;
-      min-height: 420px;
-      background: #eef2f7;
-      border-radius: 12px;
+      background: #e5ecf8;
+      border-radius: 14px;
+      min-height: 500px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--muted);
-      margin-bottom: 20px;
       overflow: hidden;
+      color: var(--muted);
     }
 
     .photo-box img {
-      max-width: 100%;
-      max-height: 500px;
-      border-radius: 12px;
+      width: 100%;
+      height: 100%;
+      max-height: 680px;
       object-fit: contain;
       display: block;
     }
 
-    .info-list {
+    .meta-grid {
       display: grid;
-      grid-template-columns: 160px 1fr;
-      gap: 12px 16px;
-      font-size: 0.96rem;
+      grid-template-columns: 150px 1fr;
+      gap: 12px 14px;
+      margin-top: 16px;
+      font-size: 0.95rem;
     }
 
-    .info-label {
-      font-weight: 700;
+    .meta-label {
       color: var(--muted);
-    }
-
-    .warning {
-      background: var(--warn-bg);
-      border: 1px solid var(--warn-border);
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-
-    .warning-title {
       font-weight: 700;
-      color: var(--warn-text);
-      margin-bottom: 8px;
     }
 
-    .confidence {
-      font-weight: 700;
-      color: var(--text);
+    .criteria-list {
+      display: grid;
+      gap: 10px;
     }
 
-    .model {
-      font-size: 12px;
+    .empty-state {
+      padding: 22px 16px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      text-align: center;
       color: var(--muted);
-      margin-bottom: 8px;
+      background: #fafcff;
     }
 
-    .snippet {
-      background: #f4f4f4;
-      border-left: 3px solid #cbd5e1;
-      padding: 10px 12px;
-      margin-top: 8px;
-      white-space: pre-wrap;
-      font-family: 'SFMono-Regular', Consolas, monospace;
-      font-size: 12px;
-      border-radius: 8px;
+    .status-pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #dbeafe;
+      color: #1d4ed8;
     }
 
-    .details {
-      font-size: 13px;
-      color: #374151;
-      margin-top: 8px;
-      line-height: 1.6;
-    }
-
-    .no-warning {
-      background: #ecfdf5;
-      color: #065f46;
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 1200;
+      background: #111827;
+      color: #fff;
       padding: 12px 14px;
       border-radius: 12px;
-      border: 1px solid #a7f3d0;
+      display: none;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.2);
     }
 
-    .attachments {
-      margin-top: 20px;
-    }
-
-    .attachments ul {
-      padding-left: 20px;
-      margin: 10px 0 0;
-    }
-
-    .attachments a {
-      color: var(--primary-2);
-      text-decoration: none;
-    }
-
-    .attachments a:hover {
-      text-decoration: underline;
-    }
-
-    .actions {
-      margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      cursor: pointer;
-      font-weight: 700;
-      transition: filter 0.2s ease;
-    }
-
-    button:hover { filter: brightness(1.04); }
-
-    .approve { background: var(--success); color: #fff; }
-    .reject { background: var(--danger); color: #fff; }
-    .false-positive { background: #6b7280; color: #fff; }
-
-    @media (max-width: 900px) {
-      .content-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .info-list {
+    @media (max-width: 1080px) {
+      .layout,
+      .detail-grid {
         grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>View Submission #{{ submission.id }}: {{ submission.title }}</h1>
-      <div class="meta">
-        <strong>Author:</strong> {{ submission.author }}
-        &nbsp; | &nbsp;
-        <strong>Submitted At:</strong> {{ submission.submitted_at }}
-        <span>
-          {% if submission.flagged %}
-            <span class="status flagged">FLAGGED</span>
-          {% else %}
-            <span class="status ok">OK</span>
-          {% endif %}
-        </span>
-      </div>
+  <div class="page">
+    <div class="hero">
+      <h1>Judge Review Center</h1>
+      <p>Danh sách assignment/round được phân công và màn hình xem bài chấm đã ẩn danh thí sinh.</p>
     </div>
 
-    <div class="content-grid">
-      <main class="card">
-        <h2>Submission</h2>
-
-        <div class="photo-box">
-          {% if submission.image_url %}
-            <img src="{{ submission.image_url }}" alt="{{ submission.title }}">
-          {% else %}
-            No image available
-          {% endif %}
-        </div>
-
-        <h3>Submission Details</h3>
-        <div class="info-list">
-          <div class="info-label">Title</div>
-          <div>{{ submission.title }}</div>
-
-          <div class="info-label">Author</div>
-          <div>{{ submission.author }}</div>
-
-          <div class="info-label">Submitted At</div>
-          <div>{{ submission.submitted_at }}</div>
-
-          <div class="info-label">Status</div>
+    <div class="layout">
+      <aside class="panel sidebar">
+        <div class="stack">
           <div>
-            {% if submission.flagged %}
-              <strong style="color:#b42318;">Flagged</strong>
-            {% else %}
-              <strong style="color:#187a3d;">OK</strong>
-            {% endif %}
+            <h2 class="section-title">Assignments của bạn</h2>
+            <div id="assignment-list" class="stack">
+              <div class="empty-state">Đang tải assignments...</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="toolbar">
+              <h2 class="section-title" style="margin:0;">Submission trong Assignment</h2>
+              <button id="refresh-assignment-btn" class="ghost-button" type="button">Làm mới</button>
+            </div>
+            <div id="submission-list" class="stack">
+              <div class="empty-state">Chọn assignment để xem danh sách bài.</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="panel detail">
+        <div class="toolbar">
+          <div>
+            <h2 class="section-title" style="margin:0 0 6px;">Chi tiết bài nộp</h2>
+            <div id="detail-subtitle" class="muted">Chưa chọn bài để xem.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="prev-btn" class="ghost-button" type="button" disabled>Bài trước</button>
+            <button id="next-btn" class="nav-button" type="button" disabled>Bài tiếp theo</button>
           </div>
         </div>
 
-        <div style="margin-top:20px;">
-          <h3>Submission Content</h3>
-          <div>{{ submission.content }}</div>
-        </div>
-
-        <div class="attachments">
-          <h3>Attachments</h3>
-          {% if submission.attachments %}
-            <ul>
-              {% for attachment in submission.attachments %}
-                <li>
-                  <a href="{{ attachment }}" target="_blank">{{ attachment }}</a>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <div>No attachments.</div>
-          {% endif %}
+        <div id="detail-content" class="empty-state">
+          Chọn một submission từ danh sách bên trái để xem ảnh, metadata kỹ thuật và criteria chấm điểm.
         </div>
       </main>
-
-      <aside class="card">
-        <h2>AI Warning</h2>
-
-        {% if ai_warnings %}
-          {% for warning in ai_warnings %}
-            <div class="warning">
-              <div class="warning-title">{{ warning.label }}</div>
-              <div>
-                Confidence:
-                <span class="confidence">{{ (warning.confidence * 100)|round(1) }}</span>
-              </div>
-              <div class="model">
-                Model: {{ warning.model_name }} (v{{ warning.model_version }})
-              </div>
-
-              {% if warning.snippet %}
-                <div class="snippet">{{ warning.snippet }}</div>
-              {% endif %}
-
-              {% if warning.details %}
-                <div class="details">{{ warning.details.summary }}</div>
-              {% endif %}
-            </div>
-          {% endfor %}
-        {% else %}
-          <div class="no-warning">No AI warnings.</div>
-        {% endif %}
-
-        <div class="actions">
-          <button class="approve" type="button">Approve</button>
-          <button class="reject" type="button">Reject</button>
-          <button class="false-positive" type="button">Mark false-positive</button>
-        </div>
-      </aside>
     </div>
   </div>
+
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script src="/static/api_client.js"></script>
+  <script>
+    const state = {
+      assignments: [],
+      submissions: [],
+      selectedAssignmentId: '',
+      selectedSubmissionId: '',
+      navigation: {
+        previous_submission_id: null,
+        next_submission_id: null,
+      },
+    };
+
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.style.display = 'block';
+      toast.style.background = isError ? '#b91c1c' : '#111827';
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2600);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function getInitialSubmissionId() {
+      const queryId = new URLSearchParams(window.location.search).get('submission_id');
+      if (queryId) return queryId;
+
+      const pathMatch = window.location.pathname.match(/\/submission_review\/(\d+)/);
+      return pathMatch ? pathMatch[1] : '';
+    }
+
+    function getInitialAssignmentId() {
+      return new URLSearchParams(window.location.search).get('assignment_id') || '';
+    }
+
+    function ensureSession() {
+      const session = window.AuthSession.getSession();
+      if (!session.token) {
+        window.location.href = '/auth/login';
+        return null;
+      }
+      return session;
+    }
+
+    async function fetchAssignments() {
+      ensureSession();
+      return await window.apiClient.get('/judge/assignments');
+    }
+
+    async function fetchAssignmentSubmissions(assignmentId) {
+      ensureSession();
+      return await window.apiClient.get(`/judge/assignments/${encodeURIComponent(assignmentId)}/submissions`);
+    }
+
+    async function fetchSubmissionDetail(submissionId) {
+      ensureSession();
+      return await window.apiClient.get(`/api/judge/submissions/${encodeURIComponent(submissionId)}/review-detail`);
+    }
+
+    function renderAssignments() {
+      const root = document.getElementById('assignment-list');
+      if (!root) return;
+
+      if (!state.assignments.length) {
+        root.innerHTML = '<div class="empty-state">Bạn chưa được phân công assignment nào.</div>';
+        return;
+      }
+
+      root.innerHTML = state.assignments.map((assignment) => {
+        const active = String(assignment.id) === String(state.selectedAssignmentId) ? 'active' : '';
+        return `
+          <div class="assignment-card ${active}">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+              <div>
+                <div style="font-weight:800;">Assignment #${escapeHtml(assignment.id)}</div>
+                <div class="muted">Round ID: ${escapeHtml(assignment.round_id)}</div>
+                <div class="muted">Status: ${escapeHtml(assignment.status || 'assigned')}</div>
+              </div>
+              <button class="nav-button open-assignment-btn" data-assignment-id="${escapeHtml(assignment.id)}" type="button">Mở</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      root.querySelectorAll('.open-assignment-btn').forEach((button) => {
+        button.addEventListener('click', async () => {
+          await selectAssignment(button.dataset.assignmentId);
+        });
+      });
+    }
+
+    function renderSubmissions() {
+      const root = document.getElementById('submission-list');
+      if (!root) return;
+
+      if (!state.selectedAssignmentId) {
+        root.innerHTML = '<div class="empty-state">Chọn assignment để xem danh sách bài.</div>';
+        return;
+      }
+
+      if (!state.submissions.length) {
+        root.innerHTML = '<div class="empty-state">Assignment này chưa có bài để chấm.</div>';
+        return;
+      }
+
+      root.innerHTML = state.submissions.map((submission) => {
+        const active = String(submission.id) === String(state.selectedSubmissionId) ? 'active' : '';
+        return `
+          <div class="submission-card ${active}">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+              <div>
+                <div style="font-weight:800;">Submission #${escapeHtml(submission.id)}</div>
+                <div class="muted">Round ID: ${escapeHtml(submission.round_id)}</div>
+                <div class="status-pill">${escapeHtml(submission.status || 'submitted')}</div>
+              </div>
+              <button class="ghost-button open-submission-btn" data-submission-id="${escapeHtml(submission.id)}" type="button">Xem</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      root.querySelectorAll('.open-submission-btn').forEach((button) => {
+        button.addEventListener('click', async () => {
+          await selectSubmission(button.dataset.submissionId);
+        });
+      });
+    }
+
+    function renderSubmissionDetail(payload) {
+      const content = document.getElementById('detail-content');
+      const subtitle = document.getElementById('detail-subtitle');
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+
+      const submission = payload.submission || {};
+      const metadata = submission.metadata || {};
+      const criteria = payload.criteria || [];
+
+      subtitle.textContent = `Submission #${submission.id || '-'} · Round #${submission.round_id || '-'}`;
+      state.navigation = payload.navigation || {
+        previous_submission_id: null,
+        next_submission_id: null,
+      };
+
+      prevBtn.disabled = !state.navigation.previous_submission_id;
+      nextBtn.disabled = !state.navigation.next_submission_id;
+
+      const metaRows = [
+        ['Submission ID', submission.id],
+        ['Status', submission.status],
+        ['Camera', metadata.camera_body],
+        ['Lens', metadata.lens],
+        ['Film Stock', metadata.film_stock],
+        ['Film ISO', metadata.film_iso],
+        ['Development', metadata.development_process],
+        ['Image Size', metadata.width_px && metadata.height_px ? `${metadata.width_px} x ${metadata.height_px}` : null],
+      ].filter(([, value]) => value !== null && value !== undefined && value !== '');
+
+      content.innerHTML = `
+        <div class="detail-grid">
+          <section>
+            <div class="photo-box">
+              ${submission.image_url ? `<img src="${escapeHtml(submission.image_url)}" alt="Submission image">` : 'No image available'}
+            </div>
+            <div class="meta-grid">
+              ${metaRows.map(([label, value]) => `
+                <div class="meta-label">${escapeHtml(label)}</div>
+                <div>${escapeHtml(value)}</div>
+              `).join('')}
+            </div>
+          </section>
+
+          <aside>
+            <h3 class="section-title">Criteria</h3>
+            <div class="criteria-list">
+              ${criteria.length ? criteria.map((item) => `
+                <div class="criteria-card">
+                  <div style="font-weight:800; margin-bottom:4px;">${escapeHtml(item.name)}</div>
+                  <div class="muted">Max score: ${escapeHtml(item.max_score)} · Weight: ${escapeHtml(item.weight)}</div>
+                  ${item.description ? `<div style="margin-top:8px; font-size:0.92rem;">${escapeHtml(item.description)}</div>` : ''}
+                </div>
+              `).join('') : '<div class="empty-state">Round này chưa có criteria.</div>'}
+            </div>
+          </aside>
+        </div>
+      `;
+    }
+
+    async function selectAssignment(assignmentId) {
+      state.selectedAssignmentId = assignmentId;
+      const url = new URL(window.location.href);
+      url.searchParams.set('assignment_id', assignmentId);
+      window.history.replaceState({}, '', url.toString());
+
+      const response = await fetchAssignmentSubmissions(assignmentId);
+      state.submissions = response.submissions || [];
+      renderAssignments();
+      renderSubmissions();
+
+      const preferredSubmissionId = getInitialSubmissionId();
+      const firstSubmissionId = state.submissions.length ? String(state.submissions[0].id) : '';
+      const targetSubmissionId = state.submissions.some((item) => String(item.id) === String(preferredSubmissionId))
+        ? String(preferredSubmissionId)
+        : firstSubmissionId;
+
+      if (targetSubmissionId) {
+        await selectSubmission(targetSubmissionId);
+      } else {
+        state.selectedSubmissionId = '';
+        document.getElementById('detail-subtitle').textContent = 'Assignment này chưa có bài để xem.';
+        document.getElementById('detail-content').innerHTML = '<div class="empty-state">Assignment này chưa có submission được phân công.</div>';
+      }
+    }
+
+    async function selectSubmission(submissionId) {
+      state.selectedSubmissionId = submissionId;
+      const url = new URL(window.location.href);
+      url.searchParams.set('submission_id', submissionId);
+      if (state.selectedAssignmentId) {
+        url.searchParams.set('assignment_id', state.selectedAssignmentId);
+      }
+      window.history.replaceState({}, '', url.toString());
+
+      renderSubmissions();
+      const payload = await fetchSubmissionDetail(submissionId);
+      renderSubmissionDetail(payload);
+    }
+
+    async function loadAssignments() {
+      const response = await fetchAssignments();
+      state.assignments = response.assignments || [];
+      renderAssignments();
+
+      const initialAssignmentId = getInitialAssignmentId();
+      const firstAssignmentId = state.assignments.length ? String(state.assignments[0].id) : '';
+      const targetAssignmentId = state.assignments.some((item) => String(item.id) === String(initialAssignmentId))
+        ? String(initialAssignmentId)
+        : firstAssignmentId;
+
+      if (targetAssignmentId) {
+        await selectAssignment(targetAssignmentId);
+      }
+    }
+
+    function bindEvents() {
+      document.getElementById('refresh-assignment-btn').addEventListener('click', async () => {
+        try {
+          await loadAssignments();
+          showToast('Đã làm mới assignment');
+        } catch (error) {
+          console.error(error);
+          showToast(error.message || 'Không thể làm mới assignment', true);
+        }
+      });
+
+      document.getElementById('prev-btn').addEventListener('click', async () => {
+        if (!state.navigation.previous_submission_id) return;
+        await selectSubmission(String(state.navigation.previous_submission_id));
+      });
+
+      document.getElementById('next-btn').addEventListener('click', async () => {
+        if (!state.navigation.next_submission_id) return;
+        await selectSubmission(String(state.navigation.next_submission_id));
+      });
+    }
+
+    async function init() {
+      try {
+        ensureSession();
+        bindEvents();
+        await loadAssignments();
+      } catch (error) {
+        console.error(error);
+        document.getElementById('assignment-list').innerHTML = '<div class="empty-state">Không tải được assignments.</div>';
+        document.getElementById('submission-list').innerHTML = '<div class="empty-state">Không tải được danh sách bài.</div>';
+        showToast(error.message || 'Không thể tải màn hình Judge review', true);
+      }
+    }
+
+    init();
+  </script>
 </body>
 </html>
