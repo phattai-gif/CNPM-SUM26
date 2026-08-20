@@ -686,6 +686,36 @@ def update_submission(submission_id):
     # --------------------------------------------------------
 
     try:
+        if request.is_json:
+            updated_sub = submission_service.update_draft_submission(
+                submission_id=submission_id,
+                user_id=user_id,
+                title=title,
+                story_description=description,
+                round_id=data.get("round_id"),
+                status=data.get("status"),
+                film_metadata=film_metadata or None,
+            )
+            return jsonify({
+                "message": "Submission updated successfully",
+                "submission": {
+                    "id": updated_sub.id,
+                    "title": updated_sub.title,
+                    "status": updated_sub.status,
+                    "round_id": updated_sub.round_id,
+                    "story_description": getattr(updated_sub, "story_description", None),
+                    "submitted_at": (
+                        updated_sub.submitted_at.isoformat()
+                        if getattr(updated_sub, "submitted_at", None)
+                        else None
+                    ),
+                    "updated_at": (
+                        updated_sub.updated_at.isoformat()
+                        if getattr(updated_sub, "updated_at", None)
+                        else None
+                    ),
+                },
+            }), 200
 
         updated_sub = (
             submission_service
@@ -832,6 +862,19 @@ def submit_submission(submission_id):
     "participant",
 )
 def get_submission(submission_id):
+
+    try:
+        detail = submission_service.get_submission_detail(
+            submission_id=submission_id,
+            user_id=request.user.get("user_id"),
+            role=request.user.get("role", "participant"),
+        )
+        if detail:
+            return jsonify(detail), 200
+    except PermissionError as error:
+        return jsonify({"message": str(error)}), 403
+    except (AttributeError, TypeError):
+        pass
 
     try:
 
