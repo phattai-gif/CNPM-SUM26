@@ -28,7 +28,14 @@ class ScoreFeedbackRepository:
             .first()
         )
 
-    def create_or_update(self, submission_id: int, judge_id: int, summary_feedback: str, final_recommendation: Optional[str] = None) -> ScoreFeedbackModel:
+    def create_or_update(
+        self,
+        submission_id: int,
+        judge_id: int,
+        summary_feedback: str,
+        final_recommendation: Optional[str] = None,
+        is_finalized: bool = False,
+    ) -> ScoreFeedbackModel:
         try:
             model = self.get_by_submission_judge(submission_id, judge_id)
             if model is None:
@@ -37,11 +44,13 @@ class ScoreFeedbackRepository:
                     judge_id=judge_id,
                     summary_feedback=summary_feedback,
                     final_recommendation=final_recommendation,
+                    is_finalized=is_finalized,
                 )
                 self.session.add(model)
             else:
                 model.summary_feedback = summary_feedback
                 model.final_recommendation = final_recommendation
+                model.is_finalized = is_finalized
 
             self.session.commit()
             self.session.refresh(model)

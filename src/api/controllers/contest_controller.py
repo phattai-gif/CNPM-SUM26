@@ -91,8 +91,18 @@ def organizer_contest_detail_page():
 @role_required('organizer', 'admin')
 def organizer_dashboard_metrics():
     """Return simple aggregated metrics for the organizer dashboard."""
-    user_id = request.user.get('user_id')
     try:
+        user = getattr(request, 'user', None) or {}
+        user_id = user.get('user_id')
+
+        if not user_id:
+            return jsonify({
+                'message': 'Metrics fetched',
+                'submissions': 0,
+                'contests': 0,
+                'judges': 0
+            }), 200
+
         contests = contest_service.list_organizer_contests(user_id)
         total_contests = len(contests)
         # Use repository session to compute totals across contests' rounds
