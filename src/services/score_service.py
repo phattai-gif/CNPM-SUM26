@@ -4,6 +4,7 @@ from typing import Optional
 
 try:
     from infrastructure.models.app import SubmissionModel
+    from infrastructure.models.app import SubmissionFileModel
     from infrastructure.repositories.score_repository import ScoreRepository
     from infrastructure.repositories.score_feedback_repository import (
         ScoreFeedbackRepository,
@@ -16,6 +17,7 @@ try:
     )
 except ImportError:
     from infrastructure.models.app import SubmissionModel
+    from infrastructure.models.app import SubmissionFileModel
     from infrastructure.repositories.score_repository import ScoreRepository
     from infrastructure.repositories.score_feedback_repository import (
         ScoreFeedbackRepository,
@@ -61,6 +63,58 @@ class ScoreService:
 
         return 0 <= score <= max_score
 
+    def _get_review_lock_state(
+        self,
+        submission_id: int,
+        judge_id: int,
+    ):
+        submission = self.submission_repo.get_by_id(submission_id)
+
+        if submission is None:
+            return {
+                "is_locked": False,
+                "lock_reason": None,
+                "feedback_finalized": False,
+                "round_finalized": False,
+                "round_status": None,
+            }
+
+        round_obj = self.contest_repo.get_round_by_id(
+            submission.round_id
+        )
+        round_status = (
+            getattr(round_obj, "status", None)
+            if round_obj is not None
+            else None
+        )
+        round_finalized = (
+            str(round_status).upper() == "FINALIZED"
+            if round_status is not None
+            else False
+        )
+
+        feedback = self.feedback_repo.get_by_submission_judge(
+            submission_id=submission_id,
+            judge_id=judge_id,
+        )
+        feedback_finalized = bool(
+            getattr(feedback, "is_finalized", False)
+        )
+
+        lock_reason = None
+        if round_finalized:
+            lock_reason = "round_finalized"
+        elif feedback_finalized:
+            lock_reason = "feedback_finalized"
+
+        return {
+            "is_locked": bool(round_finalized or feedback_finalized),
+            "lock_reason": lock_reason,
+            "feedback_finalized": feedback_finalized,
+            "round_finalized": round_finalized,
+            "round_status": round_status,
+        }
+
     def submit_score(
         self,
         submission_id: int,
@@ -73,6 +127,13 @@ class ScoreService:
 
         if submission is None:
             return None, "submission_not_found"
+
+        lock_state = self._get_review_lock_state(
+            submission_id=submission_id,
+            judge_id=judge_id,
+        )
+        if lock_state["is_locked"]:
+            return None, lock_state["lock_reason"]
 
         criteria = self.contest_repo.get_criteria_by_id(criteria_id)
 
@@ -411,6 +472,7 @@ class ScoreService:
         judge_id: int,
         summary_feedback: str,
         final_recommendation: Optional[str] = None,
+        is_finalized: bool = False,
     ):
         submission = self.submission_repo.get_by_id(
             submission_id
@@ -419,14 +481,189 @@ class ScoreService:
         if submission is None:
             return None, "submission_not_found"
 
+        lock_state = self._get_review_lock_state(
+            submission_id=submission_id,
+            judge_id=judge_id,
+        )
+        if lock_state["round_finalized"]:
+            return None, "round_finalized"
+        if lock_state["feedback_finalized"] and not is_finalized:
+            return None, "feedback_finalized"
+        if lock_state["feedback_finalized"] and is_finalized:
+            return None, "feedback_finalized"
+
         model = self.feedback_repo.create_or_update(
             submission_id=submission_id,
             judge_id=judge_id,
             summary_feedback=summary_feedback,
             final_recommendation=final_recommendation,
+            is_finalized=is_finalized,
         )
 
         return model, None
+
+    def get_submission_review_data(
+        self,
+        submission_id: int,
+        judge_id: int,
+        user_role: str = "judge",
+    ):
+        submission = self.submission_repo.get_by_id(submission_id)
+
+        if submission is None:
+            return None, "submission_not_found"
+
+        if not self.is_judge_assigned(
+            submission_id=submission_id,
+            judge_id=judge_id,
+            user_role=user_role,
+        ):
+            return None, "not_assigned"
+
+        round_obj = self.contest_repo.get_round_by_id(
+            submission.round_id
+        )
+
+        image_url = None
+
+        try:
+            file_row = (
+                self.submission_repo.session
+                .query(SubmissionFileModel)
+                .filter_by(submission_id=submission_id)
+                .order_by(SubmissionFileModel.id.asc())
+                .first()
+            )
+            if file_row is not None:
+                image_url = getattr(file_row, "image_hd_url", None)
+        except Exception:
+            image_url = None
+
+        criteria_list = (
+            self.contest_repo.get_criteria_by_round_id(
+                submission.round_id
+            )
+            or []
+        )
+
+        all_scores = self.score_repo.list_by_submission(
+            submission_id
+        ) or []
+
+        judge_scores = [
+            score
+            for score in all_scores
+            if score.judge_id == judge_id
+        ]
+
+        score_map = {
+            score.criteria_id: score
+            for score in judge_scores
+        }
+
+        feedback = self.feedback_repo.get_by_submission_judge(
+            submission_id=submission_id,
+            judge_id=judge_id,
+        )
+        lock_state = self._get_review_lock_state(
+            submission_id=submission_id,
+            judge_id=judge_id,
+        )
+
+        criteria_payload = []
+        scored_values = []
+        max_values = []
+
+        for criterion in criteria_list:
+            try:
+                weight = float(criterion.weight or 0)
+            except (TypeError, ValueError):
+                weight = 0.0
+
+            try:
+                max_score = float(criterion.max_score or 0)
+            except (TypeError, ValueError):
+                max_score = 0.0
+
+            score_model = score_map.get(criterion.id)
+            existing_score = None
+            existing_comment = None
+
+            if score_model is not None:
+                try:
+                    existing_score = float(score_model.score_value)
+                except (TypeError, ValueError):
+                    existing_score = None
+                existing_comment = score_model.comment
+
+            if existing_score is not None and weight > 0:
+                scored_values.append((existing_score, weight))
+
+            if weight > 0:
+                max_values.append((max_score, weight))
+
+            criteria_payload.append({
+                "id": criterion.id,
+                "round_id": criterion.round_id,
+                "name": criterion.name,
+                "description": criterion.description,
+                "max_score": max_score,
+                "weight": weight,
+                "score_value": existing_score,
+                "comment": existing_comment,
+            })
+
+        provisional_total = self._calculate_weighted_average(scored_values)
+        maximum_total = self._calculate_weighted_average(max_values)
+
+        next_previous, error = self.get_next_previous(submission_id)
+
+        if error:
+            next_previous = {
+                "previous": None,
+                "next": None,
+            }
+
+        return {
+            "submission": self._serialize_submission(submission),
+            "image_url": image_url,
+            "round": None if round_obj is None else {
+                "id": round_obj.id,
+                "contest_id": round_obj.contest_id,
+                "round_number": round_obj.round_number,
+                "title": round_obj.title,
+                "status": round_obj.status,
+            },
+            "criteria": criteria_payload,
+            "feedback": None if feedback is None else {
+                "id": feedback.id,
+                "summary_feedback": feedback.summary_feedback,
+                "final_recommendation": feedback.final_recommendation,
+                "is_finalized": bool(getattr(feedback, "is_finalized", False)),
+            },
+            "review_state": {
+                "is_locked": lock_state["is_locked"],
+                "lock_reason": lock_state["lock_reason"],
+                "feedback_finalized": lock_state["feedback_finalized"],
+                "round_finalized": lock_state["round_finalized"],
+                "round_status": lock_state["round_status"],
+            },
+            "provisional_total": (
+                round(provisional_total, 2)
+                if provisional_total is not None
+                else None
+            ),
+            "maximum_total": (
+                round(maximum_total, 2)
+                if maximum_total is not None
+                else None
+            ),
+            "next_previous": next_previous,
+            "progress": {
+                "scored_count": len(scored_values),
+                "criteria_count": len(criteria_payload),
+            },
+        }, None
 
     
 
