@@ -1,568 +1,1163 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Judge Review Center</title>
-  <style>
-    :root {
-      --bg: #f3f6fb;
-      --panel: #ffffff;
-      --border: #e5e7eb;
-      --text: #111827;
-      --muted: #6b7280;
-      --primary: #2563eb;
-      --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+{% extends "base.html" %}
+
+{% block title %}CNPM-75 · Submission Review{% endblock %}
+
+{% block extra_head %}
+<style>
+  .review-shell {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 14px 28px;
+  }
+
+  .sticky-col {
+    position: sticky;
+    top: 16px;
+    z-index: 10;
+  }
+
+  .submission-image {
+    width: 100%;
+    max-height: 560px;
+    object-fit: contain;
+    border-radius: 0.5rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+  }
+
+  .submission-image-empty {
+    border: 1px dashed #ced4da;
+    border-radius: 0.5rem;
+    min-height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    background: #f8f9fa;
+  }
+
+  .criterion-card {
+    border: 1px solid #e9ecef;
+  }
+
+  .criterion-score-value {
+    min-width: 56px;
+    text-align: right;
+    font-weight: 700;
+  }
+
+  .small-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+    font-size: 0.82rem;
+  }
+
+  .pointer {
+    cursor: pointer;
+  }
+
+  @media (max-width: 991.98px) {
+    .sticky-col {
+      position: static;
     }
+  }
+</style>
+{% endblock %}
 
-    * { box-sizing: border-box; }
+{% block content %}
+<div class="review-shell">
+  <div id="alertContainer" class="mb-3"></div>
 
-    body {
-      margin: 0;
-      padding: 28px 18px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-
-    .page {
-      max-width: 1380px;
-      margin: 0 auto;
-    }
-
-    .hero, .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-    }
-
-    .hero {
-      padding: 22px 24px;
-      margin-bottom: 18px;
-    }
-
-    .hero h1 {
-      margin: 0 0 6px;
-      font-size: clamp(1.6rem, 2.3vw, 2.2rem);
-    }
-
-    .hero p {
-      margin: 0;
-      color: var(--muted);
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 360px minmax(0, 1fr);
-      gap: 18px;
-    }
-
-    .sidebar,
-    .detail {
-      min-height: 720px;
-    }
-
-    .sidebar {
-      padding: 18px;
-    }
-
-    .detail {
-      padding: 20px;
-    }
-
-    .section-title {
-      margin: 0 0 12px;
-      font-size: 1rem;
-      font-weight: 800;
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .stack {
-      display: grid;
-      gap: 12px;
-    }
-
-    .assignment-card,
-    .submission-card,
-    .criteria-card {
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #fff;
-      padding: 12px 14px;
-    }
-
-    .assignment-card.active,
-    .submission-card.active {
-      border-color: #93c5fd;
-      background: #eff6ff;
-    }
-
-    .submission-card button,
-    .assignment-card button,
-    .nav-button,
-    .ghost-button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .ghost-button {
-      background: #fff;
-      color: #374151;
-      border: 1px solid var(--border);
-    }
-
-    .nav-button {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .nav-button[disabled],
-    .ghost-button[disabled] {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 18px;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.15fr) 360px;
-      gap: 18px;
-    }
-
-    .photo-box {
-      background: #e5ecf8;
-      border-radius: 14px;
-      min-height: 500px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      color: var(--muted);
-    }
-
-    .photo-box img {
-      width: 100%;
-      height: 100%;
-      max-height: 680px;
-      object-fit: contain;
-      display: block;
-    }
-
-    .meta-grid {
-      display: grid;
-      grid-template-columns: 150px 1fr;
-      gap: 12px 14px;
-      margin-top: 16px;
-      font-size: 0.95rem;
-    }
-
-    .meta-label {
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .criteria-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .empty-state {
-      padding: 22px 16px;
-      border: 1px dashed #cbd5e1;
-      border-radius: 14px;
-      text-align: center;
-      color: var(--muted);
-      background: #fafcff;
-    }
-
-    .status-pill {
-      display: inline-block;
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-
-    .toast {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 1200;
-      background: #111827;
-      color: #fff;
-      padding: 12px 14px;
-      border-radius: 12px;
-      display: none;
-      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.2);
-    }
-
-    @media (max-width: 1080px) {
-      .layout,
-      .detail-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <div class="hero">
-      <h1>Judge Review Center</h1>
-      <p>Danh sách assignment/round được phân công và màn hình xem bài chấm đã ẩn danh thí sinh.</p>
-    </div>
-
-    <div class="layout">
-      <aside class="panel sidebar">
-        <div class="stack">
-          <div>
-            <h2 class="section-title">Assignments của bạn</h2>
-            <div id="assignment-list" class="stack">
-              <div class="empty-state">Đang tải assignments...</div>
-            </div>
-          </div>
-
-          <div>
-            <div class="toolbar">
-              <h2 class="section-title" style="margin:0;">Submission trong Assignment</h2>
-              <button id="refresh-assignment-btn" class="ghost-button" type="button">Làm mới</button>
-            </div>
-            <div id="submission-list" class="stack">
-              <div class="empty-state">Chọn assignment để xem danh sách bài.</div>
-            </div>
-          </div>
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+          <h4 class="mb-1">Chấm bài submission (CNPM-75)</h4>
+          <div class="text-muted" id="headerSubtitle">Chọn assignment và submission để bắt đầu.</div>
         </div>
-      </aside>
-
-      <main class="panel detail">
-        <div class="toolbar">
-          <div>
-            <h2 class="section-title" style="margin:0 0 6px;">Chi tiết bài nộp</h2>
-            <div id="detail-subtitle" class="muted">Chưa chọn bài để xem.</div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button id="prev-btn" class="ghost-button" type="button" disabled>Bài trước</button>
-            <button id="next-btn" class="nav-button" type="button" disabled>Bài tiếp theo</button>
-          </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary" id="prevButton" disabled>Bài trước</button>
+          <button type="button" class="btn btn-outline-secondary" id="nextButton" disabled>Bài sau</button>
+          <button type="button" class="btn btn-outline-primary" id="reloadButton">Tải lại</button>
         </div>
-
-        <div id="detail-content" class="empty-state">
-          Chọn một submission từ danh sách bên trái để xem ảnh, metadata kỹ thuật và criteria chấm điểm.
-        </div>
-      </main>
+      </div>
     </div>
   </div>
 
-  <div id="toast" class="toast" aria-live="polite"></div>
+  <div class="row g-3">
+    <div class="col-lg-3">
+      <div class="sticky-col d-grid gap-3">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <strong>Assignments</strong>
+            <span class="badge text-bg-primary" id="assignmentCount">0</span>
+          </div>
+          <div class="card-body p-2">
+            <div id="assignmentList" class="list-group list-group-flush"></div>
+            <div id="assignmentEmpty" class="text-muted small p-2 d-none">Chưa có assignment nào.</div>
+          </div>
+        </div>
 
-  <script src="/static/api_client.js"></script>
-  <script>
-    const state = {
-      assignments: [],
-      submissions: [],
-      selectedAssignmentId: '',
-      selectedSubmissionId: '',
-      navigation: {
-        previous_submission_id: null,
-        next_submission_id: null,
+        <div class="card shadow-sm">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <strong>Submissions</strong>
+            <span class="badge text-bg-secondary" id="submissionCount">0</span>
+          </div>
+          <div class="card-body p-2">
+            <div id="submissionList" class="list-group list-group-flush"></div>
+            <div id="submissionEmpty" class="text-muted small p-2 d-none">Assignment hiện tại chưa có submission.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <div>
+            <strong id="submissionTitle">Chi tiết submission</strong>
+            <div class="small text-muted" id="submissionMeta">Chưa chọn submission.</div>
+          </div>
+          <span class="badge text-bg-light border" id="submissionStatus">N/A</span>
+        </div>
+        <div class="card-body">
+          <div id="imageContainer">
+            <div class="submission-image-empty">Chưa có ảnh để hiển thị</div>
+          </div>
+
+          <hr>
+
+          <div class="row g-2" id="detailGrid"></div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <strong>Tổng quan điểm</strong>
+          <span class="badge text-bg-info" id="criteriaCount">0 criteria</span>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Đã nhập điểm</span>
+            <strong id="filledCount">0/0</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Tổng điểm tạm thời (quy đổi theo trọng số)</span>
+            <strong id="provisionalScore">--</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Điểm tối đa quy đổi</span>
+            <strong id="maxWeightedScore">--</strong>
+          </div>
+          <div class="progress" role="progressbar" aria-label="Score completion">
+            <div class="progress-bar" id="scoreProgress" style="width: 0%;"></div>
+          </div>
+          <div class="small text-muted mt-2" id="scoreHint">Nhập điểm cho từng tiêu chí để tính tổng điểm tạm thời.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <strong>Criteria & điểm số</strong>
+          <span class="badge text-bg-warning" id="draftState">Draft</span>
+        </div>
+        <div class="card-body">
+          <div id="criteriaList" class="d-grid gap-2"></div>
+          <div id="criteriaEmpty" class="text-muted small d-none">Round này chưa có criteria.</div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <strong>Feedback chung</strong>
+          <span class="badge text-bg-secondary" id="feedbackState">Nháp</span>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="summaryFeedback" class="form-label">Nhận xét tổng quát</label>
+            <textarea class="form-control" id="summaryFeedback" rows="5" placeholder="Nhập nhận xét của giám khảo..."></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="finalRecommendation" class="form-label">Khuyến nghị</label>
+            <select id="finalRecommendation" class="form-select">
+              <option value="">Chưa chọn</option>
+              <option value="approve">Approve</option>
+              <option value="revise">Need revision</option>
+              <option value="reject">Reject</option>
+            </select>
+          </div>
+
+          <div class="small text-muted mb-3" id="saveStateText">Dữ liệu điểm đang lưu cục bộ theo draft khi bạn nhập.</div>
+
+          <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+            <button type="button" class="btn btn-outline-secondary" id="saveDraftButton">Lưu tạm</button>
+            <button type="button" class="btn btn-primary" id="finalizeButton">Hoàn tất chấm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const state = {
+    assignments: [],
+    submissions: [],
+    activeAssignmentId: null,
+    activeSubmissionId: null,
+    reviewData: null,
+    busy: false,
+  };
+
+  const els = {
+    alertContainer: document.getElementById('alertContainer'),
+    headerSubtitle: document.getElementById('headerSubtitle'),
+    prevButton: document.getElementById('prevButton'),
+    nextButton: document.getElementById('nextButton'),
+    reloadButton: document.getElementById('reloadButton'),
+
+    assignmentCount: document.getElementById('assignmentCount'),
+    assignmentList: document.getElementById('assignmentList'),
+    assignmentEmpty: document.getElementById('assignmentEmpty'),
+
+    submissionCount: document.getElementById('submissionCount'),
+    submissionList: document.getElementById('submissionList'),
+    submissionEmpty: document.getElementById('submissionEmpty'),
+
+    submissionTitle: document.getElementById('submissionTitle'),
+    submissionMeta: document.getElementById('submissionMeta'),
+    submissionStatus: document.getElementById('submissionStatus'),
+    imageContainer: document.getElementById('imageContainer'),
+    detailGrid: document.getElementById('detailGrid'),
+
+    criteriaCount: document.getElementById('criteriaCount'),
+    filledCount: document.getElementById('filledCount'),
+    provisionalScore: document.getElementById('provisionalScore'),
+    maxWeightedScore: document.getElementById('maxWeightedScore'),
+    scoreProgress: document.getElementById('scoreProgress'),
+    scoreHint: document.getElementById('scoreHint'),
+
+    criteriaList: document.getElementById('criteriaList'),
+    criteriaEmpty: document.getElementById('criteriaEmpty'),
+    draftState: document.getElementById('draftState'),
+
+    summaryFeedback: document.getElementById('summaryFeedback'),
+    finalRecommendation: document.getElementById('finalRecommendation'),
+    feedbackState: document.getElementById('feedbackState'),
+    saveStateText: document.getElementById('saveStateText'),
+
+    saveDraftButton: document.getElementById('saveDraftButton'),
+    finalizeButton: document.getElementById('finalizeButton'),
+  };
+
+  function getReviewState() {
+    return state.reviewData && state.reviewData.review_state
+      ? state.reviewData.review_state
+      : {
+          is_locked: false,
+          lock_reason: null,
+          feedback_finalized: false,
+          round_finalized: false,
+          round_status: null,
+        };
+  }
+
+  function isReviewLocked() {
+    return Boolean(getReviewState().is_locked);
+  }
+
+  function getLockMessage() {
+    const reviewState = getReviewState();
+    if (reviewState.round_finalized) {
+      return 'Vòng thi đã được finalized trên backend. Điểm và nhận xét đã bị khóa.';
+    }
+    if (reviewState.feedback_finalized) {
+      return 'Bản chấm này đã được finalized. Backend không cho phép chỉnh sửa thêm.';
+    }
+    return 'Bản chấm đang mở để chỉnh sửa.';
+  }
+
+  function getSession() {
+    try {
+      if (window.AuthSession && typeof window.AuthSession.getSession === 'function') {
+        return window.AuthSession.getSession();
+      }
+    } catch (error) {}
+
+    return {
+      token: localStorage.getItem('authToken'),
+      user: null,
+    };
+  }
+
+  function ensureSession() {
+    const session = getSession();
+    if (!session || !session.token) {
+      window.location.href = '/login';
+      return null;
+    }
+    return session;
+  }
+
+  function showAlert(type, title, message) {
+    const typeClass = {
+      success: 'alert-success',
+      danger: 'alert-danger',
+      warning: 'alert-warning',
+      info: 'alert-info',
+    }[type] || 'alert-info';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'alert ' + typeClass + ' alert-dismissible fade show mb-2';
+    wrapper.role = 'alert';
+
+    const strong = document.createElement('strong');
+    strong.textContent = title ? title + ': ' : '';
+
+    const text = document.createElement('span');
+    text.textContent = message || '';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'btn-close';
+    closeBtn.setAttribute('data-bs-dismiss', 'alert');
+    closeBtn.setAttribute('aria-label', 'Close');
+
+    wrapper.appendChild(strong);
+    wrapper.appendChild(text);
+    wrapper.appendChild(closeBtn);
+
+    els.alertContainer.innerHTML = '';
+    els.alertContainer.appendChild(wrapper);
+  }
+
+  function clearAlert() {
+    els.alertContainer.innerHTML = '';
+  }
+
+  function setBusy(isBusy) {
+    const previousId = state.reviewData
+      ? (state.reviewData.next_previous
+        ? state.reviewData.next_previous.previous
+        : (state.reviewData.navigation ? state.reviewData.navigation.previous_submission_id : null))
+      : null;
+    const nextId = state.reviewData
+      ? (state.reviewData.next_previous
+        ? state.reviewData.next_previous.next
+        : (state.reviewData.navigation ? state.reviewData.navigation.next_submission_id : null))
+      : null;
+
+    state.busy = isBusy;
+    els.reloadButton.disabled = isBusy;
+    els.saveDraftButton.disabled = isBusy || isReviewLocked();
+    els.finalizeButton.disabled = isBusy || isReviewLocked();
+    els.prevButton.disabled = isBusy || !previousId;
+    els.nextButton.disabled = isBusy || !nextId;
+  }
+
+  function applyReadonlyState() {
+    const locked = isReviewLocked();
+
+    els.summaryFeedback.readOnly = locked;
+    els.finalRecommendation.disabled = locked;
+    els.criteriaList.querySelectorAll('.criterion-range, .criterion-number').forEach(function (input) {
+      input.disabled = locked;
+    });
+
+    els.saveDraftButton.disabled = state.busy || locked;
+    els.finalizeButton.disabled = state.busy || locked;
+  }
+
+  function getUrlParamNumber(name) {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get(name);
+    const parsed = raw ? Number(raw) : null;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  function updateUrlParams(assignmentId, submissionId) {
+    const url = new URL(window.location.href);
+    if (assignmentId) {
+      url.searchParams.set('assignment_id', String(assignmentId));
+    }
+    if (submissionId) {
+      url.searchParams.set('submission_id', String(submissionId));
+    }
+    window.history.replaceState({}, '', url.toString());
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function numberOrNull(value) {
+    if (value === '' || value == null) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function formatScore(value) {
+    if (value === null || value === undefined || value === '') return '--';
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return '--';
+    return parsed.toFixed(2).replace(/\.00$/, '');
+  }
+
+  function draftKey(submissionId) {
+    return 'judge-score-draft:' + String(submissionId);
+  }
+
+  function readDraft(submissionId) {
+    try {
+      const raw = localStorage.getItem(draftKey(submissionId));
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeDraft(submissionId, payload) {
+    try {
+      localStorage.setItem(draftKey(submissionId), JSON.stringify(payload));
+    } catch (error) {
+      console.warn('Cannot write draft', error);
+    }
+  }
+
+  function clearDraft(submissionId) {
+    try {
+      localStorage.removeItem(draftKey(submissionId));
+    } catch (error) {
+      console.warn('Cannot clear draft', error);
+    }
+  }
+
+  function getDraftState(submissionId) {
+    return readDraft(submissionId) || {
+      scores: {},
+      summary_feedback: '',
+      final_recommendation: '',
+    };
+  }
+
+  function setDraftState(submissionId, patch) {
+    const current = getDraftState(submissionId);
+    const next = {
+      ...current,
+      ...patch,
+      scores: {
+        ...(current.scores || {}),
+        ...((patch && patch.scores) || {}),
       },
     };
+    writeDraft(submissionId, next);
+    els.draftState.className = 'badge text-bg-warning';
+    els.draftState.textContent = 'Draft';
+  }
 
-    function showToast(message, isError = false) {
-      const toast = document.getElementById('toast');
-      if (!toast) return;
-      toast.textContent = message;
-      toast.style.display = 'block';
-      toast.style.background = isError ? '#b91c1c' : '#111827';
-      clearTimeout(showToast.timer);
-      showToast.timer = setTimeout(() => {
-        toast.style.display = 'none';
-      }, 2600);
+  async function requestJson(path, options) {
+    const session = ensureSession();
+    const headers = {
+      Accept: 'application/json',
+      ...(options && options.headers ? options.headers : {}),
+    };
+
+    if (session && session.token) {
+      headers.Authorization = 'Bearer ' + session.token;
     }
 
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
+    const response = await fetch(path, {
+      method: (options && options.method) || 'GET',
+      headers,
+      body: options && options.body ? JSON.stringify(options.body) : undefined,
+      credentials: 'same-origin',
+    });
+
+    const contentType = response.headers.get('content-type') || '';
+    let payload = null;
+    if (contentType.includes('application/json')) {
+      payload = await response.json().catch(function () { return null; });
+    } else {
+      payload = await response.text().catch(function () { return ''; });
     }
 
-    function getInitialSubmissionId() {
-      const queryId = new URLSearchParams(window.location.search).get('submission_id');
-      if (queryId) return queryId;
-
-      const pathMatch = window.location.pathname.match(/\/submission_review\/(\d+)/);
-      return pathMatch ? pathMatch[1] : '';
+    if (response.status === 401) {
+      window.location.href = '/login';
+      throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
     }
 
-    function getInitialAssignmentId() {
-      return new URLSearchParams(window.location.search).get('assignment_id') || '';
+    if (!response.ok) {
+      const message = payload && payload.message
+        ? payload.message
+        : ('Request failed with status ' + response.status);
+      throw new Error(message);
     }
 
-    function ensureSession() {
-      const session = window.AuthSession.getSession();
-      if (!session.token) {
-        window.location.href = '/auth/login';
-        return null;
+    return payload;
+  }
+
+  async function apiGet(path) {
+    return await requestJson(path, { method: 'GET' });
+  }
+
+  async function apiPost(path, payload) {
+    return await requestJson(path, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: payload,
+    });
+  }
+
+  function renderAssignments() {
+    const items = state.assignments || [];
+    els.assignmentCount.textContent = String(items.length);
+    els.assignmentList.innerHTML = '';
+    els.assignmentEmpty.classList.toggle('d-none', items.length > 0);
+
+    items.forEach((item) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'list-group-item list-group-item-action text-start';
+      if (String(item.id) === String(state.activeAssignmentId)) {
+        button.classList.add('active');
       }
-      return session;
-    }
 
-    async function fetchAssignments() {
-      ensureSession();
-      return await window.apiClient.get('/judge/assignments');
-    }
+      const roundPart = item.round_id != null ? String(item.round_id) : '--';
+      const statusPart = item.status || 'assigned';
 
-    async function fetchAssignmentSubmissions(assignmentId) {
-      ensureSession();
-      return await window.apiClient.get(`/judge/assignments/${encodeURIComponent(assignmentId)}/submissions`);
-    }
+      button.innerHTML =
+        '<div class="fw-semibold">Assignment #' + escapeHtml(item.id) + '</div>' +
+        '<div class="small opacity-75">Round: ' + escapeHtml(roundPart) + '</div>' +
+        '<div class="small opacity-75">Status: ' + escapeHtml(statusPart) + '</div>';
 
-    async function fetchSubmissionDetail(submissionId) {
-      ensureSession();
-      return await window.apiClient.get(`/api/judge/submissions/${encodeURIComponent(submissionId)}/review-detail`);
-    }
-
-    function renderAssignments() {
-      const root = document.getElementById('assignment-list');
-      if (!root) return;
-
-      if (!state.assignments.length) {
-        root.innerHTML = '<div class="empty-state">Bạn chưa được phân công assignment nào.</div>';
-        return;
-      }
-
-      root.innerHTML = state.assignments.map((assignment) => {
-        const active = String(assignment.id) === String(state.selectedAssignmentId) ? 'active' : '';
-        return `
-          <div class="assignment-card ${active}">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-              <div>
-                <div style="font-weight:800;">Assignment #${escapeHtml(assignment.id)}</div>
-                <div class="muted">Round ID: ${escapeHtml(assignment.round_id)}</div>
-                <div class="muted">Status: ${escapeHtml(assignment.status || 'assigned')}</div>
-              </div>
-              <button class="nav-button open-assignment-btn" data-assignment-id="${escapeHtml(assignment.id)}" type="button">Mở</button>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      root.querySelectorAll('.open-assignment-btn').forEach((button) => {
-        button.addEventListener('click', async () => {
-          await selectAssignment(button.dataset.assignmentId);
-        });
+      button.addEventListener('click', function () {
+        selectAssignment(item.id);
       });
-    }
 
-    function renderSubmissions() {
-      const root = document.getElementById('submission-list');
-      if (!root) return;
+      els.assignmentList.appendChild(button);
+    });
+  }
 
-      if (!state.selectedAssignmentId) {
-        root.innerHTML = '<div class="empty-state">Chọn assignment để xem danh sách bài.</div>';
-        return;
+  function statusBadgeClass(status, finalized) {
+    if (finalized) return 'text-bg-success';
+    const lower = String(status || '').toLowerCase();
+    if (lower.includes('flag')) return 'text-bg-warning';
+    if (lower.includes('reject')) return 'text-bg-danger';
+    if (lower.includes('final')) return 'text-bg-success';
+    return 'text-bg-secondary';
+  }
+
+  function renderSubmissions() {
+    const items = state.submissions || [];
+    els.submissionCount.textContent = String(items.length);
+    els.submissionList.innerHTML = '';
+    els.submissionEmpty.classList.toggle('d-none', items.length > 0);
+
+    items.forEach((item) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'list-group-item list-group-item-action text-start';
+      if (String(item.id) === String(state.activeSubmissionId)) {
+        button.classList.add('active');
       }
 
-      if (!state.submissions.length) {
-        root.innerHTML = '<div class="empty-state">Assignment này chưa có bài để chấm.</div>';
-        return;
-      }
+      const title = item.title || 'Untitled';
+      const story = item.story_description || '';
+      const status = item.status || 'submitted';
+      const score = formatScore(item.final_score);
 
-      root.innerHTML = state.submissions.map((submission) => {
-        const active = String(submission.id) === String(state.selectedSubmissionId) ? 'active' : '';
-        return `
-          <div class="submission-card ${active}">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-              <div>
-                <div style="font-weight:800;">Submission #${escapeHtml(submission.id)}</div>
-                <div class="muted">Round ID: ${escapeHtml(submission.round_id)}</div>
-                <div class="status-pill">${escapeHtml(submission.status || 'submitted')}</div>
-              </div>
-              <button class="ghost-button open-submission-btn" data-submission-id="${escapeHtml(submission.id)}" type="button">Xem</button>
-            </div>
-          </div>
-        `;
-      }).join('');
+      button.innerHTML =
+        '<div class="fw-semibold">#' + escapeHtml(item.id) + ' · ' + escapeHtml(title) + '</div>' +
+        '<div class="small text-truncate" style="max-width:100%;">' + escapeHtml(story) + '</div>' +
+        '<div class="small mt-1 d-flex justify-content-between"><span>' + escapeHtml(status) + '</span><span>Score: ' + escapeHtml(score) + '</span></div>';
 
-      root.querySelectorAll('.open-submission-btn').forEach((button) => {
-        button.addEventListener('click', async () => {
-          await selectSubmission(button.dataset.submissionId);
-        });
+      button.addEventListener('click', function () {
+        selectSubmission(item.id);
       });
+
+      els.submissionList.appendChild(button);
+    });
+  }
+
+  function renderEmptyReviewState() {
+    els.headerSubtitle.textContent = 'Chọn assignment và submission để bắt đầu.';
+    els.submissionTitle.textContent = 'Chi tiết submission';
+    els.submissionMeta.textContent = 'Chưa chọn submission.';
+    els.submissionStatus.className = 'badge text-bg-light border';
+    els.submissionStatus.textContent = 'N/A';
+
+    els.imageContainer.innerHTML = '<div class="submission-image-empty">Chưa có ảnh để hiển thị</div>';
+    els.detailGrid.innerHTML = '';
+
+    els.criteriaList.innerHTML = '';
+    els.criteriaEmpty.classList.remove('d-none');
+    els.criteriaCount.textContent = '0 criteria';
+
+    els.filledCount.textContent = '0/0';
+    els.provisionalScore.textContent = '--';
+    els.maxWeightedScore.textContent = '--';
+    els.scoreProgress.style.width = '0%';
+
+    els.summaryFeedback.value = '';
+    els.finalRecommendation.value = '';
+    els.feedbackState.className = 'badge text-bg-secondary';
+    els.feedbackState.textContent = 'Nháp';
+    els.draftState.className = 'badge text-bg-warning';
+    els.draftState.textContent = 'Draft';
+    els.saveStateText.textContent = 'Dữ liệu điểm đang lưu cục bộ theo draft khi bạn nhập.';
+    applyReadonlyState();
+  }
+
+  function renderSubmissionDetail() {
+    const data = state.reviewData;
+    if (!data || !data.submission) {
+      renderEmptyReviewState();
+      return;
     }
 
-    function renderSubmissionDetail(payload) {
-      const content = document.getElementById('detail-content');
-      const subtitle = document.getElementById('detail-subtitle');
-      const prevBtn = document.getElementById('prev-btn');
-      const nextBtn = document.getElementById('next-btn');
+    const submission = data.submission || {};
+    const round = data.round || {};
+    const feedback = data.feedback || {};
 
-      const submission = payload.submission || {};
-      const metadata = submission.metadata || {};
-      const criteria = payload.criteria || [];
+    els.headerSubtitle.textContent = 'Assignment #' + (state.activeAssignmentId || '--') + ' · Submission #' + submission.id;
+    els.submissionTitle.textContent = (submission.title || 'Untitled') + ' (#' + submission.id + ')';
+    els.submissionMeta.textContent =
+      'Round: ' + (round.round_number != null ? round.round_number : (submission.round_id != null ? submission.round_id : '--')) +
+      (round.title ? ' · ' + round.title : '');
 
-      subtitle.textContent = `Submission #${submission.id || '-'} · Round #${submission.round_id || '-'}`;
-      state.navigation = payload.navigation || {
-        previous_submission_id: null,
-        next_submission_id: null,
-      };
+    const isFinalized = Boolean(feedback.is_finalized);
+    const badgeClass = statusBadgeClass(submission.status, isFinalized);
+    els.submissionStatus.className = 'badge ' + badgeClass;
+    els.submissionStatus.textContent = isFinalized ? 'Finalized' : (submission.status || 'submitted');
 
-      prevBtn.disabled = !state.navigation.previous_submission_id;
-      nextBtn.disabled = !state.navigation.next_submission_id;
-
-      const metaRows = [
-        ['Submission ID', submission.id],
-        ['Status', submission.status],
-        ['Camera', metadata.camera_body],
-        ['Lens', metadata.lens],
-        ['Film Stock', metadata.film_stock],
-        ['Film ISO', metadata.film_iso],
-        ['Development', metadata.development_process],
-        ['Image Size', metadata.width_px && metadata.height_px ? `${metadata.width_px} x ${metadata.height_px}` : null],
-      ].filter(([, value]) => value !== null && value !== undefined && value !== '');
-
-      content.innerHTML = `
-        <div class="detail-grid">
-          <section>
-            <div class="photo-box">
-              ${submission.image_url ? `<img src="${escapeHtml(submission.image_url)}" alt="Submission image">` : 'No image available'}
-            </div>
-            <div class="meta-grid">
-              ${metaRows.map(([label, value]) => `
-                <div class="meta-label">${escapeHtml(label)}</div>
-                <div>${escapeHtml(value)}</div>
-              `).join('')}
-            </div>
-          </section>
-
-          <aside>
-            <h3 class="section-title">Criteria</h3>
-            <div class="criteria-list">
-              ${criteria.length ? criteria.map((item) => `
-                <div class="criteria-card">
-                  <div style="font-weight:800; margin-bottom:4px;">${escapeHtml(item.name)}</div>
-                  <div class="muted">Max score: ${escapeHtml(item.max_score)} · Weight: ${escapeHtml(item.weight)}</div>
-                  ${item.description ? `<div style="margin-top:8px; font-size:0.92rem;">${escapeHtml(item.description)}</div>` : ''}
-                </div>
-              `).join('') : '<div class="empty-state">Round này chưa có criteria.</div>'}
-            </div>
-          </aside>
-        </div>
-      `;
+    const imageUrl = data.image_url || submission.image_url || null;
+    if (imageUrl) {
+      els.imageContainer.innerHTML =
+        '<img class="submission-image" src="' + escapeHtml(imageUrl) + '" alt="Submission image">';
+    } else {
+      els.imageContainer.innerHTML = '<div class="submission-image-empty">Submission chưa có ảnh hiển thị</div>';
     }
 
-    async function selectAssignment(assignmentId) {
-      state.selectedAssignmentId = assignmentId;
-      const url = new URL(window.location.href);
-      url.searchParams.set('assignment_id', assignmentId);
-      window.history.replaceState({}, '', url.toString());
+    const detailRows = [
+      ['Submission ID', '#' + (submission.id || '--')],
+      ['Status', submission.status || 'submitted'],
+      ['Final score', formatScore(submission.final_score)],
+      ['Round ID', submission.round_id != null ? submission.round_id : '--'],
+    ];
 
-      const response = await fetchAssignmentSubmissions(assignmentId);
-      state.submissions = response.submissions || [];
-      renderAssignments();
-      renderSubmissions();
+    els.detailGrid.innerHTML = detailRows.map(function (row) {
+      return (
+        '<div class="col-6">' +
+          '<div class="border rounded p-2 h-100">' +
+            '<div class="small text-muted">' + escapeHtml(row[0]) + '</div>' +
+            '<div class="fw-semibold">' + escapeHtml(row[1]) + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
 
-      const preferredSubmissionId = getInitialSubmissionId();
-      const firstSubmissionId = state.submissions.length ? String(state.submissions[0].id) : '';
-      const targetSubmissionId = state.submissions.some((item) => String(item.id) === String(preferredSubmissionId))
-        ? String(preferredSubmissionId)
-        : firstSubmissionId;
+    renderCriteria();
+    renderFeedback();
+    applyReadonlyState();
 
-      if (targetSubmissionId) {
-        await selectSubmission(targetSubmissionId);
+    const nav = data.next_previous || {
+      previous: data.navigation ? data.navigation.previous_submission_id : null,
+      next: data.navigation ? data.navigation.next_submission_id : null,
+    };
+    els.prevButton.disabled = state.busy || !nav.previous;
+    els.nextButton.disabled = state.busy || !nav.next;
+  }
+
+  function renderCriteria() {
+    const data = state.reviewData;
+    const criteria = (data && Array.isArray(data.criteria)) ? data.criteria : [];
+
+    els.criteriaCount.textContent = String(criteria.length) + ' criteria';
+    els.criteriaList.innerHTML = '';
+    els.criteriaEmpty.classList.toggle('d-none', criteria.length > 0);
+
+    if (!criteria.length || !data || !data.submission) {
+      updateScoreSummary();
+      return;
+    }
+
+    const submissionId = data.submission.id;
+    const draft = getDraftState(submissionId);
+
+    criteria.forEach(function (criterion, index) {
+      const cId = criterion.id;
+      const maxScore = Number(criterion.max_score || 0);
+      const weight = Number(criterion.weight || 0);
+      const serverValue = criterion.score_value;
+      const draftValue = draft.scores && draft.scores[cId] !== undefined ? draft.scores[cId] : undefined;
+      const initialValue = draftValue !== undefined ? draftValue : (serverValue != null ? serverValue : '');
+      const displayValue = initialValue === '' ? '--' : formatScore(initialValue);
+
+      const card = document.createElement('div');
+      card.className = 'criterion-card rounded p-2';
+      card.setAttribute('data-criterion-id', String(cId));
+
+      card.innerHTML =
+        '<div class="d-flex justify-content-between align-items-start gap-2 mb-2">' +
+          '<div>' +
+            '<div class="fw-semibold">' + (index + 1) + '. ' + escapeHtml(criterion.name || 'Unnamed criteria') + '</div>' +
+            '<div class="small text-muted">' + escapeHtml(criterion.description || 'Không có mô tả') + '</div>' +
+          '</div>' +
+          '<div class="text-end small">' +
+            '<div>Max: <strong>' + escapeHtml(formatScore(maxScore)) + '</strong></div>' +
+            '<div>Weight: <strong>' + escapeHtml(formatScore(weight)) + '</strong></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="row g-2 align-items-center">' +
+          '<div class="col-8">' +
+            '<input type="range" class="form-range criterion-range" min="0" max="' + escapeHtml(maxScore) + '" step="0.1" value="' + escapeHtml(initialValue === '' ? 0 : initialValue) + '" data-criterion-id="' + escapeHtml(cId) + '">' +
+          '</div>' +
+          '<div class="col-4">' +
+            '<input type="number" class="form-control form-control-sm criterion-number" min="0" max="' + escapeHtml(maxScore) + '" step="0.1" value="' + escapeHtml(initialValue) + '" data-criterion-id="' + escapeHtml(cId) + '" placeholder="0">' +
+          '</div>' +
+        '</div>' +
+        '<div class="small text-muted d-flex justify-content-between">' +
+          '<span>Điểm hiện tại</span>' +
+          '<span class="criterion-score-value" data-role="score-display" data-criterion-id="' + escapeHtml(cId) + '">' + escapeHtml(displayValue) + '</span>' +
+        '</div>';
+
+      els.criteriaList.appendChild(card);
+    });
+
+    els.criteriaList.querySelectorAll('.criterion-range').forEach(function (el) {
+      el.addEventListener('input', onCriterionInput);
+    });
+
+    els.criteriaList.querySelectorAll('.criterion-number').forEach(function (el) {
+      el.addEventListener('input', onCriterionInput);
+    });
+
+    updateScoreSummary();
+    applyReadonlyState();
+  }
+
+  function onCriterionInput(event) {
+    if (!state.reviewData || !state.reviewData.submission) return;
+    if (isReviewLocked()) return;
+
+    const input = event.target;
+    const criterionId = Number(input.getAttribute('data-criterion-id'));
+    const card = input.closest('[data-criterion-id]');
+    if (!card) return;
+
+    const range = card.querySelector('.criterion-range');
+    const number = card.querySelector('.criterion-number');
+    const display = card.querySelector('[data-role="score-display"]');
+    const max = Number(number.getAttribute('max') || 0);
+
+    if (input.classList.contains('criterion-range')) {
+      number.value = input.value;
+    } else {
+      const parsed = numberOrNull(input.value);
+      if (parsed === null) {
+        range.value = '0';
       } else {
-        state.selectedSubmissionId = '';
-        document.getElementById('detail-subtitle').textContent = 'Assignment này chưa có bài để xem.';
-        document.getElementById('detail-content').innerHTML = '<div class="empty-state">Assignment này chưa có submission được phân công.</div>';
+        const clamped = Math.min(Math.max(parsed, 0), max);
+        if (clamped !== parsed) {
+          number.value = String(clamped);
+        }
+        range.value = String(clamped);
       }
     }
 
-    async function selectSubmission(submissionId) {
-      state.selectedSubmissionId = submissionId;
-      const url = new URL(window.location.href);
-      url.searchParams.set('submission_id', submissionId);
-      if (state.selectedAssignmentId) {
-        url.searchParams.set('assignment_id', state.selectedAssignmentId);
-      }
-      window.history.replaceState({}, '', url.toString());
+    const finalValue = number.value;
+    display.textContent = finalValue === '' ? '--' : formatScore(finalValue);
 
-      renderSubmissions();
-      const payload = await fetchSubmissionDetail(submissionId);
-      renderSubmissionDetail(payload);
+    const submissionId = state.reviewData.submission.id;
+    const draft = getDraftState(submissionId);
+    draft.scores = draft.scores || {};
+    draft.scores[criterionId] = finalValue;
+    draft.summary_feedback = els.summaryFeedback.value;
+    draft.final_recommendation = els.finalRecommendation.value;
+    writeDraft(submissionId, draft);
+
+    els.draftState.className = 'badge text-bg-warning';
+    els.draftState.textContent = 'Draft';
+    els.saveStateText.textContent = 'Draft cục bộ đã được cập nhật. Nhấn Lưu tạm để đồng bộ server.';
+
+    updateScoreSummary();
+  }
+
+  function updateScoreSummary() {
+    const data = state.reviewData;
+    const criteria = (data && Array.isArray(data.criteria)) ? data.criteria : [];
+
+    if (!criteria.length || !data || !data.submission) {
+      els.filledCount.textContent = '0/0';
+      els.provisionalScore.textContent = '--';
+      els.maxWeightedScore.textContent = '--';
+      els.scoreProgress.style.width = '0%';
+      return;
     }
 
-    async function loadAssignments() {
-      const response = await fetchAssignments();
-      state.assignments = response.assignments || [];
+    const submissionId = data.submission.id;
+    const draft = getDraftState(submissionId);
+    let filled = 0;
+    let totalWeight = 0;
+    let weightedTotal = 0;
+    let weightedMax = 0;
+
+    criteria.forEach(function (criterion) {
+      const weight = Number(criterion.weight || 0);
+      const max = Number(criterion.max_score || 0);
+
+      if (weight > 0) {
+        totalWeight += weight;
+        weightedMax += max * weight;
+      }
+
+      const draftValue = draft.scores && draft.scores[criterion.id] !== undefined ? draft.scores[criterion.id] : undefined;
+      const baseValue = draftValue !== undefined ? draftValue : criterion.score_value;
+      const parsed = numberOrNull(baseValue);
+
+      if (parsed !== null) {
+        filled += 1;
+        if (weight > 0) {
+          weightedTotal += parsed * weight;
+        }
+      }
+    });
+
+    const provisional = totalWeight > 0 && filled > 0 ? (weightedTotal / totalWeight) : null;
+    const maxConverted = totalWeight > 0 ? (weightedMax / totalWeight) : null;
+    const percent = criteria.length > 0 ? Math.round((filled / criteria.length) * 100) : 0;
+
+    els.filledCount.textContent = String(filled) + '/' + String(criteria.length);
+    els.provisionalScore.textContent = provisional == null ? '--' : formatScore(provisional);
+    els.maxWeightedScore.textContent = maxConverted == null ? '--' : formatScore(maxConverted);
+    els.scoreProgress.style.width = String(percent) + '%';
+
+    if (filled === 0) {
+      els.scoreHint.textContent = 'Chưa có điểm nào được nhập.';
+    } else {
+      els.scoreHint.textContent = 'Đã nhập ' + filled + '/' + criteria.length + ' criteria. Tổng điểm tạm tính cập nhật tự động.';
+    }
+  }
+
+  function renderFeedback() {
+    const data = state.reviewData;
+    if (!data || !data.submission) return;
+
+    const submissionId = data.submission.id;
+    const feedback = data.feedback || {};
+    const draft = getDraftState(submissionId);
+
+    const mergedFeedback = draft.summary_feedback !== undefined && draft.summary_feedback !== ''
+      ? draft.summary_feedback
+      : (feedback.summary_feedback || '');
+
+    const mergedRecommendation = draft.final_recommendation !== undefined && draft.final_recommendation !== ''
+      ? draft.final_recommendation
+      : (feedback.final_recommendation || '');
+
+    els.summaryFeedback.value = mergedFeedback;
+    els.finalRecommendation.value = mergedRecommendation;
+
+    if (feedback.is_finalized) {
+      els.feedbackState.className = 'badge text-bg-success';
+      els.feedbackState.textContent = 'Finalized';
+      els.draftState.className = 'badge text-bg-success';
+      els.draftState.textContent = 'Server Finalized';
+      els.saveStateText.textContent = getLockMessage();
+    } else {
+      els.feedbackState.className = 'badge text-bg-secondary';
+      els.feedbackState.textContent = 'Nháp';
+      els.draftState.className = 'badge text-bg-warning';
+      els.draftState.textContent = 'Draft';
+      els.saveStateText.textContent = getLockMessage();
+    }
+
+    if (getReviewState().round_finalized) {
+      els.feedbackState.className = 'badge text-bg-dark';
+      els.feedbackState.textContent = 'Round Locked';
+      els.draftState.className = 'badge text-bg-dark';
+      els.draftState.textContent = 'Locked';
+    }
+  }
+
+  function collectScorePayloads(isFinalize) {
+    if (!state.reviewData || !state.reviewData.submission) {
+      throw new Error('Chưa chọn submission để chấm.');
+    }
+
+    const criteria = state.reviewData.criteria || [];
+    const payloads = [];
+
+    for (let i = 0; i < criteria.length; i += 1) {
+      const criterion = criteria[i];
+      const numberInput = els.criteriaList.querySelector('.criterion-number[data-criterion-id="' + criterion.id + '"]');
+      const raw = numberInput ? numberInput.value.trim() : '';
+      const value = numberOrNull(raw);
+      const max = Number(criterion.max_score || 0);
+
+      if (value === null) {
+        if (isFinalize) {
+          throw new Error('Criteria "' + (criterion.name || criterion.id) + '" chưa có điểm.');
+        }
+        continue;
+      }
+
+      if (value < 0 || value > max) {
+        throw new Error('Criteria "' + (criterion.name || criterion.id) + '" phải nằm trong khoảng 0 - ' + max + '.');
+      }
+
+      payloads.push({
+        criteria_id: criterion.id,
+        score_value: value,
+        comment: null,
+      });
+    }
+
+    return payloads;
+  }
+
+  async function saveReview(isFinalize) {
+    try {
+      clearAlert();
+
+      if (!state.reviewData || !state.reviewData.submission) {
+        showAlert('warning', 'Thiếu dữ liệu', 'Hãy chọn submission trước khi lưu.');
+        return;
+      }
+
+      if (isReviewLocked()) {
+        showAlert('warning', 'Bản chấm đã khóa', getLockMessage());
+        return;
+      }
+
+      const submissionId = state.reviewData.submission.id;
+      const feedbackText = els.summaryFeedback.value.trim();
+      const recommendation = els.finalRecommendation.value.trim();
+
+      if (isFinalize && !feedbackText) {
+        showAlert('warning', 'Thiếu feedback', 'Vui lòng nhập nhận xét chung trước khi hoàn tất chấm.');
+        return;
+      }
+
+      const scorePayloads = collectScorePayloads(isFinalize);
+      setBusy(true);
+
+      for (let i = 0; i < scorePayloads.length; i += 1) {
+        await apiPost('/scores/submissions/' + submissionId, scorePayloads[i]);
+      }
+
+      await apiPost('/scores/submissions/' + submissionId + '/feedback', {
+        summary_feedback: feedbackText,
+        final_recommendation: recommendation || null,
+        is_finalized: isFinalize,
+      });
+
+      clearDraft(submissionId);
+
+      showAlert(
+        'success',
+        isFinalize ? 'Hoàn tất chấm' : 'Lưu tạm thành công',
+        isFinalize
+          ? 'Bản chấm đã được finalize và lưu trên server.'
+          : 'Điểm và feedback đã lưu ở trạng thái draft trên server.'
+      );
+
+      await selectSubmission(submissionId);
+      await loadAssignments(submissionId);
+    } catch (error) {
+      console.error(error);
+      showAlert('danger', 'Lưu thất bại', error && error.message ? error.message : 'Server trả về lỗi khi lưu bản chấm.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadAssignments(preferredSubmissionId) {
+    setBusy(true);
+    try {
+      const response = await apiGet('/judge/assignments');
+      const assignments = Array.isArray(response && response.assignments)
+        ? response.assignments
+        : (Array.isArray(response) ? response : []);
+
+      state.assignments = assignments;
       renderAssignments();
 
-      const initialAssignmentId = getInitialAssignmentId();
-      const firstAssignmentId = state.assignments.length ? String(state.assignments[0].id) : '';
-      const targetAssignmentId = state.assignments.some((item) => String(item.id) === String(initialAssignmentId))
-        ? String(initialAssignmentId)
-        : firstAssignmentId;
-
-      if (targetAssignmentId) {
-        await selectAssignment(targetAssignmentId);
+      if (!assignments.length) {
+        state.activeAssignmentId = null;
+        state.submissions = [];
+        state.activeSubmissionId = null;
+        state.reviewData = null;
+        renderSubmissions();
+        renderEmptyReviewState();
+        return;
       }
+
+      const queryAssignmentId = getUrlParamNumber('assignment_id');
+      const targetAssignment =
+        assignments.find(function (a) { return String(a.id) === String(state.activeAssignmentId); }) ||
+        assignments.find(function (a) { return String(a.id) === String(queryAssignmentId); }) ||
+        assignments[0];
+
+      await selectAssignment(targetAssignment.id, preferredSubmissionId);
+    } catch (error) {
+      console.error(error);
+      showAlert('danger', 'Không tải được assignments', error && error.message ? error.message : 'Vui lòng thử lại sau.');
+    } finally {
+      setBusy(false);
     }
+  }
 
-    function bindEvents() {
-      document.getElementById('refresh-assignment-btn').addEventListener('click', async () => {
-        try {
-          await loadAssignments();
-          showToast('Đã làm mới assignment');
-        } catch (error) {
-          console.error(error);
-          showToast(error.message || 'Không thể làm mới assignment', true);
-        }
-      });
+  async function selectAssignment(assignmentId, preferredSubmissionId) {
+    setBusy(true);
+    try {
+      state.activeAssignmentId = assignmentId;
+      renderAssignments();
 
-      document.getElementById('prev-btn').addEventListener('click', async () => {
-        if (!state.navigation.previous_submission_id) return;
-        await selectSubmission(String(state.navigation.previous_submission_id));
-      });
+      const response = await apiGet('/judge/assignments/' + assignmentId + '/submissions');
+      const submissions = Array.isArray(response && response.submissions) ? response.submissions : [];
+      state.submissions = submissions;
+      renderSubmissions();
 
-      document.getElementById('next-btn').addEventListener('click', async () => {
-        if (!state.navigation.next_submission_id) return;
-        await selectSubmission(String(state.navigation.next_submission_id));
-      });
-    }
-
-    async function init() {
-      try {
-        ensureSession();
-        bindEvents();
-        await loadAssignments();
-      } catch (error) {
-        console.error(error);
-        document.getElementById('assignment-list').innerHTML = '<div class="empty-state">Không tải được assignments.</div>';
-        document.getElementById('submission-list').innerHTML = '<div class="empty-state">Không tải được danh sách bài.</div>';
-        showToast(error.message || 'Không thể tải màn hình Judge review', true);
+      if (!submissions.length) {
+        state.activeSubmissionId = null;
+        state.reviewData = null;
+        renderEmptyReviewState();
+        updateUrlParams(assignmentId, null);
+        return;
       }
-    }
 
-    init();
-  </script>
-</body>
-</html>
+      const querySubmissionId = getUrlParamNumber('submission_id');
+      const candidateIds = submissions.map(function (item) { return item.id; });
+
+      let submissionToOpen = null;
+      if (preferredSubmissionId && candidateIds.includes(preferredSubmissionId)) {
+        submissionToOpen = preferredSubmissionId;
+      } else if (state.activeSubmissionId && candidateIds.includes(state.activeSubmissionId)) {
+        submissionToOpen = state.activeSubmissionId;
+      } else if (querySubmissionId && candidateIds.includes(querySubmissionId)) {
+        submissionToOpen = querySubmissionId;
+      } else {
+        submissionToOpen = submissions[0].id;
+      }
+
+      updateUrlParams(assignmentId, submissionToOpen);
+      await selectSubmission(submissionToOpen);
+    } catch (error) {
+      console.error(error);
+      showAlert('danger', 'Không tải được submissions', error && error.message ? error.message : 'Vui lòng thử lại sau.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function selectSubmission(submissionId) {
+    setBusy(true);
+    try {
+      state.activeSubmissionId = submissionId;
+      renderSubmissions();
+
+      const response = await apiGet('/api/judge/submissions/' + submissionId + '/review-detail');
+      state.reviewData = response || null;
+      renderSubmissionDetail();
+      updateUrlParams(state.activeAssignmentId, submissionId);
+    } catch (error) {
+      console.error(error);
+      showAlert('danger', 'Không tải được review detail', error && error.message ? error.message : 'Vui lòng thử lại sau.');
+      state.reviewData = null;
+      renderEmptyReviewState();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reloadCurrent() {
+    if (!state.activeSubmissionId) {
+      showAlert('info', 'Chưa có submission', 'Hãy chọn submission để tải lại dữ liệu.');
+      return;
+    }
+    await selectSubmission(state.activeSubmissionId);
+  }
+
+  function bindEvents() {
+    els.prevButton.addEventListener('click', async function () {
+      const previous = state.reviewData
+        ? (state.reviewData.next_previous
+          ? state.reviewData.next_previous.previous
+          : (state.reviewData.navigation ? state.reviewData.navigation.previous_submission_id : null))
+        : null;
+      if (!previous) return;
+      await selectSubmission(previous);
+    });
+
+    els.nextButton.addEventListener('click', async function () {
+      const next = state.reviewData
+        ? (state.reviewData.next_previous
+          ? state.reviewData.next_previous.next
+          : (state.reviewData.navigation ? state.reviewData.navigation.next_submission_id : null))
+        : null;
+      if (!next) return;
+      await selectSubmission(next);
+    });
+
+    els.reloadButton.addEventListener('click', reloadCurrent);
+
+    els.saveDraftButton.addEventListener('click', function () {
+      saveReview(false);
+    });
+
+    els.finalizeButton.addEventListener('click', function () {
+      saveReview(true);
+    });
+
+    els.summaryFeedback.addEventListener('input', function () {
+      if (!state.reviewData || !state.reviewData.submission) return;
+      if (isReviewLocked()) return;
+      setDraftState(state.reviewData.submission.id, {
+        summary_feedback: els.summaryFeedback.value,
+        final_recommendation: els.finalRecommendation.value,
+      });
+      els.saveStateText.textContent = 'Draft feedback cục bộ đã cập nhật.';
+    });
+
+    els.finalRecommendation.addEventListener('change', function () {
+      if (!state.reviewData || !state.reviewData.submission) return;
+      if (isReviewLocked()) return;
+      setDraftState(state.reviewData.submission.id, {
+        summary_feedback: els.summaryFeedback.value,
+        final_recommendation: els.finalRecommendation.value,
+      });
+      els.saveStateText.textContent = 'Draft khuyến nghị cục bộ đã cập nhật.';
+    });
+  }
+
+  async function init() {
+    try {
+      ensureSession();
+      bindEvents();
+      renderEmptyReviewState();
+
+      const preferredSubmissionId = getUrlParamNumber('submission_id');
+      await loadAssignments(preferredSubmissionId);
+    } catch (error) {
+      console.error(error);
+      showAlert('danger', 'Không thể khởi tạo màn hình', error && error.message ? error.message : 'Vui lòng thử lại sau.');
+    }
+  }
+
+  init();
+})();
+</script>
+{% endblock %}

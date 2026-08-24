@@ -347,7 +347,15 @@
                 showToast('Không xác định được mã bài dự thi', 'warning');
                 return;
             }
-            smoothRedirect(`/organizer/results?submission_id=${activeSubmissionId}`);
+            smoothRedirect(`/judge/review?submission_id=${encodeURIComponent(activeSubmissionId)}`);
+        }
+
+        function goToTask75Review(submissionId) {
+            if (!submissionId) {
+                showToast('Không xác định được mã bài dự thi', 'warning');
+                return;
+            }
+            smoothRedirect(`/judge/review?submission_id=${encodeURIComponent(submissionId)}`);
         }
 
         async function loadContestData(options = {}) {
@@ -484,9 +492,14 @@
                             </span>
                         </td>
                         <td class="text-end pe-3">
-                            <button type="button" class="btn btn-sm btn-primary action-btn" onclick="openSubmissionDetailModal('${escapeHtml(subId)}')">
-                                Chi tiết / Review
-                            </button>
+                            <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary action-btn" onclick="openSubmissionDetailModal('${escapeHtml(subId)}')">
+                                    Chi tiết
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary action-btn" onclick="goToTask75Review('${escapeHtml(subId)}')">
+                                    Chấm điểm (Task 75)
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;

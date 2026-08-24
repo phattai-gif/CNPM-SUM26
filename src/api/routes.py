@@ -36,6 +36,8 @@ from api.controllers.contest_settings_controller import (
 from api.controllers.moderator_controller import moderator_bp
 from api.role_required import role_required
 from api.controllers.admin_controller import admin_bp
+from api.role_required import role_required
+from services.score_service import ScoreService
 
 
 def register_routes(app):
@@ -103,12 +105,71 @@ def register_routes(app):
     except Exception:
         pass
 
+    # Judge review / scoring page
+    try:
+        app.add_url_rule(
+            "/judge/review",
+            "judge_review_page",
+            lambda: render_template("submission_review.html"),
+        )
+    except Exception:
+        pass
+
     # Login
     try:
         app.add_url_rule(
             "/login",
             "login",
             lambda: render_template("login.html"),
+        )
+    except Exception:
+        pass
+
+    # ============================================================
+    # JUDGE REVIEW DETAIL API
+    # ============================================================
+
+    try:
+        score_service = ScoreService()
+
+        @role_required("judge", "admin")
+        def api_get_judge_submission_review_detail(submission_id):
+            judge_id = request.user.get("user_id")
+            user_role = request.user.get("role", "judge")
+
+            if not judge_id:
+                return jsonify({
+                    "message": "Judge information is missing"
+                }), 401
+
+            payload, error = score_service.get_submission_review_data(
+                submission_id=submission_id,
+                judge_id=judge_id,
+                user_role=user_role,
+            )
+
+            if error == "submission_not_found":
+                return jsonify({
+                    "message": "Submission not found"
+                }), 404
+
+            if error == "not_assigned":
+                return jsonify({
+                    "message": "Judge is not assigned to this submission"
+                }), 403
+
+            if payload is None:
+                return jsonify({
+                    "message": "Failed to get review detail"
+                }), 500
+
+            return jsonify(payload), 200
+
+        app.add_url_rule(
+            "/api/judge/submissions/<int:submission_id>/review-detail",
+            "api_judge_submission_review_detail",
+            api_get_judge_submission_review_detail,
+            methods=["GET"],
         )
     except Exception:
         pass
