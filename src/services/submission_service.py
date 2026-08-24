@@ -33,7 +33,54 @@ class SubmissionService:
     - AI detection
     - Duplicate image detection
     """
+    def submit_draft(self, submission_id, user_id):
+        submission = self.submission_repo.get_by_id_with_details(
+            submission_id
+        )
 
+        if not submission:
+           raise ValueError("Submission not found")
+
+        if isinstance(submission, tuple):
+           submission_obj = submission[0]
+           file_obj = submission[1] if len(submission) > 1 else None
+           metadata_obj = submission[2] if len(submission) > 2 else None
+        else:
+           submission_obj = submission
+           file_obj = None
+           metadata_obj = None
+
+        if submission_obj.user_id != user_id:
+            raise PermissionError(
+                "You are not the owner of this submission"
+            )
+
+        if submission_obj.status != "draft":
+            raise ValueError(
+                "Only draft submissions can be submitted"
+            )
+
+    # Validate required submission data
+        if not getattr(submission_obj, "title", None):
+            raise ValueError(
+                "Submission title is required"
+            )
+
+        if not file_obj:
+            raise ValueError(
+                "Submission file is required"
+            )
+ 
+        if not metadata_obj:
+            raise ValueError(
+                "Submission metadata is required"
+            )
+
+        return self.submission_repo.update_status(
+            submission_id,
+            "submitted"
+            )
+            
     def __init__(
         self,
         submission_repo: Optional[SubmissionRepository] = None,
@@ -319,6 +366,10 @@ class SubmissionService:
                         ),
                         "phash": phash_val,
                         "ahash": ahash_val,
+                        "file_type": file_item.get(
+                            "file_type",
+                            "main_image",
+                        ),
                     }
                 )
 
@@ -384,6 +435,7 @@ class SubmissionService:
                     ),
                     "phash": phash_val,
                     "ahash": ahash_val,
+                    "file_type": "main_image",
                 }
             )
 
@@ -848,6 +900,10 @@ class SubmissionService:
                         ),
                         "phash": phash_val,
                         "ahash": ahash_val,
+                        "file_type": file_item.get(
+                            "file_type",
+                            "main_image",
+                        ),
                     }
                 )
 
@@ -874,287 +930,101 @@ class SubmissionService:
     # =========================================================
     # SUBMIT DRAFT
     # =========================================================
+def submit_draft(
+    self,
+    submission_id: int,
+    user_id: int,
+) -> SubmissionModel:
 
-    def submit_draft(
-        self,
-        submission_id: int,
-        user_id: int,
-    ) -> SubmissionModel:
+    result = (
+        self.submission_repo
+        .get_by_id_with_details(submission_id)
+    )
 
-        result = (
-            self.submission_repo
-            .get_by_id_with_details(
-                submission_id
-            )
+    if not result:
+        raise ValueError("Submission not found")
+
+    (
+        submission,
+        submission_file,
+        film_metadata,
+    ) = result
+
+    # 1. Kiểm tra quyền sở hữu
+    if submission.user_id != user_id:
+        raise PermissionError("Forbidden")
+
+    # 2. Kiểm tra trạng thái
+    if submission.status != "draft":
+        raise ValueError(
+            "Cannot submit submission that is not in draft status"
         )
 
-        if not result:
-            raise ValueError(
-                "Submission not found"
-            )
+    # 3. Kiểm tra round nếu submission có round_id
+    round_id = getattr(submission, "round_id", None)
 
-        (
-            submission,
-            submission_file,
-            film_metadata,
-        ) = result
+    if round_id is not None:
+        self._validate_round_status_for_submission(round_id)
 
-        if submission.user_id != user_id:
-            raise PermissionError(
-                "Forbidden"
-            )
+    # 4. Kiểm tra title
+    if (
+        not submission.title
+        or not submission.title.strip()
+    ):
+        raise ValueError("title is required")
 
-        if submission.status != "draft":
-            raise ValueError(
-                "Cannot submit submission that is not in draft status"
-            )
-
-        self._validate_round_status_for_submission(submission.round_id)
-
-        if (
-            not submission.title
-            or not submission.title.strip()
-        ):
-            raise ValueError(
-                "title is required"
-            )
-
-        if not submission_file:
-            raise ValueError(
-                "At least one image file is required"
-            )
-
-        if (
-            not film_metadata
-            or not film_metadata.film_stock
-            or not film_metadata.film_stock.strip()
-        ):
-            raise ValueError(
-                "film_stock is required"
-            )
-
-        # -----------------------------------------------------
-        # Update status
-        # -----------------------------------------------------
-
-        from datetime import datetime, timezone
-
-        now_utc = datetime.now(
-            timezone.utc
+    # 5. Kiểm tra file
+    if not submission_file:
+        raise ValueError(
+            "At least one image file is required"
         )
 
-        updated_submission = (
-            self.submission_repo
-            .update_status(
-                submission_id=submission_id,
-                status="submitted",
-                submitted_at=now_utc,
-            )
+    # 6. Kiểm tra film metadata
+    if (
+        not film_metadata
+        or not film_metadata.film_stock
+        or not film_metadata.film_stock.strip()
+    ):
+        raise ValueError("film_stock is required")
+
+    # 7. Update status
+    from datetime import datetime, timezone
+
+    now_utc = datetime.now(timezone.utc)
+
+    updated_submission = (
+        self.submission_repo.update_status(
+            submission_id=submission_id,
+            status="submitted",
+            submitted_at=now_utc,
         )
+    )
 
-        # -----------------------------------------------------
-        # AI detection
-        # -----------------------------------------------------
+    # 8. AI detection
+    if (
+        submission_file
+        and submission_file.image_hd_url
+    ):
+        try:
+            from services.ai_detection_service import (
+                AiDetectionService,
+            )
 
-        if (
-            submission_file
-            and submission_file.image_hd_url
-        ):
+            ai_service = AiDetectionService()
 
-            try:
+            ai_result = ai_service.detect_ai(
+                submission_file.image_hd_url
+            )
 
-                from services.ai_detection_service import (
-                    AiDetectionService,
-                )
+            # Nếu service AI trả kết quả thì xử lý ở đây.
+            # Không để lỗi AI làm submit thất bại.
 
-                ai_service = (
-                    AiDetectionService()
-                )
+        except Exception:
+            # AI detection là bước phụ,
+            # không được làm API submit thành 500.
+            pass
 
-                ai_result = (
-                    ai_service.detect_ai(
-                        submission_file.image_hd_url
-                    )
-                )
-
-                if not isinstance(
-                    ai_result,
-                    dict,
-                ):
-                    ai_result = {}
-
-                ai_score = ai_result.get(
-                    "ai_score",
-                    0,
-                )
-
-                risk_level = ai_result.get(
-                    "risk_level",
-                    "safe",
-                )
-
-                saved_flag = (
-                    self.submission_repo
-                    .save_ai_flag(
-                        submission_id=submission.id,
-                        confidence_score=ai_score,
-                        risk_level=risk_level,
-                        flag_type="AI_METADATA",
-                        status="pending",
-                    )
-                )
-
-                self.submission_repo.save_ai_analysis_report(
-                    submission_id=submission.id,
-                    ai_flag_id=saved_flag.id,
-                    ai_model_name=(
-                        "EXIF Extraction Engine"
-                    ),
-                    ai_confidence_score=ai_score,
-                    raw_details={
-                        "exif_data": (
-                            ai_result.get(
-                                "exif_data",
-                                {},
-                            )
-                        ),
-                        "raw_exif": (
-                            ai_result.get(
-                                "raw_exif",
-                                {},
-                            )
-                        ),
-                    },
-                )
-
-            except Exception:
-                pass
-
-            # -------------------------------------------------
-            # Duplicate detection
-            # -------------------------------------------------
-
-            try:
-
-                local_path = (
-                    submission_file.image_hd_url
-                )
-
-                if (
-                    local_path.startswith(
-                        "http://"
-                    )
-                    or local_path.startswith(
-                        "https://"
-                    )
-                    or local_path.startswith(
-                        "/static/uploads/"
-                    )
-                ):
-
-                    if "/static/uploads/" in local_path:
-
-                        filename = (
-                            local_path.split(
-                                "/static/uploads/"
-                            )[-1]
-                        )
-
-                        project_root = (
-                            os.path.abspath(
-                                os.path.join(
-                                    os.path.dirname(
-                                        __file__
-                                    ),
-                                    "../..",
-                                )
-                            )
-                        )
-
-                        local_path = os.path.join(
-                            project_root,
-                            "frontend",
-                            "static",
-                            "uploads",
-                            filename,
-                        )
-
-                    else:
-
-                        try:
-                            import urllib.request
-                            import tempfile
-
-                            suffix = (
-                                os.path.splitext(
-                                    local_path.split(
-                                        "?"
-                                    )[0]
-                                )[1]
-                                .lower()
-                                or ".jpg"
-                            )
-
-                            temp_file = (
-                                tempfile.NamedTemporaryFile(
-                                    delete=False,
-                                    suffix=suffix,
-                                )
-                            )
-
-                            temp_file.close()
-
-                            urllib.request.urlretrieve(
-                                submission_file.image_hd_url,
-                                temp_file.name,
-                            )
-
-                            local_path = (
-                                temp_file.name
-                            )
-
-                        except Exception:
-                            pass
-
-                if os.path.exists(local_path):
-
-                    with open(
-                        local_path,
-                        "rb",
-                    ) as f:
-                        file_bytes = f.read()
-
-                    # Ensure hashes exist
-                    phash_val, ahash_val = (
-                        self._calculate_image_hashes(
-                            file_bytes
-                        )
-                    )
-
-                    if (
-                        phash_val is not None
-                        or ahash_val is not None
-                    ):
-                        submission_file.phash = (
-                            phash_val
-                        )
-                        submission_file.ahash = (
-                            ahash_val
-                        )
-
-                        self.submission_repo.session.commit()
-
-                    self._run_duplicate_check_and_flag(
-                        updated_submission,
-                        file_bytes,
-                    )
-
-            except Exception as e:
-                print(
-                    f"Warning: duplicate check failed: {e}"
-                )
-
-        return updated_submission
+    return updated_submission
 
     # =========================================================
     # GET SUBMISSION BY ID
@@ -1331,41 +1201,6 @@ class SubmissionService:
             self._validate_round_status_for_submission(
                 target_round_id
             )
-
-        submission = (
-            self.submission_repo
-            .update_draft_submission(
-                submission_id=submission_id,
-                user_id=user_id,
-                title=title,
-                story_description=(
-                    story_description
-                ),
-                round_id=round_id,
-                status=status,
-                film_metadata=(
-                    film_metadata
-                ),
-                image_hd_url=(
-                    image_hd_url
-                ),
-                thumbnail_url=(
-                    thumbnail_url
-                ),
-                file_hash=(
-                    file_hash
-                ),
-                width_px=(
-                    width_px
-                ),
-                height_px=(
-                    height_px
-                ),
-                file_size_bytes=(
-                    file_size_bytes
-                ),
-            )
-        )
 
         submission = (
             self.submission_repo
@@ -1713,7 +1548,52 @@ class SubmissionService:
                     if submission_file.created_at
                     else None
                 ),
+                "file_type": (
+                    getattr(submission_file, "file_type", "main_image")
+                    or "main_image"
+                ),
             }
+
+        all_submission_files = []
+        if (
+            hasattr(submission, "files")
+            and submission.files is not None
+            and len(submission.files) > 0
+        ):
+            all_submission_files = list(submission.files)
+        elif submission_file:
+            all_submission_files = [submission_file]
+
+        files_categorized = {
+            "main_image": [],
+            "negative": [],
+            "contact_sheet": [],
+        }
+
+        for sf in all_submission_files:
+            ftype = getattr(sf, "file_type", "main_image") or "main_image"
+            sf_dict = {
+                "id": sf.id,
+                "image_hd_url": sf.image_hd_url,
+                "thumbnail_url": sf.thumbnail_url,
+                "width_px": sf.width_px,
+                "height_px": sf.height_px,
+                "file_size_bytes": sf.file_size_bytes,
+                "file_hash": sf.file_hash,
+                "file_type": ftype,
+                "phash": getattr(sf, "phash", None),
+                "ahash": getattr(sf, "ahash", None),
+                "created_at": (
+                    sf.created_at.isoformat()
+                    if getattr(sf, "created_at", None)
+                    else None
+                ),
+            }
+            if ftype not in files_categorized:
+                files_categorized[ftype] = []
+            files_categorized[ftype].append(sf_dict)
+
+        item["files"] = files_categorized
 
         if film_metadata:
 

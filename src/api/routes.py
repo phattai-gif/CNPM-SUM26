@@ -450,10 +450,13 @@ def register_routes(app):
                         "message": "Forbidden"
                     }), 403
 
-            submission_file = (
+            main_image_file = (
                 session
                 .query(SubmissionFileModel)
-                .filter_by(submission_id=submission.id)
+                .filter_by(
+                    submission_id=submission.id,
+                    file_type="main_image",
+                )
                 .first()
             )
             film_metadata = (
@@ -490,16 +493,44 @@ def register_routes(app):
                 else None
             )
 
+            all_submission_files = (
+                session
+                .query(SubmissionFileModel)
+                .filter_by(submission_id=submission.id)
+                .all()
+            )
+            files_categorized = {
+                "main_image": [],
+                "negative": [],
+                "contact_sheet": [],
+            }
+            for sf in all_submission_files:
+                ftype = getattr(sf, "file_type", "main_image") or "main_image"
+                sf_dict = {
+                    "id": sf.id,
+                    "image_hd_url": sf.image_hd_url,
+                    "thumbnail_url": sf.thumbnail_url,
+                    "width_px": sf.width_px,
+                    "height_px": sf.height_px,
+                    "file_size_bytes": sf.file_size_bytes,
+                    "file_hash": sf.file_hash,
+                    "file_type": ftype,
+                }
+                if ftype not in files_categorized:
+                    files_categorized[ftype] = []
+                files_categorized[ftype].append(sf_dict)
+
             return jsonify({
                 "submission": {
                     "id": submission.id,
                     "round_id": submission.round_id,
                     "status": submission.status,
                     "image_url": (
-                        submission_file.image_hd_url
-                        if submission_file
+                        main_image_file.image_hd_url
+                        if main_image_file
                         else None
                     ),
+                    "files": files_categorized,
                     "metadata": {
                         "camera_body": (
                             film_metadata.camera_body
@@ -527,13 +558,13 @@ def register_routes(app):
                             else None
                         ),
                         "width_px": (
-                            submission_file.width_px
-                            if submission_file
+                            main_image_file.width_px
+                            if main_image_file
                             else None
                         ),
                         "height_px": (
-                            submission_file.height_px
-                            if submission_file
+                            main_image_file.height_px
+                            if main_image_file
                             else None
                         ),
                     },

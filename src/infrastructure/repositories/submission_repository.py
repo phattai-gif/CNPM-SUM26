@@ -608,6 +608,7 @@ class SubmissionRepository(ISubmissionRepository):
                     file_hash=f_info["file_hash"],
                     phash=f_info.get("phash"),
                     ahash=f_info.get("ahash"),
+                    file_type=f_info.get("file_type", "main_image"),
                 )
 
                 self.session.add(
@@ -764,6 +765,10 @@ class SubmissionRepository(ISubmissionRepository):
                             ),
                             ahash=f_info.get(
                                 "ahash"
+                            ),
+                            file_type=f_info.get(
+                                "file_type",
+                                "main_image",
                             ),
                         )
                     )
