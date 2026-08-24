@@ -121,6 +121,54 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Google Sign-In Integration
+  if (window.google_client_id && document.getElementById('googleBtn')) {
+    const handleCredentialResponse = async (response) => {
+      showMessage('');
+      if (messageEl) {
+        messageEl.textContent = 'Verifying Google authentication...';
+        messageEl.className = 'message info';
+      }
+      
+      const { ok, data } = await requestJson('/auth/google', { id_token: response.credential });
+      if (!ok) {
+        showMessage(data.message || 'Google Sign-In failed.');
+        return;
+      }
+
+      if (data.token) {
+        window.AuthSession.setSession({
+          token: data.token,
+          user: data.user,
+          role: data.user?.role || null
+        });
+      }
+
+      showMessage('Login successful! Welcome, ' + (data.user?.username || 'user'), true);
+      setTimeout(() => {
+        redirectToRole(data.user?.role || window.AuthSession.getSession().role);
+      }, 400);
+    };
+
+    window.handleCredentialResponse = handleCredentialResponse;
+
+    const initGoogleGSI = () => {
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        google.accounts.id.initialize({
+          client_id: window.google_client_id,
+          callback: handleCredentialResponse
+        });
+        google.accounts.id.renderButton(
+          document.getElementById("googleBtn"),
+          { theme: "outline", size: "large", width: "100%", shape: "pill" }
+        );
+      } else {
+        setTimeout(initGoogleGSI, 100);
+      }
+    };
+    initGoogleGSI();
+  }
+
   if (registerForm) {
     registerForm.addEventListener('submit', async (event) => {
       event.preventDefault();

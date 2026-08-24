@@ -44,6 +44,9 @@ class AuthService:
     def get_user_by_id(self, user_id: int) -> Optional[Auth]:
         return self.repository.get_user_by_id(user_id)
 
+    def get_user_by_email(self, email: str) -> Optional[Auth]:
+        return self.repository.get_user_by_email(email)
+
     def update_profile(self, user_id: int, full_name: Optional[str] = None, bio: Optional[str] = None, avatar_url: Optional[str] = None) -> Optional[Auth]:
         return self.repository.update_profile(user_id=user_id, full_name=full_name, bio=bio, avatar_url=avatar_url)
 

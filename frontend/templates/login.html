@@ -22,10 +22,19 @@
         <button type="submit">Login</button>
       </form>
 
+      <div class="auth-separator">
+        <span>Or continue with</span>
+      </div>
+      <div id="googleBtn" class="google-btn-container"></div>
+
       <div id="message" class="message"></div>
       <p class="secondary-text">Need an account? <a href="{{ url_for('auth.register_page') }}">Create one</a></p>
     </div>
   </div>
+  <script>
+    window.google_client_id = "{{ google_client_id }}";
+  </script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="{{ url_for('static', filename='api_client.js') }}"></script>
   <script src="{{ url_for('static', filename='auth.js') }}"></script>
 </body>

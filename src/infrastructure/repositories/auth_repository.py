@@ -124,6 +124,29 @@ class AuthRepository(IAuthRepository):
             print(f"Error fetching user by id: {e}")
             return None
 
+    def get_user_by_email(self, email: str) -> Optional[Auth]:
+        try:
+            user_obj = self.session.query(UserModel).filter_by(email=email).first()
+            if not user_obj:
+                return None
+
+            role_code = self.get_user_role(user_obj.id) or 'participant'
+            return Auth(
+                id=user_obj.id,
+                username=user_obj.username,
+                password='',
+                passwordcomfirm='',
+                email=user_obj.email,
+                role=role_code,
+                full_name=user_obj.full_name,
+                avatar_url=getattr(user_obj, 'avatar_url', None),
+                bio=getattr(user_obj, 'bio', None),
+                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None
+            )
+        except Exception as e:
+            print(f"Error fetching user by email: {e}")
+            return None
+
     def update_profile(self, user_id: int, full_name: Optional[str] = None, bio: Optional[str] = None, avatar_url: Optional[str] = None) -> Optional[Auth]:
         try:
             user_obj = self.session.query(UserModel).filter_by(id=user_id).first()
