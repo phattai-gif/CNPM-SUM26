@@ -1,5 +1,4 @@
 ﻿from abc import ABC, abstractmethod
-
 import os
 
 from sqlalchemy import create_engine
@@ -9,8 +8,9 @@ from sqlalchemy.pool import StaticPool
 
 class AbstractDatabase(ABC):
     def __init__(self):
-        self.database_uri = os.environ.get("DATABASE_URI") or os.environ.get(
-            "POSTGREE_DATABASE_URL"
+        self.database_uri = (
+            os.environ.get("DATABASE_URI")
+            or os.environ.get("POSTGREE_DATABASE_URL")
         )
 
         if not self.database_uri:
@@ -20,13 +20,19 @@ class AbstractDatabase(ABC):
             )
 
         engine_options = {"pool_pre_ping": True}
-        if self.database_uri.startswith("sqlite:///:memory:"):
-            engine_options.update({
-                "connect_args": {"check_same_thread": False},
-                "poolclass": StaticPool,
-            })
 
-        self.engine = create_engine(self.database_uri, **engine_options)
+        if self.database_uri.startswith("sqlite:///:memory:"):
+            engine_options.update(
+                {
+                    "connect_args": {"check_same_thread": False},
+                    "poolclass": StaticPool,
+                }
+            )
+
+        self.engine = create_engine(
+            self.database_uri,
+            **engine_options,
+        )
 
         self.SessionLocal = sessionmaker(
             autocommit=False,

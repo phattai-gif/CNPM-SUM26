@@ -16,7 +16,15 @@ from infrastructure.models.app import (
     AIFlagModel,
     AIAnalysisReportModel,
     RoundModel,
+
+    ContestModel,
     JudgeAssignmentModel,
+    ScoreModel,
+    ScoreFeedbackModel,
+    CriteriaModel,
+
+    JudgeAssignmentModel,
+
 )
 
 

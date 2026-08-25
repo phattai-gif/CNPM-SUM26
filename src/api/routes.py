@@ -5,7 +5,6 @@ from flask import (
     redirect,
     render_template,
 )
-
 from api.controllers.auth_controller import auth_bp
 from api.controllers.ai_detection_controller import bp as ai_detection_bp
 from api.controllers.duplicate_detection_controller import (
@@ -17,17 +16,14 @@ from api.controllers.submission_controller import (
     get_organizer_contest_submissions,
     get_judge_assignment_submissions,
 )
-
 from api.controllers.submission_review_controller import (
     bp as submission_review_bp,
 )
-
 from api.controllers.contest_controller import (
     contest_bp,
     public_bp as contest_public_bp,
     finalize_round,
 )
-
 from api.controllers.judge_controller import judge_bp
 from api.controllers.notification_controller import notification_bp
 from api.controllers.contest_settings_controller import (
@@ -38,7 +34,6 @@ from api.role_required import role_required
 from api.controllers.admin_controller import admin_bp
 from api.role_required import role_required
 from services.score_service import ScoreService
-
 
 def register_routes(app):
     # ============================================================
@@ -82,6 +77,14 @@ def register_routes(app):
             "root",
             lambda: redirect("/contests"),
         )
+    except Exception:
+        pass
+    try:
+        app.add_url_rule('/profile', 'profile_page', lambda: render_template('profile.html'))
+    except Exception:
+        pass
+    try:
+        app.add_url_rule('/portfolio', 'portfolio_page', lambda: redirect('/profile'))
     except Exception:
         pass
 

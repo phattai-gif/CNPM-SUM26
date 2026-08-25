@@ -1190,6 +1190,186 @@ def create_submission():
         ), 500
 
 
+
+# -------------------------------------------------------------------------
+# Participant Portfolio & Submission Detail Routes
+# -------------------------------------------------------------------------
+
+@submission_bp.route("/my", methods=["GET"])
+@token_required
+def get_my_submissions():
+    """
+    Retrieve all submissions belonging to the currently
+    logged-in participant.
+    """
+    user_id = request.user.get("user_id")
+
+    if not user_id:
+        return jsonify({
+            "message": "User information is missing in token"
+        }), 401
+
+    # --------------------------------------------------------
+    # ROUND FILTER
+    # --------------------------------------------------------
+    round_id_param = request.args.get("round_id")
+    round_id = None
+
+    if round_id_param is not None:
+        try:
+            round_id = int(round_id_param)
+        except (ValueError, TypeError):
+            return jsonify({
+                "message": "Invalid round_id"
+            }), 400
+
+    # --------------------------------------------------------
+    # STATUS FILTER
+    # --------------------------------------------------------
+    status = request.args.get("status")
+
+    allowed_statuses = {
+        "draft",
+        "submitted",
+        "flagged",
+        "evaluated",
+        "under_review",
+        "graded",
+        "approved",
+        "rejected",
+    }
+
+    if status and status not in allowed_statuses:
+        return jsonify({
+            "message": "Invalid status"
+        }), 400
+
+    # --------------------------------------------------------
+    # AI FLAG FILTER
+    # --------------------------------------------------------
+    ai_flag = request.args.get("ai_flag")
+
+    allowed_ai_flags = {
+        "safe",
+        "medium",
+        "high",
+    }
+
+    if ai_flag and ai_flag not in allowed_ai_flags:
+        return jsonify({
+            "message": "Invalid ai_flag"
+        }), 400
+
+    # --------------------------------------------------------
+    # GET SUBMISSIONS
+    # --------------------------------------------------------
+    try:
+        data = submission_service.get_my_submissions(
+            user_id=user_id,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
+        )
+
+        # Service already returns a response dictionary
+        if isinstance(data, dict):
+            return jsonify(data), 200
+
+        # Service returns a list
+        if isinstance(data, list):
+            return jsonify({
+                "message": "My submissions retrieved successfully",
+                "submissions": data,
+                "count": len(data),
+                "total": len(data),
+            }), 200
+
+        # Fallback
+        return jsonify(data), 200
+
+    except Exception as error:
+        import traceback
+        traceback.print_exc()
+
+        return jsonify({
+            "message": "Failed to get my submissions",
+            "error": str(error),
+        }), 500
+
+
+# -------------------------------------------------------------------------
+# Alias: /my-submissions
+# -------------------------------------------------------------------------
+
+@submission_bp.route("/my-submissions", methods=["GET"])
+@token_required
+def get_my_submissions_alias():
+    """
+    Alias for /my.
+    """
+    return get_my_submissions()
+
+
+# -------------------------------------------------------------------------
+# Alias: /me
+# -------------------------------------------------------------------------
+
+@submission_bp.route("/me", methods=["GET"])
+@token_required
+def get_my_submissions_me():
+    """
+    Alias for /my.
+    """
+    return get_my_submissions()
+
+
+# -------------------------------------------------------------------------
+# UI: My Submissions / Portfolio
+# -------------------------------------------------------------------------
+
+@submission_bp.route("/my-submissions-ui", methods=["GET"])
+def my_submissions_ui():
+    """
+    Render the My Submissions / Portfolio page.
+    """
+    return render_template("my_submissions.html")
+
+
+# -------------------------------------------------------------------------
+# UI: Submission Detail
+# -------------------------------------------------------------------------
+
+@submission_bp.route(
+    "/detail/<int:submission_id>",
+    methods=["GET"],
+)
+def submission_detail_ui_detail(submission_id):
+    """
+    Render the Submission Details page.
+    """
+    return render_template(
+        "submission_detail.html",
+        submission_id=submission_id,
+    )
+
+
+# -------------------------------------------------------------------------
+# UI: Submission Detail Alias
+# -------------------------------------------------------------------------
+
+@submission_bp.route(
+    "/<int:submission_id>/ui",
+    methods=["GET"],
+)
+def submission_detail_ui(submission_id):
+    """
+    Render the Submission Details page.
+    """
+    return render_template(
+        "submission_detail.html",
+        submission_id=submission_id,
+    )
+
 # ============================================================
 # UPLOAD PROOF FILES
 # ============================================================
@@ -1383,59 +1563,49 @@ def upload_proof_files(submission_id):
     methods=["PUT", "PATCH"],
 )
 @token_required
+@submission_bp.route(
+    "/<int:submission_id>",
+    methods=["PUT", "PATCH"],
+)
+@token_required
 def update_submission(submission_id):
     user_id = _get_user_id()
 
     if not user_id:
-        return jsonify(
-            {
-                "message": (
-                    "User information is missing "
-                    "in token"
-                )
-            }
-        ), 401
+        return jsonify({
+            "message": "User information is missing in token"
+        }), 401
 
     if request.is_json:
-        data = (
-            request.get_json(silent=True)
-            or {}
-        )
+        data = request.get_json(silent=True) or {}
     else:
         data = request.form
 
     title = data.get("title")
-
     if title is not None:
         title = title.strip()
-
         if not title:
-            return jsonify(
-                {
-                    "message": "title is required"
-                }
-            ), 400
+            return jsonify({
+                "message": "title is required"
+            }), 400
 
-    if data.get("description") is not None:
-        description = data.get("description")
-    else:
-        description = data.get(
-            "story_description"
-        )
+    description = (
+        data.get("description")
+        if data.get("description") is not None
+        else data.get("story_description")
+    )
+
+    # --------------------------------------------------------
+    # COLLECT FILES
+    # --------------------------------------------------------
+    try:
+        uploaded_files = _collect_uploaded_files(strict=True)
+    except ValueError as error:
+        return jsonify({
+            "message": str(error)
+        }), 400
 
     files_list = []
-
-    try:
-        uploaded_files = _collect_uploaded_files(
-            strict=True
-        )
-
-    except ValueError as error:
-        return jsonify(
-            {
-                "message": str(error)
-            }
-        ), 400
 
     for uploaded_file in uploaded_files:
         try:
@@ -1443,160 +1613,118 @@ def update_submission(submission_id):
                 file_obj=uploaded_file["file_obj"],
                 file_type=uploaded_file["file_type"],
             )
-
-            files_list.append(
-                file_payload
-            )
+            files_list.append(file_payload)
 
         except ValueError as error:
-            return jsonify(
-                {
-                    "message": str(error)
-                }
-            ), 400
+            return jsonify({
+                "message": str(error)
+            }), 400
 
+    # --------------------------------------------------------
+    # FILM METADATA
+    # --------------------------------------------------------
     try:
-        film_metadata = _parse_film_metadata(
-            data
+        film_metadata = _parse_film_metadata(data)
+    except ValueError as error:
+        return jsonify({
+            "message": str(error)
+        }), 400
+
+    # --------------------------------------------------------
+    # UPDATE
+    # --------------------------------------------------------
+    try:
+        update_method = getattr(
+            submission_service,
+            "update_draft_submission",
+            None,
         )
 
-    except ValueError as error:
-        return jsonify(
-            {
-                "message": str(error)
-            }
-        ), 400
-
-    try:
-        if request.is_json:
-            updated_sub = (
-                submission_service
-                .update_draft_submission(
-                    submission_id=submission_id,
-                    user_id=user_id,
-                    title=title,
-                    story_description=description,
-                    round_id=data.get(
-                        "round_id"
-                    ),
-                    status=data.get(
-                        "status"
-                    ),
-                    film_metadata=(
-                        film_metadata
-                        or None
-                    ),
-                )
+        if update_method is not None:
+            updated_sub = update_method(
+                submission_id=submission_id,
+                user_id=user_id,
+                title=title,
+                story_description=description,
+                round_id=data.get("round_id"),
+                status=data.get("status"),
+                film_metadata=film_metadata or None,
+                files=files_list,
             )
-
-            return jsonify(
-                {
-                    "message": (
-                        "Submission updated successfully"
-                    ),
-                    "submission": {
-                        "id": updated_sub.id,
-                        "title": updated_sub.title,
-                        "status": updated_sub.status,
-                        "round_id": updated_sub.round_id,
-                        "story_description": getattr(
-                            updated_sub,
-                            "story_description",
-                            None,
-                        ),
-                        "submitted_at": (
-                            updated_sub.submitted_at.isoformat()
-                            if getattr(
-                                updated_sub,
-                                "submitted_at",
-                                None,
-                            )
-                            else None
-                        ),
-                        "updated_at": (
-                            updated_sub.updated_at.isoformat()
-                            if getattr(
-                                updated_sub,
-                                "updated_at",
-                                None,
-                            )
-                            else None
-                        ),
-                    },
-                }
-            ), 200
-
-        updated_sub = (
-            submission_service.update_draft(
+        else:
+            updated_sub = submission_service.update_draft(
                 submission_id=submission_id,
                 user_id=user_id,
                 title=title,
                 story_description=description,
                 files=files_list,
-                film_metadata=(
-                    film_metadata
-                    if film_metadata
-                    else None
-                ),
+                film_metadata=film_metadata or None,
             )
-        )
 
         if updated_sub is None:
-            return jsonify(
-                {
-                    "message": "Submission not found"
-                }
-            ), 404
+            return jsonify({
+                "message": "Submission not found"
+            }), 404
 
-        return jsonify(
-            {
-                "message": (
-                    "Submission draft updated successfully"
-                ),
-                "submission": _serialize_submission(
-                    updated_sub
-                ),
-            }
-        ), 200
+        return jsonify({
+            "message": "Submission updated successfully",
+            "submission": _serialize_submission(updated_sub),
+        }), 200
 
     except PermissionError as error:
-        return jsonify(
-            {
-                "message": str(error)
-            }
-        ), 403
+        return jsonify({
+            "message": str(error)
+        }), 403
 
     except ValueError as error:
         err_msg = str(error)
 
         if "not found" in err_msg.lower():
-            return jsonify(
-                {
-                    "message": err_msg
-                }
-            ), 404
-
-        return jsonify(
-            {
+            return jsonify({
                 "message": err_msg
-            }
-        ), 400
+            }), 404
+
+        return jsonify({
+            "message": err_msg
+        }), 400
+
+    except TypeError as error:
+        # Compatibility with older update_draft_submission
+        # signatures.
+        try:
+            updated_sub = submission_service.update_draft(
+                submission_id=submission_id,
+                user_id=user_id,
+                title=title,
+                story_description=description,
+                files=files_list,
+                film_metadata=film_metadata or None,
+            )
+
+            if updated_sub is None:
+                return jsonify({
+                    "message": "Submission not found"
+                }), 404
+
+            return jsonify({
+                "message": "Submission updated successfully",
+                "submission": _serialize_submission(updated_sub),
+            }), 200
+
+        except Exception as fallback_error:
+            return jsonify({
+                "message": "Failed to update submission draft",
+                "error": str(fallback_error),
+            }), 500
 
     except Exception as error:
-        return jsonify(
-            {
-                "message": (
-                    "Failed to update submission draft"
-                ),
-                "error": str(error),
-            }
-        ), 500
+        import traceback
+        traceback.print_exc()
 
-
-# ============================================================
-# SUBMIT DRAFT
-# ============================================================
-
+        return jsonify({
+            "message": "Failed to update submission draft",
+            "error": str(error),
+        }), 500
 @submission_bp.route(
     "/<int:submission_id>/submit",
     methods=["POST"],
@@ -1683,12 +1811,8 @@ def submit_submission(submission_id):
     "participant",
 )
 def get_submission(submission_id):
-    user_id = request.user.get("user_id")
-    role = request.user.get("role", "participant")
-
-    # --------------------------------------------------------
-    # NEW DETAIL SERVICE
-    # --------------------------------------------------------
+    user_id = _get_user_id()
+    role = _get_user_role() or "participant"
 
     try:
         detail = submission_service.get_submission_detail(
@@ -1702,28 +1826,12 @@ def get_submission(submission_id):
                 detail.setdefault("files", [])
 
                 if not detail["files"] and detail.get("file"):
-                    detail["files"] = [
-                        detail["file"]
-                    ]
+                    detail["files"] = [detail["file"]]
 
-                normalized_files = []
+                # Normalize files
+                source_files = detail.get("files") or []
 
-                                # ------------------------------------------------
-                # GET FILES FROM DETAIL
-                # ------------------------------------------------
-
-                source_files = detail.get(
-                    "files",
-                    [],
-                ) or []
-
-                # ------------------------------------------------
-                # GET FILES FROM SUBMISSION OBJECT
-                # ------------------------------------------------
-
-                submission_obj = detail.get(
-                    "submission"
-                )
+                submission_obj = detail.get("submission")
 
                 if submission_obj is not None:
                     submission_files = getattr(
@@ -1735,10 +1843,6 @@ def get_submission(submission_id):
                     if submission_files:
                         source_files = submission_files
 
-                # ------------------------------------------------
-                # NORMALIZE FILES
-                # ------------------------------------------------
-
                 normalized_files = []
 
                 for item in source_files:
@@ -1747,18 +1851,13 @@ def get_submission(submission_id):
 
                     if isinstance(item, dict):
                         item = dict(item)
-
                     else:
                         try:
-                            item = _serialize_submission_file(
-                                item
-                            )
+                            item = _serialize_submission_file(item)
                         except Exception:
                             continue
 
-                    file_type = item.get(
-                        "file_type"
-                    )
+                    file_type = item.get("file_type")
 
                     if not file_type:
                         file_type = "main_image"
@@ -1767,11 +1866,7 @@ def get_submission(submission_id):
                         file_type = "negative"
 
                     item["file_type"] = file_type
-
                     normalized_files.append(item)
-                # ------------------------------------------------
-                # GROUP PROOF FILES
-                # ------------------------------------------------
 
                 files_group = {
                     "main_image": [],
@@ -1780,33 +1875,23 @@ def get_submission(submission_id):
                 }
 
                 for item in normalized_files:
-                    file_type = item.get(
-                        "file_type"
-                    )
+                    file_type = item.get("file_type")
 
                     if file_type == "main_image":
-                        files_group[
-                            "main_image"
-                        ].append(item)
+                        files_group["main_image"].append(item)
 
                     elif file_type in {
                         "negative",
                         "negative_film",
                     }:
-                        files_group[
-                            "negative"
-                        ].append(item)
+                        files_group["negative"].append(item)
 
                     elif file_type == "contact_sheet":
-                        files_group[
-                            "contact_sheet"
-                        ].append(item)
+                        files_group["contact_sheet"].append(item)
 
                 detail["files"] = files_group
-                # ------------------------------------------------
-                # BACKWARD COMPATIBILITY
-                # ------------------------------------------------
 
+                # Backward compatibility
                 main_files = files_group["main_image"]
 
                 main_file = (
@@ -1855,57 +1940,38 @@ def get_submission(submission_id):
                 ), 200
 
     except PermissionError as error:
-        return jsonify(
-            {
-                "message": str(error)
-            }
-        ), 403
-
-    except (
-        AttributeError,
-        TypeError,
-    ):
-        pass
+        return jsonify({
+            "message": str(error)
+        }), 403
 
     except Exception:
+        # Fall through to repository fallback.
         pass
 
     # --------------------------------------------------------
-    # FALLBACK REPOSITORY
+    # FALLBACK
     # --------------------------------------------------------
-
     try:
         result = submission_service.get_submission_by_id(
             submission_id
         )
 
     except Exception as error:
-        return jsonify(
-            {
-                "message": "Failed to get submission",
-                "error": str(error),
-            }
-        ), 500
+        return jsonify({
+            "message": "Failed to get submission",
+            "error": str(error),
+        }), 500
 
     if not result:
-        return jsonify(
-            {
-                "message": "Submission not found"
-            }
-        ), 404
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
 
     try:
         if isinstance(result, dict):
             submission = result.get("submission")
-
-            files = result.get(
-                "files",
-                [],
-            )
-
-            film_metadata = result.get(
-                "film_metadata"
-            )
+            files = result.get("files", [])
+            film_metadata = result.get("film_metadata")
 
         else:
             if len(result) >= 3:
@@ -1919,15 +1985,9 @@ def get_submission(submission_id):
                     submission_file,
                     (list, tuple),
                 ):
-                    files = list(
-                        submission_file
-                    )
-
+                    files = list(submission_file)
                 elif submission_file:
-                    files = [
-                        submission_file
-                    ]
-
+                    files = [submission_file]
                 else:
                     files = []
 
@@ -1937,26 +1997,19 @@ def get_submission(submission_id):
                 film_metadata = None
 
         if not submission:
-            return jsonify(
-                {
-                    "message": "Submission not found"
-                }
-            ), 404
+            return jsonify({
+                "message": "Submission not found"
+            }), 404
 
-        # ----------------------------------------------------
-        # PARTICIPANT OWNERSHIP
-        # ----------------------------------------------------
-
+        # Participant can only view own submission.
         if role == "participant":
             if submission.user_id != user_id:
-                return jsonify(
-                    {
-                        "message": (
-                            "You are not allowed "
-                            "to view this submission"
-                        )
-                    }
-                ), 403
+                return jsonify({
+                    "message": (
+                        "You are not allowed "
+                        "to view this submission"
+                    )
+                }), 403
 
         response = _serialize_submission_detail(
             submission=submission,
@@ -1965,20 +2018,17 @@ def get_submission(submission_id):
         )
 
     except Exception as error:
-        return jsonify(
-            {
-                "message": (
-                    "Failed to serialize "
-                    "submission details"
-                ),
-                "error": str(error),
-            }
-        ), 500
+        return jsonify({
+            "message": (
+                "Failed to serialize "
+                "submission details"
+            ),
+            "error": str(error),
+        }), 500
 
     # --------------------------------------------------------
     # AI FLAG
     # --------------------------------------------------------
-
     ai_flag_data = None
 
     try:
@@ -2001,9 +2051,6 @@ def get_submission(submission_id):
     response["ai_flag"] = ai_flag_data
 
     return jsonify(response), 200
-# ============================================================
-# SUBMIT SCORE
-# ============================================================
 
 @submission_bp.route(
     "/<int:submission_id>/scores",
@@ -2439,6 +2486,7 @@ def list_submissions():
         ), 500
 
 
+
 # ============================================================
 # MY SUBMISSIONS
 # ============================================================
@@ -2576,6 +2624,7 @@ def get_my_submissions():
 # ============================================================
 # ORGANIZER CONTEST SUBMISSIONS
 # ============================================================
+
 
 @submission_bp.route(
     "/contest/<int:contest_id>",

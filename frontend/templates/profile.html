@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ & Portfolio Nghệ Sĩ - Analog Film Contest</title>
+    <meta name="description" content="Trang hồ sơ cá nhân và bộ sưu tập tác phẩm nhiếp ảnh phim analog đã được thẩm định và công khai.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='profile.css') }}">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="profile-navbar" id="mainNavbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/contests" class="brand-link" id="navBrandLink">
+                    <span class="brand-icon">🎞️</span>
+                    <span class="brand-text">ANALOG<span>CONTEST</span></span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="/contests" class="nav-link" id="navContests">Cuộc Thi</a>
+                <a href="/leaderboard" class="nav-link" id="navLeaderboard">Bảng Xếp Hạng</a>
+                <a href="/my-submissions" class="nav-link" id="navMySubmissions">Bài Dự Thi</a>
+                <a href="/profile" class="nav-link active" id="navProfile">Hồ Sơ & Portfolio</a>
+            </div>
+            <div class="nav-user" id="navUserSection">
+                <a href="/submit" class="btn-nav-submit" id="navSubmitBtn">
+                    <span>+</span> Nộp Tác Phẩm
+                </a>
+                <div class="user-chip" id="userChip">
+                    <div class="user-avatar" id="navUserAvatar">📸</div>
+                    <span class="user-name" id="navUserName">Tài khoản</span>
+                </div>
+                <button type="button" class="btn-logout" id="logoutBtn" title="Đăng xuất">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="profile-main-container">
+        <div class="container">
+            <!-- Profile Hero Section -->
+            <section class="profile-hero-card" id="profileHeroSection">
+                <div class="hero-cover-banner">
+                    <div class="cover-overlay"></div>
+                    <div class="cover-pattern"></div>
+                </div>
+
+                <div class="hero-content-wrap">
+                    <div class="hero-avatar-wrapper">
+                        <div class="profile-avatar-container" id="profileAvatarContainer">
+                            <img src="" alt="Avatar" class="profile-avatar-img" id="profileAvatarImg" style="display: none;">
+                            <div class="profile-avatar-initial" id="profileAvatarInitial">👤</div>
+                            <div class="avatar-badge" id="avatarBadge" title="Nhiếp ảnh gia xác thực">✓</div>
+                        </div>
+                    </div>
+
+                    <div class="hero-meta-details">
+                        <div class="hero-header-top">
+                            <div class="user-identity">
+                                <div class="identity-name-row">
+                                    <h1 class="user-fullname" id="profileFullName">Đang tải hồ sơ...</h1>
+                                    <span class="role-pill" id="profileRolePill">Participant</span>
+                                </div>
+                                <div class="user-handle-row">
+                                    <span class="user-username" id="profileUsername">@username</span>
+                                    <span class="dot-separator">•</span>
+                                    <span class="user-email" id="profileEmail">email@domain.com</span>
+                                    <span class="dot-separator">•</span>
+                                    <span class="user-joined" id="profileJoinedDate">Thành viên từ 2026</span>
+                                </div>
+                            </div>
+
+                            <div class="hero-action-buttons">
+                                <button type="button" class="btn-action btn-edit-profile" id="btnOpenEditModal">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    Chỉnh Sửa Hồ Sơ
+                                </button>
+                                <a href="/submit" class="btn-action btn-submit-photo" id="btnHeroSubmit">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                                    Nộp Tác Phẩm
+                                </a>
+                                <button type="button" class="btn-action btn-share-profile" id="btnShareProfile" title="Sao chép liên kết hồ sơ">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bio / Description -->
+                        <div class="user-bio-section">
+                            <p class="user-bio-text" id="profileBioText">Chưa cập nhật tiểu sử nghệ sĩ. Hãy giới thiệu một chút về phong cách nhiếp ảnh phim của bạn!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Overview Bar -->
+                <div class="profile-stats-grid" id="profileStatsGrid">
+                    <div class="profile-stat-box">
+                        <div class="stat-icon-wrap icon-photos">📷</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statTotalPhotos">0</span>
+                            <span class="stat-name">Tổng tác phẩm</span>
+                        </div>
+                    </div>
+                    <div class="profile-stat-box">
+                        <div class="stat-icon-wrap icon-approved">🌟</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statApprovedPhotos">0</span>
+                            <span class="stat-name">Tác phẩm công khai</span>
+                        </div>
+                    </div>
+                    <div class="profile-stat-box">
+                        <div class="stat-icon-wrap icon-score">🏆</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statHighScore">--</span>
+                            <span class="stat-name">Điểm cao nhất</span>
+                        </div>
+                    </div>
+                    <div class="profile-stat-box">
+                        <div class="stat-icon-wrap icon-contests">🎞️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statContestsJoined">0</span>
+                            <span class="stat-name">Cuộc thi tham gia</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Tabs Header -->
+            <div class="profile-navigation-tabs" id="profileNavTabs">
+                <button class="nav-tab-btn active" data-tab="portfolio" id="tabBtnPortfolio">
+                    <span class="tab-icon">🖼️</span>
+                    <span>Portfolio Tác Phẩm</span>
+                    <span class="tab-count-badge" id="tabPortfolioCount">0</span>
+                </button>
+                <button class="nav-tab-btn" data-tab="about" id="tabBtnAbout">
+                    <span class="tab-icon">⚙️</span>
+                    <span>Cài Đặt Hồ Sơ</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: PORTFOLIO SHOWCASE -->
+            <section class="tab-content-panel active" id="panelPortfolio">
+                <!-- Portfolio Filter & Search Toolbar -->
+                <div class="portfolio-toolbar">
+                    <div class="portfolio-filter-buttons" id="portfolioFilterGroup">
+                        <button class="filter-pill-btn active" data-filter="all" id="filterAll">
+                            Tất cả (<span id="filterCountAll">0</span>)
+                        </button>
+                        <button class="filter-pill-btn" data-filter="public" id="filterPublic">
+                            Đã duyệt / Công khai (<span id="filterCountPublic">0</span>)
+                        </button>
+                        <button class="filter-pill-btn" data-filter="highscore" id="filterHighScore">
+                            Điểm cao ★ (<span id="filterCountHighScore">0</span>)
+                        </button>
+                        <button class="filter-pill-btn" data-filter="draft" id="filterDraft">
+                            Bản nháp (<span id="filterCountDraft">0</span>)
+                        </button>
+                    </div>
+
+                    <div class="portfolio-search-input">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="portfolioSearch" placeholder="Tìm theo tên tác phẩm, phim, máy ảnh...">
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading-state" id="portfolioLoading">
+                    <div class="spinner"></div>
+                    <p>Đang tải bộ sưu tập tác phẩm từ thư viện phim...</p>
+                </div>
+
+                <!-- Empty Portfolio State -->
+                <div class="empty-portfolio-state" id="portfolioEmpty" style="display: none;">
+                    <div class="empty-art-icon">🎞️</div>
+                    <h3 id="emptyTitle">Chưa có tác phẩm nào trong portfolio</h3>
+                    <p id="emptySubtitle">Hãy gửi bài dự thi hoặc cập nhật bài thi đầu tiên của bạn để trưng bày tác phẩm nghệ thuật tại đây.</p>
+                    <a href="/submit" class="btn-primary-action" id="btnEmptySubmit">
+                        <span>+</span> Nộp Tác Phẩm Ngay
+                    </a>
+                </div>
+
+                <!-- Gallery Showcase Grid -->
+                <div class="portfolio-gallery-grid" id="portfolioGrid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </section>
+
+            <!-- TAB 2: ABOUT & PROFILE SETTINGS -->
+            <section class="tab-content-panel" id="panelAbout" style="display: none;">
+                <div class="settings-card-layout">
+                    <div class="settings-card-header">
+                        <h2>Chỉnh Sửa Hồ Sơ Cá Nhân</h2>
+                        <p>Cập nhật thông tin công khai, giới thiệu bản thân và phong cách chụp ảnh phim của bạn.</p>
+                    </div>
+
+                    <form id="profileEditForm" class="settings-form">
+                        <div class="form-row form-row-2col">
+                            <div class="form-group">
+                                <label for="inputFullName">Họ và Tên Hiển Thị</label>
+                                <input type="text" id="inputFullName" class="form-input" placeholder="Ví dụ: Nguyễn Văn A" required>
+                                <span class="form-hint">Tên sẽ xuất hiện trên bài dự thi và chứng nhận tác phẩm.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputUsername">Tên Người Dùng (Username)</label>
+                                <input type="text" id="inputUsername" class="form-input" disabled>
+                                <span class="form-hint">Username là định danh tài khoản cố định.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-row form-row-2col">
+                            <div class="form-group">
+                                <label for="inputEmail">Địa Chỉ Email</label>
+                                <input type="email" id="inputEmail" class="form-input" disabled>
+                                <span class="form-hint">Dùng để nhận thông báo chấm giải và xác thực tài khoản.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputRole">Vai Trò Hệ Thống</label>
+                                <input type="text" id="inputRole" class="form-input" disabled>
+                                <span class="form-hint">Cấp độ tài khoản (Participant, Judge, Organizer, Admin).</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inputAvatarUrl">Đường Dẫn Ảnh Đại Diện (Avatar URL)</label>
+                            <div class="avatar-input-group">
+                                <input type="url" id="inputAvatarUrl" class="form-input" placeholder="https://example.com/avatar.jpg">
+                                <div class="avatar-preview-mini" id="avatarPreviewMini">
+                                    <img src="" alt="Preview" id="avatarMiniImg" style="display: none;">
+                                    <span id="avatarMiniInitial">👤</span>
+                                </div>
+                            </div>
+                            <span class="form-hint">Nhập liên kết ảnh trực tiếp (.jpg, .png, .webp) hoặc để trống để dùng avatar mặc định.</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inputBio">Tiểu Sử & Giới Thiệu (Bio)</label>
+                            <textarea id="inputBio" class="form-textarea" rows="4" placeholder="Chia sẻ về đam mê nhiếp ảnh analog, dòng phim yêu thích (Kodak Portra, Cinestill, Ilford), máy ảnh thường dùng (Leica, Canon, Nikon)..."></textarea>
+                            <span class="form-hint">Tối đa 500 ký tự.</span>
+                        </div>
+
+                        <div class="form-actions-row">
+                            <button type="submit" class="btn-save-settings" id="btnSaveProfile">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                Lưu Thay Đổi Hồ Sơ
+                            </button>
+                            <button type="button" class="btn-cancel-settings" id="btnResetForm">Đặt Lại</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Quickview / Lightbox Modal for Portfolio Showcase -->
+    <div class="portfolio-lightbox-modal" id="portfolioLightbox" style="display: none;">
+        <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+        <div class="lightbox-dialog">
+            <button type="button" class="lightbox-close-btn" id="lightboxCloseBtn" title="Đóng">&times;</button>
+            <div class="lightbox-body">
+                <div class="lightbox-image-viewer">
+                    <img src="" alt="Submission Preview" id="lightboxImg" class="lightbox-img">
+                </div>
+                <div class="lightbox-details-panel">
+                    <div class="lightbox-header">
+                        <span class="lightbox-contest-tag" id="lightboxContestTag">Analog Contest</span>
+                        <h2 class="lightbox-title" id="lightboxTitle">Tên Tác Phẩm</h2>
+                        <div class="lightbox-badges-row" id="lightboxBadgesRow">
+                            <span class="status-badge" id="lightboxStatusBadge">Đã Nộp</span>
+                            <span class="score-badge" id="lightboxScoreBadge" style="display: none;">★ 90.0</span>
+                        </div>
+                    </div>
+
+                    <div class="lightbox-story-box">
+                        <h4>Câu chuyện tác phẩm</h4>
+                        <p id="lightboxStory">Không có mô tả kèm theo.</p>
+                    </div>
+
+                    <div class="lightbox-meta-table">
+                        <h4>Thông số kỹ thuật phim</h4>
+                        <div class="meta-data-grid">
+                            <div class="meta-item">
+                                <span class="meta-label">Film Stock:</span>
+                                <span class="meta-val" id="lightboxFilmStock">--</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Film ISO:</span>
+                                <span class="meta-val" id="lightboxFilmIso">--</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Máy ảnh (Body):</span>
+                                <span class="meta-val" id="lightboxCamera">--</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Ống kính (Lens):</span>
+                                <span class="meta-val" id="lightboxLens">--</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Lab tráng:</span>
+                                <span class="meta-val" id="lightboxLab">--</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Địa điểm chụp:</span>
+                                <span class="meta-val" id="lightboxLocation">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lightbox-footer">
+                        <a href="#" class="btn-lightbox-full" id="lightboxFullLink">Xem Trang Chi Tiết →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal (Quick Popup) -->
+    <div class="profile-modal-overlay" id="editProfileModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Chỉnh Sửa Hồ Sơ</h3>
+                <button type="button" class="modal-close" id="modalCloseBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="quickEditProfileForm">
+                    <div class="form-group">
+                        <label for="modalFullName">Họ và tên</label>
+                        <input type="text" id="modalFullName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalAvatarUrl">Avatar URL</label>
+                        <input type="url" id="modalAvatarUrl" class="form-input" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalBio">Tiểu sử (Bio)</label>
+                        <textarea id="modalBio" class="form-textarea" rows="3" placeholder="Giới thiệu bản thân..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-modal-cancel" id="modalCancelBtn">Hủy</button>
+                        <button type="submit" class="btn-modal-save" id="modalSaveBtn">Lưu Hồ Sơ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Toast Notification Center -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Core Scripts -->
+    <script src="{{ url_for('static', filename='api_client.js') }}"></script>
+    <script src="{{ url_for('static', filename='profile.js') }}"></script>
+</body>
+</html>
