@@ -560,7 +560,6 @@ def create_submission():
         }), 500
 
 
-<<<<<<< HEAD
 
 # -------------------------------------------------------------------------
 # Participant Portfolio & Submission Detail Routes
@@ -651,9 +650,6 @@ def submission_detail_ui(submission_id):
     """Render the Submission Details page."""
     return render_template("submission_detail.html", submission_id=submission_id)
 
-
-=======
->>>>>>> origin/main
 # ============================================================
 # UPDATE DRAFT SUBMISSION
 # ============================================================
@@ -754,36 +750,17 @@ def update_submission(submission_id):
     # --------------------------------------------------------
 
     try:
-<<<<<<< HEAD
-        update_method = getattr(submission_service, 'update_draft_submission', None) or submission_service.update_draft
-        try:
-            updated_sub = update_method(
-=======
-
         film_metadata = _parse_film_metadata(
             data
         )
-
     except ValueError as error:
-
         return jsonify({
             "message": str(error)
         }), 400
 
     # --------------------------------------------------------
     # UPDATE
-    #
-    # IMPORTANT:
-    #
-    # Use update_draft(), not update_draft_submission().
-    #
-    # This matches the current SubmissionService /
-    # SubmissionRepository flow and the unit test:
-    #
-    # mock_repo.update_draft.return_value = ...
-    #
     # --------------------------------------------------------
-
     try:
         if request.is_json:
             updated_sub = submission_service.update_draft_submission(
@@ -797,39 +774,18 @@ def update_submission(submission_id):
             )
             return jsonify({
                 "message": "Submission updated successfully",
-                "submission": {
-                    "id": updated_sub.id,
-                    "title": updated_sub.title,
-                    "status": updated_sub.status,
-                    "round_id": updated_sub.round_id,
-                    "story_description": getattr(updated_sub, "story_description", None),
-                    "submitted_at": (
-                        updated_sub.submitted_at.isoformat()
-                        if getattr(updated_sub, "submitted_at", None)
-                        else None
-                    ),
-                    "updated_at": (
-                        updated_sub.updated_at.isoformat()
-                        if getattr(updated_sub, "updated_at", None)
-                        else None
-                    ),
-                },
+                "submission": _serialize_submission(updated_sub),
             }), 200
 
-        updated_sub = (
-            submission_service
-            .update_draft(
->>>>>>> origin/main
+        update_method = getattr(submission_service, 'update_draft_submission', None) or submission_service.update_draft
+        try:
+            updated_sub = update_method(
                 submission_id=submission_id,
                 user_id=user_id,
                 title=title,
                 story_description=description,
                 files=files_list,
-                film_metadata=(
-                    film_metadata
-                    if film_metadata
-                    else None
-                ),
+                film_metadata=film_metadata or None,
             )
         except TypeError:
             updated_sub = update_method(
@@ -848,22 +804,9 @@ def update_submission(submission_id):
             "message": (
                 "Submission updated successfully"
             ),
-<<<<<<< HEAD
-            "submission": {
-                "id": getattr(updated_sub, "id", submission_id),
-                "round_id": getattr(updated_sub, "round_id", None),
-                "user_id": getattr(updated_sub, "user_id", user_id),
-                "title": getattr(updated_sub, "title", title),
-                "story_description": (
-                    getattr(updated_sub, "story_description", description)
-                ),
-                "status": getattr(updated_sub, "status", "draft"),
-            },
-=======
             "submission": _serialize_submission(
                 updated_sub
             ),
->>>>>>> origin/main
         }), 200
 
     except PermissionError as error:
@@ -976,7 +919,6 @@ def submit_submission(submission_id):
     "/<int:submission_id>",
     methods=["GET"],
 )
-<<<<<<< HEAD
 
 @token_required
 def get_submission(
@@ -1044,86 +986,12 @@ def get_submission(
                     }
         except Exception:
             ai_flag_data = None
-=======
-@role_required(
-    "organizer",
-    "judge",
-    "participant",
-)
-def get_submission(submission_id):
-
-    try:
-        detail = submission_service.get_submission_detail(
-            submission_id=submission_id,
-            user_id=request.user.get("user_id"),
-            role=request.user.get("role", "participant"),
-        )
-        if detail:
-            return jsonify(detail), 200
-    except PermissionError as error:
-        return jsonify({"message": str(error)}), 403
-    except (AttributeError, TypeError):
-        pass
-
-    try:
-
-        result = (
-            submission_service
-            .get_submission_by_id(
-                submission_id
-            )
-        )
-
-    except Exception as error:
-
-        return jsonify({
-            "message": "Failed to get submission",
-            "error": str(error),
-        }), 500
-
-    if not result:
-
-        return jsonify({
-            "message": "Submission not found"
-        }), 404
-
-    try:
-
-        (
-            submission,
-            submission_file,
-            film_metadata,
-        ) = result
-
-        # ----------------------------------------------------
-        # PARTICIPANT OWNERSHIP
-        # ----------------------------------------------------
-
-        if request.user.get("role") == "participant":
-
-            if (
-                submission.user_id
-                != request.user.get("user_id")
-            ):
-
-                return jsonify({
-                    "message": (
-                        "You are not allowed "
-                        "to view this submission"
-                    )
-                }), 403
-
-        # ----------------------------------------------------
-        # BASIC DATA
-        # ----------------------------------------------------
->>>>>>> origin/main
 
         response = {
             "id": submission.id,
             "round_id": submission.round_id,
             "user_id": submission.user_id,
             "title": submission.title,
-<<<<<<< HEAD
             "story_description": submission.story_description,
             "status": submission.status,
             "final_score": float(submission.final_score) if submission.final_score is not None else None,
@@ -1156,159 +1024,6 @@ def get_submission(submission_id):
         return jsonify(response), 200
 
     return jsonify(detail), 200
-=======
-            "story_description": (
-                submission.story_description
-            ),
-            "status": submission.status,
-            "final_score": (
-                float(submission.final_score)
-                if submission.final_score is not None
-                else None
-            ),
-            "submitted_at": (
-                submission.submitted_at.isoformat()
-                if submission.submitted_at
-                else None
-            ),
-            "created_at": (
-                submission.created_at.isoformat()
-                if submission.created_at
-                else None
-            ),
-            "updated_at": (
-                submission.updated_at.isoformat()
-                if submission.updated_at
-                else None
-            ),
-        }
-
-        # ----------------------------------------------------
-        # FILE
-        # ----------------------------------------------------
-
-        if submission_file:
-
-            response["file"] = {
-                "id": submission_file.id,
-                "image_hd_url": (
-                    submission_file.image_hd_url
-                ),
-                "thumbnail_url": (
-                    submission_file.thumbnail_url
-                ),
-                "width_px": (
-                    submission_file.width_px
-                ),
-                "height_px": (
-                    submission_file.height_px
-                ),
-                "file_size_bytes": (
-                    submission_file.file_size_bytes
-                ),
-                "file_hash": (
-                    submission_file.file_hash
-                ),
-                "created_at": (
-                    submission_file.created_at.isoformat()
-                    if submission_file.created_at
-                    else None
-                ),
-            }
-
-        else:
-
-            response["file"] = None
-
-        # ----------------------------------------------------
-        # FILM METADATA
-        # ----------------------------------------------------
-
-        if film_metadata:
-
-            response["film_metadata"] = {
-                "film_stock": (
-                    film_metadata.film_stock
-                ),
-                "film_iso": (
-                    film_metadata.film_iso
-                ),
-                "camera_body": (
-                    film_metadata.camera_body
-                ),
-                "lens": (
-                    film_metadata.lens
-                ),
-                "lab_name": (
-                    film_metadata.lab_name
-                ),
-                "scanner_info": (
-                    film_metadata.scanner_info
-                ),
-                "development_process": (
-                    film_metadata.development_process
-                ),
-                "taken_at_location": (
-                    film_metadata.taken_at_location
-                ),
-                "created_at": (
-                    film_metadata.created_at.isoformat()
-                    if film_metadata.created_at
-                    else None
-                ),
-            }
-
-        else:
-
-            response["film_metadata"] = None
-
-    except Exception as error:
-
-        return jsonify({
-            "message": (
-                "Failed to serialize "
-                "submission details"
-            ),
-            "error": str(error),
-        }), 500
-
-    # --------------------------------------------------------
-    # AI FLAG
-    # --------------------------------------------------------
-
-    ai_flag_data = None
-
-    try:
-
-        existing_flag = (
-            submission_repo
-            .get_ai_flag(
-                submission_id
-            )
-        )
-
-        if existing_flag:
-
-            ai_flag_data = {
-                "ai_score": float(
-                    existing_flag.confidence_score
-                ),
-                "risk_level": (
-                    existing_flag.risk_level
-                ),
-                "status": (
-                    existing_flag.status
-                ),
-            }
-
-    except Exception:
-
-        ai_flag_data = None
-
-    response["ai_flag"] = ai_flag_data
-
-    return jsonify(response), 200
->>>>>>> origin/main
 
 
 # ============================================================
@@ -1733,143 +1448,7 @@ def list_submissions():
         }), 500
 
 
-<<<<<<< HEAD
-@role_required("organizer", "admin")
-def get_organizer_contest_submissions(contest_id):
-=======
-# ============================================================
-# LIST MY SUBMISSIONS
-# ============================================================
 
-@submission_bp.route(
-    "/my-submissions",
-    methods=["GET"],
-)
-@submission_bp.route(
-    "/my",
-    methods=["GET"],
-)
-@token_required
-def get_my_submissions():
-
-    user_id = _get_user_id()
-
-    if not user_id:
-
-        return jsonify({
-            "message": (
-                "User information is missing "
-                "in token"
-            )
-        }), 401
-
-    round_id_param = request.args.get(
-        "round_id"
-    )
-
-    round_id = None
-
-    if round_id_param is not None:
-
-        try:
-
-            round_id = int(
-                round_id_param
-            )
-
-        except (
-            ValueError,
-            TypeError,
-        ):
-
-            return jsonify({
-                "message": "Invalid round_id"
-            }), 400
-
-    status = request.args.get(
-        "status"
-    )
-
-    allowed_statuses = [
-        "draft",
-        "submitted",
-        "flagged",
-        "evaluated",
-    ]
-
-    if (
-        status
-        and status not in allowed_statuses
-    ):
-
-        return jsonify({
-            "message": "Invalid status"
-        }), 400
-
-    ai_flag = request.args.get(
-        "ai_flag"
-    )
-
-    if ai_flag and ai_flag not in [
-        "safe",
-        "medium",
-        "high",
-    ]:
-
-        return jsonify({
-            "message": "Invalid ai_flag"
-        }), 400
-
-    try:
-
-        data = (
-            submission_service
-            .get_my_submissions(
-                user_id=user_id,
-                round_id=round_id,
-                status=status,
-                ai_flag=ai_flag,
-            )
-        )
-
-        if isinstance(data, dict):
-
-            response_data = {
-                "message": (
-                    "My submissions "
-                    "retrieved successfully"
-                ),
-                **data,
-            }
-
-        else:
-
-            response_data = {
-                "message": (
-                    "My submissions "
-                    "retrieved successfully"
-                ),
-                "submissions": data,
-            }
-
-        return jsonify(
-            response_data
-        ), 200
-
-    except Exception as error:
-
-        return jsonify({
-            "message": (
-                "Failed to get my submissions"
-            ),
-            "error": str(error),
-        }), 500
-
-
-# ============================================================
-# ORGANIZER CONTEST SUBMISSIONS
-# ============================================================
->>>>>>> origin/main
 
 @submission_bp.route(
     "/contest/<int:contest_id>",
