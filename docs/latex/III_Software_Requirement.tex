@@ -39,7 +39,7 @@
 
 \renewcommand{\arraystretch}{1.15}
 \setlength{\tabcolsep}{6pt}
-\begin{longtable}{|>{\centering\arraybackslash}p{0.06\textwidth}|>{\raggedright\arraybackslash}p{0.28\textwidth}|>{\raggedright\arraybackslash}p{0.60\textwidth}|}
+\begin{longtable}{|>{\centering\arraybackslash}p{0.05\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|>{\raggedright\arraybackslash}p{0.57\textwidth}|}
 \hline
 \multicolumn{1}{|c|}{\textbf{No.}} & \multicolumn{1}{c|}{\textbf{Actor}} & \multicolumn{1}{c|}{\textbf{Description}} \\
 \hline
@@ -47,10 +47,6 @@
 \multicolumn{1}{|c|}{\textbf{No.}} & \multicolumn{1}{c|}{\textbf{Actor}} & \multicolumn{1}{c|}{\textbf{Description}} \\
 \hline
 \endhead
-\hline
-\endfoot
-\hline
-\endlastfoot
 1 & Administrator & Responsible for overall system configuration, managing user accounts, enforcing RBAC (Role-Based Access Control) permissions, tuning AI detection thresholds, managing camera/film master data catalogs, and monitoring system audit trail logs. \\
 \hline
 2 & Organizer & A contest management authority responsible for setting up competitions, configuring evaluation rubrics, allocating judges, reviewing AI duplicate/fraud flags, handling dispute entries, and publishing final competition results. \\
@@ -245,10 +241,6 @@ UC-61 & Filter Logs by User & Admin, System Audit Engine & Allows the Admin to s
 \multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
 \hline
 \endhead
-\hline
-\endfoot
-\hline
-\endlastfoot
 1 & General & Home & The public landing page of the system. Allows the Admin to view the general interface and quickly access the admin Login button. \\
 \hline
 2 & General & Login & Authentication screen for the Admin account using Email/Password. After successful authentication, the system redirects directly to the Admin Dashboard. \\
@@ -304,10 +296,6 @@ UC-61 & Filter Logs by User & Admin, System Audit Engine & Allows the Admin to s
 \multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
 \hline
 \endhead
-\hline
-\endfoot
-\hline
-\endlastfoot
 1 & Authentication & Login Page & Allows the Participant (Film Photographer) to log in to the system with a registered account. \\
 \hline
 2 & Register & User Register & Allows the Participant to create a new account to join the system. \\
@@ -369,10 +357,6 @@ UC-61 & Filter Logs by User & Admin, System Audit Engine & Allows the Admin to s
 \multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
 \hline
 \endhead
-\hline
-\endfoot
-\hline
-\endlastfoot
 1 & Authentication & Login Page & Allows the Organizer to log in to the system using an authorized account. \\
 \hline
 2 & Organizer Dashboard & Organizer Dashboard & Displays the main functions and management areas available to the Organizer. \\
@@ -450,10 +434,6 @@ UC-61 & Filter Logs by User & Admin, System Audit Engine & Allows the Admin to s
 \multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
 \hline
 \endhead
-\hline
-\endfoot
-\hline
-\endlastfoot
 1 & General & Home & The landing page of the application, providing general platform information. \\
 \hline
 2 & General & Login & Authentication screen allowing the Judge to access the system using secure credentials. \\
@@ -498,10 +478,6 @@ UC-61 & Filter Logs by User & Admin, System Audit Engine & Allows the Admin to s
 \multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Web Module / Screen}} & \multicolumn{1}{c|}{\textbf{Typical Actions}} & \multicolumn{1}{c|}{\textbf{Admin}} & \multicolumn{1}{c|}{\textbf{Organizer}} & \multicolumn{1}{c|}{\textbf{Judge}} & \multicolumn{1}{c|}{\textbf{Participant}} \\
 \hline
 \endhead
-\hline
-\endfoot
-\hline
-\endlastfoot
 1 & Authentication (Login / Register / Change PW) & C-R-U & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
 \hline
 2 & Own Profile & R-U & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
@@ -552,10 +528,6 @@ UC-61 & Filter Logs by User & Admin, System Audit Engine & Allows the Admin to s
 \multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{System Function}} & \multicolumn{1}{c|}{\textbf{Description}} \\
 \hline
 \endhead
-\hline
-\endfoot
-\hline
-\endlastfoot
 1 & EXIF Metadata Extraction & Auto-extract Image EXIF & Automatically extract camera model, lens, aperture, shutter speed, ISO, and capture date upon photo upload.\newline Populate extracted metadata directly into the submission record for verification. \\
 \hline
 2 & AI Generated Image Detection & Async AI Detection Pipeline & Automatically scan submitted images using pre-trained AI detection models.\newline Flag suspicious submissions exceeding the AI-probability threshold and generate analysis reports. \\
