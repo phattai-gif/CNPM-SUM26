@@ -1,6 +1,7 @@
 ﻿from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 try:
     from domain.models.icontest_repository import IContestRepository
@@ -24,6 +25,23 @@ class ContestRepository(IContestRepository):
             except Exception:
                 from infrastructure.databases.postgres import session as pg_session
                 self.session = pg_session
+
+        self._ensure_task95_columns()
+
+    def _ensure_task95_columns(self):
+        """Best-effort compatibility for deployments that have not run Task 95 migrations yet."""
+        try:
+            self.session.execute(text(
+                "ALTER TABLE app.contests "
+                "ADD COLUMN IF NOT EXISTS categories_json JSONB NOT NULL DEFAULT '[]'::jsonb"
+            ))
+            self.session.execute(text(
+                "ALTER TABLE app.contests "
+                "ADD COLUMN IF NOT EXISTS awards_json JSONB NOT NULL DEFAULT '[]'::jsonb"
+            ))
+            self.session.commit()
+        except Exception:
+            self._rollback_session()
 
     def _rollback_session(self):
         try:
@@ -72,6 +90,12 @@ class ContestRepository(IContestRepository):
     def _to_domain_contest(self, model: ContestModel) -> Contest:
         if not model:
             return None
+        categories = getattr(model, 'categories_json', []) or []
+        awards = getattr(model, 'awards_json', []) or []
+        if not isinstance(categories, list):
+            categories = []
+        if not isinstance(awards, list):
+            awards = []
         rounds_list = []
         try:
             round_models = self.session.query(RoundModel).filter_by(contest_id=model.id).order_by(RoundModel.round_number.asc()).all()
@@ -92,7 +116,9 @@ class ContestRepository(IContestRepository):
             end_date=model.end_date,
             created_at=model.created_at,
             updated_at=model.updated_at,
-            rounds=rounds_list
+            rounds=rounds_list,
+            categories=categories,
+            awards=awards
         )
 
     def create_contest(self, contest: Contest) -> Contest:
@@ -104,6 +130,8 @@ class ContestRepository(IContestRepository):
                 description=contest.description,
                 rules=contest.rules,
                 banner_url=contest.banner_url,
+                categories_json=contest.categories or [],
+                awards_json=contest.awards or [],
                 created_by=contest.created_by,
                 status=contest.status or 'draft',
                 start_date=contest.start_date,

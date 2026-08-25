@@ -96,13 +96,19 @@ class SubmissionRepository(ISubmissionRepository):
     def get_by_id_with_details(
         self,
         submission_id: int,
-    ) -> Optional[
-        Tuple[
-            SubmissionModel,
-            Optional[SubmissionFileModel],
-            Optional[SubmissionFilmMetadataModel],
-        ]
-    ]:
+    ):
+        """
+        Return submission together with:
+        - all submission files
+        - film metadata
+
+        Return:
+            (
+                submission,
+                submission_files,
+                film_metadata
+            )
+        """
 
         submission = (
             self.session
@@ -116,14 +122,17 @@ class SubmissionRepository(ISubmissionRepository):
         if submission is None:
             return None
 
-        submission_file = (
+        submission_files = (
             self.session
             .query(SubmissionFileModel)
             .filter(
                 SubmissionFileModel.submission_id
                 == submission_id
             )
-            .first()
+            .order_by(
+                SubmissionFileModel.id.asc()
+            )
+            .all()
         )
 
         submission_film_metadata = (
@@ -138,7 +147,7 @@ class SubmissionRepository(ISubmissionRepository):
 
         return (
             submission,
-            submission_file,
+            submission_files,
             submission_film_metadata,
         )
 
@@ -268,7 +277,10 @@ class SubmissionRepository(ISubmissionRepository):
             )
 
             if existing:
-                existing.confidence_score = confidence_score
+
+                existing.confidence_score = (
+                    confidence_score
+                )
                 existing.risk_level = risk_level
                 existing.status = status
 
@@ -317,11 +329,15 @@ class SubmissionRepository(ISubmissionRepository):
             .first()
         )
 
+    # =========================================================
+    # GET ALL AI FLAGS
+    # =========================================================
+
     def get_all_ai_flags(
         self,
         submission_id: int,
     ) -> List[AIFlagModel]:
-        
+
         return (
             self.session
             .query(AIFlagModel)
@@ -329,15 +345,22 @@ class SubmissionRepository(ISubmissionRepository):
                 AIFlagModel.submission_id
                 == submission_id,
             )
+            .order_by(
+                AIFlagModel.id.asc()
+            )
             .all()
         )
+
+    # =========================================================
+    # UPDATE AI FLAG STATUS
+    # =========================================================
 
     def update_ai_flag_status(
         self,
         flag_id: int,
         status: str,
     ) -> Optional[AIFlagModel]:
-        
+
         try:
             flag = (
                 self.session
@@ -352,13 +375,19 @@ class SubmissionRepository(ISubmissionRepository):
                 return None
 
             flag.status = status
+
             self.session.commit()
             self.session.refresh(flag)
-            
+
             return flag
+
         except Exception:
             self.session.rollback()
             raise
+
+    # =========================================================
+    # GET FLAGGED SUBMISSIONS
+    # =========================================================
 
     def get_flagged_submissions(
         self,
@@ -371,51 +400,77 @@ class SubmissionRepository(ISubmissionRepository):
             List[AIFlagModel],
         ]
     ]:
-        
+
         query = (
             self.session
             .query(SubmissionModel)
             .join(
                 AIFlagModel,
-                AIFlagModel.submission_id == SubmissionModel.id
+                AIFlagModel.submission_id
+                == SubmissionModel.id,
             )
         )
-        
+
         if status:
-            query = query.filter(AIFlagModel.status == status)
-            
+            query = query.filter(
+                AIFlagModel.status == status
+            )
+
         submissions = (
             query
-            .order_by(SubmissionModel.submitted_at.desc(), SubmissionModel.id.desc())
+            .order_by(
+                SubmissionModel.submitted_at.desc(),
+                SubmissionModel.id.desc(),
+            )
             .distinct()
             .all()
         )
-        
+
         results = []
+
         for submission in submissions:
-            submission_file = (
+
+            submission_files = (
                 self.session
                 .query(SubmissionFileModel)
-                .filter(SubmissionFileModel.submission_id == submission.id)
-                .first()
+                .filter(
+                    SubmissionFileModel.submission_id
+                    == submission.id
+                )
+                .order_by(
+                    SubmissionFileModel.id.asc()
+                )
+                .all()
             )
 
             film_metadata = (
                 self.session
-                .query(SubmissionFilmMetadataModel)
-                .filter(SubmissionFilmMetadataModel.submission_id == submission.id)
+                .query(
+                    SubmissionFilmMetadataModel
+                )
+                .filter(
+                    SubmissionFilmMetadataModel
+                    .submission_id
+                    == submission.id
+                )
                 .first()
             )
 
-            ai_flags = self.get_all_ai_flags(submission.id)
+            ai_flags = (
+                self.get_all_ai_flags(
+                    submission.id
+                )
+            )
 
-            results.append((
-                submission,
-                submission_file,
-                film_metadata,
-                ai_flags,
-            ))
-            
+            results.append(
+                (
+                    submission,
+                    submission_files,
+                    film_metadata,
+                    ai_flags,
+                )
+            )
+
         return results
 
     # =========================================================
@@ -433,6 +488,7 @@ class SubmissionRepository(ISubmissionRepository):
     ) -> AIAnalysisReportModel:
 
         try:
+
             existing = (
                 self.session
                 .query(AIAnalysisReportModel)
@@ -448,9 +504,11 @@ class SubmissionRepository(ISubmissionRepository):
             if existing:
 
                 existing.ai_flag_id = ai_flag_id
+
                 existing.ai_confidence_score = (
                     ai_confidence_score
                 )
+
                 existing.raw_details = raw_details
 
                 if hasattr(
@@ -470,7 +528,9 @@ class SubmissionRepository(ISubmissionRepository):
                 "submission_id": submission_id,
                 "ai_flag_id": ai_flag_id,
                 "ai_model_name": ai_model_name,
-                "ai_confidence_score": ai_confidence_score,
+                "ai_confidence_score": (
+                    ai_confidence_score
+                ),
                 "raw_details": raw_details,
             }
 
@@ -573,13 +633,17 @@ class SubmissionRepository(ISubmissionRepository):
                 file_list = files_data
 
             elif image_hd_url and file_hash:
+
                 file_list = [
                     {
+                        "file_type": "main_image",
                         "image_hd_url": image_hd_url,
                         "thumbnail_url": thumbnail_url,
                         "width_px": width_px,
                         "height_px": height_px,
-                        "file_size_bytes": file_size_bytes,
+                        "file_size_bytes": (
+                            file_size_bytes
+                        ),
                         "file_hash": file_hash,
                         "phash": None,
                         "ahash": None,
@@ -592,30 +656,66 @@ class SubmissionRepository(ISubmissionRepository):
 
             for f_info in file_list:
 
-                if not f_info.get("image_hd_url"):
+                if not f_info.get(
+                    "image_hd_url"
+                ):
                     raise ValueError(
                         "image_hd_url is required"
                     )
 
-                if not f_info.get("file_hash"):
+                if not f_info.get(
+                    "file_hash"
+                ):
                     raise ValueError(
                         "file_hash is required"
                     )
 
-                submission_file = SubmissionFileModel(
-                    submission_id=submission.id,
-                    image_hd_url=f_info["image_hd_url"],
-                    thumbnail_url=f_info.get(
-                        "thumbnail_url"
-                    ),
-                    width_px=f_info.get("width_px"),
-                    height_px=f_info.get("height_px"),
-                    file_size_bytes=f_info.get(
-                        "file_size_bytes"
-                    ),
-                    file_hash=f_info["file_hash"],
-                    phash=f_info.get("phash"),
-                    ahash=f_info.get("ahash"),
+                submission_file = (
+                    SubmissionFileModel(
+                        submission_id=(
+                            submission.id
+                        ),
+                        image_hd_url=(
+                            f_info[
+                                "image_hd_url"
+                            ]
+                        ),
+                        thumbnail_url=(
+                            f_info.get(
+                                "thumbnail_url"
+                            )
+                        ),
+                        width_px=(
+                            f_info.get(
+                                "width_px"
+                            )
+                        ),
+                        height_px=(
+                            f_info.get(
+                                "height_px"
+                            )
+                        ),
+                        file_size_bytes=(
+                            f_info.get(
+                                "file_size_bytes"
+                            )
+                        ),
+                        file_hash=(
+                            f_info[
+                                "file_hash"
+                            ]
+                        ),
+                        phash=f_info.get(
+                            "phash"
+                        ),
+                        ahash=f_info.get(
+                            "ahash"
+                        ),
+                        file_type=f_info.get(
+                            "file_type",
+                            "main_image",
+                        ),
+                    )
                 )
 
                 self.session.add(
@@ -626,18 +726,25 @@ class SubmissionRepository(ISubmissionRepository):
             # Create film metadata
             # -------------------------------------------------
 
-            film_metadata = SubmissionFilmMetadataModel(
-                submission_id=submission.id,
-                film_stock=film_stock or "",
-                film_iso=film_iso,
-                camera_body=camera_body,
-                lens=lens,
-                lab_name=lab_name,
-                scanner_info=scanner_info,
-                development_process=(
-                    development_process or "C-41"
-                ),
-                taken_at_location=taken_at_location,
+            film_metadata = (
+                SubmissionFilmMetadataModel(
+                    submission_id=submission.id,
+                    film_stock=(
+                        film_stock or ""
+                    ),
+                    film_iso=film_iso,
+                    camera_body=camera_body,
+                    lens=lens,
+                    lab_name=lab_name,
+                    scanner_info=scanner_info,
+                    development_process=(
+                        development_process
+                        or "C-41"
+                    ),
+                    taken_at_location=(
+                        taken_at_location
+                    ),
+                )
             )
 
             self.session.add(
@@ -736,7 +843,9 @@ class SubmissionRepository(ISubmissionRepository):
 
                     submission_file = (
                         SubmissionFileModel(
-                            submission_id=submission.id,
+                            submission_id=(
+                                submission.id
+                            ),
                             image_hd_url=(
                                 f_info[
                                     "image_hd_url"
@@ -772,6 +881,10 @@ class SubmissionRepository(ISubmissionRepository):
                             ),
                             ahash=f_info.get(
                                 "ahash"
+                            ),
+                            file_type=f_info.get(
+                                "file_type",
+                                "main_image",
                             ),
                         )
                     )
@@ -897,6 +1010,307 @@ class SubmissionRepository(ISubmissionRepository):
             raise
 
     # =========================================================
+    # UPDATE DRAFT SUBMISSION
+    # =========================================================
+
+    def update_draft_submission(
+        self,
+        submission_id: int,
+        user_id: int,
+        title: Optional[str] = None,
+        story_description: Optional[str] = None,
+        round_id: Optional[int] = None,
+        status: Optional[str] = None,
+        film_metadata: Optional[dict] = None,
+        image_hd_url: Optional[str] = None,
+        thumbnail_url: Optional[str] = None,
+        file_hash: Optional[str] = None,
+        width_px: Optional[int] = None,
+        height_px: Optional[int] = None,
+        file_size_bytes: Optional[int] = None,
+        file_type: str = "main_image",
+    ) -> SubmissionModel:
+
+        try:
+
+            # -------------------------------------------------
+            # Find submission
+            # -------------------------------------------------
+
+            submission = (
+                self.session
+                .query(SubmissionModel)
+                .filter(
+                    SubmissionModel.id
+                    == submission_id,
+                    SubmissionModel.user_id
+                    == user_id,
+                )
+                .first()
+            )
+
+            if not submission:
+                raise ValueError(
+                    "Submission not found"
+                )
+
+            # -------------------------------------------------
+            # Only draft can be edited
+            # -------------------------------------------------
+
+            if submission.status != "draft":
+                raise PermissionError(
+                    "Only draft submissions can be updated"
+                )
+
+            # -------------------------------------------------
+            # Basic fields
+            # -------------------------------------------------
+
+            if title is not None:
+                submission.title = title
+
+            if story_description is not None:
+                submission.story_description = (
+                    story_description
+                )
+
+            if round_id is not None:
+                round_obj = (
+                    self.session
+                    .query(RoundModel)
+                    .filter(
+                        RoundModel.id
+                        == round_id
+                    )
+                    .first()
+                )
+
+                if not round_obj:
+                    raise ValueError(
+                        f"Round with id {round_id} does not exist"
+                    )
+
+                submission.round_id = round_id
+
+            # -------------------------------------------------
+            # Status
+            # -------------------------------------------------
+
+            if status is not None:
+                submission.status = status
+
+            # -------------------------------------------------
+            # Update file
+            # -------------------------------------------------
+
+            if image_hd_url:
+
+                normalized_file_type = (
+                    file_type
+                    or "main_image"
+                )
+
+                existing_file = (
+                    self.session
+                    .query(
+                        SubmissionFileModel
+                    )
+                    .filter(
+                        SubmissionFileModel
+                        .submission_id
+                        == submission_id,
+                        SubmissionFileModel
+                        .file_type
+                        == normalized_file_type,
+                    )
+                    .first()
+                )
+
+                if existing_file:
+
+                    existing_file.image_hd_url = (
+                        image_hd_url
+                    )
+
+                    if thumbnail_url is not None:
+                        existing_file.thumbnail_url = (
+                            thumbnail_url
+                        )
+
+                    if file_hash is not None:
+                        existing_file.file_hash = (
+                            file_hash
+                        )
+
+                    if width_px is not None:
+                        existing_file.width_px = (
+                            width_px
+                        )
+
+                    if height_px is not None:
+                        existing_file.height_px = (
+                            height_px
+                        )
+
+                    if file_size_bytes is not None:
+                        existing_file.file_size_bytes = (
+                            file_size_bytes
+                        )
+
+                    existing_file.file_type = (
+                        normalized_file_type
+                    )
+
+                else:
+
+                    if not file_hash:
+                        raise ValueError(
+                            "file_hash is required when adding a new submission file"
+                        )
+
+                    submission_file = (
+                        SubmissionFileModel(
+                            submission_id=(
+                                submission.id
+                            ),
+                            image_hd_url=(
+                                image_hd_url
+                            ),
+                            thumbnail_url=(
+                                thumbnail_url
+                            ),
+                            width_px=(
+                                width_px
+                            ),
+                            height_px=(
+                                height_px
+                            ),
+                            file_size_bytes=(
+                                file_size_bytes
+                            ),
+                            file_hash=(
+                                file_hash
+                            ),
+                            phash=None,
+                            ahash=None,
+                            file_type=(
+                                normalized_file_type
+                            ),
+                        )
+                    )
+
+                    self.session.add(
+                        submission_file
+                    )
+
+            # -------------------------------------------------
+            # Film metadata
+            # -------------------------------------------------
+
+            if film_metadata is not None:
+
+                meta_obj = (
+                    self.session
+                    .query(
+                        SubmissionFilmMetadataModel
+                    )
+                    .filter(
+                        SubmissionFilmMetadataModel
+                        .submission_id
+                        == submission_id
+                    )
+                    .first()
+                )
+
+                if not meta_obj:
+
+                    meta_obj = (
+                        SubmissionFilmMetadataModel(
+                            submission_id=(
+                                submission.id
+                            ),
+                            film_stock="",
+                            development_process="C-41",
+                        )
+                    )
+
+                    self.session.add(
+                        meta_obj
+                    )
+
+                if "film_stock" in film_metadata:
+                    meta_obj.film_stock = (
+                        film_metadata.get(
+                            "film_stock"
+                        )
+                        or ""
+                    )
+
+                if "film_iso" in film_metadata:
+                    meta_obj.film_iso = (
+                        film_metadata.get(
+                            "film_iso"
+                        )
+                    )
+
+                if "camera_body" in film_metadata:
+                    meta_obj.camera_body = (
+                        film_metadata.get(
+                            "camera_body"
+                        )
+                    )
+
+                if "lens" in film_metadata:
+                    meta_obj.lens = (
+                        film_metadata.get(
+                            "lens"
+                        )
+                    )
+
+                if "lab_name" in film_metadata:
+                    meta_obj.lab_name = (
+                        film_metadata.get(
+                            "lab_name"
+                        )
+                    )
+
+                if "scanner_info" in film_metadata:
+                    meta_obj.scanner_info = (
+                        film_metadata.get(
+                            "scanner_info"
+                        )
+                    )
+
+                if "development_process" in film_metadata:
+                    meta_obj.development_process = (
+                        film_metadata.get(
+                            "development_process"
+                        )
+                        or "C-41"
+                    )
+
+                if "taken_at_location" in film_metadata:
+                    meta_obj.taken_at_location = (
+                        film_metadata.get(
+                            "taken_at_location"
+                        )
+                    )
+
+            # -------------------------------------------------
+            # Commit
+            # -------------------------------------------------
+
+            self.session.commit()
+            self.session.refresh(submission)
+
+            return submission
+
+        except Exception:
+            self.session.rollback()
+            raise
+
+    # =========================================================
     # UPDATE STATUS
     # =========================================================
 
@@ -947,27 +1361,23 @@ class SubmissionRepository(ISubmissionRepository):
     def _enrich_submissions_with_details(
         self,
         submissions: List[SubmissionModel],
-    ) -> List[
-        Tuple[
-            SubmissionModel,
-            Optional[SubmissionFileModel],
-            Optional[SubmissionFilmMetadataModel],
-            List[AIFlagModel],
-        ]
-    ]:
+    ):
 
         results = []
 
         for submission in submissions:
 
-            submission_file = (
+            submission_files = (
                 self.session
                 .query(SubmissionFileModel)
                 .filter(
                     SubmissionFileModel.submission_id
                     == submission.id
                 )
-                .first()
+                .order_by(
+                    SubmissionFileModel.id.asc()
+                )
+                .all()
             )
 
             film_metadata = (
@@ -983,12 +1393,16 @@ class SubmissionRepository(ISubmissionRepository):
                 .first()
             )
 
-            ai_flags = self.get_all_ai_flags(submission.id)
+            ai_flags = (
+                self.get_all_ai_flags(
+                    submission.id
+                )
+            )
 
             results.append(
                 (
                     submission,
-                    submission_file,
+                    submission_files,
                     film_metadata,
                     ai_flags,
                 )
@@ -1006,14 +1420,7 @@ class SubmissionRepository(ISubmissionRepository):
         round_id: Optional[int] = None,
         status: Optional[str] = None,
         ai_flag: Optional[str] = None,
-    ) -> List[
-        Tuple[
-            SubmissionModel,
-            Optional[SubmissionFileModel],
-            Optional[SubmissionFilmMetadataModel],
-            List[AIFlagModel],
-        ]
-    ]:
+    ):
 
         query = (
             self.session
@@ -1076,14 +1483,7 @@ class SubmissionRepository(ISubmissionRepository):
         round_id: Optional[int] = None,
         status: Optional[str] = None,
         ai_flag: Optional[str] = None,
-    ) -> List[
-        Tuple[
-            SubmissionModel,
-            Optional[SubmissionFileModel],
-            Optional[SubmissionFilmMetadataModel],
-            List[AIFlagModel],
-        ]
-    ]:
+    ):
 
         query = (
             self.session
@@ -1151,16 +1551,7 @@ class SubmissionRepository(ISubmissionRepository):
         round_id: Optional[int] = None,
         status: Optional[str] = None,
         ai_flag: Optional[str] = None,
-    ) -> Optional[
-        List[
-            Tuple[
-                SubmissionModel,
-                Optional[SubmissionFileModel],
-                Optional[SubmissionFilmMetadataModel],
-                List[AIFlagModel],
-            ]
-        ]
-    ]:
+    ):
 
         assignment = (
             self.session

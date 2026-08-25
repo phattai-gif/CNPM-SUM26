@@ -124,6 +124,37 @@
         font-size: 0.9rem;
       }
 
+      .config-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 14px;
+        background: #f8fbff;
+      }
+
+      .config-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .config-item {
+        border: 1px solid #dbe7ff;
+        border-radius: 10px;
+        padding: 10px;
+        background: #fff;
+      }
+
+      .config-item-title {
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .config-item-meta {
+        font-size: 0.88rem;
+        color: #6b7280;
+        margin-top: 4px;
+      }
+
       #toast {
         display: none;
         position: fixed;
@@ -184,18 +215,13 @@
 
           <div class="section-grid">
             <div>
-              <label>Categories (comma separated)</label>
-              <input type="text" name="categories" placeholder="Portrait, Landscape, Documentary" />
-            </div>
-            <div>
               <label>Start Date (ISO)</label>
               <input type="text" name="start_date" placeholder="2026-08-12T09:00:00" />
             </div>
-          </div>
-
-          <div>
-            <label>End Date (ISO)</label>
-            <input type="text" name="end_date" placeholder="2026-08-20T18:00:00" />
+            <div>
+              <label>End Date (ISO)</label>
+              <input type="text" name="end_date" placeholder="2026-08-20T18:00:00" />
+            </div>
           </div>
 
           <div class="inline-actions">
@@ -209,6 +235,54 @@
           <div class="inline-actions">
             <button type="button" id="addRoundBtn" class="btn-secondary">Add Round</button>
             <button type="button" id="resetRoundsBtn" class="btn-secondary">Reset Local View</button>
+          </div>
+
+          <hr />
+          <h3 style="margin:0;">Categories (Danh mục)</h3>
+          <p class="muted" style="margin:0;">Quản lý danh mục theo contest_id bằng API thêm/sửa/xóa.</p>
+          <div class="config-card">
+            <div class="section-grid">
+              <div>
+                <label>Tên danh mục</label>
+                <input type="text" id="categoryNameInput" placeholder="Ví dụ: Portrait" />
+              </div>
+              <div>
+                <label>Mô tả danh mục</label>
+                <input type="text" id="categoryDescInput" placeholder="Mô tả ngắn" />
+              </div>
+            </div>
+            <div class="inline-actions" style="margin-top:10px;">
+              <button type="button" id="addCategoryBtn" class="btn-success">Thêm Category</button>
+            </div>
+            <div id="categoryList" class="config-list"></div>
+          </div>
+
+          <hr />
+          <h3 style="margin:0;">Awards / Prizes (Giải thưởng)</h3>
+          <p class="muted" style="margin:0;">Quản lý giải thưởng theo contest_id bằng API thêm/sửa/xóa.</p>
+          <div class="config-card">
+            <div class="section-grid" style="grid-template-columns:1fr 1fr 0.7fr;">
+              <div>
+                <label>Tên giải thưởng</label>
+                <input type="text" id="awardTitleInput" placeholder="Ví dụ: Best Portrait" />
+              </div>
+              <div>
+                <label>Giá trị giải thưởng</label>
+                <input type="text" id="awardPrizeInput" placeholder="Ví dụ: 10,000,000 VND" />
+              </div>
+              <div>
+                <label>Thứ hạng</label>
+                <input type="number" id="awardRankInput" min="1" placeholder="1" />
+              </div>
+            </div>
+            <div style="margin-top:8px;">
+              <label>Mô tả giải thưởng</label>
+              <input type="text" id="awardDescInput" placeholder="Mô tả ngắn" />
+            </div>
+            <div class="inline-actions" style="margin-top:10px;">
+              <button type="button" id="addAwardBtn" class="btn-success">Thêm Award</button>
+            </div>
+            <div id="awardList" class="config-list"></div>
           </div>
 
           <div class="inline-actions">
@@ -242,6 +316,16 @@
         const submitBtn = document.getElementById('submitBtn');
         const saveContestBtn = document.getElementById('saveContestBtn');
         const modeText = document.getElementById('modeText');
+        const categoryNameInput = document.getElementById('categoryNameInput');
+        const categoryDescInput = document.getElementById('categoryDescInput');
+        const addCategoryBtn = document.getElementById('addCategoryBtn');
+        const categoryList = document.getElementById('categoryList');
+        const awardTitleInput = document.getElementById('awardTitleInput');
+        const awardPrizeInput = document.getElementById('awardPrizeInput');
+        const awardRankInput = document.getElementById('awardRankInput');
+        const awardDescInput = document.getElementById('awardDescInput');
+        const addAwardBtn = document.getElementById('addAwardBtn');
+        const awardList = document.getElementById('awardList');
 
         const publishBtn = document.getElementById('publishBtn');
         const modal = document.getElementById('confirmModal');
@@ -252,6 +336,8 @@
         const getParam = (name) => new URLSearchParams(window.location.search).get(name);
         let activeContestId = getParam('contest_id');
         let nextRoundIdx = 1;
+        let categoriesState = [];
+        let awardsState = [];
 
         function showToast(msg, ms = 2600, isError = false) {
           toast.textContent = msg;
@@ -297,6 +383,196 @@
           } else {
             modeText.textContent = 'Tạo hoặc chỉnh sửa contest, round, criteria trực tiếp trên giao diện.';
           }
+        }
+
+        function renderCategories() {
+          if (!categoryList) return;
+
+          if (!categoriesState.length) {
+            categoryList.innerHTML = '<div class="muted">Chưa có category nào.</div>';
+            return;
+          }
+
+          categoryList.innerHTML = categoriesState.map((item) => {
+            return `
+              <div class="config-item">
+                <div class="config-item-title">${escapeHtml(item.name || 'Unnamed')}</div>
+                <div class="config-item-meta">${escapeHtml(item.description || 'Không có mô tả')}</div>
+                <div class="inline-actions" style="margin-top:8px;">
+                  <button type="button" class="btn-secondary edit-category" data-id="${escapeHtml(item.id)}">Sửa</button>
+                  <button type="button" class="btn-danger delete-category" data-id="${escapeHtml(item.id)}">Xóa</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          categoryList.querySelectorAll('.edit-category').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const id = Number(btn.dataset.id);
+              const current = categoriesState.find((x) => Number(x.id) === id);
+              if (!current) return;
+              const name = prompt('Tên category', current.name || '');
+              if (name === null) return;
+              const description = prompt('Mô tả category', current.description || '');
+              if (description === null) return;
+              await updateCategory(id, { name, description });
+            });
+          });
+
+          categoryList.querySelectorAll('.delete-category').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const id = Number(btn.dataset.id);
+              if (!confirm('Xóa category này?')) return;
+              await deleteCategory(id);
+            });
+          });
+        }
+
+        function renderAwards() {
+          if (!awardList) return;
+
+          if (!awardsState.length) {
+            awardList.innerHTML = '<div class="muted">Chưa có award nào.</div>';
+            return;
+          }
+
+          awardList.innerHTML = awardsState.map((item) => {
+            return `
+              <div class="config-item">
+                <div class="config-item-title">#${escapeHtml(item.rank)} · ${escapeHtml(item.title || 'Untitled')}</div>
+                <div class="config-item-meta">Prize: ${escapeHtml(item.prize || 'N/A')}</div>
+                <div class="config-item-meta">${escapeHtml(item.description || 'Không có mô tả')}</div>
+                <div class="inline-actions" style="margin-top:8px;">
+                  <button type="button" class="btn-secondary edit-award" data-id="${escapeHtml(item.id)}">Sửa</button>
+                  <button type="button" class="btn-danger delete-award" data-id="${escapeHtml(item.id)}">Xóa</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          awardList.querySelectorAll('.edit-award').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const id = Number(btn.dataset.id);
+              const current = awardsState.find((x) => Number(x.id) === id);
+              if (!current) return;
+
+              const title = prompt('Tên award', current.title || '');
+              if (title === null) return;
+              const prize = prompt('Giá trị giải thưởng', current.prize || '');
+              if (prize === null) return;
+              const rankRaw = prompt('Thứ hạng', current.rank != null ? String(current.rank) : '1');
+              if (rankRaw === null) return;
+              const description = prompt('Mô tả award', current.description || '');
+              if (description === null) return;
+
+              await updateAward(id, {
+                title,
+                prize,
+                rank: Number(rankRaw),
+                description
+              });
+            });
+          });
+
+          awardList.querySelectorAll('.delete-award').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const id = Number(btn.dataset.id);
+              if (!confirm('Xóa award này?')) return;
+              await deleteAward(id);
+            });
+          });
+        }
+
+        async function refreshCategoryAwardData() {
+          if (!activeContestId || !hasSession()) {
+            categoriesState = [];
+            awardsState = [];
+            renderCategories();
+            renderAwards();
+            return;
+          }
+
+          const [categoriesResp, awardsResp] = await Promise.all([
+            window.apiClient.get(`/organizer/contests/${activeContestId}/categories`),
+            window.apiClient.get(`/organizer/contests/${activeContestId}/awards`)
+          ]);
+
+          categoriesState = (categoriesResp && categoriesResp.categories) ? categoriesResp.categories : [];
+          awardsState = (awardsResp && awardsResp.awards) ? awardsResp.awards : [];
+          renderCategories();
+          renderAwards();
+        }
+
+        async function addCategory() {
+          await ensureContest();
+          const name = (categoryNameInput.value || '').trim();
+          const description = (categoryDescInput.value || '').trim();
+          if (!name) throw new Error('Tên category không được để trống');
+
+          const resp = await window.apiClient.post(`/organizer/contests/${activeContestId}/categories`, { name, description });
+          categoriesState = (resp && resp.categories) ? resp.categories : categoriesState;
+          categoryNameInput.value = '';
+          categoryDescInput.value = '';
+          renderCategories();
+          showToast('Thêm category thành công');
+        }
+
+        async function updateCategory(categoryId, payload) {
+          await ensureContest();
+          const resp = await window.apiClient.put(`/organizer/contests/${activeContestId}/categories/${categoryId}`, payload);
+          categoriesState = (resp && resp.categories) ? resp.categories : categoriesState;
+          renderCategories();
+          showToast('Cập nhật category thành công');
+        }
+
+        async function deleteCategory(categoryId) {
+          await ensureContest();
+          const resp = await window.apiClient.delete(`/organizer/contests/${activeContestId}/categories/${categoryId}`);
+          categoriesState = (resp && resp.categories) ? resp.categories : categoriesState;
+          renderCategories();
+          showToast('Xóa category thành công');
+        }
+
+        async function addAward() {
+          await ensureContest();
+          const title = (awardTitleInput.value || '').trim();
+          const prize = (awardPrizeInput.value || '').trim();
+          const rank = Number(awardRankInput.value || '0');
+          const description = (awardDescInput.value || '').trim();
+
+          if (!title) throw new Error('Tên award không được để trống');
+
+          const payload = {
+            title,
+            prize,
+            rank: Number.isFinite(rank) && rank > 0 ? rank : null,
+            description
+          };
+
+          const resp = await window.apiClient.post(`/organizer/contests/${activeContestId}/awards`, payload);
+          awardsState = (resp && resp.awards) ? resp.awards : awardsState;
+          awardTitleInput.value = '';
+          awardPrizeInput.value = '';
+          awardRankInput.value = '';
+          awardDescInput.value = '';
+          renderAwards();
+          showToast('Thêm award thành công');
+        }
+
+        async function updateAward(awardId, payload) {
+          await ensureContest();
+          const resp = await window.apiClient.put(`/organizer/contests/${activeContestId}/awards/${awardId}`, payload);
+          awardsState = (resp && resp.awards) ? resp.awards : awardsState;
+          renderAwards();
+          showToast('Cập nhật award thành công');
+        }
+
+        async function deleteAward(awardId) {
+          await ensureContest();
+          const resp = await window.apiClient.delete(`/organizer/contests/${activeContestId}/awards/${awardId}`);
+          awardsState = (resp && resp.awards) ? resp.awards : awardsState;
+          renderAwards();
+          showToast('Xóa award thành công');
         }
 
         function createCriteriaElement(rIdx, cIdx, data) {
@@ -586,6 +862,11 @@
           roundsContainer.innerHTML = '';
           nextRoundIdx = 1;
           (contest.rounds || []).forEach((r) => addRound(r));
+
+          categoriesState = Array.isArray(contest.categories) ? contest.categories : [];
+          awardsState = Array.isArray(contest.awards) ? contest.awards : [];
+          renderCategories();
+          renderAwards();
         }
 
         addRoundBtn.addEventListener('click', () => addRound());
@@ -623,19 +904,6 @@
               }
             }
 
-            const categories = form.querySelector('input[name="categories"]').value
-              .split(',')
-              .map((x) => x.trim())
-              .filter(Boolean);
-
-            if (categories.length && activeContestId) {
-              try {
-                await window.apiClient.put(`/organizer/contests/${activeContestId}`, { categories });
-              } catch (error) {
-                console.warn('Categories may not be supported by backend', error);
-              }
-            }
-
             showToast('Đã lưu toàn bộ cấu hình cuộc thi');
             setTimeout(() => {
               window.location.href = '/organizer/dashboard';
@@ -644,6 +912,28 @@
             showToast(error.message || 'Không thể lưu toàn bộ cấu hình', 3000, true);
           } finally {
             setButtonLoading(submitBtn, false);
+          }
+        });
+
+        addCategoryBtn.addEventListener('click', async () => {
+          setButtonLoading(addCategoryBtn, true, 'Đang thêm...');
+          try {
+            await addCategory();
+          } catch (error) {
+            showToast(error.message || 'Không thể thêm category', 3000, true);
+          } finally {
+            setButtonLoading(addCategoryBtn, false);
+          }
+        });
+
+        addAwardBtn.addEventListener('click', async () => {
+          setButtonLoading(addAwardBtn, true, 'Đang thêm...');
+          try {
+            await addAward();
+          } catch (error) {
+            showToast(error.message || 'Không thể thêm award', 3000, true);
+          } finally {
+            setButtonLoading(addAwardBtn, false);
           }
         });
 
@@ -676,6 +966,8 @@
           });
         } else {
           setEditModeText();
+          renderCategories();
+          renderAwards();
         }
       });
     </script>

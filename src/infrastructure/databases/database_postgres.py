@@ -45,6 +45,11 @@ class DatabasePostgres(AbstractDatabase):
             connection.execute(
                 text(
                     "ALTER TABLE app.submission_files "
+                    "ADD COLUMN IF NOT EXISTS file_type "
+                    "VARCHAR(50) DEFAULT 'main_image' NOT NULL;"
+                ))
+                connection.execute(text(
+                    "ALTER TABLE app.submission_files "
                     "ADD COLUMN IF NOT EXISTS updated_at "
                     "TIMESTAMP WITH TIME ZONE "
                     "DEFAULT CURRENT_TIMESTAMP;"
