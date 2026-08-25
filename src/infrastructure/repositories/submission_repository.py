@@ -277,12 +277,24 @@ class SubmissionRepository(ISubmissionRepository):
             )
 
             if existing:
-
+                old_status = existing.status
                 existing.confidence_score = (
                     confidence_score
                 )
                 existing.risk_level = risk_level
                 existing.status = status
+
+                if old_status != status:
+                    from infrastructure.models.app.app_audit_log_model import AuditLogModel
+                    log = AuditLogModel(
+                        user_id=None,
+                        action="status_changed",
+                        entity_name="ai_flags",
+                        entity_id=existing.id,
+                        old_value={"status": old_status},
+                        new_value={"status": status}
+                    )
+                    self.session.add(log)
 
                 self.session.commit()
                 self.session.refresh(existing)
@@ -359,6 +371,7 @@ class SubmissionRepository(ISubmissionRepository):
         self,
         flag_id: int,
         status: str,
+        user_id: Optional[int] = None
     ) -> Optional[AIFlagModel]:
 
         try:
@@ -374,7 +387,25 @@ class SubmissionRepository(ISubmissionRepository):
             if not flag:
                 return None
 
+            old_status = flag.status
             flag.status = status
+            
+            if user_id:
+                flag.reviewed_by = user_id
+                from datetime import datetime, timezone
+                flag.reviewed_at = datetime.now(timezone.utc)
+
+            # Write to audit log
+            from infrastructure.models.app.app_audit_log_model import AuditLogModel
+            log = AuditLogModel(
+                user_id=user_id,
+                action="status_changed",
+                entity_name="ai_flags",
+                entity_id=flag.id,
+                old_value={"status": old_status},
+                new_value={"status": status}
+            )
+            self.session.add(log)
 
             self.session.commit()
             self.session.refresh(flag)

@@ -674,77 +674,154 @@ class SubmissionService:
             )
         )
 
-        # =====================================================
-        # AI DETECTION
-        # =====================================================
-
-        if (
-            first_file.get(
-                "image_hd_url"
-            )
-            and status != "draft"
-        ):
-
-            self._run_ai_detection(
-                submission=submission,
-                image_url=first_file.get(
-                    "image_hd_url"
-                ),
-                film_metadata=film_metadata,
-            )
 
         # =====================================================
-        # DUPLICATE DETECTION
+        # AI DETECTION & DUPLICATE CHECK (BACKGROUND)
         # =====================================================
 
-        try:
 
+        if status != "draft":
+            # 1. Initialize pending flags before starting background thread
+            try:
+                self.submission_repo.save_ai_flag(
+                    submission_id=submission.id,
+                    confidence_score=0.0,
+                    risk_level="safe",
+                    flag_type="AI_METADATA",
+                    status="pending"
+                )
+                self.submission_repo.save_ai_flag(
+                    submission_id=submission.id,
+                    confidence_score=0.0,
+                    risk_level="safe",
+                    flag_type="duplicate_similarity",
+                    status="pending"
+                )
+            except Exception as e:
+                print(f"Warning: could not create initial pending flags: {e}")
+
+            # 2. Extract first_bytes for duplicate detection
             first_bytes = None
-
             if files:
                 for file_item in files:
-
-                    if (
-                        self._normalize_file_type(
-                            file_item.get(
-                                "file_type"
-                            )
-                        )
-                        == "main_image"
-                    ):
-                        first_bytes = (
-                            file_item.get(
-                                "file_bytes"
-                            )
-                        )
+                    if self._normalize_file_type(file_item.get("file_type")) == "main_image":
+                        first_bytes = file_item.get("file_bytes")
                         break
-
-                if (
-                    first_bytes is None
-                    and files
-                ):
-                    first_bytes = (
-                        files[0].get(
-                            "file_bytes"
-                        )
-                    )
-
+                if first_bytes is None and files:
+                    first_bytes = files[0].get("file_bytes")
             elif file_bytes:
                 first_bytes = file_bytes
 
-            if (
-                first_bytes
-                and status != "draft"
-            ):
-                self._run_duplicate_check_and_flag(
-                    submission,
-                    first_bytes,
-                )
+            # 3. Start thread
+            import threading
+            
+            def ai_pipeline_thread(sub_id, hd_url, f_bytes, metadata):
+                from infrastructure.repositories.submission_repository import SubmissionRepository
+                repo = SubmissionRepository()
+                
+                # --- AI Detection ---
+                if hd_url:
+                    try:
+                        from services.ai_detection_service import AiDetectionService
+                        ai_service = AiDetectionService()
+                        ai_result = ai_service.detect_ai(hd_url)
+                        if not isinstance(ai_result, dict):
+                            ai_result = {}
+                            
+                        comparison_result = ai_service.compare_metadata_with_exif(
+                            metadata, ai_result.get("exif_data", {})
+                        )
+                        if not isinstance(comparison_result, dict):
+                            comparison_result = {}
 
-        except Exception as e:
-            print(
-                f"Warning: duplicate check failed: {e}"
+                        ai_score = max(
+                            float(ai_result.get("ai_score", 0) or 0),
+                            float(comparison_result.get("confidence_score", 0) or 0),
+                        )
+                        base_risk = ai_result.get("risk_level", "safe")
+                        comp_risk = comparison_result.get("risk_level", "safe")
+                        
+                        risk_level = "safe"
+                        if "high" in [base_risk, comp_risk]:
+                            risk_level = "high"
+                        elif "medium" in [base_risk, comp_risk]:
+                            risk_level = "medium"
+                            
+                        saved_flag = repo.save_ai_flag(
+                            submission_id=sub_id,
+                            confidence_score=ai_score,
+                            risk_level=risk_level,
+                            flag_type="AI_METADATA",
+                            status="completed",
+                        )
+                        repo.save_ai_analysis_report(
+                            submission_id=sub_id,
+                            ai_flag_id=saved_flag.id,
+                            ai_model_name="EXIF Extraction Engine",
+                            ai_confidence_score=ai_score,
+                            raw_details={
+                                "exif_data": ai_result.get("exif_data", {}),
+                                "raw_exif": ai_result.get("raw_exif", {}),
+                                "metadata_comparison": comparison_result,
+                            },
+                        )
+                    except Exception as e:
+                        print(f"Background AI task failed: {e}")
+                        flag = repo.get_ai_flag(sub_id, "AI_METADATA")
+                        if flag:
+                            repo.update_ai_flag_status(flag.id, "failed")
+                            
+                # --- Duplicate Detection ---
+                if f_bytes:
+                    try:
+                        from services.duplicate_detection_service import DuplicateDetectionService
+                        dup_service = DuplicateDetectionService()
+                        dup_result = dup_service.check_duplicate_against_database(
+                            new_image_bytes=f_bytes,
+                            exclude_submission_id=sub_id,
+                            session=repo.session,
+                        )
+                        if not isinstance(dup_result, dict):
+                            dup_result = {}
+
+                        similarity = float(dup_result.get("similarity_score", 0.0) or 0.0)
+                        is_dup = bool(dup_result.get("is_duplicate", False))
+
+                        risk_level = "safe"
+                        if is_dup:
+                            risk_level = "high"
+                        elif similarity >= 70.0:
+                            risk_level = "medium"
+
+                        saved_flag = repo.save_ai_flag(
+                            submission_id=sub_id,
+                            confidence_score=similarity,
+                            risk_level=risk_level,
+                            flag_type="duplicate_similarity",
+                            status="completed",
+                        )
+                        matched_sub_id = dup_result.get("matched_submission_id")
+                        repo.save_ai_analysis_report(
+                            submission_id=sub_id,
+                            ai_flag_id=saved_flag.id,
+                            ai_model_name="Duplicate Detection Engine",
+                            ai_confidence_score=similarity,
+                            raw_details=dup_result,
+                            similarity_matched_submission_id=matched_sub_id,
+                        )
+                    except Exception as e:
+                        print(f"Background Duplicate task failed: {e}")
+                        flag = repo.get_ai_flag(sub_id, "duplicate_similarity")
+                        if flag:
+                            repo.update_ai_flag_status(flag.id, "failed")
+                
+            # Fire and forget
+            t = threading.Thread(
+                target=ai_pipeline_thread,
+                args=(submission.id, first_file.get("image_hd_url"), first_bytes, film_metadata)
             )
+            t.daemon = True
+            t.start()
 
         return submission
 
@@ -854,7 +931,7 @@ class SubmissionService:
                     confidence_score=ai_score,
                     risk_level=risk_level,
                     flag_type="AI_METADATA",
-                    status="pending",
+                    status="completed",
                 )
             )
 
@@ -886,8 +963,11 @@ class SubmissionService:
 
         except Exception as e:
             print(
-                f"Warning: AI detection failed: {e}"
+                f"Error in _run_ai_detection: {e}"
             )
+            flag = self.submission_repo.get_ai_flag(submission.id, "AI_METADATA")
+            if flag:
+                self.submission_repo.update_ai_flag_status(flag.id, "failed")
 
     # =========================================================
     # UPDATE DRAFT
@@ -2347,3 +2427,63 @@ class SubmissionService:
             "risk_level": flag.risk_level,
             "status": flag.status,
         }
+    # =========================================================
+    # GET AI ANALYSIS REPORT
+    # =========================================================
+
+    def get_submission_ai_report(self, submission_id: int) -> dict:
+        flags = self.submission_repo.get_all_ai_flags(submission_id)
+        
+        from infrastructure.models.app.app_audit_log_model import AuditLogModel
+        from infrastructure.models.app.app_submission_model import SubmissionModel
+        
+        result = []
+        for flag in flags:
+            flag_dict = {
+                "id": flag.id,
+                "flag_type": flag.flag_type,
+                "confidence_score": float(flag.confidence_score) if flag.confidence_score is not None else None,
+                "risk_level": flag.risk_level,
+                "status": flag.status,
+                "reviewed_by": flag.reviewed_by,
+                "reviewed_at": flag.reviewed_at.isoformat() if flag.reviewed_at else None,
+                "review_notes": flag.review_notes,
+                "created_at": flag.created_at.isoformat() if flag.created_at else None,
+                "updated_at": flag.updated_at.isoformat() if flag.updated_at else None,
+                "raw_details": None,
+                "similarity_matched_submission": None,
+                "history": []
+            }
+            
+            if flag.analysis_report:
+                flag_dict["raw_details"] = flag.analysis_report.raw_details
+                matched_id = flag.analysis_report.similarity_matched_submission_id
+                if matched_id:
+                    matched_sub = self.submission_repo.session.query(SubmissionModel).filter(SubmissionModel.id == matched_id).first()
+                    if matched_sub:
+                        flag_dict["similarity_matched_submission"] = {
+                            "id": matched_sub.id,
+                            "title": matched_sub.title,
+                            "author_id": matched_sub.user_id
+                        }
+            
+            # Fetch history
+            audit_logs = self.submission_repo.session.query(AuditLogModel).filter(
+                AuditLogModel.entity_name == "ai_flags",
+                AuditLogModel.entity_id == flag.id
+            ).order_by(AuditLogModel.created_at.asc()).all()
+            
+            for log in audit_logs:
+                flag_dict["history"].append({
+                    "id": log.id,
+                    "action": log.action,
+                    "old_value": log.old_value,
+                    "new_value": log.new_value,
+                    "created_at": log.created_at.isoformat() if log.created_at else None,
+                    "user_id": log.user_id
+                })
+                
+            result.append(flag_dict)
+            
+        return {"submission_id": submission_id, "ai_flags": result}
+
