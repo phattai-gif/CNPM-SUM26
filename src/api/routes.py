@@ -36,6 +36,8 @@ from api.controllers.contest_settings_controller import (
 from api.controllers.moderator_controller import moderator_bp
 from api.role_required import role_required
 from api.controllers.admin_controller import admin_bp
+from api.role_required import role_required
+from services.score_service import ScoreService
 
 
 def register_routes(app):
@@ -103,12 +105,71 @@ def register_routes(app):
     except Exception:
         pass
 
+    # Judge review / scoring page
+    try:
+        app.add_url_rule(
+            "/judge/review",
+            "judge_review_page",
+            lambda: render_template("submission_review.html"),
+        )
+    except Exception:
+        pass
+
     # Login
     try:
         app.add_url_rule(
             "/login",
             "login",
             lambda: render_template("login.html"),
+        )
+    except Exception:
+        pass
+
+    # ============================================================
+    # JUDGE REVIEW DETAIL API
+    # ============================================================
+
+    try:
+        score_service = ScoreService()
+
+        @role_required("judge", "admin")
+        def api_get_judge_submission_review_detail(submission_id):
+            judge_id = request.user.get("user_id")
+            user_role = request.user.get("role", "judge")
+
+            if not judge_id:
+                return jsonify({
+                    "message": "Judge information is missing"
+                }), 401
+
+            payload, error = score_service.get_submission_review_data(
+                submission_id=submission_id,
+                judge_id=judge_id,
+                user_role=user_role,
+            )
+
+            if error == "submission_not_found":
+                return jsonify({
+                    "message": "Submission not found"
+                }), 404
+
+            if error == "not_assigned":
+                return jsonify({
+                    "message": "Judge is not assigned to this submission"
+                }), 403
+
+            if payload is None:
+                return jsonify({
+                    "message": "Failed to get review detail"
+                }), 500
+
+            return jsonify(payload), 200
+
+        app.add_url_rule(
+            "/api/judge/submissions/<int:submission_id>/review-detail",
+            "api_judge_submission_review_detail",
+            api_get_judge_submission_review_detail,
+            methods=["GET"],
         )
     except Exception:
         pass
@@ -450,10 +511,13 @@ def register_routes(app):
                         "message": "Forbidden"
                     }), 403
 
-            submission_file = (
+            main_image_file = (
                 session
                 .query(SubmissionFileModel)
-                .filter_by(submission_id=submission.id)
+                .filter_by(
+                    submission_id=submission.id,
+                    file_type="main_image",
+                )
                 .first()
             )
             film_metadata = (
@@ -490,16 +554,44 @@ def register_routes(app):
                 else None
             )
 
+            all_submission_files = (
+                session
+                .query(SubmissionFileModel)
+                .filter_by(submission_id=submission.id)
+                .all()
+            )
+            files_categorized = {
+                "main_image": [],
+                "negative": [],
+                "contact_sheet": [],
+            }
+            for sf in all_submission_files:
+                ftype = getattr(sf, "file_type", "main_image") or "main_image"
+                sf_dict = {
+                    "id": sf.id,
+                    "image_hd_url": sf.image_hd_url,
+                    "thumbnail_url": sf.thumbnail_url,
+                    "width_px": sf.width_px,
+                    "height_px": sf.height_px,
+                    "file_size_bytes": sf.file_size_bytes,
+                    "file_hash": sf.file_hash,
+                    "file_type": ftype,
+                }
+                if ftype not in files_categorized:
+                    files_categorized[ftype] = []
+                files_categorized[ftype].append(sf_dict)
+
             return jsonify({
                 "submission": {
                     "id": submission.id,
                     "round_id": submission.round_id,
                     "status": submission.status,
                     "image_url": (
-                        submission_file.image_hd_url
-                        if submission_file
+                        main_image_file.image_hd_url
+                        if main_image_file
                         else None
                     ),
+                    "files": files_categorized,
                     "metadata": {
                         "camera_body": (
                             film_metadata.camera_body
@@ -527,13 +619,13 @@ def register_routes(app):
                             else None
                         ),
                         "width_px": (
-                            submission_file.width_px
-                            if submission_file
+                            main_image_file.width_px
+                            if main_image_file
                             else None
                         ),
                         "height_px": (
-                            submission_file.height_px
-                            if submission_file
+                            main_image_file.height_px
+                            if main_image_file
                             else None
                         ),
                     },
