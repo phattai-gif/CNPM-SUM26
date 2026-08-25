@@ -2963,3 +2963,23 @@ def update_flag_status(flag_id):
                 "error": str(error),
             }
         ), 500
+
+# ============================================================
+# GET AI REPORT
+# ============================================================
+
+@submission_bp.route(
+    "/<int:submission_id>/ai-report",
+    methods=["GET"],
+)
+@role_required("organizer", "admin", "moderator", "judge")
+def get_submission_ai_report_api(submission_id):
+    try:
+        report = submission_service.get_submission_ai_report(submission_id)
+        return jsonify(report), 200
+    except Exception as error:
+        return jsonify({
+            "message": "Failed to get AI report",
+            "error": str(error)
+        }), 500
+
