@@ -376,7 +376,16 @@ def get_contest(contest_id):
     if not contest:
         return jsonify({'message': 'KhÃ´ng tÃ¬m tháº¥y cuá»™c thi'}), 404
 
-    if user_role != 'admin' and contest.created_by != user_id:
+    try:
+        owner_id = int(contest.created_by)
+    except (TypeError, ValueError):
+        owner_id = contest.created_by
+    try:
+        actor_id = int(user_id)
+    except (TypeError, ValueError):
+        actor_id = user_id
+
+    if user_role != 'admin' and owner_id != actor_id:
         return jsonify({'message': 'Báº¡n khÃ´ng cÃ³ quyá»n xem cuá»™c thi nÃ y'}), 403
 
     return jsonify({
@@ -427,6 +436,162 @@ def delete_contest(contest_id):
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
         return jsonify({'message': 'Lá»—i khi xÃ³a cuá»™c thi', 'error': str(e)}), 500
+
+
+# -------------------------------------------------------------------------
+# Categories & Awards (Task CNPM-95) APIs
+# -------------------------------------------------------------------------
+
+@contest_bp.route('/contests/<int:contest_id>/categories', methods=['GET'])
+@role_required('organizer', 'admin')
+def list_contest_categories(contest_id):
+    user_id = request.user.get('user_id')
+    user_role = request.user.get('role')
+
+    try:
+        categories = contest_service.list_categories(contest_id, user_id=user_id, user_role=user_role)
+        return jsonify({'message': 'Láº¥y danh má»¥c thÃ nh cÃ´ng', 'categories': categories}), 200
+    except ValueError as ve:
+        return jsonify({'message': str(ve)}), 404
+    except PermissionError as pe:
+        return jsonify({'message': str(pe)}), 403
+    except Exception as e:
+        return jsonify({'message': 'Lá»—i khi láº¥y danh má»¥c', 'error': str(e)}), 500
+
+
+@contest_bp.route('/contests/<int:contest_id>/categories', methods=['POST'])
+@role_required('organizer', 'admin')
+def create_contest_category(contest_id):
+    user_id = request.user.get('user_id')
+    user_role = request.user.get('role')
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+
+    try:
+        categories = contest_service.create_category(contest_id, data, user_id=user_id, user_role=user_role)
+        return jsonify({'message': 'Táº¡o danh má»¥c thÃ nh cÃ´ng', 'categories': categories}), 201
+    except ValueError as ve:
+        message = str(ve)
+        status_code = 404 if 'KhÃ´ng tÃ¬m tháº¥y cuá»™c thi' in message else 400
+        return jsonify({'message': message}), status_code
+    except PermissionError as pe:
+        return jsonify({'message': str(pe)}), 403
+    except Exception as e:
+        return jsonify({'message': 'Lá»—i khi táº¡o danh má»¥c', 'error': str(e)}), 500
+
+
+@contest_bp.route('/contests/<int:contest_id>/categories/<int:category_id>', methods=['PUT'])
+@role_required('organizer', 'admin')
+def update_contest_category(contest_id, category_id):
+    user_id = request.user.get('user_id')
+    user_role = request.user.get('role')
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+
+    try:
+        categories = contest_service.update_category(contest_id, category_id, data, user_id=user_id, user_role=user_role)
+        return jsonify({'message': 'Cáº­p nháº­t danh má»¥c thÃ nh cÃ´ng', 'categories': categories}), 200
+    except ValueError as ve:
+        message = str(ve)
+        status_code = 404 if 'KhÃ´ng tÃ¬m tháº¥y' in message else 400
+        return jsonify({'message': message}), status_code
+    except PermissionError as pe:
+        return jsonify({'message': str(pe)}), 403
+    except Exception as e:
+        return jsonify({'message': 'Lá»—i khi cáº­p nháº­t danh má»¥c', 'error': str(e)}), 500
+
+
+@contest_bp.route('/contests/<int:contest_id>/categories/<int:category_id>', methods=['DELETE'])
+@role_required('organizer', 'admin')
+def delete_contest_category(contest_id, category_id):
+    user_id = request.user.get('user_id')
+    user_role = request.user.get('role')
+
+    try:
+        categories = contest_service.delete_category(contest_id, category_id, user_id=user_id, user_role=user_role)
+        return jsonify({'message': 'XÃ³a danh má»¥c thÃ nh cÃ´ng', 'categories': categories}), 200
+    except ValueError as ve:
+        message = str(ve)
+        status_code = 404 if 'KhÃ´ng tÃ¬m tháº¥y' in message else 400
+        return jsonify({'message': message}), status_code
+    except PermissionError as pe:
+        return jsonify({'message': str(pe)}), 403
+    except Exception as e:
+        return jsonify({'message': 'Lá»—i khi xÃ³a danh má»¥c', 'error': str(e)}), 500
+
+
+@contest_bp.route('/contests/<int:contest_id>/awards', methods=['GET'])
+@role_required('organizer', 'admin')
+def list_contest_awards(contest_id):
+    user_id = request.user.get('user_id')
+    user_role = request.user.get('role')
+
+    try:
+        awards = contest_service.list_awards(contest_id, user_id=user_id, user_role=user_role)
+        return jsonify({'message': 'Láº¥y giáº£i thÆ°á»Ÿng thÃ nh cÃ´ng', 'awards': awards}), 200
+    except ValueError as ve:
+        return jsonify({'message': str(ve)}), 404
+    except PermissionError as pe:
+        return jsonify({'message': str(pe)}), 403
+    except Exception as e:
+        return jsonify({'message': 'Lá»—i khi láº¥y giáº£i thÆ°á»Ÿng', 'error': str(e)}), 500
+
+
+@contest_bp.route('/contests/<int:contest_id>/awards', methods=['POST'])
+@role_required('organizer', 'admin')
+def create_contest_award(contest_id):
+    user_id = request.user.get('user_id')
+    user_role = request.user.get('role')
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+
+    try:
+        awards = contest_service.create_award(contest_id, data, user_id=user_id, user_role=user_role)
+        return jsonify({'message': 'Táº¡o giáº£i thÆ°á»Ÿng thÃ nh cÃ´ng', 'awards': awards}), 201
+    except ValueError as ve:
+        message = str(ve)
+        status_code = 404 if 'KhÃ´ng tÃ¬m tháº¥y cuá»™c thi' in message else 400
+        return jsonify({'message': message}), status_code
+    except PermissionError as pe:
+        return jsonify({'message': str(pe)}), 403
+    except Exception as e:
+        return jsonify({'message': 'Lá»—i khi táº¡o giáº£i thÆ°á»Ÿng', 'error': str(e)}), 500
+
+
+@contest_bp.route('/contests/<int:contest_id>/awards/<int:award_id>', methods=['PUT'])
+@role_required('organizer', 'admin')
+def update_contest_award(contest_id, award_id):
+    user_id = request.user.get('user_id')
+    user_role = request.user.get('role')
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+
+    try:
+        awards = contest_service.update_award(contest_id, award_id, data, user_id=user_id, user_role=user_role)
+        return jsonify({'message': 'Cáº­p nháº­t giáº£i thÆ°á»Ÿng thÃ nh cÃ´ng', 'awards': awards}), 200
+    except ValueError as ve:
+        message = str(ve)
+        status_code = 404 if 'KhÃ´ng tÃ¬m tháº¥y' in message else 400
+        return jsonify({'message': message}), status_code
+    except PermissionError as pe:
+        return jsonify({'message': str(pe)}), 403
+    except Exception as e:
+        return jsonify({'message': 'Lá»—i khi cáº­p nháº­t giáº£i thÆ°á»Ÿng', 'error': str(e)}), 500
+
+
+@contest_bp.route('/contests/<int:contest_id>/awards/<int:award_id>', methods=['DELETE'])
+@role_required('organizer', 'admin')
+def delete_contest_award(contest_id, award_id):
+    user_id = request.user.get('user_id')
+    user_role = request.user.get('role')
+
+    try:
+        awards = contest_service.delete_award(contest_id, award_id, user_id=user_id, user_role=user_role)
+        return jsonify({'message': 'XÃ³a giáº£i thÆ°á»Ÿng thÃ nh cÃ´ng', 'awards': awards}), 200
+    except ValueError as ve:
+        message = str(ve)
+        status_code = 404 if 'KhÃ´ng tÃ¬m tháº¥y' in message else 400
+        return jsonify({'message': message}), status_code
+    except PermissionError as pe:
+        return jsonify({'message': str(pe)}), 403
+    except Exception as e:
+        return jsonify({'message': 'Lá»—i khi xÃ³a giáº£i thÆ°á»Ÿng', 'error': str(e)}), 500
 
 
 # -------------------------------------------------------------------------

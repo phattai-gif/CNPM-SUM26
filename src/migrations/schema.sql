@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS app.contests (
     description TEXT,
     rules TEXT,
     banner_url VARCHAR(512),
+    categories_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    awards_json JSONB NOT NULL DEFAULT '[]'::jsonb,
     created_by BIGINT NOT NULL REFERENCES app.users(id) ON DELETE CASCADE,
     status VARCHAR(20) NOT NULL DEFAULT 'draft',
     start_date TIMESTAMPTZ,
@@ -313,6 +315,10 @@ ALTER TABLE app.ai_flags
 
 ALTER TABLE app.contest_announcements
     ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE app.contests
+    ADD COLUMN IF NOT EXISTS categories_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    ADD COLUMN IF NOT EXISTS awards_json JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 ALTER TABLE app.digital_archive_exhibits
     ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
