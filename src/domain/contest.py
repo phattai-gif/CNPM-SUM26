@@ -70,7 +70,8 @@ class Contest:
                  banner_url: Optional[str] = None, created_by: int = 0, 
                  status: str = 'draft', start_date: Optional[datetime] = None, 
                  end_date: Optional[datetime] = None, created_at: Optional[datetime] = None, 
-                 updated_at: Optional[datetime] = None, rounds: Optional[List[Round]] = None):
+                 updated_at: Optional[datetime] = None, rounds: Optional[List[Round]] = None,
+                 categories: Optional[List[dict]] = None, awards: Optional[List[dict]] = None):
         self.id = id
         self.title = title
         self.slug = slug
@@ -84,6 +85,8 @@ class Contest:
         self.created_at = created_at
         self.updated_at = updated_at
         self.rounds = rounds if rounds is not None else []
+        self.categories = categories if categories is not None else []
+        self.awards = awards if awards is not None else []
 
     def to_dict(self):
         return {
@@ -99,7 +102,9 @@ class Contest:
             'end_date': self.end_date.isoformat() if isinstance(self.end_date, datetime) else self.end_date,
             'created_at': self.created_at.isoformat() if isinstance(self.created_at, datetime) else self.created_at,
             'updated_at': self.updated_at.isoformat() if isinstance(self.updated_at, datetime) else self.updated_at,
-            'rounds': [r.to_dict() for r in self.rounds]
+            'rounds': [r.to_dict() for r in self.rounds],
+            'categories': self.categories,
+            'awards': self.awards
         }
 
 
