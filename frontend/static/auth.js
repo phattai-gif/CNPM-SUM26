@@ -222,4 +222,165 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 900);
     });
   }
+
+  // Check URL parameters for tokens to auto-populate token fields
+  const urlParams = new URLSearchParams(window.location.search);
+  const tokenParam = urlParams.get('token');
+  if (tokenParam) {
+    const tokenInput = document.getElementById('token');
+    if (tokenInput) {
+      tokenInput.value = tokenParam;
+    }
+  }
+
+  // Forgot Password Form Listener
+  const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+  if (forgotPasswordForm) {
+    forgotPasswordForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      showMessage('');
+      
+      const email = document.getElementById('email').value.trim();
+      const demoTokenContainer = document.getElementById('demoTokenContainer');
+      const demoTokenText = document.getElementById('demoTokenText');
+      const goToResetLink = document.getElementById('goToResetLink');
+
+      if (demoTokenContainer) demoTokenContainer.style.display = 'none';
+
+      setFormLoading(forgotPasswordForm, true, 'Requesting token...');
+      const { ok, data } = await requestJson('/auth/forgot-password', { email });
+      setFormLoading(forgotPasswordForm, false, 'Request Reset Token');
+
+      if (!ok) {
+        showMessage(data.message || 'Failed to request reset token.');
+        return;
+      }
+
+      showMessage('Password reset token generated successfully.', true);
+
+      // Render the demo assistance block to ease copy-paste during testing/use
+      if (demoTokenContainer && demoTokenText && goToResetLink) {
+        demoTokenText.value = data.token;
+        goToResetLink.href = `/auth/reset-password?token=${encodeURIComponent(data.token)}`;
+        demoTokenContainer.style.display = 'block';
+      }
+    });
+  }
+
+  // Reset Password Form Listener
+  const resetPasswordForm = document.getElementById('resetPasswordForm');
+  if (resetPasswordForm) {
+    resetPasswordForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      showMessage('');
+
+      const token = document.getElementById('token').value.trim();
+      const password = document.getElementById('password').value;
+      const passwordconfirm = document.getElementById('passwordconfirm').value;
+
+      if (!token || !password || !passwordconfirm) {
+        showMessage('All fields are required.');
+        return;
+      }
+
+      if (password !== passwordconfirm) {
+        showMessage('Passwords do not match.');
+        return;
+      }
+
+      setFormLoading(resetPasswordForm, true, 'Resetting password...');
+      const { ok, data } = await requestJson('/auth/reset-password', {
+        token,
+        password,
+        passwordconfirm
+      });
+      setFormLoading(resetPasswordForm, false, 'Reset Password');
+
+      if (!ok) {
+        showMessage(data.message || 'Failed to reset password.');
+        return;
+      }
+
+      showMessage('Password reset successful! Redirecting to login...', true);
+      resetPasswordForm.reset();
+      setTimeout(() => {
+        window.location.href = '/auth/login';
+      }, 1500);
+    });
+  }
+
+  // Email Verification Form Listener
+  const verifyEmailForm = document.getElementById('verifyEmailForm');
+  if (verifyEmailForm) {
+    verifyEmailForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      showMessage('');
+
+      const token = document.getElementById('token').value.trim();
+      if (!token) {
+        showMessage('Verification token is required.');
+        return;
+      }
+
+      setFormLoading(verifyEmailForm, true, 'Verifying...');
+      const { ok, data } = await requestJson('/auth/verify-email', { token });
+      setFormLoading(verifyEmailForm, false, 'Verify Email');
+
+      if (!ok) {
+        showMessage(data.message || 'Verification failed.');
+        return;
+      }
+
+      showMessage('Email verified successfully! Redirecting to login...', true);
+      verifyEmailForm.reset();
+      setTimeout(() => {
+        window.location.href = '/auth/login';
+      }, 1500);
+    });
+
+    // Auto-trigger verification if token is already pre-filled from URL
+    if (tokenParam) {
+      setTimeout(() => {
+        verifyEmailForm.dispatchEvent(new Event('submit'));
+      }, 200);
+    }
+  }
+
+  // Request Verification Token Form Listener
+  const requestVerificationForm = document.getElementById('requestVerificationForm');
+  const reqMessageEl = document.getElementById('reqMessage');
+  if (requestVerificationForm) {
+    requestVerificationForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      
+      if (reqMessageEl) {
+        reqMessageEl.textContent = '';
+        reqMessageEl.className = 'message';
+        reqMessageEl.style.display = 'none';
+      }
+
+      const email = document.getElementById('reqEmail').value.trim();
+      const demoVerifyTokenContainer = document.getElementById('demoVerifyTokenContainer');
+      const demoVerifyTokenText = document.getElementById('demoVerifyTokenText');
+
+      if (demoVerifyTokenContainer) demoVerifyTokenContainer.style.display = 'none';
+
+      setFormLoading(requestVerificationForm, true, 'Requesting...');
+      const { ok, data } = await requestJson('/auth/request-verification', { email });
+      setFormLoading(requestVerificationForm, false, 'Request Token');
+
+      if (reqMessageEl) {
+        reqMessageEl.textContent = data.message || (ok ? 'Verification token generated successfully.' : 'Failed to request token.');
+        reqMessageEl.className = ok ? 'message success' : 'message error';
+        reqMessageEl.style.display = 'block';
+      }
+
+      if (!ok) return;
+
+      if (demoVerifyTokenContainer && demoVerifyTokenText) {
+        demoVerifyTokenText.value = data.token;
+        demoVerifyTokenContainer.style.display = 'block';
+      }
+    });
+  }
 });

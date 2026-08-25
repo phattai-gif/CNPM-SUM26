@@ -17,6 +17,7 @@
 
         <label for="password">Password</label>
         <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Enter your password">
+        <p style="margin-top: 6px; text-align: right; font-size: 0.9rem;"><a href="{{ url_for('auth.forgot_password_page') }}" style="color: var(--primary-2); text-decoration: none;">Forgot Password?</a></p>
 
         <button type="submit">Login</button>
       </form>
@@ -28,6 +29,7 @@
 
       <div id="message" class="message"></div>
       <p class="secondary-text">Need an account? <a href="{{ url_for('auth.register_page') }}">Create one</a></p>
+      <p class="secondary-text" style="margin-top: 8px;">Already registered? <a href="{{ url_for('auth.verify_email_page') }}">Verify your email</a></p>
     </div>
   </div>
   <script>
