@@ -20,7 +20,7 @@ class RoundSchema(Schema):
     start_date = fields.Str(allow_none=True)
     end_date = fields.Str(allow_none=True)
     weight = fields.Float(load_default=1.0, dump_default=1.0)
-    status = fields.Str(load_default='upcoming', validate=validate.OneOf(['upcoming', 'ongoing', 'completed']))
+    status = fields.Str(load_default='upcoming')
     created_at = fields.Str(dump_only=True)
     updated_at = fields.Str(dump_only=True)
     criteria = fields.List(fields.Nested(CriteriaSchema), load_default=[])
@@ -32,7 +32,7 @@ class ContestCreateRequestSchema(Schema):
     description = fields.Str(allow_none=True)
     rules = fields.Str(allow_none=True)
     banner_url = fields.Str(allow_none=True, validate=validate.Length(max=512))
-    status = fields.Str(load_default='draft', validate=validate.OneOf(['draft', 'published', 'active', 'completed', 'archived']))
+    status = fields.Str(load_default='draft')
     start_date = fields.Str(allow_none=True)
     end_date = fields.Str(allow_none=True)
 
@@ -42,7 +42,7 @@ class ContestUpdateRequestSchema(Schema):
     description = fields.Str(allow_none=True)
     rules = fields.Str(allow_none=True)
     banner_url = fields.Str(allow_none=True, validate=validate.Length(max=512))
-    status = fields.Str(validate=validate.OneOf(['draft', 'published', 'active', 'completed', 'archived']))
+    status = fields.Str()
     start_date = fields.Str(allow_none=True)
     end_date = fields.Str(allow_none=True)
 
@@ -70,3 +70,5 @@ class ContestResponseSchema(Schema):
     created_at = fields.Str(allow_none=True)
     updated_at = fields.Str(allow_none=True)
     rounds = fields.List(fields.Nested(RoundSchema))
+    categories = fields.List(fields.Dict(), dump_default=[])
+    awards = fields.List(fields.Dict(), dump_default=[])

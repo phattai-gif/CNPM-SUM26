@@ -1,0 +1,512 @@
+/* =============================================================
+   recovery.css — Shared styles for Forgot / Reset / Verify pages
+   Design: Dark gradient bg · Glassmorphism card · Inter + Space Grotesk
+   ============================================================= */
+
+/* ── Google Fonts ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap');
+
+/* ── CSS Variables ────────────────────────────────────────── */
+:root {
+  --bg-from:      #0f172a;
+  --bg-to:        #1e1b4b;
+  --card-bg:      rgba(255, 255, 255, 0.97);
+  --border:       rgba(255, 255, 255, 0.12);
+  --text:         #111827;
+  --muted:        #6b7280;
+  --label:        #374151;
+
+  /* Brand */
+  --indigo:       #6366f1;
+  --indigo-dark:  #4f46e5;
+  --purple:       #8b5cf6;
+  --teal:         #0d9488;
+  --cyan:         #06b6d4;
+
+  /* Gradients */
+  --grad-indigo:  linear-gradient(135deg, #6366f1, #8b5cf6);
+  --grad-teal:    linear-gradient(135deg, #0d9488, #06b6d4);
+  --grad-green:   linear-gradient(135deg, #10b981, #059669);
+
+  /* States */
+  --success-bg:   #ecfdf5;
+  --success-bd:   #6ee7b7;
+  --success-text: #065f46;
+  --error-bg:     #fff1f2;
+  --error-bd:     #fda4af;
+  --error-text:   #881337;
+
+  /* Elevation */
+  --shadow-card:  0 24px 60px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2);
+  --shadow-btn:   0 4px 18px rgba(99, 102, 241, 0.45);
+  --shadow-input: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Reset ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Body / Background ────────────────────────────────────── */
+body {
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, var(--bg-from) 0%, var(--bg-to) 100%);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ── Animated background orbs ─────────────────────────────── */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.18;
+  pointer-events: none;
+  animation: orb-drift 12s ease-in-out infinite alternate;
+}
+
+body::before {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, #6366f1, #8b5cf6);
+  top: -120px;
+  left: -100px;
+}
+
+body::after {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #06b6d4, #0d9488);
+  bottom: -80px;
+  right: -60px;
+  animation-delay: -6s;
+}
+
+@keyframes orb-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(40px, 30px) scale(1.08); }
+}
+
+/* ── Page wrapper (centers the card) ─────────────────────── */
+.rp-wrapper {
+  width: 100%;
+  max-width: 480px;
+  animation: card-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Card ─────────────────────────────────────────────────── */
+.rp-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  padding: 40px 40px 36px;
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ── Icon badge ───────────────────────────────────────────── */
+.rp-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  margin-bottom: 24px;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.rp-icon-badge.indigo { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: #4f46e5; }
+.rp-icon-badge.purple { background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #7c3aed; }
+.rp-icon-badge.teal   { background: linear-gradient(135deg, #ccfbf1, #99f6e4); color: #0f766e; }
+
+/* ── Badge label (eyebrow) ────────────────────────────────── */
+.rp-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--indigo);
+  background: #eef2ff;
+  padding: 3px 10px;
+  border-radius: 100px;
+  margin-bottom: 12px;
+}
+
+/* ── Typography ───────────────────────────────────────────── */
+.rp-card h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.rp-card .rp-subtitle {
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+/* ── Form fields ──────────────────────────────────────────── */
+.rp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.rp-field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--label);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rp-field label .lbl-icon {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.rp-input-wrap {
+  position: relative;
+}
+
+.rp-input-wrap .rp-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.rp-input-wrap.has-icon input,
+.rp-input-wrap.has-icon textarea {
+  padding-left: 42px;
+}
+
+.rp-field input,
+.rp-field textarea {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  background: #fafafa;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  outline: none;
+  resize: none;
+}
+
+.rp-field textarea {
+  min-height: 90px;
+  font-family: 'SFMono-Regular', 'Consolas', monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.rp-field input:focus,
+.rp-field textarea:focus {
+  border-color: var(--indigo);
+  background: #fff;
+  box-shadow: var(--shadow-input);
+}
+
+/* Password eye toggle */
+.rp-eye-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  opacity: 0.45;
+  padding: 4px;
+  line-height: 1;
+  transition: opacity 0.2s;
+  width: auto;
+  margin-top: 0;
+}
+.rp-eye-btn:hover { opacity: 0.75; }
+
+.rp-field input[type="password"],
+.rp-field input.has-toggle { padding-right: 44px; }
+
+/* ── Password strength meter ──────────────────────────────── */
+.strength-bar {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.strength-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  transition: background 0.3s ease;
+}
+
+.strength-seg.s1 { background: #f43f5e; }
+.strength-seg.s2 { background: #f97316; }
+.strength-seg.s3 { background: #eab308; }
+.strength-seg.s4 { background: #10b981; }
+
+.strength-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 5px;
+  color: var(--muted);
+  transition: color 0.3s;
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.rp-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.15s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.01em;
+  margin-top: 4px;
+}
+
+.rp-btn.primary {
+  background: var(--grad-indigo);
+  color: #fff;
+  box-shadow: var(--shadow-btn);
+}
+
+.rp-btn.teal-btn {
+  background: var(--grad-teal);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(13, 148, 136, 0.4);
+}
+
+.rp-btn.secondary {
+  background: #f1f5f9;
+  color: #374151;
+  box-shadow: none;
+}
+
+.rp-btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.rp-btn:active:not(:disabled) { transform: translateY(0); }
+
+.rp-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+  transform: none;
+}
+
+/* Spinner inside button */
+@keyframes spin { to { transform: rotate(360deg); } }
+.rp-btn .spin {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.rp-btn.loading .spin { display: inline-block; }
+.rp-btn.loading .btn-text { display: none; }
+
+/* ── Alert messages ───────────────────────────────────────── */
+.rp-alert {
+  display: none;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: 18px;
+  font-weight: 500;
+  animation: alert-pop 0.25s ease both;
+}
+
+@keyframes alert-pop {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.rp-alert.success {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--success-bg);
+  border: 1px solid var(--success-bd);
+  color: var(--success-text);
+}
+
+.rp-alert.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--error-bg);
+  border: 1px solid var(--error-bd);
+  color: var(--error-text);
+}
+
+.rp-alert .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* ── Divider ──────────────────────────────────────────────── */
+.rp-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0;
+  color: #d1d5db;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.rp-divider::before,
+.rp-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* ── Section heading (for secondary section) ──────────────── */
+.rp-section-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.rp-section-sub {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+/* ── Token reveal box ─────────────────────────────────────── */
+.rp-token-box {
+  display: none;
+  margin-top: 20px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border: 1.5px solid #6ee7b7;
+  border-radius: 16px;
+  animation: alert-pop 0.3s ease both;
+}
+
+.rp-token-box .tb-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.rp-token-box .tb-header span {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #065f46;
+}
+
+.rp-token-box textarea {
+  width: 100%;
+  height: 82px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #a7f3d0;
+  background: #fff;
+  font-family: 'SFMono-Regular', 'Consolas', monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #065f46;
+  resize: none;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  margin-bottom: 12px;
+}
+
+.rp-token-box textarea:focus { border-color: #34d399; }
+
+.rp-token-box .tb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: var(--grad-green);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: filter 0.2s, transform 0.15s;
+}
+
+.rp-token-box .tb-link:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+/* ── Back link ────────────────────────────────────────────── */
+.rp-back {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.rp-back a {
+  color: var(--indigo);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.rp-back a:hover { color: var(--indigo-dark); text-decoration: underline; }
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 520px) {
+  body { padding: 16px 12px; }
+
+  .rp-card {
+    padding: 28px 22px 24px;
+    border-radius: 20px;
+  }
+
+  .rp-card h1 { font-size: 1.6rem; }
+  .rp-icon-badge { width: 54px; height: 54px; font-size: 24px; }
+}

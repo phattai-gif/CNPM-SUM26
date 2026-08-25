@@ -1,8 +1,11 @@
-from dotenv import load_dotenv
+﻿from dotenv import load_dotenv
+from pathlib import Path
+from create_app import create_app
 
 load_dotenv()
 from pathlib import Path
 
+from pathlib import Path
 from flask import Flask, jsonify, redirect, url_for, render_template
 from jinja2 import ChoiceLoader, FileSystemLoader
 from flasgger import Swagger
@@ -265,6 +268,15 @@ def create_app():
         )
 
     @app.route("/submit")
+    @app.route('/profile')
+    def profile_page_root():
+        return render_template('profile.html')
+
+    @app.route('/portfolio')
+    def portfolio_page_redirect():
+        return redirect(url_for('profile_page_root'))
+
+    @app.route('/submit')
     def submit_page():
         return render_template(
             "submission.html"

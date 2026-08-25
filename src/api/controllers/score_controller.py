@@ -96,6 +96,16 @@ def submit_score(submission_id):
             "message": "Invalid score value"
         }), 400
 
+    if error == "feedback_finalized":
+        return jsonify({
+            "message": "This review has already been finalized and can no longer be edited"
+        }), 409
+
+    if error == "round_finalized":
+        return jsonify({
+            "message": "This round has already been finalized and scores are locked"
+        }), 409
+
     if model is None:
         return jsonify({
             "message": "Failed to save score"
@@ -132,11 +142,18 @@ def submit_feedback(submission_id):
 
     summary_feedback = data.get("summary_feedback")
     final_recommendation = data.get("final_recommendation")
+    is_finalized = bool(data.get("is_finalized", False))
 
-    if not summary_feedback:
+    if isinstance(summary_feedback, str):
+        summary_feedback = summary_feedback.strip()
+
+    if not summary_feedback and is_finalized:
         return jsonify({
             "message": "summary_feedback is required"
         }), 400
+
+    if not summary_feedback:
+        summary_feedback = ""
 
     user_role = request.user.get("role", "judge")
 
@@ -160,6 +177,7 @@ def submit_feedback(submission_id):
             judge_id=judge_id,
             summary_feedback=summary_feedback,
             final_recommendation=final_recommendation,
+            is_finalized=is_finalized,
         )
     except Exception as error:
         return jsonify({
@@ -171,6 +189,16 @@ def submit_feedback(submission_id):
         return jsonify({
             "message": "Submission not found"
         }), 404
+
+    if error == "feedback_finalized":
+        return jsonify({
+            "message": "This review has already been finalized and can no longer be edited"
+        }), 409
+
+    if error == "round_finalized":
+        return jsonify({
+            "message": "This round has already been finalized and scores are locked"
+        }), 409
 
     if model is None:
         return jsonify({
@@ -185,8 +213,54 @@ def submit_feedback(submission_id):
             "judge_id": model.judge_id,
             "summary_feedback": model.summary_feedback,
             "final_recommendation": model.final_recommendation,
+            "is_finalized": bool(getattr(model, "is_finalized", False)),
         },
     }), 200
+
+
+@score_bp.route(
+    "/submissions/<int:submission_id>/state",
+    methods=["GET"],
+)
+@role_required("judge", "admin")
+def get_submission_state(submission_id):
+
+    judge_id = request.user.get("user_id")
+    user_role = request.user.get("role", "judge")
+
+    if not judge_id:
+        return jsonify({
+            "message": "Judge information is missing"
+        }), 401
+
+    try:
+        payload, error = score_service.get_submission_review_data(
+            submission_id=submission_id,
+            judge_id=judge_id,
+            user_role=user_role,
+        )
+    except Exception as error:
+        return jsonify({
+            "message": "Failed to get submission state",
+            "error": str(error),
+        }), 500
+
+    if error == "submission_not_found":
+        return jsonify({
+            "message": "Submission not found"
+        }), 404
+
+    if error == "not_assigned":
+        return jsonify({
+            "message": "Judge is not assigned to this submission"
+        }), 403
+
+    if payload is None:
+        return jsonify({
+            "message": "Failed to get submission state"
+        }), 500
+
+    return jsonify(payload), 200
 
 
 @score_bp.route(
