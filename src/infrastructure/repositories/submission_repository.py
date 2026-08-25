@@ -389,7 +389,7 @@ class SubmissionRepository(ISubmissionRepository):
 
             old_status = flag.status
             flag.status = status
-            
+
             if user_id:
                 flag.reviewed_by = user_id
                 from datetime import datetime, timezone
@@ -701,52 +701,17 @@ class SubmissionRepository(ISubmissionRepository):
                         "file_hash is required"
                     )
 
-                submission_file = (
-                    SubmissionFileModel(
-                        submission_id=(
-                            submission.id
-                        ),
-                        image_hd_url=(
-                            f_info[
-                                "image_hd_url"
-                            ]
-                        ),
-                        thumbnail_url=(
-                            f_info.get(
-                                "thumbnail_url"
-                            )
-                        ),
-                        width_px=(
-                            f_info.get(
-                                "width_px"
-                            )
-                        ),
-                        height_px=(
-                            f_info.get(
-                                "height_px"
-                            )
-                        ),
-                        file_size_bytes=(
-                            f_info.get(
-                                "file_size_bytes"
-                            )
-                        ),
-                        file_hash=(
-                            f_info[
-                                "file_hash"
-                            ]
-                        ),
-                        phash=f_info.get(
-                            "phash"
-                        ),
-                        ahash=f_info.get(
-                            "ahash"
-                        ),
-                        file_type=f_info.get(
-                            "file_type",
-                            "main_image",
-                        ),
-                    )
+                submission_file = SubmissionFileModel(
+                    submission_id=submission.id,
+                    image_hd_url=f_info["image_hd_url"],
+                    thumbnail_url=f_info.get("thumbnail_url"),
+                    width_px=f_info.get("width_px"),
+                    height_px=f_info.get("height_px"),
+                    file_size_bytes=f_info.get("file_size_bytes"),
+                    file_hash=f_info["file_hash"],
+                    phash=f_info.get("phash"),
+                    ahash=f_info.get("ahash"),
+                    file_type=f_info.get("file_type", "main_image"),
                 )
 
                 self.session.add(
