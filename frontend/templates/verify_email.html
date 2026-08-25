@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Verify your email address to activate your account.">
+  <title>Email Verification — PhotoContest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='recovery.css') }}">
+  <style>
+    /* Teal-themed focus for verify page */
+    .verify-focus input:focus,
+    .verify-focus textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="rp-wrapper">
+    <div class="rp-card verify-focus">
+
+      <!-- Icon badge -->
+      <div class="rp-icon-badge teal">✉️</div>
+
+      <!-- Header -->
+      <div class="rp-tag" style="background:#ccfbf1; color:#0f766e;">Account Activation</div>
+      <h1>Verify Your Email</h1>
+      <p class="rp-subtitle">
+        Activate your account by pasting the verification token you received.
+        The token is valid for <strong>24 hours</strong>.
+      </p>
+
+      <!-- ── SECTION 1: Verify token ──────────────────────── -->
+      <form id="verifyEmailForm" novalidate>
+        <div class="rp-field">
+          <label for="token"><span class="lbl-icon">🎟️</span> Verification Token</label>
+          <div class="rp-input-wrap">
+            <textarea
+              id="token"
+              name="token"
+              required
+              placeholder="Paste your verification token here…"
+            >{{ token }}</textarea>
+          </div>
+        </div>
+
+        <button type="submit" id="verifySubmitBtn" class="rp-btn teal-btn" style="margin-top: 8px;">
+          <span class="spin"></span>
+          <span class="btn-text">✅ Verify Email</span>
+        </button>
+      </form>
+
+      <!-- Verify status message -->
+      <div id="message" class="rp-alert" role="alert">
+        <span class="alert-icon" id="msgIcon"></span>
+        <span id="msgText"></span>
+      </div>
+
+      <!-- ── Divider ──────────────────────────────────────── -->
+      <div class="rp-divider">or</div>
+
+      <!-- ── SECTION 2: Request new token ────────────────── -->
+      <div class="rp-section-title">🔄 Need a new token?</div>
+      <p class="rp-section-sub">Enter your email and we'll generate a fresh verification token.</p>
+
+      <form id="requestVerificationForm" novalidate>
+        <div class="rp-field">
+          <label for="reqEmail"><span class="lbl-icon">📧</span> Your Email Address</label>
+          <div class="rp-input-wrap has-icon">
+            <span class="rp-input-icon">✉️</span>
+            <input
+              id="reqEmail"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              placeholder="you@example.com"
+            >
+          </div>
+        </div>
+
+        <button type="submit" id="reqSubmitBtn" class="rp-btn secondary" style="margin-top: 4px;">
+          <span class="spin"></span>
+          <span class="btn-text">Request New Token →</span>
+        </button>
+      </form>
+
+      <!-- Request status message -->
+      <div id="reqMessage" class="rp-alert" role="alert">
+        <span class="alert-icon" id="reqMsgIcon"></span>
+        <span id="reqMsgText"></span>
+      </div>
+
+      <!-- Demo token reveal box (shows after successful request) -->
+      <div id="demoVerifyTokenContainer" class="rp-token-box">
+        <div class="tb-header">
+          <span>✅</span>
+          <span>Your Verification Token — Copy it above</span>
+        </div>
+        <textarea id="demoVerifyTokenText" readonly title="Click to select all"></textarea>
+      </div>
+
+    </div><!-- /.rp-card -->
+
+    <!-- Back link -->
+    <p class="rp-back">
+      Already verified? <a href="{{ url_for('auth.login_page') }}">Back to Login</a>
+    </p>
+  </div><!-- /.rp-wrapper -->
+
+  <script src="{{ url_for('static', filename='api_client.js') }}"></script>
+  <script src="{{ url_for('static', filename='verify_email.js') }}"></script>
+</body>
+</html>

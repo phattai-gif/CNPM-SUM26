@@ -151,3 +151,41 @@ body {
 .secondary-text a:hover {
   text-decoration: underline;
 }
+
+.auth-separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 24px 0;
+  color: var(--muted);
+}
+
+.auth-separator::before,
+.auth-separator::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.auth-separator:not(:empty)::before {
+  margin-right: 1em;
+}
+
+.auth-separator:not(:empty)::after {
+  margin-left: 1em;
+}
+
+.auth-separator span {
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.google-btn-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 8px;
+}

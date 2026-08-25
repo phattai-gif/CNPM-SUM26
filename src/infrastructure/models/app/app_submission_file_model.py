@@ -21,6 +21,7 @@ class SubmissionFileModel(Base):
     file_hash = Column(String(64), nullable=False)
     phash = Column(String(64), nullable=True)
     ahash = Column(String(64), nullable=True)
+    file_type = Column(String(50), nullable=False, server_default="main_image", default="main_image")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

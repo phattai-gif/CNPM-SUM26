@@ -10,6 +10,13 @@ from app import create_app
 import api.controllers.submission_controller as submission_controller_module
 
 
+def patch_controller_attr(attr_name, value):
+    for mod_name in ['src.api.controllers.submission_controller', 'api.controllers.submission_controller']:
+        if mod_name in sys.modules:
+            mod = sys.modules[mod_name]
+            setattr(mod, attr_name, value)
+
+
 def generate_jwt_token(secret_key, user_id=5, username='participant_john', role='participant'):
     payload = {
         'user_id': user_id,
@@ -193,7 +200,7 @@ def test_get_submission_detail_forbidden_for_other_user():
 
 
 def test_update_draft_submission_success():
-    """Test updating a draft submission and converting to submitted."""
+    """Test Participant updating a draft submission successfully."""
     app = create_app()
     client = app.test_client()
     secret = app.config.get('SECRET_KEY', 'dev-secret-key-change-me-in-production-32chars')
@@ -209,21 +216,25 @@ def test_update_draft_submission_success():
         updated_at=datetime(2026, 8, 19, 12, 0, 0),
     )
 
-    with patch.object(submission_controller_module.submission_service, 'update_draft_submission', return_value=mock_updated):
-        response = client.put(
-            '/submissions/102',
-            headers={'Authorization': f'Bearer {token}'},
-            json={
-                "title": "Phố Đêm Mưa - Hoàn Thiện",
-                "story_description": "Đã bổ sung câu chuyện hoàn chỉnh",
-                "status": "submitted",
-                "round_id": 2,
-                "film_metadata": {
-                    "film_stock": "Kodak Tri-X 400",
-                    "camera_body": "Nikon FM2"
-                }
+    mock_svc = MagicMock()
+    mock_svc.update_draft_submission.return_value = mock_updated
+    mock_svc.update_draft.return_value = mock_updated
+    patch_controller_attr('submission_service', mock_svc)
+
+    response = client.put(
+        '/submissions/102',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            "title": "Phố Đêm Mưa - Hoàn Thiện",
+            "story_description": "Đã bổ sung câu chuyện hoàn chỉnh",
+            "status": "submitted",
+            "round_id": 2,
+            "film_metadata": {
+                "film_stock": "Kodak Tri-X 400",
+                "camera_body": "Nikon FM2"
             }
-        )
+        }
+    )
 
     assert response.status_code == 200
     data = response.get_json()
@@ -239,16 +250,17 @@ def test_update_non_draft_submission_rejected():
     secret = app.config.get('SECRET_KEY', 'dev-secret-key-change-me-in-production-32chars')
     token = generate_jwt_token(secret, user_id=10, role='participant')
 
-    with patch.object(
-        submission_controller_module.submission_service,
-        'update_draft_submission',
-        side_effect=ValueError("Cannot edit submission with status 'submitted'. Only drafts can be modified.")
-    ):
-        response = client.put(
-            '/submissions/101',
-            headers={'Authorization': f'Bearer {token}'},
-            json={"title": "Trying to edit submitted"}
-        )
+    mock_svc = MagicMock()
+    err = ValueError("Cannot edit submission with status 'submitted'. Only drafts can be modified.")
+    mock_svc.update_draft_submission.side_effect = err
+    mock_svc.update_draft.side_effect = err
+    patch_controller_attr('submission_service', mock_svc)
+
+    response = client.put(
+        '/submissions/101',
+        headers={'Authorization': f'Bearer {token}'},
+        json={"title": "Trying to edit submitted"}
+    )
 
     assert response.status_code == 400
     data = response.get_json()
