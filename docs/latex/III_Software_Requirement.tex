@@ -22,11 +22,10 @@
 
 \endgroup
 
-\begin{figure}[htbp]
-    \centering
+\par\vspace{0.5em}
+\begin{center}
     \includegraphics[width=0.95\textwidth]{images/context_diagram}
-    \label{fig:context-diagram}
-\end{figure}
+\end{center}
 
 \subsection{User Requirements}
 \label{subsec:user-requirements}
@@ -73,11 +72,10 @@
 \label{par:use-case-diagram}
 \addcontentsline{toc}{paragraph}{\protect\numberline{2.2.1}Use Case Diagram}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.95\textwidth]{images/use_case_diagram}
-    \label{fig:use-case-diagram}
-\end{figure}
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/Use case}}
+\end{center}
 
 \vspace{1em}
 \paragraph*{2.2.2 Use Case Descriptions}
@@ -215,3 +213,367 @@ UC-60 & Flag Suspicious Activity & Admin, System Audit Engine & The system autom
 UC-61 & Filter Logs by User & Admin, System Audit Engine & Allows the Admin to search, filter, and view detailed system activity logs for specific user accounts. \\
 \hline
 \end{longtable}
+
+\subsection{Functional Requirements}
+\label{subsec:functional-requirements}
+
+\subsubsection{System Functional Overview}
+\label{subsubsec:system-functional-overview}
+
+\paragraph*{3.1.1 Web Application Admin Screen Flow}
+\label{par:web-application-admin-screen-flow}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.1}Web Application Admin Screen Flow}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.99\textwidth]{{images/Admin SC}}
+\end{center}
+
+\vspace{0.5em}
+\paragraph*{3.1.2 Web Application Admin Screen Description}
+\label{par:web-application-admin-screen-description}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.2}Web Application Admin Screen Description}
+
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\normalsize
+\begin{longtable}{|>{\centering\arraybackslash}p{0.06\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\raggedright\arraybackslash}p{0.22\textwidth}|>{\raggedright\arraybackslash}p{0.43\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+1 & General & Home & The public landing page of the system. Allows the Admin to view the general interface and quickly access the admin Login button. \\
+\hline
+2 & General & Login & Authentication screen for the Admin account using Email/Password. After successful authentication, the system redirects directly to the Admin Dashboard. \\
+\hline
+3 & Dashboard & Admin Dashboard & The central screen displaying platform-wide KPIs: total number of contests, total submissions, and number of AI scans performed. \\
+\hline
+4 & Account Management & User Accounts List & Manages the list of all user accounts on the system (Organizer, Judge, Participant). \\
+\hline
+5 & Account Management & User Details \& Role Assignment & View detailed account information and assign roles/permissions to the account. \\
+\hline
+6 & Account Management & Lock / Ban Account & Screen for locking or unlocking a violating account. \\
+\hline
+7 & Contest Oversight & System-wide Contest List & Lists all contests on the system for the Admin to oversee. \\
+\hline
+8 & Contest Oversight & Contest Details \& Status Review & View detailed content, rules, and progress of a specific contest. \\
+\hline
+9 & Contest Oversight & Approve / Suspend Contest & Screen for approving a new contest or suspending a contest that violates policy. \\
+\hline
+10 & AI \& System Logs & AI Usage Statistics & Statistical report on the frequency and activity log of the AI-Generated Image Detection and Duplicate Detection models. \\
+\hline
+11 & AI \& System Logs & AI Model Threshold Settings & Screen for configuring the AI confidence threshold used to automatically flag violations. \\
+\hline
+12 & Master Data & Film Stock Catalog & Catalog for managing film stock types (Kodak, Fuji, Ilford, etc.). \\
+\hline
+13 & Master Data & Camera \& Lens Catalog & Catalog for managing cameras and lenses. \\
+\hline
+14 & Master Data & Lab Directory & List of managed, affiliated film-developing labs. \\
+\hline
+\end{longtable}
+
+\paragraph*{3.1.3 Web Application Participant Screen Flow}
+\label{par:web-application-participant-screen-flow}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.3}Web Application Participant Screen Flow}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.99\textwidth]{{images/Participant SC}}
+\end{center}
+
+\vspace{0.5em}
+\paragraph*{3.1.4 Web Application Participant Screen Description}
+\label{par:web-application-participant-screen-description}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.4}Web Application Participant Screen Description}
+
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\normalsize
+\begin{longtable}{|>{\centering\arraybackslash}p{0.06\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\raggedright\arraybackslash}p{0.22\textwidth}|>{\raggedright\arraybackslash}p{0.43\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+1 & Authentication & Login Page & Allows the Participant (Film Photographer) to log in to the system with a registered account. \\
+\hline
+2 & Register & User Register & Allows the Participant to create a new account to join the system. \\
+\hline
+3 & Reset Password & Forgot Password & Allows the Participant to reset their password if forgotten. \\
+\hline
+4 & Home Navigation & Home / Dashboard & Displays the main navigation to Profile, Contests, Film Rolls, Submissions, Results, and Notifications. \\
+\hline
+5 & View Profile & Profile & Displays the Participant's personal profile information. \\
+\hline
+6 & Update Profile & Edit Profile & Allows the Participant to edit their personal information. \\
+\hline
+7 & Contest Discovery & Contest List & Displays the list of film photography contests currently open for registration. \\
+\hline
+8 & Contest Registration & Contest Detail & Displays contest details (theme, rules, deadline) and allows the Participant to register to participate. \\
+\hline
+9 & Film Roll Management & Film Roll List & Displays the list of film rolls the Participant has recorded. \\
+\hline
+10 & Film Roll \& Frame Detail & Film Roll Detail & Allows the Participant to create a new film roll, view, add, and edit information for each frame (film stock, ISO, camera, lens, lab, etc.). \\
+\hline
+11 & My Submissions & My Submissions & Displays the list of entries the Participant has submitted. \\
+\hline
+12 & Submit Photograph & Submit Photograph & Allows the Participant to upload a scanned photo with technical metadata and select the related frame. \\
+\hline
+13 & Submit Photograph & Submission Detail & Displays the processing status of the submission (submitted, under verification, approved, etc.). \\
+\hline
+14 & Result Publication & Contest Results & Displays the results list and ranking of the contest. \\
+\hline
+15 & Judging Feedback & Result Detail & Displays the score, ranking, and judge's feedback for each submission. \\
+\hline
+16 & Notifications & Notifications & Displays the list of notifications sent to the Participant. \\
+\hline
+17 & Notification Detail & Notification Detail & Displays the detailed content of a notification (results, feedback, reminders, etc.). \\
+\hline
+\end{longtable}
+
+\paragraph*{3.1.5 Web Application Organizer Screen Flow}
+\label{par:web-application-organizer-screen-flow}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.5}Web Application Organizer Screen Flow}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.99\textwidth]{{images/Organizer SC}}
+\end{center}
+
+\vspace{0.5em}
+\paragraph*{3.1.6 Web Application Organizer Screen Description}
+\label{par:web-application-organizer-screen-description}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.6}Web Application Organizer Screen Description}
+
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\normalsize
+\begin{longtable}{|>{\centering\arraybackslash}p{0.06\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\raggedright\arraybackslash}p{0.22\textwidth}|>{\raggedright\arraybackslash}p{0.43\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+1 & Authentication & Login Page & Allows the Organizer to log in to the system using an authorized account. \\
+\hline
+2 & Organizer Dashboard & Organizer Dashboard & Displays the main functions and management areas available to the Organizer. \\
+\hline
+3 & Contest Setup \& Configuration & Contest Setup \& Configuration & Allows the Organizer to configure and manage the contest settings. \\
+\hline
+4 & Contest Setup \& Configuration & Enter Contest Information & Allows the Organizer to enter and update basic contest information. \\
+\hline
+5 & Contest Setup \& Configuration & Set Awards & Allows the Organizer to define the awards and prizes for the contest. \\
+\hline
+6 & Contest Setup \& Configuration & Create Criteria & Allows the Organizer to create and manage judging criteria. \\
+\hline
+7 & Contest Setup \& Configuration & Assign Weights & Allows the Organizer to assign weights to the judging criteria. \\
+\hline
+8 & Contest Setup \& Configuration & Select Judges & Allows the Organizer to select and assign judges to the contest. \\
+\hline
+9 & Contest Setup \& Configuration & Assign to Categories & Allows the Organizer to assign submissions to contest categories. \\
+\hline
+10 & Contest Setup \& Configuration & Set Schedule & Allows the Organizer to define the contest schedule and important dates. \\
+\hline
+11 & Submission Management & Submission Management & Allows the Organizer to manage and process contest submissions. \\
+\hline
+12 & Submission Management & Submission List & Displays the list of submissions available for management. \\
+\hline
+13 & Submission Management & Flag Warnings for Organizers & Displays warnings and issues related to contest submissions. \\
+\hline
+14 & Submission Management & View Flagged Submissions & Allows the Organizer to view submissions that have been flagged for review. \\
+\hline
+15 & Submission Management & Request Recheck & Allows the Organizer to request a recheck of a submission when necessary. \\
+\hline
+16 & Submission Management & Reject Submission & Allows the Organizer to reject submissions that do not meet the contest requirements. \\
+\hline
+17 & Submission Management & Reopen Score Sheet & Allows the Organizer to reopen a score sheet for further review or correction. \\
+\hline
+18 & Results \& Awards Management & Results \& Awards Management & Allows the Organizer to manage scores, rankings, winners, and contest results. \\
+\hline
+19 & Results \& Awards Management & Calculate Total Score & Calculates the total score of submissions based on the judging criteria and weights. \\
+\hline
+20 & Results \& Awards Management & Rank Submissions & Displays the ranking of submissions based on their total scores. \\
+\hline
+21 & Results \& Awards Management & Select Winning Photos & Allows the Organizer to select the winning photographs. \\
+\hline
+22 & Results \& Awards Management & Publish Online Exhibition & Allows the Organizer to publish selected photographs in the online exhibition. \\
+\hline
+23 & Notifications & Notifications & Allows the Organizer to manage contest-related notifications. \\
+\hline
+24 & Notifications & Notify Participants & Allows the Organizer to send notifications to participants. \\
+\hline
+25 & Notifications & Email \& Notification Service & External service used to send emails and notifications. \\
+\hline
+\end{longtable}
+
+\paragraph*{3.1.7 Web Application Judge Screen Flow}
+\label{par:web-application-judge-screen-flow}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.7}Web Application Judge Screen Flow}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.99\textwidth]{{images/Judge SC}}
+\end{center}
+
+\vspace{0.5em}
+\paragraph*{3.1.8 Web Application Judge Screen Desciption}
+\label{par:web-application-judge-screen-desciption}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.8}Web Application Judge Screen Desciption}
+
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\normalsize
+\begin{longtable}{|>{\centering\arraybackslash}p{0.06\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\raggedright\arraybackslash}p{0.22\textwidth}|>{\raggedright\arraybackslash}p{0.43\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{Screen}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+1 & General & Home & The landing page of the application, providing general platform information. \\
+\hline
+2 & General & Login & Authentication screen allowing the Judge to access the system using secure credentials. \\
+\hline
+3 & Dashboard & Judge Dashboard & The central hub routing to different modules: Dashboard Overview, Account Management, Contest Evaluation, and Evaluation History. \\
+\hline
+4 & Dashboard Overview & Evaluation Progress & Displays statistical charts on pending versus completed grading tasks. \\
+\hline
+5 & Account Management & Update Profile & Allows the Judge to update personal information and professional photography credentials. \\
+\hline
+6 & Account Management & Change Password & Screen for updating system security credentials. \\
+\hline
+7 & Contest Evaluation & Assigned Contests List & Displays a list of active film photography contests assigned to the Judge. \\
+\hline
+8 & Contest Evaluation & Contest Guidelines And Rules & Displays specific grading criteria, rules, and notes from the Organizer for the selected contest. \\
+\hline
+9 & Contest Evaluation & Round Submissions List & Displays all photographic submissions within a specific round and allows navigation to evaluation or score finalization. \\
+\hline
+10 & Contest Evaluation & Submission Scoring Screen & A comprehensive single-screen interface allowing the Judge to view the high-resolution photo, review AI verification alerts, input scores and comments, and navigate using Next or Previous actions. \\
+\hline
+11 & Contest Evaluation & Finalize Round Scores & Summary screen accessible directly from the submissions list, enabling the Judge to review and officially submit round results to the Organizer. \\
+\hline
+12 & Evaluation History & Past Contests List & Displays an archive of previously evaluated contests. \\
+\hline
+13 & Evaluation History & View Past Scores & Read-only screen to review historical scores and feedback provided in past events. \\
+\hline
+\end{longtable}
+
+\paragraph*{3.1.9 Screen Authorization}
+\label{par:screen-authorization}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.9}Screen Authorization}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3pt}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.04\textwidth}|>{\raggedright\arraybackslash}p{0.29\textwidth}|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\centering\arraybackslash}p{0.125\textwidth}|>{\centering\arraybackslash}p{0.125\textwidth}|>{\centering\arraybackslash}p{0.125\textwidth}|>{\centering\arraybackslash}p{0.125\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Web Module / Screen}} & \multicolumn{1}{c|}{\textbf{Typical Actions}} & \multicolumn{1}{c|}{\textbf{Admin}} & \multicolumn{1}{c|}{\textbf{Organizer}} & \multicolumn{1}{c|}{\textbf{Judge}} & \multicolumn{1}{c|}{\textbf{Participant}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Web Module / Screen}} & \multicolumn{1}{c|}{\textbf{Typical Actions}} & \multicolumn{1}{c|}{\textbf{Admin}} & \multicolumn{1}{c|}{\textbf{Organizer}} & \multicolumn{1}{c|}{\textbf{Judge}} & \multicolumn{1}{c|}{\textbf{Participant}} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+1 & Authentication (Login / Register / Change PW) & C-R-U & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+\hline
+2 & Own Profile & R-U & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+\hline
+3 & Admin Dashboard & R & $\checkmark$ & & & \\
+\hline
+4 & User Account \& Role Management & C-R-U / Inactive & $\checkmark$ & & & \\
+\hline
+5 & Organizer Dashboard & R & & $\checkmark$ & & \\
+\hline
+6 & Contest Management (Create / Edit Contest) & C-R-U-D & $\checkmark$ & $\checkmark$ & & \\
+\hline
+7 & Round \& Criteria Settings & C-R-U & $\checkmark$ & $\checkmark$ & & \\
+\hline
+8 & Judge Assignment & C-R-U-D & $\checkmark$ & $\checkmark$ & & \\
+\hline
+9 & Submission Review \& Moderation (Approve / Reject) & R-U-A & $\checkmark$ & $\checkmark$ & & \\
+\hline
+10 & AI Duplicate \& AI Generated Detection Review & R-A & $\checkmark$ & $\checkmark$ & & \\
+\hline
+11 & Judge Grading Workspace & C-R-U & & & $\checkmark$ & \\
+\hline
+12 & Contest Public Page / Explore & R & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+\hline
+13 & Submission Upload (Submit Film Photo \& EXIF) & C-R-U-D & & & & $\checkmark$ \\
+\hline
+14 & My Submissions & R-U & & & & $\checkmark$ \\
+\hline
+15 & Leaderboard \& Final Results & R & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+\hline
+16 & System Config \& Master Data (Film Stocks, Cameras) & C-R-U-D & $\checkmark$ & & & \\
+\hline
+\end{longtable}
+
+\paragraph*{3.1.10 Non-screen Functions}
+\label{par:non-screen-functions}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.10}Non-screen Functions}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.06\textwidth}|>{\raggedright\arraybackslash}p{0.23\textwidth}|>{\raggedright\arraybackslash}p{0.24\textwidth}|>{\raggedright\arraybackslash}p{0.39\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{System Function}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|c|}{\textbf{\#}} & \multicolumn{1}{c|}{\textbf{Feature}} & \multicolumn{1}{c|}{\textbf{System Function}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+1 & EXIF Metadata Extraction & Auto-extract Image EXIF & Automatically extract camera model, lens, aperture, shutter speed, ISO, and capture date upon photo upload.\newline Populate extracted metadata directly into the submission record for verification. \\
+\hline
+2 & AI Generated Image Detection & Async AI Detection Pipeline & Automatically scan submitted images using pre-trained AI detection models.\newline Flag suspicious submissions exceeding the AI-probability threshold and generate analysis reports. \\
+\hline
+3 & Image Duplicate Detection & Perceptual Hashing (pHash) Scanner & Compute image feature vectors/hashes to compare with existing submissions in the database.\newline Trigger duplicate alerts for Organizer review if similarity threshold is breached. \\
+\hline
+4 & System Notification Trigger & In-app \& Event-based Alerts & Send automated notifications to Participants when submission status changes (Approved/Rejected/Flagged).\newline Notify Judges when new assignments or grading rounds are published.\newline Notify Organizers when high-risk AI/Duplicate flags are triggered. \\
+\hline
+5 & Contest Round Finalization & Leaderboard \& Score Aggregator & Automatically calculate total and average scores across all criteria when a grading round closes.\newline Rank submissions and update public Leaderboard standings. \\
+\hline
+\end{longtable}
+
+\clearpage
+\paragraph*{3.1.11 Entity Relationship Diagrams}
+\label{par:entity-relationship-diagrams}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.11}Entity Relationship Diagrams}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.99\textwidth]{images/ERD}
+\end{center}
