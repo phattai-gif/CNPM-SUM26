@@ -62,6 +62,30 @@ document.addEventListener('DOMContentLoaded', () => {
     messageEl.className = success ? 'message success' : 'message error';
   };
 
+  const handleGoogleCredential = async (response) => {
+    showMessage('');
+    const result = await requestJson('/auth/google', { credential: response.credential });
+    if (!result.ok) {
+      showMessage(result.data.message || 'Google login failed.');
+      return;
+    }
+    window.AuthSession.setSession({ token: result.data.token, user: result.data.user, role: result.data.user?.role });
+    showMessage('Login successful! Redirecting...', true);
+    setTimeout(() => redirectToRole(result.data.user?.role), 300);
+  };
+
+  window.initializeGoogleSignIn = () => {
+    if (!window.google?.accounts?.id || !document.getElementById('googleSignInButton')) return;
+    window.google.accounts.id.initialize({
+      client_id: document.body.dataset.googleClientId,
+      callback: handleGoogleCredential
+    });
+    window.google.accounts.id.renderButton(document.getElementById('googleSignInButton'), {
+      theme: 'outline', size: 'large', width: 360
+    });
+  };
+  window.initializeGoogleSignIn();
+
   const redirectToRole = (role) => {
     const target = ROLE_REDIRECTS[(role || '').toLowerCase()] || '/';
     window.location.href = target;

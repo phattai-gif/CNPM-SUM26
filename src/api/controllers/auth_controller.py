@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, current_app, render_template
 from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
+from api.schemas.auth import GoogleLoginRequestSchema
 
 from infrastructure.models.app import UserModel
 from api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
@@ -23,6 +24,47 @@ register_request_schema = RegisterUserRequestSchema()
 register_response_schema = RegisterUserResponseSchema()
 login_request_schema = LoginUserRequestSchema()
 login_response_schema = LoginUserResponseSchema()
+google_login_request_schema = GoogleLoginRequestSchema()
+
+
+def verify_google_token(id_token):
+  """Verify Google's signed ID token and audience on the backend."""
+  from google.auth.transport import requests as google_requests
+  from google.oauth2 import id_token as google_id_token
+
+  client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+  if not client_id:
+    raise ValueError('Google OAuth is not configured.')
+  claims = google_id_token.verify_oauth2_token(
+    id_token,
+    google_requests.Request(),
+    client_id,
+  )
+  if claims.get('email_verified') is not True:
+    raise ValueError('Google email is not verified.')
+  return claims
+
+
+def _jwt_response(user):
+  payload = {
+    'user_id': user.id,
+    'username': user.username,
+    'role': user.role,
+    'exp': datetime.now(timezone.utc) + timedelta(hours=24)
+  }
+  secret_key = current_app.config.get('SECRET_KEY') or 'dev-secret-key-change-me-in-production-32chars'
+  token = jwt.encode(payload, secret_key, algorithm='HS256')
+  return jsonify({
+    'message': 'Login successful!',
+    'token': token,
+    'user': {
+      'id': user.id,
+      'username': user.username,
+      'email': user.email,
+      'full_name': user.full_name,
+      'role': user.role
+    }
+  }), 200
 
 
 @auth_bp.route('/check_router', methods=['GET'])
@@ -202,17 +244,37 @@ def login():
     secret_key = current_app.config.get('SECRET_KEY') or 'dev-secret-key-change-me-in-production-32chars'
     token = jwt.encode(payload, secret_key, algorithm='HS256')
 
-    return jsonify({
-        'message': 'Login successful!',
-        'token': token,
-        'user': {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'full_name': user.full_name,
-            'role': user.role
-        }
-    }), 200
+    return _jwt_response(user)
+
+@auth_bp.route('/google', methods=['POST'])
+def google_login():
+    """Verify a Google ID token and issue the application's JWT."""
+    data = request.get_json() or {}
+    errors = google_login_request_schema.validate(data)
+    if errors:
+      return jsonify({'message': 'Validation error', 'errors': errors}), 400
+
+    google_token = data.get('id_token') or data.get('credential')
+    if not google_token:
+      return jsonify({'message': 'Google ID token is required.'}), 400
+
+    try:
+      claims = verify_google_token(google_token)
+    except Exception:
+      return jsonify({'message': 'Invalid Google credential.'}), 401
+
+    email = (claims.get('email') or '').strip().lower()
+    if not email:
+      return jsonify({'message': 'Google credential does not contain an email.'}), 401
+
+    user = auth_service.login_google(
+      email=email,
+      full_name=claims.get('name'),
+      avatar_url=claims.get('picture'),
+    )
+    if not user:
+      return jsonify({'message': 'Unable to sign in with this Google account.'}), 401
+    return _jwt_response(user)
 
 
 @auth_bp.route('/login', methods=['GET'])
@@ -220,106 +282,6 @@ def login_page():
     import os
     google_client_id = current_app.config.get('GOOGLE_CLIENT_ID') or os.environ.get('GOOGLE_CLIENT_ID') or ''
     return render_template('login.html', google_client_id=google_client_id)
-
-
-@auth_bp.route('/google', methods=['POST'])
-def google_login():
-    """
-    Login or Register user with Google OAuth ID Token
-    """
-    import urllib.request
-    import json
-    import os
-    import random
-    import string
-
-    data = request.get_json() or {}
-    id_token = data.get('id_token')
-    if not id_token:
-        return jsonify({'message': 'Google ID Token is required'}), 400
-
-    # Call Google's tokeninfo endpoint to verify token
-    try:
-        token_info_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
-        req = urllib.request.Request(token_info_url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=10) as response:
-            if response.status != 200:
-                return jsonify({'message': 'Failed to verify Google Token'}), 401
-            google_data = json.loads(response.read().decode('utf-8'))
-    except Exception as e:
-        print(f"Error calling tokeninfo: {e}")
-        return jsonify({'message': 'Invalid Google Token or connection error'}), 401
-
-    # Extract user profile
-    email = google_data.get('email')
-    full_name = google_data.get('name') or ''
-    avatar_url = google_data.get('picture') or ''
-    google_sub = google_data.get('sub') # Google's unique subject ID
-    
-    if not email:
-        return jsonify({'message': 'Email not provided by Google'}), 400
-
-    # Check if user with this email already exists
-    user = auth_service.get_user_by_email(email)
-    
-    if not user:
-        # Create a new user since they don't exist
-        # Generate a unique username
-        base_username = email.split('@')[0]
-        username = "".join(c for c in base_username if c.isalnum() or c == "_")
-        if not username:
-            username = "google_user"
-
-        # Check if username exists, append random suffix if needed
-        original_username = username
-        counter = 1
-        while auth_service.check_exist(username):
-            username = f"{original_username}_{counter}"
-            counter += 1
-
-        # Generate a random strong password hash since it's required
-        random_pwd = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-        password_hashed = generate_password_hash(random_pwd)
-
-        # Register the new user with default 'participant' role
-        user = auth_service.register(
-            username=username,
-            password=password_hashed,
-            email=email,
-            role='participant',
-            full_name=full_name
-        )
-
-        if not user:
-            return jsonify({'message': 'Failed to create Google user'}), 500
-        
-        # If the user registration went well, update avatar_url
-        if avatar_url:
-            auth_service.update_profile(user_id=user.id, avatar_url=avatar_url)
-            user.avatar_url = avatar_url
-
-    # Generate JWT Token for user
-    payload = {
-        'user_id': user.id,
-        'username': user.username,
-        'role': user.role,
-        'exp': datetime.now(timezone.utc) + timedelta(hours=24)
-    }
-
-    secret_key = current_app.config.get('SECRET_KEY') or 'dev-secret-key-change-me-in-production-32chars'
-    token = jwt.encode(payload, secret_key, algorithm='HS256')
-
-    return jsonify({
-        'message': 'Login successful!',
-        'token': token,
-        'user': {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'full_name': user.full_name,
-            'role': user.role
-        }
-    }), 200
 
 
 @auth_bp.route('/register', methods=['GET'])

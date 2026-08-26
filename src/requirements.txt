@@ -15,5 +15,6 @@ flask-swagger-ui
 Pillow>=9.0.0
 cloudinary>=1.30.0
 PyJWT>=2.0.0
+google-auth>=2.0.0
 dependency-injector>=4.40.0
 APScheduler>=3.10.0

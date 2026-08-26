@@ -32,6 +32,9 @@ class AuthService:
         )
         return self.repository.login(auth)
 
+    def login_google(self, email: str, full_name: str = None, avatar_url: str = None) -> Optional[Auth]:
+        return self.repository.login_google(email, full_name, avatar_url)
+
     def check_exist(self, username: str) -> bool:
         return self.repository.check_exist(username)
 
@@ -49,4 +52,10 @@ class AuthService:
 
     def update_profile(self, user_id: int, full_name: Optional[str] = None, bio: Optional[str] = None, avatar_url: Optional[str] = None) -> Optional[Auth]:
         return self.repository.update_profile(user_id=user_id, full_name=full_name, bio=bio, avatar_url=avatar_url)
+
+    def update_password(self, user_id: int, password_hash: str) -> bool:
+        return self.repository.update_password(user_id, password_hash)
+
+    def update_status(self, user_id: int, status: str) -> bool:
+        return self.repository.update_status(user_id, status)
 

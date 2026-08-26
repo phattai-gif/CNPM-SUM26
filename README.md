@@ -98,6 +98,7 @@ The seed command is idempotent. It creates the roles `admin`, `organizer`, `judg
     # Flask settings
     FLASK_ENV=development
     SECRET_KEY=your_secret_key
+    GOOGLE_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
     
     # SQL Server settings
     DB_USER=sa

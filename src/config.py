@@ -34,6 +34,8 @@ class Config:
         "SECRET_KEY"
     ) or "dev-secret-key-change-me-in-production-32chars"
 
+    GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+
     DEBUG = os.environ.get(
         "DEBUG",
         "False",
