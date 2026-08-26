@@ -22,11 +22,17 @@ class RegisterUserResponseSchema(Schema):
     email = fields.Email()
     full_name = fields.Str()
     role = fields.Str()
+    email_verified = fields.Bool()
 
 
 class LoginUserRequestSchema(Schema):
     username = fields.Str(required=True)
     password = fields.Str(required=True)
+
+
+class GoogleLoginRequestSchema(Schema):
+    id_token = fields.Str(required=False)
+    credential = fields.Str(required=False)
 
 
 class LoginUserResponseSchema(Schema):

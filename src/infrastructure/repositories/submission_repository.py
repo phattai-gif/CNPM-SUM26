@@ -277,12 +277,24 @@ class SubmissionRepository(ISubmissionRepository):
             )
 
             if existing:
-
+                old_status = existing.status
                 existing.confidence_score = (
                     confidence_score
                 )
                 existing.risk_level = risk_level
                 existing.status = status
+
+                if old_status != status:
+                    from infrastructure.models.app.app_audit_log_model import AuditLogModel
+                    log = AuditLogModel(
+                        user_id=None,
+                        action="status_changed",
+                        entity_name="ai_flags",
+                        entity_id=existing.id,
+                        old_value={"status": old_status},
+                        new_value={"status": status}
+                    )
+                    self.session.add(log)
 
                 self.session.commit()
                 self.session.refresh(existing)
@@ -359,6 +371,7 @@ class SubmissionRepository(ISubmissionRepository):
         self,
         flag_id: int,
         status: str,
+        user_id: Optional[int] = None
     ) -> Optional[AIFlagModel]:
 
         try:
@@ -374,7 +387,36 @@ class SubmissionRepository(ISubmissionRepository):
             if not flag:
                 return None
 
+            old_status = flag.status
             flag.status = status
+
+            if user_id:
+                flag.reviewed_by = user_id
+                from datetime import datetime, timezone
+                flag.reviewed_at = datetime.now(timezone.utc)
+
+            # Write to audit log
+            from infrastructure.models.app.app_audit_log_model import AuditLogModel
+            log = AuditLogModel(
+                user_id=user_id,
+                action="status_changed",
+                entity_name="ai_flags",
+                entity_id=flag.id,
+                old_value={"status": old_status},
+                new_value={"status": status}
+            )
+            self.session.add(log)
+
+            # Mark related notifications as read if status implies resolution
+            if status not in ["pending", "completed", "failed"]:
+                from infrastructure.models.app.app_notification_model import NotificationModel
+                search_text = f"bài dự thi #{flag.submission_id}"
+                notifications = self.session.query(NotificationModel).filter(
+                    NotificationModel.body.like(f"%{search_text}%"),
+                    NotificationModel.is_read == False
+                ).all()
+                for notif in notifications:
+                    notif.is_read = True
 
             self.session.commit()
             self.session.refresh(flag)
@@ -670,52 +712,17 @@ class SubmissionRepository(ISubmissionRepository):
                         "file_hash is required"
                     )
 
-                submission_file = (
-                    SubmissionFileModel(
-                        submission_id=(
-                            submission.id
-                        ),
-                        image_hd_url=(
-                            f_info[
-                                "image_hd_url"
-                            ]
-                        ),
-                        thumbnail_url=(
-                            f_info.get(
-                                "thumbnail_url"
-                            )
-                        ),
-                        width_px=(
-                            f_info.get(
-                                "width_px"
-                            )
-                        ),
-                        height_px=(
-                            f_info.get(
-                                "height_px"
-                            )
-                        ),
-                        file_size_bytes=(
-                            f_info.get(
-                                "file_size_bytes"
-                            )
-                        ),
-                        file_hash=(
-                            f_info[
-                                "file_hash"
-                            ]
-                        ),
-                        phash=f_info.get(
-                            "phash"
-                        ),
-                        ahash=f_info.get(
-                            "ahash"
-                        ),
-                        file_type=f_info.get(
-                            "file_type",
-                            "main_image",
-                        ),
-                    )
+                submission_file = SubmissionFileModel(
+                    submission_id=submission.id,
+                    image_hd_url=f_info["image_hd_url"],
+                    thumbnail_url=f_info.get("thumbnail_url"),
+                    width_px=f_info.get("width_px"),
+                    height_px=f_info.get("height_px"),
+                    file_size_bytes=f_info.get("file_size_bytes"),
+                    file_hash=f_info["file_hash"],
+                    phash=f_info.get("phash"),
+                    ahash=f_info.get("ahash"),
+                    file_type=f_info.get("file_type", "main_image"),
                 )
 
                 self.session.add(

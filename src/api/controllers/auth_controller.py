@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, current_app, render_template
 from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
+from api.schemas.auth import GoogleLoginRequestSchema
 
 from infrastructure.models.app import UserModel
 from api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
@@ -10,6 +11,8 @@ from services.auth_service import AuthService
 from infrastructure.repositories.auth_repository import AuthRepository
 from infrastructure.repositories.contest_repository import ContestRepository
 from services.contest_service import ContestService
+from services.email_service import email_service
+from urllib.parse import urlencode
 
 PUBLIC_SIGNUP_ROLES = {'participant'}
 
@@ -23,7 +26,75 @@ register_request_schema = RegisterUserRequestSchema()
 register_response_schema = RegisterUserResponseSchema()
 login_request_schema = LoginUserRequestSchema()
 login_response_schema = LoginUserResponseSchema()
+google_login_request_schema = GoogleLoginRequestSchema()
 
+
+def verify_google_token(id_token):
+  """Verify Google's signed ID token and audience on the backend."""
+  from google.auth.transport import requests as google_requests
+  from google.oauth2 import id_token as google_id_token
+
+  client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+  if not client_id:
+    raise ValueError('Google OAuth is not configured.')
+  claims = google_id_token.verify_oauth2_token(
+    id_token,
+    google_requests.Request(),
+    client_id,
+  )
+  if claims.get('email_verified') is not True:
+    raise ValueError('Google email is not verified.')
+  return claims
+
+
+def _jwt_response(user):
+  payload = {
+    'user_id': user.id,
+    'username': user.username,
+    'role': user.role,
+    'exp': datetime.now(timezone.utc) + timedelta(hours=24)
+  }
+  secret_key = current_app.config.get('SECRET_KEY') or 'dev-secret-key-change-me-in-production-32chars'
+  token = jwt.encode(payload, secret_key, algorithm='HS256')
+  return jsonify({
+    'message': 'Login successful!',
+    'token': token,
+    'user': {
+      'id': user.id,
+      'username': user.username,
+      'email': user.email,
+      'full_name': user.full_name,
+      'role': user.role,
+      'email_verified': getattr(user, 'email_verified', False)
+    }
+  }), 200
+
+def _account_token(user_id, token_type, lifetime):
+  secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
+  return jwt.encode({
+    'user_id': user_id,
+    'type': token_type,
+    'exp': datetime.now(timezone.utc) + lifetime
+  }, secret_key, algorithm='HS256')
+
+
+def _send_auth_token(email, token, path, subject, action_label, expires_in):
+  base_url = current_app.config.get('BASE_URL', request.host_url.rstrip('/')).rstrip('/')
+  action_url = f"{base_url}{path}?{urlencode({'token': token})}"
+  return email_service.send_token_email(
+    recipient=email,
+    subject=subject,
+    action_url=action_url,
+    action_label=action_label,
+    expires_in=expires_in,
+  )
+
+
+def _token_response_field(token, sent, field_name='token'):
+  # Tokens remain available for local development/tests when SMTP is absent.
+  if current_app.testing or not email_service.is_configured():
+    return {field_name: token}
+  return {}
 
 @auth_bp.route('/check_router', methods=['GET'])
 def check_router():
@@ -95,7 +166,7 @@ def register():
         return jsonify({'message': 'Validation error', 'errors': errors}), 400
 
     username = data.get('username')
-    email = data.get('email')
+    email = (data.get('email') or '').strip().lower()
     password = data.get('password')
     passwordconfirm = data.get('passwordconfirm')
     full_name = data.get('full_name')
@@ -129,6 +200,20 @@ def register():
     if not new_user:
         return jsonify({'message': 'Registration failed due to server error'}), 500
 
+    verification_token = _account_token(
+      new_user.id,
+      'email_verification',
+      timedelta(hours=24),
+    )
+    verification_sent = _send_auth_token(
+      email,
+      verification_token,
+      '/auth/verify-email',
+      'Verify your email address',
+      'verify your email address',
+      '24 hours',
+    )
+
     # Auto-generate JWT token for newly registered user (auto-login)
     payload = {
       'user_id': new_user.id,
@@ -143,7 +228,9 @@ def register():
     return jsonify({
       'message': 'User registered successfully!',
       'token': token,
+      'email_verification_required': True,
       'user': result
+      ,**_token_response_field(verification_token, verification_sent, 'verification_token')
     }), 201
 
 
@@ -202,17 +289,37 @@ def login():
     secret_key = current_app.config.get('SECRET_KEY') or 'dev-secret-key-change-me-in-production-32chars'
     token = jwt.encode(payload, secret_key, algorithm='HS256')
 
-    return jsonify({
-        'message': 'Login successful!',
-        'token': token,
-        'user': {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'full_name': user.full_name,
-            'role': user.role
-        }
-    }), 200
+    return _jwt_response(user)
+
+@auth_bp.route('/google', methods=['POST'])
+def google_login():
+    """Verify a Google ID token and issue the application's JWT."""
+    data = request.get_json() or {}
+    errors = google_login_request_schema.validate(data)
+    if errors:
+      return jsonify({'message': 'Validation error', 'errors': errors}), 400
+
+    google_token = data.get('id_token') or data.get('credential')
+    if not google_token:
+      return jsonify({'message': 'Google ID token is required.'}), 400
+
+    try:
+      claims = verify_google_token(google_token)
+    except Exception:
+      return jsonify({'message': 'Invalid Google credential.'}), 401
+
+    email = (claims.get('email') or '').strip().lower()
+    if not email:
+      return jsonify({'message': 'Google credential does not contain an email.'}), 401
+
+    user = auth_service.login_google(
+      email=email,
+      full_name=claims.get('name'),
+      avatar_url=claims.get('picture'),
+    )
+    if not user:
+      return jsonify({'message': 'Unable to sign in with this Google account.'}), 401
+    return _jwt_response(user)
 
 
 @auth_bp.route('/login', methods=['GET'])
@@ -220,106 +327,6 @@ def login_page():
     import os
     google_client_id = current_app.config.get('GOOGLE_CLIENT_ID') or os.environ.get('GOOGLE_CLIENT_ID') or ''
     return render_template('login.html', google_client_id=google_client_id)
-
-
-@auth_bp.route('/google', methods=['POST'])
-def google_login():
-    """
-    Login or Register user with Google OAuth ID Token
-    """
-    import urllib.request
-    import json
-    import os
-    import random
-    import string
-
-    data = request.get_json() or {}
-    id_token = data.get('id_token')
-    if not id_token:
-        return jsonify({'message': 'Google ID Token is required'}), 400
-
-    # Call Google's tokeninfo endpoint to verify token
-    try:
-        token_info_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
-        req = urllib.request.Request(token_info_url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=10) as response:
-            if response.status != 200:
-                return jsonify({'message': 'Failed to verify Google Token'}), 401
-            google_data = json.loads(response.read().decode('utf-8'))
-    except Exception as e:
-        print(f"Error calling tokeninfo: {e}")
-        return jsonify({'message': 'Invalid Google Token or connection error'}), 401
-
-    # Extract user profile
-    email = google_data.get('email')
-    full_name = google_data.get('name') or ''
-    avatar_url = google_data.get('picture') or ''
-    google_sub = google_data.get('sub') # Google's unique subject ID
-    
-    if not email:
-        return jsonify({'message': 'Email not provided by Google'}), 400
-
-    # Check if user with this email already exists
-    user = auth_service.get_user_by_email(email)
-    
-    if not user:
-        # Create a new user since they don't exist
-        # Generate a unique username
-        base_username = email.split('@')[0]
-        username = "".join(c for c in base_username if c.isalnum() or c == "_")
-        if not username:
-            username = "google_user"
-
-        # Check if username exists, append random suffix if needed
-        original_username = username
-        counter = 1
-        while auth_service.check_exist(username):
-            username = f"{original_username}_{counter}"
-            counter += 1
-
-        # Generate a random strong password hash since it's required
-        random_pwd = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-        password_hashed = generate_password_hash(random_pwd)
-
-        # Register the new user with default 'participant' role
-        user = auth_service.register(
-            username=username,
-            password=password_hashed,
-            email=email,
-            role='participant',
-            full_name=full_name
-        )
-
-        if not user:
-            return jsonify({'message': 'Failed to create Google user'}), 500
-        
-        # If the user registration went well, update avatar_url
-        if avatar_url:
-            auth_service.update_profile(user_id=user.id, avatar_url=avatar_url)
-            user.avatar_url = avatar_url
-
-    # Generate JWT Token for user
-    payload = {
-        'user_id': user.id,
-        'username': user.username,
-        'role': user.role,
-        'exp': datetime.now(timezone.utc) + timedelta(hours=24)
-    }
-
-    secret_key = current_app.config.get('SECRET_KEY') or 'dev-secret-key-change-me-in-production-32chars'
-    token = jwt.encode(payload, secret_key, algorithm='HS256')
-
-    return jsonify({
-        'message': 'Login successful!',
-        'token': token,
-        'user': {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'full_name': user.full_name,
-            'role': user.role
-        }
-    }), 200
 
 
 @auth_bp.route('/register', methods=['GET'])
@@ -364,6 +371,7 @@ def get_current_user():
             'email': user.email,
             'full_name': user.full_name,
             'role': user.role,
+            'email_verified': getattr(user, 'email_verified', False),
             'avatar_url': getattr(user, 'avatar_url', None),
             'bio': getattr(user, 'bio', None),
             'created_at': getattr(user, 'created_at', None)
@@ -523,7 +531,7 @@ def forgot_password():
     Request a password reset link/token
     """
     data = request.get_json() or {}
-    email = data.get('email')
+    email = (data.get('email') or '').strip().lower()
 
     if not email:
         return jsonify({'message': 'Email is required'}), 400
@@ -540,11 +548,20 @@ def forgot_password():
         'exp': datetime.now(timezone.utc) + timedelta(minutes=15)
     }
     reset_token = jwt.encode(payload, secret_key, algorithm='HS256')
+    reset_sent = _send_auth_token(
+      email,
+      reset_token,
+      '/auth/reset-password',
+      'Reset your password',
+      'reset your password',
+      '15 minutes',
+    )
 
-    return jsonify({
-        'message': 'Reset token generated successfully. For testing, copy the token below.',
-        'token': reset_token
-    }), 200
+    response = {
+      'message': 'If the email is registered, a password reset link has been sent.'
+    }
+    response.update(_token_response_field(reset_token, reset_sent))
+    return jsonify(response), 200
 
 
 @auth_bp.route('/reset-password', methods=['GET'])
@@ -627,7 +644,10 @@ def verify_email():
     if not user:
         return jsonify({'message': 'User not found'}), 404
 
-    success = auth_service.update_status(user.id, 'active')
+    success = (
+        auth_service.update_email_verified(user.id, True)
+        and auth_service.update_status(user.id, 'active')
+    )
     if not success:
         return jsonify({'message': 'Failed to verify email'}), 500
 
@@ -657,8 +677,15 @@ def request_verification():
         'exp': datetime.now(timezone.utc) + timedelta(days=1)
     }
     verify_token = jwt.encode(payload, secret_key, algorithm='HS256')
+    verification_sent = _send_auth_token(
+      email,
+      verify_token,
+      '/auth/verify-email',
+      'Verify your email address',
+      'verify your email address',
+      '24 hours',
+    )
 
-    return jsonify({
-        'message': 'Verification token generated successfully. For testing, copy the token below.',
-        'token': verify_token
-    }), 200
+    response = {'message': 'A verification link has been sent to your email.'}
+    response.update(_token_response_field(verify_token, verification_sent))
+    return jsonify(response), 200

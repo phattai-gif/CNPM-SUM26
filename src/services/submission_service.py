@@ -42,6 +42,53 @@ class SubmissionService:
     - AI detection
     - Duplicate image detection
     """
+    def submit_draft(self, submission_id, user_id):
+        submission = self.submission_repo.get_by_id_with_details(
+            submission_id
+        )
+
+        if not submission:
+           raise ValueError("Submission not found")
+
+        if isinstance(submission, tuple):
+           submission_obj = submission[0]
+           file_obj = submission[1] if len(submission) > 1 else None
+           metadata_obj = submission[2] if len(submission) > 2 else None
+        else:
+           submission_obj = submission
+           file_obj = None
+           metadata_obj = None
+
+        if submission_obj.user_id != user_id:
+            raise PermissionError(
+                "You are not the owner of this submission"
+            )
+
+        if submission_obj.status != "draft":
+            raise ValueError(
+                "Only draft submissions can be submitted"
+            )
+
+    # Validate required submission data
+        if not getattr(submission_obj, "title", None):
+            raise ValueError(
+                "Submission title is required"
+            )
+
+        if not file_obj:
+            raise ValueError(
+                "Submission file is required"
+            )
+
+        if not metadata_obj:
+            raise ValueError(
+                "Submission metadata is required"
+            )
+
+        return self.submission_repo.update_status(
+            submission_id,
+            "submitted"
+            )
 
     # =========================================================
     # CONSTANTS
@@ -74,6 +121,23 @@ class SubmissionService:
             storage_service
             or StorageService()
         )
+
+    def _validate_round_status_for_submission(self, round_id: int):
+        if not round_id:
+            return
+        session = getattr(self.submission_repo, "session", None)
+        if session:
+            try:
+                from infrastructure.models.app import RoundModel
+                round_obj = session.query(RoundModel).filter_by(id=round_id).first()
+                if round_obj:
+                    status_str = (round_obj.status or "").lower()
+                    if status_str != "ongoing":
+                        raise ValueError(f"Cannot submit to round with status '{round_obj.status}'")
+            except ValueError:
+                raise
+            except Exception:
+                pass
 
     # =========================================================
     # FILE TYPE HELPERS
@@ -452,6 +516,9 @@ class SubmissionService:
             film_metadata or {}
         )
 
+        if status != "draft":
+            self._validate_round_status_for_submission(round_id)
+
         files_data: List[
             Dict[str, Any]
         ] = []
@@ -523,6 +590,23 @@ class SubmissionService:
                     "thumbnail_url": (
                         thumbnail_url
                     ),
+                    "phash": phash_val,
+                    "ahash": ahash_val,
+                    "file_type": "main_image",
+                }
+            )
+
+        # =====================================================
+        # EXISTING FILE URL
+        # =====================================================
+
+        elif image_hd_url and file_hash:
+
+            files_data.append(
+                {
+                    "image_hd_url": image_hd_url,
+                    "thumbnail_url": thumbnail_url,
+
                     "file_hash": file_hash,
                     "width_px": width_px,
                     "height_px": height_px,
@@ -674,77 +758,186 @@ class SubmissionService:
             )
         )
 
-        # =====================================================
-        # AI DETECTION
-        # =====================================================
-
-        if (
-            first_file.get(
-                "image_hd_url"
-            )
-            and status != "draft"
-        ):
-
-            self._run_ai_detection(
-                submission=submission,
-                image_url=first_file.get(
-                    "image_hd_url"
-                ),
-                film_metadata=film_metadata,
-            )
 
         # =====================================================
-        # DUPLICATE DETECTION
+        # AI DETECTION & DUPLICATE CHECK (BACKGROUND)
         # =====================================================
 
-        try:
 
+        if status != "draft":
+            # 1. Initialize pending flags before starting background thread
+            try:
+                self.submission_repo.save_ai_flag(
+                    submission_id=submission.id,
+                    confidence_score=0.0,
+                    risk_level="safe",
+                    flag_type="AI_METADATA",
+                    status="pending"
+                )
+                self.submission_repo.save_ai_flag(
+                    submission_id=submission.id,
+                    confidence_score=0.0,
+                    risk_level="safe",
+                    flag_type="duplicate_similarity",
+                    status="pending"
+                )
+            except Exception as e:
+                print(f"Warning: could not create initial pending flags: {e}")
+
+            # 2. Extract first_bytes for duplicate detection
             first_bytes = None
-
             if files:
                 for file_item in files:
-
-                    if (
-                        self._normalize_file_type(
-                            file_item.get(
-                                "file_type"
-                            )
-                        )
-                        == "main_image"
-                    ):
-                        first_bytes = (
-                            file_item.get(
-                                "file_bytes"
-                            )
-                        )
+                    if self._normalize_file_type(file_item.get("file_type")) == "main_image":
+                        first_bytes = file_item.get("file_bytes")
                         break
-
-                if (
-                    first_bytes is None
-                    and files
-                ):
-                    first_bytes = (
-                        files[0].get(
-                            "file_bytes"
-                        )
-                    )
-
+                if first_bytes is None and files:
+                    first_bytes = files[0].get("file_bytes")
             elif file_bytes:
                 first_bytes = file_bytes
 
-            if (
-                first_bytes
-                and status != "draft"
-            ):
-                self._run_duplicate_check_and_flag(
-                    submission,
-                    first_bytes,
-                )
+            # 3. Start thread
+            import threading
 
-        except Exception as e:
-            print(
-                f"Warning: duplicate check failed: {e}"
+            def ai_pipeline_thread(sub_id, hd_url, f_bytes, metadata):
+                from infrastructure.repositories.submission_repository import SubmissionRepository
+                repo = SubmissionRepository()
+
+                def notify_fraud(risk, f_type):
+                    if risk in ["medium", "high"]:
+                        try:
+                            from infrastructure.models.app import SubmissionModel, UserModel, RoleModel, user_roles
+                            from services.notification_service import NotificationService
+                            from infrastructure.repositories.notification_repository import NotificationRepository
+                            notif_repo = NotificationRepository(session=repo.session)
+                            notif_service = NotificationService(repository=notif_repo)
+                            sub = repo.session.query(SubmissionModel).filter_by(id=sub_id).first()
+                            if not sub or not sub.round or not sub.round.contest: return
+                            contest = sub.round.contest
+                            t = f"Cảnh báo gian lận mức độ {risk.upper()}"
+                            b = f"Phát hiện rủi ro {f_type} ở bài dự thi #{sub_id}."
+                            
+                            notif_service.create_notification(
+                                user_id=contest.created_by, title=t, body=b,
+                                contest_id=contest.id, notification_type="fraud_alert"
+                            )
+                            
+                            admins = repo.session.query(UserModel).join(user_roles).join(RoleModel).filter(RoleModel.code == 'admin').all()
+                            for admin in admins:
+                                if admin.id != contest.created_by:
+                                    notif_service.create_notification(
+                                        user_id=admin.id, title=t, body=b,
+                                        contest_id=contest.id, notification_type="fraud_alert"
+                                    )
+                        except Exception as e:
+                            print(f"Failed to send fraud notification: {e}")
+
+
+                # --- AI Detection ---
+                if hd_url:
+                    try:
+                        from services.ai_detection_service import AiDetectionService
+                        ai_service = AiDetectionService()
+                        ai_result = ai_service.detect_ai(hd_url)
+                        if not isinstance(ai_result, dict):
+                            ai_result = {}
+
+                        comparison_result = ai_service.compare_metadata_with_exif(
+                            metadata, ai_result.get("exif_data", {})
+                        )
+                        if not isinstance(comparison_result, dict):
+                            comparison_result = {}
+
+                        ai_score = max(
+                            float(ai_result.get("ai_score", 0) or 0),
+                            float(comparison_result.get("confidence_score", 0) or 0),
+                        )
+                        base_risk = ai_result.get("risk_level", "safe")
+                        comp_risk = comparison_result.get("risk_level", "safe")
+
+                        risk_level = "safe"
+                        if "high" in [base_risk, comp_risk]:
+                            risk_level = "high"
+                        elif "medium" in [base_risk, comp_risk]:
+                            risk_level = "medium"
+
+                        saved_flag = repo.save_ai_flag(
+                            submission_id=sub_id,
+                            confidence_score=ai_score,
+                            risk_level=risk_level,
+                            flag_type="AI_METADATA",
+                            status="completed",
+                        )
+                        notify_fraud(risk_level, "AI_METADATA")
+                        repo.save_ai_analysis_report(
+                            submission_id=sub_id,
+                            ai_flag_id=saved_flag.id,
+                            ai_model_name="EXIF Extraction Engine",
+                            ai_confidence_score=ai_score,
+                            raw_details={
+                                "exif_data": ai_result.get("exif_data", {}),
+                                "raw_exif": ai_result.get("raw_exif", {}),
+                                "metadata_comparison": comparison_result,
+                            },
+                        )
+                    except Exception as e:
+                        print(f"Background AI task failed: {e}")
+                        flag = repo.get_ai_flag(sub_id, "AI_METADATA")
+                        if flag:
+                            repo.update_ai_flag_status(flag.id, "failed")
+
+                # --- Duplicate Detection ---
+                if f_bytes:
+                    try:
+                        from services.duplicate_detection_service import DuplicateDetectionService
+                        dup_service = DuplicateDetectionService()
+                        dup_result = dup_service.check_duplicate_against_database(
+                            new_image_bytes=f_bytes,
+                            exclude_submission_id=sub_id,
+                            session=repo.session,
+                        )
+                        if not isinstance(dup_result, dict):
+                            dup_result = {}
+
+                        similarity = float(dup_result.get("similarity_score", 0.0) or 0.0)
+                        is_dup = bool(dup_result.get("is_duplicate", False))
+
+                        risk_level = "safe"
+                        if is_dup:
+                            risk_level = "high"
+                        elif similarity >= 70.0:
+                            risk_level = "medium"
+
+                        saved_flag = repo.save_ai_flag(
+                            submission_id=sub_id,
+                            confidence_score=similarity,
+                            risk_level=risk_level,
+                            flag_type="duplicate_similarity",
+                            status="completed",
+                        )
+                        notify_fraud(risk_level, "duplicate_similarity")
+                        matched_sub_id = dup_result.get("matched_submission_id")
+                        repo.save_ai_analysis_report(
+                            submission_id=sub_id,
+                            ai_flag_id=saved_flag.id,
+                            ai_model_name="Duplicate Detection Engine",
+                            ai_confidence_score=similarity,
+                            raw_details=dup_result,
+                            similarity_matched_submission_id=matched_sub_id,
+                        )
+                    except Exception as e:
+                        print(f"Background Duplicate task failed: {e}")
+                        flag = repo.get_ai_flag(sub_id, "duplicate_similarity")
+                        if flag:
+                            repo.update_ai_flag_status(flag.id, "failed")
+
+            # Fire and forget
+            t = threading.Thread(
+                target=ai_pipeline_thread,
+                args=(submission.id, first_file.get("image_hd_url"), first_bytes, film_metadata)
             )
+            t.daemon = True
+            t.start()
 
         return submission
 
@@ -854,7 +1047,7 @@ class SubmissionService:
                     confidence_score=ai_score,
                     risk_level=risk_level,
                     flag_type="AI_METADATA",
-                    status="pending",
+                    status="completed",
                 )
             )
 
@@ -886,8 +1079,11 @@ class SubmissionService:
 
         except Exception as e:
             print(
-                f"Warning: AI detection failed: {e}"
+                f"Error in _run_ai_detection: {e}"
             )
+            flag = self.submission_repo.get_ai_flag(submission.id, "AI_METADATA")
+            if flag:
+                self.submission_repo.update_ai_flag_status(flag.id, "failed")
 
     # =========================================================
     # UPDATE DRAFT
@@ -932,11 +1128,65 @@ class SubmissionService:
         files_data = None
 
         if files:
-            files_data = (
-                self._build_files_data(
-                    files
+
+            for file_item in files:
+
+                file_bytes_item = (
+                    file_item.get(
+                        "file_bytes"
+                    )
                 )
-            )
+
+                filename_item = (
+                    file_item.get(
+                        "filename"
+                    )
+                )
+
+                content_type_item = (
+                    file_item.get(
+                        "content_type"
+                    )
+                    or "image/jpeg"
+                )
+
+                if (
+                    not file_bytes_item
+                    or not filename_item
+                ):
+                    continue
+
+                storage_info = (
+                    self.storage_service
+                    .upload_image(
+                        file_bytes=file_bytes_item,
+                        filename=filename_item,
+                        content_type=content_type_item,
+                    )
+                )
+
+                phash_val, ahash_val = (
+                    self._calculate_image_hashes(
+                        file_bytes_item
+                    )
+                )
+
+                files_data.append(
+                    {
+                        "image_hd_url": storage_info["hd_url"],
+                        "thumbnail_url": storage_info["thumbnail_url"],
+                        "file_hash": storage_info["sha256"],
+                        "width_px": storage_info["width"],
+                        "height_px": storage_info["height"],
+                        "file_size_bytes": storage_info["file_size"],
+                        "phash": phash_val,
+                        "ahash": ahash_val,
+                        "file_type": file_item.get(
+                            "file_type",
+                            "main_image",
+                        ),
+                    }
+                )
 
         return (
             self.submission_repo
@@ -960,89 +1210,116 @@ class SubmissionService:
     # =========================================================
     # SUBMIT DRAFT
     # =========================================================
+def submit_draft(
+    self,
+    submission_id: int,
+    user_id: int,
+) -> SubmissionModel:
 
-    def submit_draft(
-        self,
-        submission_id: int,
-        user_id: int,
-    ) -> SubmissionModel:
+    result = (
+        self.submission_repo
+        .get_by_id_with_details(submission_id)
+    )
 
-        result = (
-            self.submission_repo
-            .get_by_id_with_details(
-                submission_id
-            )
+    if not result:
+        raise ValueError("Submission not found")
+
+    (
+        submission,
+        submission_file,
+        film_metadata,
+    ) = result
+
+    # 1. Kiểm tra quyền sở hữu
+    if submission.user_id != user_id:
+        raise PermissionError("Forbidden")
+
+    # 2. Kiểm tra trạng thái
+    if submission.status != "draft":
+        raise ValueError(
+            "Cannot submit submission that is not in draft status"
         )
 
-        if not result:
-            raise ValueError(
-                "Submission not found"
-            )
+    # 3. Kiểm tra round nếu submission có round_id
+    round_id = getattr(submission, "round_id", None)
 
-        (
-            submission,
-            submission_file,
-            film_metadata,
-        ) = result
+    if round_id is not None:
+        self._validate_round_status_for_submission(round_id)
 
-        if submission.user_id != user_id:
-            raise PermissionError(
-                "Forbidden"
-            )
+    # 4. Kiểm tra title
+    if (
+        not submission.title
+        or not submission.title.strip()
+    ):
+        raise ValueError("title is required")
 
-        if submission.status != "draft":
-            raise ValueError(
-                "Cannot submit submission that is not in draft status"
-            )
-
-        if (
-            not submission.title
-            or not submission.title.strip()
-        ):
-            raise ValueError(
-                "title is required"
-            )
-
-        if not submission_file:
-            raise ValueError(
-                "At least one image file is required"
-            )
-
-        if (
-            not film_metadata
-            or not film_metadata.film_stock
-            or not film_metadata.film_stock.strip()
-        ):
-            raise ValueError(
-                "film_stock is required"
-            )
-
-        now_utc = datetime.now(
-            timezone.utc
+    # 5. Kiểm tra file
+    if not submission_file:
+        raise ValueError(
+            "At least one image file is required"
         )
 
-        updated_submission = (
-            self.submission_repo
-            .update_status(
-                submission_id=submission_id,
-                status="submitted",
-                submitted_at=now_utc,
+    # 6. Kiểm tra film metadata
+    if (
+        not film_metadata
+        or not film_metadata.film_stock
+        or not film_metadata.film_stock.strip()
+    ):
+        raise ValueError("film_stock is required")
+
+    # 7. Update status
+    from datetime import datetime, timezone
+
+    now_utc = datetime.now(timezone.utc)
+
+    updated_submission = (
+        self.submission_repo.update_status(
+            submission_id=submission_id,
+            status="submitted",
+            submitted_at=now_utc,
+        )
+    )
+
+
+    # 8. AI detection
+    if (
+        submission_file
+        and submission_file.image_hd_url
+    ):
+        try:
+            from services.ai_detection_service import (
+                AiDetectionService,
             )
-        )
 
-        # -----------------------------------------------------
-        # AI
-        # -----------------------------------------------------
+            ai_service = AiDetectionService()
 
-        image_url = getattr(
-            submission_file,
-            "image_hd_url",
-            None,
-        )
+            ai_result = ai_service.detect_ai(
+                submission_file.image_hd_url
+            )
 
-        if image_url:
+            # Nếu service AI trả kết quả thì xử lý ở đây.
+            # Không để lỗi AI làm submit thất bại.
 
-            self._run_ai_detection(
+        except Exception:
+            # AI detection là bước phụ,
+            # không được làm API submit thành 500.
+            pass
+
+
+    
+
+    # -----------------------------------------------------
+    # AI
+    # -----------------------------------------------------
+
+    image_url = getattr(
+        submission_file,
+        "image_hd_url",
+        None,
+    )
+
+    if image_url:
+        self._run_ai_detection(
                 submission=submission,
                 image_url=image_url,
                 film_metadata={
@@ -1455,6 +1732,42 @@ class SubmissionService:
                 storage_info.get(
                     "file_size"
                 )
+            )
+        # -----------------------------------------------------
+        # Validate Round status before submitting a draft
+        # -----------------------------------------------------
+        #
+        # A participant may edit a draft regardless of the
+        # Round status, but the draft must only be converted
+        # to "submitted" while the Round is "ongoing".
+        #
+        # This prevents bypassing the submission restriction
+        # through the update-draft endpoint.
+        # -----------------------------------------------------
+
+        if status == "submitted":
+
+            target_round_id = round_id
+
+            # If round_id is not provided, use the submission's
+            # existing round.
+            if target_round_id is None:
+                existing_submission = (
+                    self.submission_repo
+                    .get_by_id(submission_id)
+                )
+
+                if not existing_submission:
+                    raise ValueError(
+                        "Submission not found"
+                    )
+
+                target_round_id = (
+                    existing_submission.round_id
+                )
+
+            self._validate_round_status_for_submission(
+                target_round_id
             )
 
         else:
@@ -1990,18 +2303,97 @@ class SubmissionService:
 
         if submission_file:
 
-            if isinstance(
-                submission_file,
-                (list, tuple, set),
-            ):
-                file_objects = list(
-                    submission_file
-                )
+            item["file"] = {
+                "id": submission_file.id,
+                "image_hd_url": (
+                    submission_file.image_hd_url
+                ),
+                "thumbnail_url": (
+                    submission_file.thumbnail_url
+                ),
+                "width_px": (
+                    submission_file.width_px
+                ),
+                "height_px": (
+                    submission_file.height_px
+                ),
+                "file_size_bytes": (
+                    submission_file.file_size_bytes
+                ),
+                "file_hash": (
+                    submission_file.file_hash
+                ),
+                "phash": (
+                    submission_file.phash
+                ),
+                "ahash": (
+                    submission_file.ahash
+                ),
+                "created_at": (
+                    submission_file.created_at.isoformat()
+                    if submission_file.created_at
+                    else None
+                ),
+                "file_type": (
+                    getattr(submission_file, "file_type", "main_image")
+                    or "main_image"
+                ),
+            }
 
-            else:
-                file_objects = [
-                    submission_file
-                ]
+        all_submission_files = []
+        if (
+            hasattr(submission, "files")
+            and submission.files is not None
+            and len(submission.files) > 0
+        ):
+            all_submission_files = list(submission.files)
+        elif submission_file:
+            all_submission_files = [submission_file]
+
+        files_categorized = {
+            "main_image": [],
+            "negative": [],
+            "contact_sheet": [],
+        }
+
+        for sf in all_submission_files:
+            ftype = getattr(sf, "file_type", "main_image") or "main_image"
+            sf_dict = {
+                "id": sf.id,
+                "image_hd_url": sf.image_hd_url,
+                "thumbnail_url": sf.thumbnail_url,
+                "width_px": sf.width_px,
+                "height_px": sf.height_px,
+                "file_size_bytes": sf.file_size_bytes,
+                "file_hash": sf.file_hash,
+                "file_type": ftype,
+                "phash": getattr(sf, "phash", None),
+                "ahash": getattr(sf, "ahash", None),
+                "created_at": (
+                    sf.created_at.isoformat()
+                    if getattr(sf, "created_at", None)
+                    else None
+                ),
+            }
+
+            if ftype not in files_categorized:
+                files_categorized[ftype] = []
+
+            files_categorized[ftype].append(sf_dict)
+
+        item["files"] = files_categorized
+
+        if isinstance(
+            submission_file,
+            (list, tuple, set),
+        ):
+            file_objects = list(
+                submission_file
+            )
+        else:
+            file_objects = [
+                submission_file
+            ]
 
         formatted_files = [
             self._format_file_dict(
@@ -2010,7 +2402,6 @@ class SubmissionService:
             for file_obj in file_objects
             if file_obj
         ]
-
         # -----------------------------------------------------
         # Main image
         # -----------------------------------------------------
@@ -2347,3 +2738,62 @@ class SubmissionService:
             "risk_level": flag.risk_level,
             "status": flag.status,
         }
+    # =========================================================
+    # GET AI ANALYSIS REPORT
+    # =========================================================
+
+    def get_submission_ai_report(self, submission_id: int) -> dict:
+        flags = self.submission_repo.get_all_ai_flags(submission_id)
+
+        from infrastructure.models.app.app_audit_log_model import AuditLogModel
+        from infrastructure.models.app.app_submission_model import SubmissionModel
+
+        result = []
+        for flag in flags:
+            flag_dict = {
+                "id": flag.id,
+                "flag_type": flag.flag_type,
+                "confidence_score": float(flag.confidence_score) if flag.confidence_score is not None else None,
+                "risk_level": flag.risk_level,
+                "status": flag.status,
+                "reviewed_by": flag.reviewed_by,
+                "reviewed_at": flag.reviewed_at.isoformat() if flag.reviewed_at else None,
+                "review_notes": flag.review_notes,
+                "created_at": flag.created_at.isoformat() if flag.created_at else None,
+                "updated_at": flag.updated_at.isoformat() if flag.updated_at else None,
+                "raw_details": None,
+                "similarity_matched_submission": None,
+                "history": []
+            }
+
+            if flag.analysis_report:
+                flag_dict["raw_details"] = flag.analysis_report.raw_details
+                matched_id = flag.analysis_report.similarity_matched_submission_id
+                if matched_id:
+                    matched_sub = self.submission_repo.session.query(SubmissionModel).filter(SubmissionModel.id == matched_id).first()
+                    if matched_sub:
+                        flag_dict["similarity_matched_submission"] = {
+                            "id": matched_sub.id,
+                            "title": matched_sub.title,
+                            "author_id": matched_sub.user_id
+                        }
+
+            # Fetch history
+            audit_logs = self.submission_repo.session.query(AuditLogModel).filter(
+                AuditLogModel.entity_name == "ai_flags",
+                AuditLogModel.entity_id == flag.id
+            ).order_by(AuditLogModel.created_at.asc()).all()
+
+            for log in audit_logs:
+                flag_dict["history"].append({
+                    "id": log.id,
+                    "action": log.action,
+                    "old_value": log.old_value,
+                    "new_value": log.new_value,
+                    "created_at": log.created_at.isoformat() if log.created_at else None,
+                    "user_id": log.user_id
+                })
+
+            result.append(flag_dict)
+
+        return {"submission_id": submission_id, "ai_flags": result}
