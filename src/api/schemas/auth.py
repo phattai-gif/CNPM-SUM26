@@ -22,6 +22,7 @@ class RegisterUserResponseSchema(Schema):
     email = fields.Email()
     full_name = fields.Str()
     role = fields.Str()
+    email_verified = fields.Bool()
 
 
 class LoginUserRequestSchema(Schema):

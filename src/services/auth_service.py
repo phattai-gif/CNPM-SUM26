@@ -59,3 +59,6 @@ class AuthService:
     def update_status(self, user_id: int, status: str) -> bool:
         return self.repository.update_status(user_id, status)
 
+    def update_email_verified(self, user_id: int, verified: bool = True) -> bool:
+        return self.repository.update_email_verified(user_id, verified)
+

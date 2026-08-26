@@ -11,6 +11,8 @@ from services.auth_service import AuthService
 from infrastructure.repositories.auth_repository import AuthRepository
 from infrastructure.repositories.contest_repository import ContestRepository
 from services.contest_service import ContestService
+from services.email_service import email_service
+from urllib.parse import urlencode
 
 PUBLIC_SIGNUP_ROLES = {'participant'}
 
@@ -62,10 +64,37 @@ def _jwt_response(user):
       'username': user.username,
       'email': user.email,
       'full_name': user.full_name,
-      'role': user.role
+      'role': user.role,
+      'email_verified': getattr(user, 'email_verified', False)
     }
   }), 200
 
+def _account_token(user_id, token_type, lifetime):
+  secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
+  return jwt.encode({
+    'user_id': user_id,
+    'type': token_type,
+    'exp': datetime.now(timezone.utc) + lifetime
+  }, secret_key, algorithm='HS256')
+
+
+def _send_auth_token(email, token, path, subject, action_label, expires_in):
+  base_url = current_app.config.get('BASE_URL', request.host_url.rstrip('/')).rstrip('/')
+  action_url = f"{base_url}{path}?{urlencode({'token': token})}"
+  return email_service.send_token_email(
+    recipient=email,
+    subject=subject,
+    action_url=action_url,
+    action_label=action_label,
+    expires_in=expires_in,
+  )
+
+
+def _token_response_field(token, sent, field_name='token'):
+  # Tokens remain available for local development/tests when SMTP is absent.
+  if current_app.testing or not email_service.is_configured():
+    return {field_name: token}
+  return {}
 
 @auth_bp.route('/check_router', methods=['GET'])
 def check_router():
@@ -137,7 +166,7 @@ def register():
         return jsonify({'message': 'Validation error', 'errors': errors}), 400
 
     username = data.get('username')
-    email = data.get('email')
+    email = (data.get('email') or '').strip().lower()
     password = data.get('password')
     passwordconfirm = data.get('passwordconfirm')
     full_name = data.get('full_name')
@@ -171,6 +200,20 @@ def register():
     if not new_user:
         return jsonify({'message': 'Registration failed due to server error'}), 500
 
+    verification_token = _account_token(
+      new_user.id,
+      'email_verification',
+      timedelta(hours=24),
+    )
+    verification_sent = _send_auth_token(
+      email,
+      verification_token,
+      '/auth/verify-email',
+      'Verify your email address',
+      'verify your email address',
+      '24 hours',
+    )
+
     # Auto-generate JWT token for newly registered user (auto-login)
     payload = {
       'user_id': new_user.id,
@@ -185,7 +228,9 @@ def register():
     return jsonify({
       'message': 'User registered successfully!',
       'token': token,
+      'email_verification_required': True,
       'user': result
+      ,**_token_response_field(verification_token, verification_sent, 'verification_token')
     }), 201
 
 
@@ -326,6 +371,7 @@ def get_current_user():
             'email': user.email,
             'full_name': user.full_name,
             'role': user.role,
+            'email_verified': getattr(user, 'email_verified', False),
             'avatar_url': getattr(user, 'avatar_url', None),
             'bio': getattr(user, 'bio', None),
             'created_at': getattr(user, 'created_at', None)
@@ -485,7 +531,7 @@ def forgot_password():
     Request a password reset link/token
     """
     data = request.get_json() or {}
-    email = data.get('email')
+    email = (data.get('email') or '').strip().lower()
 
     if not email:
         return jsonify({'message': 'Email is required'}), 400
@@ -502,11 +548,20 @@ def forgot_password():
         'exp': datetime.now(timezone.utc) + timedelta(minutes=15)
     }
     reset_token = jwt.encode(payload, secret_key, algorithm='HS256')
+    reset_sent = _send_auth_token(
+      email,
+      reset_token,
+      '/auth/reset-password',
+      'Reset your password',
+      'reset your password',
+      '15 minutes',
+    )
 
-    return jsonify({
-        'message': 'Reset token generated successfully. For testing, copy the token below.',
-        'token': reset_token
-    }), 200
+    response = {
+      'message': 'If the email is registered, a password reset link has been sent.'
+    }
+    response.update(_token_response_field(reset_token, reset_sent))
+    return jsonify(response), 200
 
 
 @auth_bp.route('/reset-password', methods=['GET'])
@@ -589,7 +644,10 @@ def verify_email():
     if not user:
         return jsonify({'message': 'User not found'}), 404
 
-    success = auth_service.update_status(user.id, 'active')
+    success = (
+        auth_service.update_email_verified(user.id, True)
+        and auth_service.update_status(user.id, 'active')
+    )
     if not success:
         return jsonify({'message': 'Failed to verify email'}), 500
 
@@ -619,8 +677,15 @@ def request_verification():
         'exp': datetime.now(timezone.utc) + timedelta(days=1)
     }
     verify_token = jwt.encode(payload, secret_key, algorithm='HS256')
+    verification_sent = _send_auth_token(
+      email,
+      verify_token,
+      '/auth/verify-email',
+      'Verify your email address',
+      'verify your email address',
+      '24 hours',
+    )
 
-    return jsonify({
-        'message': 'Verification token generated successfully. For testing, copy the token below.',
-        'token': verify_token
-    }), 200
+    response = {'message': 'A verification link has been sent to your email.'}
+    response.update(_token_response_field(verify_token, verification_sent))
+    return jsonify(response), 200
