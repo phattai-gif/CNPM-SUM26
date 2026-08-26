@@ -99,6 +99,17 @@ The seed command is idempotent. It creates the roles `admin`, `organizer`, `judg
     FLASK_ENV=development
     SECRET_KEY=your_secret_key
     GOOGLE_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
+    BASE_URL=http://localhost:9999
+
+    # SMTP email delivery (required in production)
+    SMTP_HOST=smtp.gmail.com
+    SMTP_PORT=587
+    SMTP_USERNAME=your-email@example.com
+    SMTP_PASSWORD=your-app-password
+    SMTP_FROM=your-email@example.com
+    SMTP_USE_TLS=true
+    SMTP_USE_SSL=false
+    SMTP_TIMEOUT=10
     
     # SQL Server settings
     DB_USER=sa

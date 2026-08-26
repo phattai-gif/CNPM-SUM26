@@ -4,7 +4,8 @@ from datetime import date
 class Auth:
     def __init__(self, username: str, password: str, passwordcomfirm: str, email: str,
                  role: str = 'participant', full_name: str = None, id: int = None,
-                 avatar_url: str = None, bio: str = None, created_at = None):
+                 avatar_url: str = None, bio: str = None, created_at = None,
+                 email_verified: bool = False):
         self.id = id
         self.username = username
         self.password = password
@@ -15,3 +16,4 @@ class Auth:
         self.avatar_url = avatar_url
         self.bio = bio
         self.created_at = created_at
+        self.email_verified = email_verified

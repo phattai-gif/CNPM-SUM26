@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS app.users (
     avatar_url VARCHAR(512),
     bio TEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'active',
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

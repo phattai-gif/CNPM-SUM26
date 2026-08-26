@@ -226,6 +226,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // If backend returned token, set session and redirect appropriately
       if (data.token) {
+        if (data.email_verification_required) {
+          window.AuthSession.clearSession();
+          const verificationUrl = data.verification_token
+            ? `/auth/verify-email?token=${encodeURIComponent(data.verification_token)}`
+            : '/auth/verify-email';
+          showMessage('Registration successful! Check your email to verify your account.', true);
+          setTimeout(() => { window.location.href = verificationUrl; }, 700);
+          return;
+        }
         window.AuthSession.setSession({ token: data.token, user: data.user, role: data.user?.role });
         showMessage('Registration successful! Redirecting...', true);
         setTimeout(() => {

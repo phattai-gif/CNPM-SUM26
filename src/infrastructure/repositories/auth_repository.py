@@ -33,7 +33,8 @@ class AuthRepository(IAuthRepository):
                 email=auth.email,
                 password_hash=auth.password,
                 full_name=auth.full_name,
-                status='active'
+                     status='active',
+                     email_verified=False
             )
             self.session.add(new_user)
             self.session.flush()  # Lấy ID của user mới
@@ -97,6 +98,7 @@ class AuthRepository(IAuthRepository):
             if user_obj:
                 if user_obj.status != 'active':
                     return None
+                user_obj.email_verified = True
                 if full_name and not user_obj.full_name:
                     user_obj.full_name = full_name
                 if avatar_url and not user_obj.avatar_url:
@@ -113,7 +115,8 @@ class AuthRepository(IAuthRepository):
                     password_hash=token_urlsafe(32),
                     full_name=full_name,
                     avatar_url=avatar_url,
-                    status='active'
+                    status='active',
+                    email_verified=True
                 )
                 self.session.add(user_obj)
                 self.session.flush()
@@ -137,7 +140,8 @@ class AuthRepository(IAuthRepository):
                 passwordcomfirm='',
                 email=user_obj.email,
                 role=self.get_user_role(user_obj.id) or 'participant',
-                full_name=user_obj.full_name
+                full_name=user_obj.full_name,
+                email_verified=user_obj.email_verified
             )
         except Exception as e:
             self.session.rollback()
@@ -175,7 +179,8 @@ class AuthRepository(IAuthRepository):
                 full_name=user_obj.full_name,
                 avatar_url=getattr(user_obj, 'avatar_url', None),
                 bio=getattr(user_obj, 'bio', None),
-                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None
+                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None,
+                email_verified=user_obj.email_verified
             )
         except Exception as e:
             print(f"Error fetching user by id: {e}")
@@ -198,7 +203,8 @@ class AuthRepository(IAuthRepository):
                 full_name=user_obj.full_name,
                 avatar_url=getattr(user_obj, 'avatar_url', None),
                 bio=getattr(user_obj, 'bio', None),
-                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None
+                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None,
+                email_verified=user_obj.email_verified
             )
         except Exception as e:
             print(f"Error fetching user by email: {e}")
@@ -231,12 +237,26 @@ class AuthRepository(IAuthRepository):
                 full_name=user_obj.full_name,
                 avatar_url=user_obj.avatar_url,
                 bio=user_obj.bio,
-                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None
+                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None,
+                email_verified=user_obj.email_verified
             )
         except Exception as e:
             self.session.rollback()
             print(f"Error updating user profile: {e}")
             return None
+
+    def update_email_verified(self, user_id: int, verified: bool = True) -> bool:
+        try:
+            user_obj = self.session.query(UserModel).filter_by(id=user_id).first()
+            if not user_obj:
+                return False
+            user_obj.email_verified = verified
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error updating email verification: {e}")
+            return False
 
     def update_password(self, user_id: int, password_hash: str) -> bool:
         try:

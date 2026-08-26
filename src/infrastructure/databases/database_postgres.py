@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Integer, inspect, text
+from sqlalchemy import BigInteger, Boolean, Integer, inspect, text
 
 from infrastructure.databases.abstract_database import AbstractDatabase
 from infrastructure.databases.base import Base
@@ -32,6 +32,13 @@ class DatabasePostgres(AbstractDatabase):
             return
 
         with self.engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE app.users "
+                    "ADD COLUMN IF NOT EXISTS email_verified "
+                    "BOOLEAN NOT NULL DEFAULT FALSE;"
+                )
+            )
             connection.execute(
                 text("CREATE SCHEMA IF NOT EXISTS app")
             )
@@ -111,11 +118,8 @@ class DatabasePostgres(AbstractDatabase):
                         dialect=self.engine.dialect
                     )
 
-                    nullable = (
-                        ""
-                        if column.nullable
-                        else " NOT NULL DEFAULT ''"
-                    )
+                    default_value = "0" if isinstance(column.type, Boolean) else "''"
+                    nullable = "" if column.nullable else f" NOT NULL DEFAULT {default_value}"
 
                     connection.execute(
                         text(
