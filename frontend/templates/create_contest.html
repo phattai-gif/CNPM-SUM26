@@ -261,7 +261,7 @@
           <h3 style="margin:0;">Awards / Prizes (Giải thưởng)</h3>
           <p class="muted" style="margin:0;">Quản lý giải thưởng theo contest_id bằng API thêm/sửa/xóa.</p>
           <div class="config-card">
-            <div class="section-grid" style="grid-template-columns:1fr 1fr 0.7fr;">
+            <div class="section-grid" style="grid-template-columns:1fr 1fr 0.7fr 0.7fr;">
               <div>
                 <label>Tên giải thưởng</label>
                 <input type="text" id="awardTitleInput" placeholder="Ví dụ: Best Portrait" />
@@ -273,6 +273,10 @@
               <div>
                 <label>Thứ hạng</label>
                 <input type="number" id="awardRankInput" min="1" placeholder="1" />
+              </div>
+              <div>
+                <label>Số lượng</label>
+                <input type="number" id="awardQuantityInput" min="1" value="1" placeholder="1" />
               </div>
             </div>
             <div style="margin-top:8px;">
@@ -323,6 +327,7 @@
         const awardTitleInput = document.getElementById('awardTitleInput');
         const awardPrizeInput = document.getElementById('awardPrizeInput');
         const awardRankInput = document.getElementById('awardRankInput');
+        const awardQuantityInput = document.getElementById('awardQuantityInput');
         const awardDescInput = document.getElementById('awardDescInput');
         const addAwardBtn = document.getElementById('addAwardBtn');
         const awardList = document.getElementById('awardList');
@@ -440,7 +445,7 @@
             return `
               <div class="config-item">
                 <div class="config-item-title">#${escapeHtml(item.rank)} · ${escapeHtml(item.title || 'Untitled')}</div>
-                <div class="config-item-meta">Prize: ${escapeHtml(item.prize || 'N/A')}</div>
+                <div class="config-item-meta">Prize: ${escapeHtml(item.prize || 'N/A')} · Quantity: ${escapeHtml(item.quantity || 1)}</div>
                 <div class="config-item-meta">${escapeHtml(item.description || 'Không có mô tả')}</div>
                 <div class="inline-actions" style="margin-top:8px;">
                   <button type="button" class="btn-secondary edit-award" data-id="${escapeHtml(item.id)}">Sửa</button>
@@ -462,6 +467,8 @@
               if (prize === null) return;
               const rankRaw = prompt('Thứ hạng', current.rank != null ? String(current.rank) : '1');
               if (rankRaw === null) return;
+              const quantityRaw = prompt('Số lượng giải', current.quantity != null ? String(current.quantity) : '1');
+              if (quantityRaw === null) return;
               const description = prompt('Mô tả award', current.description || '');
               if (description === null) return;
 
@@ -469,6 +476,7 @@
                 title,
                 prize,
                 rank: Number(rankRaw),
+                quantity: Number(quantityRaw),
                 description
               });
             });
@@ -538,6 +546,7 @@
           const title = (awardTitleInput.value || '').trim();
           const prize = (awardPrizeInput.value || '').trim();
           const rank = Number(awardRankInput.value || '0');
+          const quantity = Number(awardQuantityInput.value || '1');
           const description = (awardDescInput.value || '').trim();
 
           if (!title) throw new Error('Tên award không được để trống');
@@ -546,6 +555,7 @@
             title,
             prize,
             rank: Number.isFinite(rank) && rank > 0 ? rank : null,
+            quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
             description
           };
 
@@ -554,6 +564,7 @@
           awardTitleInput.value = '';
           awardPrizeInput.value = '';
           awardRankInput.value = '';
+          awardQuantityInput.value = '1';
           awardDescInput.value = '';
           renderAwards();
           showToast('Thêm award thành công');

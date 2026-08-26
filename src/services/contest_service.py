@@ -174,12 +174,20 @@ class ContestService:
             except (TypeError, ValueError):
                 award_id = self._next_collection_id(normalized)
 
+            try:
+                quantity = int(item.get('quantity', 1))
+            except (TypeError, ValueError):
+                quantity = 1
+            if quantity < 1:
+                quantity = 1
+
             normalized.append({
                 'id': award_id,
                 'rank': rank,
                 'title': title,
                 'prize': prize,
                 'description': description,
+                'quantity': quantity,
             })
 
         normalized.sort(key=lambda x: (x.get('rank', 999999), x.get('id', 999999)))
@@ -350,6 +358,7 @@ class ContestService:
             'title': title,
             'prize': str(data.get('prize', '') or '').strip(),
             'description': str(data.get('description', '') or '').strip(),
+            'quantity': self._coerce_int(data.get('quantity'), default=1, minimum=1),
         }
         awards.append(award)
         awards = self._normalize_awards(awards)
@@ -378,6 +387,11 @@ class ContestService:
             target['prize'] = str(data.get('prize', '') or '').strip()
         if 'rank' in data:
             target['rank'] = self._coerce_int(data.get('rank'), default=int(target.get('rank', 1) or 1), minimum=1)
+        if 'quantity' in data:
+            quantity = self._coerce_int(data.get('quantity'), default=1, minimum=1)
+            if quantity < 1:
+                raise ValueError("Số lượng giải phải lớn hơn 0.")
+            target['quantity'] = quantity
 
         awards = self._normalize_awards(awards)
         self.repository.update_contest(contest_id, {'awards_json': awards})
