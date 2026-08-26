@@ -17,27 +17,22 @@ from api.controllers.submission_controller import (
     get_organizer_contest_submissions,
     get_judge_assignment_submissions,
 )
-
 from api.controllers.submission_review_controller import (
     bp as submission_review_bp,
 )
-
 from api.controllers.contest_controller import (
     contest_bp,
     public_bp as contest_public_bp,
     finalize_round,
 )
-
 from api.controllers.judge_controller import judge_bp
 from api.controllers.notification_controller import notification_bp
 from api.controllers.contest_settings_controller import (
     contest_settings_bp,
 )
 from api.controllers.moderator_controller import moderator_bp
-from api.role_required import role_required
 from api.controllers.admin_controller import admin_bp
 from api.role_required import role_required
-from services.score_service import ScoreService
 
 
 def register_routes(app):
@@ -51,13 +46,15 @@ def register_routes(app):
     app.register_blueprint(submission_bp)
     app.register_blueprint(submission_review_bp)
     app.register_blueprint(contest_bp)
-        # Finalize round API alias
+
+    # Finalize round API alias
     app.add_url_rule(
-            "/rounds/<int:round_id>/finalize",
-            "finalize_round_root",
-            finalize_round,
-            methods=["POST"],
-        )
+        "/rounds/<int:round_id>/finalize",
+        "finalize_round_root",
+        finalize_round,
+        methods=["POST"],
+    )
+
     app.register_blueprint(contest_public_bp)
     app.register_blueprint(judge_bp)
 
@@ -85,6 +82,26 @@ def register_routes(app):
     except Exception:
         pass
 
+    # Profile
+    try:
+        app.add_url_rule(
+            "/profile",
+            "profile_page",
+            lambda: render_template("profile.html"),
+        )
+    except Exception:
+        pass
+
+    # Portfolio
+    try:
+        app.add_url_rule(
+            "/portfolio",
+            "portfolio_page",
+            lambda: redirect("/profile"),
+        )
+    except Exception:
+        pass
+
     # Contests page
     try:
         app.add_url_rule(
@@ -105,71 +122,12 @@ def register_routes(app):
     except Exception:
         pass
 
-    # Judge review / scoring page
-    try:
-        app.add_url_rule(
-            "/judge/review",
-            "judge_review_page",
-            lambda: render_template("submission_review.html"),
-        )
-    except Exception:
-        pass
-
     # Login
     try:
         app.add_url_rule(
             "/login",
             "login",
             lambda: render_template("login.html"),
-        )
-    except Exception:
-        pass
-
-    # ============================================================
-    # JUDGE REVIEW DETAIL API
-    # ============================================================
-
-    try:
-        score_service = ScoreService()
-
-        @role_required("judge", "admin")
-        def api_get_judge_submission_review_detail(submission_id):
-            judge_id = request.user.get("user_id")
-            user_role = request.user.get("role", "judge")
-
-            if not judge_id:
-                return jsonify({
-                    "message": "Judge information is missing"
-                }), 401
-
-            payload, error = score_service.get_submission_review_data(
-                submission_id=submission_id,
-                judge_id=judge_id,
-                user_role=user_role,
-            )
-
-            if error == "submission_not_found":
-                return jsonify({
-                    "message": "Submission not found"
-                }), 404
-
-            if error == "not_assigned":
-                return jsonify({
-                    "message": "Judge is not assigned to this submission"
-                }), 403
-
-            if payload is None:
-                return jsonify({
-                    "message": "Failed to get review detail"
-                }), 500
-
-            return jsonify(payload), 200
-
-        app.add_url_rule(
-            "/api/judge/submissions/<int:submission_id>/review-detail",
-            "api_judge_submission_review_detail",
-            api_get_judge_submission_review_detail,
-            methods=["GET"],
         )
     except Exception:
         pass
@@ -240,16 +198,10 @@ def register_routes(app):
                     contest_service,
                 )
 
-                return (
-                    contest_service
-                    .repository
-                    .session
-                )
+                return contest_service.repository.session
 
             except Exception:
-                database = FactoryDatabase.get_database(
-                    "POSTGREE"
-                )
+                database = FactoryDatabase.get_database("POSTGREE")
                 return database.session
 
         # ========================================================
@@ -280,34 +232,40 @@ def register_routes(app):
                 output = []
 
                 for contest in contests:
-                    output.append({
-                        "id": contest.id,
-                        "title": contest.title,
-                        "description": contest.description,
-                        "status": contest.status,
-                        "start_date": (
-                            str(contest.start_date)
-                            if contest.start_date
-                            else None
-                        ),
-                        "end_date": (
-                            str(contest.end_date)
-                            if contest.end_date
-                            else None
-                        ),
-                        "banner_url": contest.banner_url,
-                    })
+                    output.append(
+                        {
+                            "id": contest.id,
+                            "title": contest.title,
+                            "description": contest.description,
+                            "status": contest.status,
+                            "start_date": (
+                                str(contest.start_date)
+                                if contest.start_date
+                                else None
+                            ),
+                            "end_date": (
+                                str(contest.end_date)
+                                if contest.end_date
+                                else None
+                            ),
+                            "banner_url": contest.banner_url,
+                        }
+                    )
 
-                return jsonify({
-                    "contests": output
-                }), 200
+                return jsonify(
+                    {
+                        "contests": output,
+                    }
+                ), 200
 
             except Exception as error:
-                return jsonify({
-                    "message": "Error",
-                    "error": str(error),
-                    "contests": [],
-                }), 500
+                return jsonify(
+                    {
+                        "message": "Error",
+                        "error": str(error),
+                        "contests": [],
+                    }
+                ), 500
 
         app.add_url_rule(
             "/api/contests",
@@ -332,9 +290,11 @@ def register_routes(app):
                 )
 
                 if not contest:
-                    return jsonify({
-                        "message": "Not found"
-                    }), 404
+                    return jsonify(
+                        {
+                            "message": "Not found",
+                        }
+                    ), 404
 
                 rounds = []
 
@@ -352,44 +312,50 @@ def register_routes(app):
                     )
 
                     for round_model in round_models:
-                        rounds.append({
-                            "id": round_model.id,
-                            "title": round_model.title,
-                            "round_number": (
-                                round_model.round_number
-                            ),
-                            "status": round_model.status,
-                        })
+                        rounds.append(
+                            {
+                                "id": round_model.id,
+                                "title": round_model.title,
+                                "round_number": (
+                                    round_model.round_number
+                                ),
+                                "status": round_model.status,
+                            }
+                        )
 
                 except Exception:
                     rounds = []
 
-                return jsonify({
-                    "contest": {
-                        "id": contest.id,
-                        "title": contest.title,
-                        "description": contest.description,
-                        "status": contest.status,
-                        "start_date": (
-                            str(contest.start_date)
-                            if contest.start_date
-                            else None
-                        ),
-                        "end_date": (
-                            str(contest.end_date)
-                            if contest.end_date
-                            else None
-                        ),
-                        "banner_url": contest.banner_url,
-                        "rounds": rounds,
+                return jsonify(
+                    {
+                        "contest": {
+                            "id": contest.id,
+                            "title": contest.title,
+                            "description": contest.description,
+                            "status": contest.status,
+                            "start_date": (
+                                str(contest.start_date)
+                                if contest.start_date
+                                else None
+                            ),
+                            "end_date": (
+                                str(contest.end_date)
+                                if contest.end_date
+                                else None
+                            ),
+                            "banner_url": contest.banner_url,
+                            "rounds": rounds,
+                        }
                     }
-                }), 200
+                ), 200
 
             except Exception as error:
-                return jsonify({
-                    "message": "Error",
-                    "error": str(error),
-                }), 500
+                return jsonify(
+                    {
+                        "message": "Error",
+                        "error": str(error),
+                    }
+                ), 500
 
         app.add_url_rule(
             "/api/contests/<int:contest_id>",
@@ -405,8 +371,6 @@ def register_routes(app):
     # SUBMISSION LIST APIs
     # ============================================================
     #
-    # IMPORTANT:
-    #
     # Participant:
     # GET /submissions/my
     #
@@ -416,12 +380,9 @@ def register_routes(app):
     # Judge:
     # GET /judge/assignments/<assignment_id>/submissions
     #
-    # Các function xử lý nằm trong submission_controller.py
-    #
     # ============================================================
 
     try:
-
         # --------------------------------------------------------
         # ORGANIZER
         # --------------------------------------------------------
@@ -455,11 +416,16 @@ def register_routes(app):
             methods=["GET"],
         )
 
+        # ========================================================
+        # JUDGE REVIEW DETAIL API
+        # ========================================================
+
         @role_required("judge", "admin")
         def judge_review_submission_detail(submission_id):
             from infrastructure.databases.factory_database import (
                 FactoryDatabase,
             )
+
             from infrastructure.models.app import (
                 CriteriaModel,
                 JudgeAssignmentModel,
@@ -474,6 +440,10 @@ def register_routes(app):
                 .session
             )
 
+            # ----------------------------------------------------
+            # Find submission
+            # ----------------------------------------------------
+
             submission = (
                 session
                 .query(SubmissionModel)
@@ -482,20 +452,28 @@ def register_routes(app):
             )
 
             if not submission:
-                return jsonify({
-                    "message": "Submission not found"
-                }), 404
+                return jsonify(
+                    {
+                        "message": "Submission not found",
+                    }
+                ), 404
 
             user_id = request.user.get("user_id")
             user_role = request.user.get("role")
 
+            # ----------------------------------------------------
+            # Check judge assignment
+            # ----------------------------------------------------
+
             if user_role != "admin":
-                assignment = (
+                assignments = (
                     session
                     .query(JudgeAssignmentModel)
                     .filter(
-                        JudgeAssignmentModel.round_id == submission.round_id,
-                        JudgeAssignmentModel.judge_id == user_id,
+                        JudgeAssignmentModel.round_id
+                        == submission.round_id,
+                        JudgeAssignmentModel.judge_id
+                        == user_id,
                     )
                     .all()
                 )
@@ -503,13 +481,19 @@ def register_routes(app):
                 is_allowed = any(
                     item.submission_id is None
                     or item.submission_id == submission.id
-                    for item in assignment
+                    for item in assignments
                 )
 
                 if not is_allowed:
-                    return jsonify({
-                        "message": "Forbidden"
-                    }), 403
+                    return jsonify(
+                        {
+                            "message": "Forbidden",
+                        }
+                    ), 403
+
+            # ----------------------------------------------------
+            # Main image
+            # ----------------------------------------------------
 
             main_image_file = (
                 session
@@ -520,131 +504,210 @@ def register_routes(app):
                 )
                 .first()
             )
+
+            # ----------------------------------------------------
+            # Film metadata
+            # ----------------------------------------------------
+
             film_metadata = (
                 session
                 .query(SubmissionFilmMetadataModel)
-                .filter_by(submission_id=submission.id)
+                .filter_by(
+                    submission_id=submission.id
+                )
                 .first()
             )
+
+            # ----------------------------------------------------
+            # Criteria
+            # ----------------------------------------------------
+
             criteria_models = (
                 session
                 .query(CriteriaModel)
-                .filter_by(round_id=submission.round_id)
-                .order_by(CriteriaModel.id.asc())
-                .all()
-            )
-            round_submissions = (
-                session
-                .query(SubmissionModel)
-                .filter_by(round_id=submission.round_id)
-                .order_by(SubmissionModel.id.asc())
+                .filter_by(
+                    round_id=submission.round_id
+                )
+                .order_by(
+                    CriteriaModel.id.asc()
+                )
                 .all()
             )
 
-            ordered_ids = [item.id for item in round_submissions]
-            current_index = ordered_ids.index(submission.id)
+            # ----------------------------------------------------
+            # Submission navigation
+            # ----------------------------------------------------
+
+            round_submissions = (
+                session
+                .query(SubmissionModel)
+                .filter_by(
+                    round_id=submission.round_id
+                )
+                .order_by(
+                    SubmissionModel.id.asc()
+                )
+                .all()
+            )
+
+            ordered_ids = [
+                item.id
+                for item in round_submissions
+            ]
+
+            current_index = ordered_ids.index(
+                submission.id
+            )
+
             previous_submission_id = (
                 ordered_ids[current_index - 1]
                 if current_index > 0
                 else None
             )
+
             next_submission_id = (
                 ordered_ids[current_index + 1]
                 if current_index < len(ordered_ids) - 1
                 else None
             )
 
+            # ----------------------------------------------------
+            # All submission files
+            # ----------------------------------------------------
+
             all_submission_files = (
                 session
                 .query(SubmissionFileModel)
-                .filter_by(submission_id=submission.id)
+                .filter_by(
+                    submission_id=submission.id
+                )
                 .all()
             )
+
             files_categorized = {
                 "main_image": [],
                 "negative": [],
                 "contact_sheet": [],
             }
-            for sf in all_submission_files:
-                ftype = getattr(sf, "file_type", "main_image") or "main_image"
-                sf_dict = {
-                    "id": sf.id,
-                    "image_hd_url": sf.image_hd_url,
-                    "thumbnail_url": sf.thumbnail_url,
-                    "width_px": sf.width_px,
-                    "height_px": sf.height_px,
-                    "file_size_bytes": sf.file_size_bytes,
-                    "file_hash": sf.file_hash,
-                    "file_type": ftype,
-                }
-                if ftype not in files_categorized:
-                    files_categorized[ftype] = []
-                files_categorized[ftype].append(sf_dict)
 
-            return jsonify({
-                "submission": {
-                    "id": submission.id,
-                    "round_id": submission.round_id,
-                    "status": submission.status,
-                    "image_url": (
-                        main_image_file.image_hd_url
-                        if main_image_file
-                        else None
+            for submission_file in all_submission_files:
+                file_type = (
+                    getattr(
+                        submission_file,
+                        "file_type",
+                        "main_image",
+                    )
+                    or "main_image"
+                )
+
+                file_data = {
+                    "id": submission_file.id,
+                    "image_hd_url": (
+                        submission_file.image_hd_url
                     ),
-                    "files": files_categorized,
-                    "metadata": {
-                        "camera_body": (
-                            film_metadata.camera_body
-                            if film_metadata
-                            else None
-                        ),
-                        "lens": (
-                            film_metadata.lens
-                            if film_metadata
-                            else None
-                        ),
-                        "film_stock": (
-                            film_metadata.film_stock
-                            if film_metadata
-                            else None
-                        ),
-                        "film_iso": (
-                            film_metadata.film_iso
-                            if film_metadata
-                            else None
-                        ),
-                        "development_process": (
-                            film_metadata.development_process
-                            if film_metadata
-                            else None
-                        ),
-                        "width_px": (
-                            main_image_file.width_px
+                    "thumbnail_url": (
+                        submission_file.thumbnail_url
+                    ),
+                    "width_px": (
+                        submission_file.width_px
+                    ),
+                    "height_px": (
+                        submission_file.height_px
+                    ),
+                    "file_size_bytes": (
+                        submission_file.file_size_bytes
+                    ),
+                    "file_hash": (
+                        submission_file.file_hash
+                    ),
+                    "file_type": file_type,
+                }
+
+                if file_type not in files_categorized:
+                    files_categorized[file_type] = []
+
+                files_categorized[file_type].append(
+                    file_data
+                )
+
+            # ----------------------------------------------------
+            # Response
+            # ----------------------------------------------------
+
+            return jsonify(
+                {
+                    "submission": {
+                        "id": submission.id,
+                        "round_id": submission.round_id,
+                        "status": submission.status,
+                        "image_url": (
+                            main_image_file.image_hd_url
                             if main_image_file
                             else None
                         ),
-                        "height_px": (
-                            main_image_file.height_px
-                            if main_image_file
-                            else None
+                        "files": files_categorized,
+                        "metadata": {
+                            "camera_body": (
+                                film_metadata.camera_body
+                                if film_metadata
+                                else None
+                            ),
+                            "lens": (
+                                film_metadata.lens
+                                if film_metadata
+                                else None
+                            ),
+                            "film_stock": (
+                                film_metadata.film_stock
+                                if film_metadata
+                                else None
+                            ),
+                            "film_iso": (
+                                film_metadata.film_iso
+                                if film_metadata
+                                else None
+                            ),
+                            "development_process": (
+                                film_metadata.development_process
+                                if film_metadata
+                                else None
+                            ),
+                            "width_px": (
+                                main_image_file.width_px
+                                if main_image_file
+                                else None
+                            ),
+                            "height_px": (
+                                main_image_file.height_px
+                                if main_image_file
+                                else None
+                            ),
+                        },
+                    },
+                    "criteria": [
+                        {
+                            "id": criteria.id,
+                            "name": criteria.name,
+                            "description": criteria.description,
+                            "max_score": float(
+                                criteria.max_score
+                            ),
+                            "weight": float(
+                                criteria.weight
+                            ),
+                        }
+                        for criteria in criteria_models
+                    ],
+                    "navigation": {
+                        "previous_submission_id": (
+                            previous_submission_id
+                        ),
+                        "next_submission_id": (
+                            next_submission_id
                         ),
                     },
-                },
-                "criteria": [
-                    {
-                        "id": criteria.id,
-                        "name": criteria.name,
-                        "description": criteria.description,
-                        "max_score": float(criteria.max_score),
-                        "weight": float(criteria.weight),
-                    }
-                    for criteria in criteria_models
-                ],
-                "navigation": {
-                    "previous_submission_id": previous_submission_id,
-                    "next_submission_id": next_submission_id,
-                },
-            }), 200
+                }
+            ), 200
 
         app.add_url_rule(
             "/api/judge/submissions/<int:submission_id>/review-detail",

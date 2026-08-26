@@ -248,18 +248,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const aiFlag = data.ai_flag || {};
             const riskLevel = aiFlag.risk_level || 'safe';
             const aiScore = aiFlag.confidence_score !== undefined && aiFlag.confidence_score !== null ? aiFlag.confidence_score : 0;
+            const status = aiFlag.status || 'completed';
 
             let badgeHtml = '';
             let explanation = '';
 
-            if (riskLevel === 'safe' || aiScore < 30) {
-                badgeHtml = `<span class="ai-status-tag safe">✓ An toàn • Phim Thật</span>`;
+            if (status === 'pending') {
+                badgeHtml = `<span class="ai-status-tag" style="background:rgba(100,116,139,0.2); color:var(--text-secondary);">⏳ Đang xử lý AI (Pending)...</span>`;
+                explanation = 'Hệ thống đang tiến hành trích xuất EXIF và kiểm tra. Quá trình xử lý không làm gián đoạn việc nộp bài của bạn.';
+            } else if (status === 'failed') {
+                badgeHtml = `<span class="ai-status-tag" style="background:rgba(220,38,38,0.15); color:#f87171;">❌ Xử lý thất bại (Failed)</span>`;
+                explanation = 'Có lỗi trong quá trình kiểm tra tự động. Giám khảo sẽ kiểm tra thủ công.';
+            } else if (riskLevel === 'safe' || aiScore < 30) {
+                badgeHtml = `<span class="ai-status-tag safe">✓ An toàn • Phim Thật (Completed)</span>`;
                 explanation = 'Tác phẩm được trích xuất thông số máy ảnh & phim analog hoàn toàn hợp lệ. Không phát hiện dấu hiệu tạo sinh nhân tạo.';
             } else if (riskLevel === 'high' || riskLevel === 'high_risk' || aiScore >= 70) {
-                badgeHtml = `<span class="ai-status-tag high">⚠️ Cảnh báo AI (Nguy cơ cao)</span>`;
+                badgeHtml = `<span class="ai-status-tag high">⚠️ Cảnh báo AI (Nguy cơ cao - Completed)</span>`;
                 explanation = 'Hệ thống phát hiện ảnh thiếu dữ liệu metadata EXIF chuẩn của máy phim hoặc có cấu trúc điểm ảnh nghi vấn tạo bằng AI.';
             } else {
-                badgeHtml = `<span class="ai-status-tag" style="background:rgba(245,158,11,0.15); color:var(--accent-amber);">🔍 Cần Giám Khảo Thẩm Định</span>`;
+                badgeHtml = `<span class="ai-status-tag" style="background:rgba(245,158,11,0.15); color:var(--accent-amber);">🔍 Cần Giám Khảo Thẩm Định (Completed)</span>`;
                 explanation = 'Tác phẩm có một số thông số ảnh cần được Ban Giám Khảo kiểm tra thủ công thêm.';
             }
 
@@ -271,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div style="text-align:right; flex-shrink:0;">
                         <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; display:block;">Độ rủi ro AI</span>
-                        <strong style="font-size:1.4rem; color:#ffffff; font-family:'Space Grotesk',sans-serif;">${Number(aiScore).toFixed(0)}%</strong>
+                        <strong style="font-size:1.4rem; color:#ffffff; font-family:'Space Grotesk',sans-serif;">${status === 'pending' || status === 'failed' ? '-' : Number(aiScore).toFixed(0) + '%'}</strong>
                     </div>
                 </div>
             `;

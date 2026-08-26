@@ -1,4 +1,9 @@
-from flask import Blueprint, jsonify, request
+from flask import (
+    Blueprint,
+    jsonify,
+    request,
+    render_template,
+)
 
 import hashlib
 import io
@@ -53,8 +58,37 @@ ALLOWED_IMAGE_EXTENSIONS = {
 
 ALLOWED_PROOF_FILE_TYPES = {
     "main_image",
-    "negative_film",
+    "negative",
     "contact_sheet",
+}
+
+
+KEY_TO_FILE_TYPE = {
+    "main_image": "main_image",
+    "file": "main_image",
+    "files": "main_image",
+    "image": "main_image",
+    "images": "main_image",
+    "main": "main_image",
+    "main_file": "main_image",
+    "image_files": "main_image",
+
+    "negative": "negative",
+    "negative_film": "negative",
+    "negatives": "negative",
+    "negative[]": "negative",
+    "negative_film[]": "negative",
+    "negative_files": "negative",
+    "negative_file": "negative",
+    "negative_images": "negative",
+    "negative_image": "negative",
+
+    "contact_sheet": "contact_sheet",
+    "contact_sheets": "contact_sheet",
+    "contact_sheet[]": "contact_sheet",
+    "contact_sheet_files": "contact_sheet",
+    "contact_sheet_file": "contact_sheet",
+    "contact_sheet_images": "contact_sheet",
 }
 
 
@@ -150,6 +184,9 @@ def _serialize_submission_file(file_obj):
 
         file_type = file_obj.get("file_type")
 
+        if file_type == "negative_film":
+            file_type = "negative"
+
         if not file_type:
             file_type = "main_image"
 
@@ -191,6 +228,9 @@ def _serialize_submission_file(file_obj):
         "file_type",
         None,
     )
+
+    if file_type == "negative_film":
+        file_type = "negative"
 
     if not file_type:
         file_type = "main_image"
@@ -309,40 +349,56 @@ def _serialize_submission_detail(
     # --------------------------------------------------------
 
     if files is not None:
-        if not isinstance(
-            files,
-            (list, tuple),
-        ):
-            files = [files]
+        if isinstance(files, dict):
+            grouped_files = files
 
-        serialized_files = [
-            _serialize_submission_file(item)
-            for item in files
-            if item is not None
-        ]
+            for file_type, file_items in grouped_files.items():
+                if file_type not in response["files"]:
+                    continue
 
-        for file_item in serialized_files:
-            file_type = file_item.get("file_type")
+                if not isinstance(file_items, (list, tuple)):
+                    file_items = [file_items]
 
-            if file_type == "main_image":
-                response["files"]["main_image"].append(
-                    file_item
-                )
+                for item in file_items:
+                    serialized = _serialize_submission_file(item)
 
-            elif file_type in {
-                "negative",
-                "negative_film",
-            }:
-                response["files"]["negative"].append(
-                    file_item
-                )
+                    if serialized:
+                        response["files"][file_type].append(
+                            serialized
+                        )
 
-            elif file_type == "contact_sheet":
-                response["files"]["contact_sheet"].append(
-                    file_item
-                )
+        else:
+            if not isinstance(files, (list, tuple)):
+                files = [files]
 
-        # --------------------------------------------------------
+            serialized_files = [
+                _serialize_submission_file(item)
+                for item in files
+                if item is not None
+            ]
+
+            for file_item in serialized_files:
+                file_type = file_item.get("file_type")
+
+                if file_type == "main_image":
+                    response["files"]["main_image"].append(
+                        file_item
+                    )
+
+                elif file_type in {
+                    "negative",
+                    "negative_film",
+                }:
+                    response["files"]["negative"].append(
+                        file_item
+                    )
+
+                elif file_type == "contact_sheet":
+                    response["files"]["contact_sheet"].append(
+                        file_item
+                    )
+
+    # --------------------------------------------------------
     # BACKWARD COMPATIBILITY
     # --------------------------------------------------------
 
@@ -553,6 +609,7 @@ def _normalize_file_type(file_type):
         "main_file": "main_image",
         "image": "main_image",
         "file": "main_image",
+        "files": "main_image",
 
         "negative": "negative",
         "negative_film": "negative",
@@ -560,6 +617,7 @@ def _normalize_file_type(file_type):
         "negative_file": "negative",
         "negative_image": "negative",
         "negative_images": "negative",
+        "negatives": "negative",
 
         "contact_sheet": "contact_sheet",
         "contact-sheet": "contact_sheet",
@@ -567,6 +625,7 @@ def _normalize_file_type(file_type):
         "contact_sheet_files": "contact_sheet",
         "contact_sheet_image": "contact_sheet",
         "contact_sheet_images": "contact_sheet",
+        "contact_sheets": "contact_sheet",
     }
 
     return aliases.get(value)
@@ -625,9 +684,6 @@ def _get_file_type_from_field_name(field_name):
 
     return None
 
-# ============================================================
-# COLLECT UPLOADED FILES
-# ============================================================
 
 # ============================================================
 # COLLECT UPLOADED FILES
@@ -645,46 +701,22 @@ def _collect_uploaded_files(strict=False):
         # RESOLVE FILE TYPE
         # ----------------------------------------------------
 
-        if field_name in {
-            "file",
-            "image",
-            "main_image",
-            "main_file",
-            "main",
-            "files",
-            "images",
-            "image_files",
-        }:
-            file_type = "main_image"
+        file_type = _get_file_type_from_field_name(
+            field_name
+        )
 
-        elif field_name in {
-            "negative",
-        }:
-            # IMPORTANT:
-            # test_submission.py expects "negative"
-            file_type = "negative"
+        if file_type is None:
+            # Try file_type from request body.
+            form_file_type = (
+                request.form.get("file_type")
+                or request.args.get("file_type")
+            )
 
-        elif field_name in {
-            "negative_files",
-            "negative_file",
-            "negative_film",
-            "negative_images",
-            "negative_image",
-        }:
-            # Keep compatibility with the existing
-            # negative_film naming.
-            file_type = "negative_film"
+            file_type = _normalize_file_type(
+                form_file_type
+            )
 
-        elif field_name in {
-            "contact_sheet_files",
-            "contact_sheet_file",
-            "contact_sheet",
-            "contact_sheets",
-            "contact_sheet_images",
-        }:
-            file_type = "contact_sheet"
-
-        else:
+        if file_type is None:
             if strict:
                 raise ValueError(
                     "Invalid file type. "
@@ -728,14 +760,9 @@ def _build_file_payload(
     file_obj,
     file_type,
 ):
-    # Keep the field name "negative" because the
-    # submission API/test expects this exact value.
-    if file_type == "negative":
-        normalized_type = "negative"
-    else:
-        normalized_type = _normalize_file_type(
-            file_type
-        )
+    normalized_type = _normalize_file_type(
+        file_type
+    )
 
     allowed_types = {
         "main_image",
@@ -751,6 +778,9 @@ def _build_file_payload(
             "main_image, negative, negative_film, "
             "contact_sheet"
         )
+
+    if normalized_type == "negative_film":
+        normalized_type = "negative"
 
     (
         file_bytes,
@@ -769,6 +799,8 @@ def _build_file_payload(
             file_bytes
         ).hexdigest(),
     }
+
+
 # ============================================================
 # FILM METADATA
 # ============================================================
@@ -1001,6 +1033,10 @@ def create_submission():
             }
         ), 403
 
+    # --------------------------------------------------------
+    # TITLE
+    # --------------------------------------------------------
+
     if status == "submitted":
         if not title or not title.strip():
             return jsonify(
@@ -1011,7 +1047,7 @@ def create_submission():
 
         title = title.strip()
 
-    elif title:
+    if title:
         title = title.strip()
 
     # --------------------------------------------------------
@@ -1051,18 +1087,7 @@ def create_submission():
         ), 400
 
     # --------------------------------------------------------
-    # IMPORTANT:
-    # DO NOT USE main_files[:1] HERE.
-    #
-    # The request may contain:
-    #
-    # main_image -> 1 file
-    # negative   -> 2 files
-    #
-    # Expected:
-    # files_list -> 3 files
-    #
-    # We therefore process ALL uploaded files.
+    # BUILD ALL FILE PAYLOADS
     # --------------------------------------------------------
 
     files_list = []
@@ -1074,21 +1099,9 @@ def create_submission():
                 file_type=uploaded_file["file_type"],
             )
 
-        # POST /submissions:
-        # test yêu cầu negative, không phải negative_film
-            if uploaded_file["file_type"] == "negative":
-                file_payload["file_type"] = "negative"
-
             files_list.append(
                 file_payload
             )
-
-        except ValueError as error:
-            return jsonify(
-                {
-                    "message": str(error)
-                }
-            ), 400
 
         except ValueError as error:
             return jsonify(
@@ -1191,6 +1204,198 @@ def create_submission():
 
 
 # ============================================================
+# MY SUBMISSIONS
+# ============================================================
+
+@submission_bp.route(
+    "/my",
+    methods=["GET"],
+)
+@token_required
+def get_my_submissions():
+    user_id = _get_user_id()
+
+    if not user_id:
+        return jsonify(
+            {
+                "message": (
+                    "User information is missing "
+                    "in token"
+                )
+            }
+        ), 401
+
+    round_id_param = request.args.get(
+        "round_id"
+    )
+
+    round_id = None
+
+    if round_id_param is not None:
+        try:
+            round_id = int(
+                round_id_param
+            )
+
+        except (
+            ValueError,
+            TypeError,
+        ):
+            return jsonify(
+                {
+                    "message": "Invalid round_id"
+                }
+            ), 400
+
+    status = request.args.get(
+        "status"
+    )
+
+    allowed_statuses = {
+        "draft",
+        "submitted",
+        "flagged",
+        "evaluated",
+        "under_review",
+        "graded",
+        "approved",
+        "rejected",
+    }
+
+    if status and status not in allowed_statuses:
+        return jsonify(
+            {
+                "message": "Invalid status"
+            }
+        ), 400
+
+    ai_flag = request.args.get(
+        "ai_flag"
+    )
+
+    allowed_ai_flags = {
+        "safe",
+        "medium",
+        "high",
+    }
+
+    if ai_flag and ai_flag not in allowed_ai_flags:
+        return jsonify(
+            {
+                "message": "Invalid ai_flag"
+            }
+        ), 400
+
+    try:
+        data = submission_service.get_my_submissions(
+            user_id=user_id,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
+        )
+
+        if isinstance(data, dict):
+            return jsonify(data), 200
+
+        if isinstance(data, list):
+            return jsonify(
+                {
+                    "message": (
+                        "My submissions "
+                        "retrieved successfully"
+                    ),
+                    "submissions": data,
+                    "count": len(data),
+                    "total": len(data),
+                }
+            ), 200
+
+        return jsonify(data), 200
+
+    except Exception as error:
+        import traceback
+
+        traceback.print_exc()
+
+        return jsonify(
+            {
+                "message": "Failed to get my submissions",
+                "error": str(error),
+            }
+        ), 500
+
+
+# ============================================================
+# ALIAS: /my-submissions
+# ============================================================
+
+@submission_bp.route(
+    "/my-submissions",
+    methods=["GET"],
+)
+@token_required
+def get_my_submissions_alias():
+    return get_my_submissions()
+
+
+# ============================================================
+# ALIAS: /me
+# ============================================================
+
+@submission_bp.route(
+    "/me",
+    methods=["GET"],
+)
+@token_required
+def get_my_submissions_me():
+    return get_my_submissions()
+
+
+# ============================================================
+# UI: MY SUBMISSIONS / PORTFOLIO
+# ============================================================
+
+@submission_bp.route(
+    "/my-submissions-ui",
+    methods=["GET"],
+)
+def my_submissions_ui():
+    return render_template(
+        "my_submissions.html"
+    )
+
+
+# ============================================================
+# UI: SUBMISSION DETAIL
+# ============================================================
+
+@submission_bp.route(
+    "/detail/<int:submission_id>",
+    methods=["GET"],
+)
+def submission_detail_ui_detail(submission_id):
+    return render_template(
+        "submission_detail.html",
+        submission_id=submission_id,
+    )
+
+
+# ============================================================
+# UI: SUBMISSION DETAIL ALIAS
+# ============================================================
+
+@submission_bp.route(
+    "/<int:submission_id>/ui",
+    methods=["GET"],
+)
+def submission_detail_ui(submission_id):
+    return render_template(
+        "submission_detail.html",
+        submission_id=submission_id,
+    )
+
+
+# ============================================================
 # UPLOAD PROOF FILES
 # ============================================================
 
@@ -1227,7 +1432,7 @@ def upload_proof_files(submission_id):
                 "message": (
                     "Invalid file type. "
                     "Allowed values: "
-                    "main_image, negative_film, contact_sheet"
+                    "main_image, negative, contact_sheet"
                 )
             }
         ), 400
@@ -1397,10 +1602,9 @@ def update_submission(submission_id):
         ), 401
 
     if request.is_json:
-        data = (
-            request.get_json(silent=True)
-            or {}
-        )
+        data = request.get_json(
+            silent=True
+        ) or {}
     else:
         data = request.form
 
@@ -1416,14 +1620,15 @@ def update_submission(submission_id):
                 }
             ), 400
 
-    if data.get("description") is not None:
-        description = data.get("description")
-    else:
-        description = data.get(
-            "story_description"
-        )
+    description = (
+        data.get("description")
+        if data.get("description") is not None
+        else data.get("story_description")
+    )
 
-    files_list = []
+    # --------------------------------------------------------
+    # COLLECT FILES
+    # --------------------------------------------------------
 
     try:
         uploaded_files = _collect_uploaded_files(
@@ -1436,6 +1641,8 @@ def update_submission(submission_id):
                 "message": str(error)
             }
         ), 400
+
+    files_list = []
 
     for uploaded_file in uploaded_files:
         try:
@@ -1455,6 +1662,10 @@ def update_submission(submission_id):
                 }
             ), 400
 
+    # --------------------------------------------------------
+    # FILM METADATA
+    # --------------------------------------------------------
+
     try:
         film_metadata = _parse_film_metadata(
             data
@@ -1467,67 +1678,49 @@ def update_submission(submission_id):
             }
         ), 400
 
+    # --------------------------------------------------------
+    # UPDATE
+    # --------------------------------------------------------
+
     try:
-        if request.is_json:
-            updated_sub = (
-                submission_service
-                .update_draft_submission(
+        update_method = getattr(
+            submission_service,
+            "update_draft_submission",
+            None,
+        )
+
+        if update_method is not None:
+            try:
+                updated_sub = update_method(
                     submission_id=submission_id,
                     user_id=user_id,
                     title=title,
                     story_description=description,
-                    round_id=data.get(
-                        "round_id"
+                    round_id=data.get("round_id"),
+                    status=data.get("status"),
+                    film_metadata=(
+                        film_metadata
+                        or None
                     ),
-                    status=data.get(
-                        "status"
-                    ),
+                    files=files_list,
+                )
+
+            except TypeError:
+                updated_sub = update_method(
+                    submission_id=submission_id,
+                    user_id=user_id,
+                    title=title,
+                    story_description=description,
+                    round_id=data.get("round_id"),
+                    status=data.get("status"),
                     film_metadata=(
                         film_metadata
                         or None
                     ),
                 )
-            )
 
-            return jsonify(
-                {
-                    "message": (
-                        "Submission updated successfully"
-                    ),
-                    "submission": {
-                        "id": updated_sub.id,
-                        "title": updated_sub.title,
-                        "status": updated_sub.status,
-                        "round_id": updated_sub.round_id,
-                        "story_description": getattr(
-                            updated_sub,
-                            "story_description",
-                            None,
-                        ),
-                        "submitted_at": (
-                            updated_sub.submitted_at.isoformat()
-                            if getattr(
-                                updated_sub,
-                                "submitted_at",
-                                None,
-                            )
-                            else None
-                        ),
-                        "updated_at": (
-                            updated_sub.updated_at.isoformat()
-                            if getattr(
-                                updated_sub,
-                                "updated_at",
-                                None,
-                            )
-                            else None
-                        ),
-                    },
-                }
-            ), 200
-
-        updated_sub = (
-            submission_service.update_draft(
+        else:
+            updated_sub = submission_service.update_draft(
                 submission_id=submission_id,
                 user_id=user_id,
                 title=title,
@@ -1535,11 +1728,9 @@ def update_submission(submission_id):
                 files=files_list,
                 film_metadata=(
                     film_metadata
-                    if film_metadata
-                    else None
+                    or None
                 ),
             )
-        )
 
         if updated_sub is None:
             return jsonify(
@@ -1551,7 +1742,7 @@ def update_submission(submission_id):
         return jsonify(
             {
                 "message": (
-                    "Submission draft updated successfully"
+                    "Submission updated successfully"
                 ),
                 "submission": _serialize_submission(
                     updated_sub
@@ -1583,6 +1774,10 @@ def update_submission(submission_id):
         ), 400
 
     except Exception as error:
+        import traceback
+
+        traceback.print_exc()
+
         return jsonify(
             {
                 "message": (
@@ -1683,131 +1878,147 @@ def submit_submission(submission_id):
     "participant",
 )
 def get_submission(submission_id):
-    user_id = request.user.get("user_id")
-    role = request.user.get("role", "participant")
+    user_id = _get_user_id()
+    role = _get_user_role() or "participant"
 
     # --------------------------------------------------------
-    # NEW DETAIL SERVICE
+    # PRIMARY SERVICE
     # --------------------------------------------------------
 
     try:
-        detail = submission_service.get_submission_detail(
-            submission_id=submission_id,
-            user_id=user_id,
-            role=role,
+        detail = (
+            submission_service
+            .get_submission_detail(
+                submission_id=submission_id,
+                user_id=user_id,
+                role=role,
+            )
         )
 
         if detail:
             if isinstance(detail, dict):
-                detail.setdefault("files", [])
+                detail = dict(detail)
 
-                if not detail["files"] and detail.get("file"):
-                    detail["files"] = [
-                        detail["file"]
-                    ]
-
-                normalized_files = []
-
-                                # ------------------------------------------------
-                # GET FILES FROM DETAIL
-                # ------------------------------------------------
+                # --------------------------------------------
+                # NORMALIZE FILES
+                # --------------------------------------------
 
                 source_files = detail.get(
-                    "files",
-                    [],
-                ) or []
-
-                # ------------------------------------------------
-                # GET FILES FROM SUBMISSION OBJECT
-                # ------------------------------------------------
-
-                submission_obj = detail.get(
-                    "submission"
+                    "files"
                 )
 
-                if submission_obj is not None:
-                    submission_files = getattr(
-                        submission_obj,
-                        "files",
-                        [],
-                    ) or []
+                if source_files is None:
+                    source_files = []
 
-                    if submission_files:
-                        source_files = submission_files
+                # If service returns grouped files.
+                if isinstance(
+                    source_files,
+                    dict,
+                ):
+                    grouped_files = {
+                        "main_image": [],
+                        "negative": [],
+                        "contact_sheet": [],
+                    }
 
-                # ------------------------------------------------
-                # NORMALIZE FILES
-                # ------------------------------------------------
-
-                normalized_files = []
-
-                for item in source_files:
-                    if item is None:
-                        continue
-
-                    if isinstance(item, dict):
-                        item = dict(item)
-
-                    else:
-                        try:
-                            item = _serialize_submission_file(
-                                item
+                    for file_type, file_items in source_files.items():
+                        normalized_type = (
+                            _normalize_file_type(
+                                file_type
                             )
-                        except Exception:
+                        )
+
+                        if normalized_type not in grouped_files:
                             continue
 
-                    file_type = item.get(
-                        "file_type"
-                    )
+                        if not isinstance(
+                            file_items,
+                            (list, tuple),
+                        ):
+                            file_items = [
+                                file_items
+                            ]
 
-                    if not file_type:
-                        file_type = "main_image"
+                        for item in file_items:
+                            serialized = (
+                                _serialize_submission_file(
+                                    item
+                                )
+                            )
 
-                    if file_type == "negative_film":
-                        file_type = "negative"
+                            if serialized:
+                                grouped_files[
+                                    normalized_type
+                                ].append(
+                                    serialized
+                                )
 
-                    item["file_type"] = file_type
+                    detail["files"] = grouped_files
 
-                    normalized_files.append(item)
-                # ------------------------------------------------
-                # GROUP PROOF FILES
-                # ------------------------------------------------
+                else:
+                    if not isinstance(
+                        source_files,
+                        (list, tuple),
+                    ):
+                        source_files = [
+                            source_files
+                        ]
 
-                files_group = {
-                    "main_image": [],
-                    "negative": [],
-                    "contact_sheet": [],
-                }
+                    normalized_files = []
 
-                for item in normalized_files:
-                    file_type = item.get(
-                        "file_type"
-                    )
+                    for item in source_files:
+                        if item is None:
+                            continue
 
-                    if file_type == "main_image":
-                        files_group[
-                            "main_image"
-                        ].append(item)
+                        serialized = (
+                            _serialize_submission_file(
+                                item
+                            )
+                        )
 
-                    elif file_type in {
-                        "negative",
-                        "negative_film",
-                    }:
-                        files_group[
-                            "negative"
-                        ].append(item)
+                        if serialized:
+                            normalized_files.append(
+                                serialized
+                            )
 
-                    elif file_type == "contact_sheet":
-                        files_group[
-                            "contact_sheet"
-                        ].append(item)
+                    files_group = {
+                        "main_image": [],
+                        "negative": [],
+                        "contact_sheet": [],
+                    }
 
-                detail["files"] = files_group
-                # ------------------------------------------------
+                    for item in normalized_files:
+                        file_type = item.get(
+                            "file_type"
+                        )
+
+                        if file_type == "main_image":
+                            files_group[
+                                "main_image"
+                            ].append(item)
+
+                        elif file_type in {
+                            "negative",
+                            "negative_film",
+                        }:
+                            files_group[
+                                "negative"
+                            ].append(item)
+
+                        elif file_type == "contact_sheet":
+                            files_group[
+                                "contact_sheet"
+                            ].append(item)
+
+                    detail["files"] = files_group
+
+                # --------------------------------------------
                 # BACKWARD COMPATIBILITY
-                # ------------------------------------------------
+                # --------------------------------------------
 
-                main_files = files_group["main_image"]
+                main_files = detail[
+                    "files"
+                ]["main_image"]
 
                 main_file = (
                     main_files[0]
@@ -1816,24 +2027,31 @@ def get_submission(submission_id):
                 )
 
                 if main_file is None:
-                    negative_files = files_group["negative"]
+                    negative_files = detail[
+                        "files"
+                    ]["negative"]
 
                     if negative_files:
                         main_file = negative_files[0]
 
                 if main_file is None:
-                    contact_sheet_files = files_group[
-                        "contact_sheet"
-                    ]
+                    contact_sheet_files = detail[
+                        "files"
+                    ]["contact_sheet"]
 
                     if contact_sheet_files:
                         main_file = contact_sheet_files[0]
 
                 detail["file"] = main_file
 
-                return jsonify(detail), 200
+                return jsonify(
+                    detail
+                ), 200
 
-            if hasattr(detail, "id"):
+            if hasattr(
+                detail,
+                "id",
+            ):
                 files = getattr(
                     detail,
                     "files",
@@ -1861,17 +2079,12 @@ def get_submission(submission_id):
             }
         ), 403
 
-    except (
-        AttributeError,
-        TypeError,
-    ):
-        pass
-
     except Exception:
+        # Fall through to repository/service fallback.
         pass
 
     # --------------------------------------------------------
-    # FALLBACK REPOSITORY
+    # FALLBACK
     # --------------------------------------------------------
 
     try:
@@ -1896,43 +2109,57 @@ def get_submission(submission_id):
 
     try:
         if isinstance(result, dict):
-            submission = result.get("submission")
-
+            submission = result.get(
+                "submission"
+            )
             files = result.get(
                 "files",
                 [],
             )
-
             film_metadata = result.get(
                 "film_metadata"
             )
 
         else:
-            if len(result) >= 3:
-                (
-                    submission,
-                    submission_file,
-                    film_metadata,
-                ) = result
+            if isinstance(
+                result,
+                (list, tuple),
+            ):
+                if len(result) >= 3:
+                    (
+                        submission,
+                        submission_file,
+                        film_metadata,
+                    ) = result
 
-                if isinstance(
-                    submission_file,
-                    (list, tuple),
-                ):
-                    files = list(
-                        submission_file
-                    )
+                    if isinstance(
+                        submission_file,
+                        (list, tuple),
+                    ):
+                        files = list(
+                            submission_file
+                        )
 
-                elif submission_file:
-                    files = [
-                        submission_file
-                    ]
+                    elif submission_file:
+                        files = [
+                            submission_file
+                        ]
+
+                    else:
+                        files = []
+
+                elif len(result) >= 1:
+                    submission = result[0]
+                    files = []
+                    film_metadata = None
 
                 else:
+                    submission = None
                     files = []
+                    film_metadata = None
 
             else:
-                submission = result[0]
+                submission = result
                 files = []
                 film_metadata = None
 
@@ -1944,7 +2171,7 @@ def get_submission(submission_id):
             ), 404
 
         # ----------------------------------------------------
-        # PARTICIPANT OWNERSHIP
+        # PARTICIPANT ACCESS CONTROL
         # ----------------------------------------------------
 
         if role == "participant":
@@ -1957,6 +2184,10 @@ def get_submission(submission_id):
                         )
                     }
                 ), 403
+
+        # ----------------------------------------------------
+        # SERIALIZE
+        # ----------------------------------------------------
 
         response = _serialize_submission_detail(
             submission=submission,
@@ -2000,7 +2231,11 @@ def get_submission(submission_id):
 
     response["ai_flag"] = ai_flag_data
 
-    return jsonify(response), 200
+    return jsonify(
+        response
+    ), 200
+
+
 # ============================================================
 # SUBMIT SCORE
 # ============================================================
@@ -2285,8 +2520,7 @@ def calculate_submission_score(submission_id):
                     float(
                         submission.final_score
                     )
-                    if submission.final_score
-                    is not None
+                    if submission.final_score is not None
                     else None
                 ),
             },
@@ -2407,15 +2641,18 @@ def list_submissions():
                     "user_id": item.user_id,
                     "title": item.title,
                     "story_description": (
-                        item.story_description
+                        getattr(
+                            item,
+                            "story_description",
+                            None,
+                        )
                     ),
                     "status": item.status,
                     "final_score": (
                         float(
                             item.final_score
                         )
-                        if item.final_score
-                        is not None
+                        if item.final_score is not None
                         else None
                     ),
                     "submitted_at": (
@@ -2433,140 +2670,6 @@ def list_submissions():
             {
                 "message": (
                     "Failed to list submissions"
-                ),
-                "error": str(error),
-            }
-        ), 500
-
-
-# ============================================================
-# MY SUBMISSIONS
-# ============================================================
-
-@submission_bp.route(
-    "/my-submissions",
-    methods=["GET"],
-)
-@submission_bp.route(
-    "/my",
-    methods=["GET"],
-)
-@token_required
-def get_my_submissions():
-    user_id = _get_user_id()
-
-    if not user_id:
-        return jsonify(
-            {
-                "message": (
-                    "User information is missing "
-                    "in token"
-                )
-            }
-        ), 401
-
-    round_id_param = request.args.get(
-        "round_id"
-    )
-
-    round_id = None
-
-    if round_id_param is not None:
-        try:
-            round_id = int(
-                round_id_param
-            )
-
-        except (
-            ValueError,
-            TypeError,
-        ):
-            return jsonify(
-                {
-                    "message": "Invalid round_id"
-                }
-            ), 400
-
-    status = request.args.get(
-        "status"
-    )
-
-    allowed_statuses = {
-        "draft",
-        "submitted",
-        "flagged",
-        "evaluated",
-    }
-
-    if (
-        status
-        and status not in allowed_statuses
-    ):
-        return jsonify(
-            {
-                "message": "Invalid status"
-            }
-        ), 400
-
-    ai_flag = request.args.get(
-        "ai_flag"
-    )
-
-    if (
-        ai_flag
-        and ai_flag not in {
-            "safe",
-            "medium",
-            "high",
-        }
-    ):
-        return jsonify(
-            {
-                "message": "Invalid ai_flag"
-            }
-        ), 400
-
-    try:
-        data = (
-            submission_service
-            .get_my_submissions(
-                user_id=user_id,
-                round_id=round_id,
-                status=status,
-                ai_flag=ai_flag,
-            )
-        )
-
-        if isinstance(
-            data,
-            dict,
-        ):
-            response_data = {
-                "message": (
-                    "My submissions "
-                    "retrieved successfully"
-                ),
-                **data,
-            }
-
-        else:
-            response_data = {
-                "message": (
-                    "My submissions "
-                    "retrieved successfully"
-                ),
-                "submissions": data,
-            }
-
-        return jsonify(
-            response_data
-        ), 200
-
-    except Exception as error:
-        return jsonify(
-            {
-                "message": (
-                    "Failed to get my submissions"
                 ),
                 "error": str(error),
             }
@@ -2960,6 +3063,42 @@ def update_flag_status(flag_id):
                 "message": (
                     "Failed to update flag status"
                 ),
+                "error": str(error),
+            }
+        ), 500
+
+
+# ============================================================
+# GET AI REPORT
+# ============================================================
+
+@submission_bp.route(
+    "/<int:submission_id>/ai-report",
+    methods=["GET"],
+)
+@role_required(
+    "organizer",
+    "admin",
+    "moderator",
+    "judge",
+)
+def get_submission_ai_report_api(submission_id):
+    try:
+        report = (
+            submission_service
+            .get_submission_ai_report(
+                submission_id
+            )
+        )
+
+        return jsonify(
+            report
+        ), 200
+
+    except Exception as error:
+        return jsonify(
+            {
+                "message": "Failed to get AI report",
                 "error": str(error),
             }
         ), 500

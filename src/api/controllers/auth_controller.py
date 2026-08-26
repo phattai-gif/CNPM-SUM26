@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, jsonify, current_app, render_template
+from flask import Blueprint, request, jsonify, current_app, render_template
 from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -279,7 +279,9 @@ def google_login():
 
 @auth_bp.route('/login', methods=['GET'])
 def login_page():
-    return render_template('login.html')
+    import os
+    google_client_id = current_app.config.get('GOOGLE_CLIENT_ID') or os.environ.get('GOOGLE_CLIENT_ID') or ''
+    return render_template('login.html', google_client_id=google_client_id)
 
 
 @auth_bp.route('/register', methods=['GET'])
@@ -323,9 +325,88 @@ def get_current_user():
             'username': user.username,
             'email': user.email,
             'full_name': user.full_name,
-            'role': user.role
+            'role': user.role,
+            'avatar_url': getattr(user, 'avatar_url', None),
+            'bio': getattr(user, 'bio', None),
+            'created_at': getattr(user, 'created_at', None)
         }
     }), 200
+
+
+@auth_bp.route('/profile', methods=['PUT', 'PATCH'])
+@token_required
+def update_profile():
+    return update_current_user()
+
+
+@auth_bp.route('/me', methods=['PUT', 'PATCH'])
+@token_required
+def update_current_user():
+    """
+    Update logged-in user profile
+    ---
+    put:
+      summary: Update user profile (full_name, bio, avatar_url)
+      tags:
+        - Auth
+      security:
+        - Bearer: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                bio:
+                  type: string
+                avatar_url:
+                  type: string
+      responses:
+        200:
+          description: Profile updated successfully
+        400:
+          description: Validation error
+        401:
+          description: Unauthorized
+    """
+    user_id = request.user.get('user_id')
+    data = request.get_json(silent=True) or {}
+
+    full_name = data.get('full_name')
+    bio = data.get('bio')
+    avatar_url = data.get('avatar_url')
+
+    updated_user = auth_service.update_profile(
+        user_id=user_id,
+        full_name=full_name,
+        bio=bio,
+        avatar_url=avatar_url
+    )
+
+    if not updated_user:
+        return jsonify({'message': 'Failed to update user profile'}), 400
+
+    return jsonify({
+        'message': 'Profile updated successfully',
+        'user': {
+            'id': updated_user.id,
+            'username': updated_user.username,
+            'email': updated_user.email,
+            'full_name': updated_user.full_name,
+            'role': updated_user.role,
+            'avatar_url': updated_user.avatar_url,
+            'bio': updated_user.bio,
+            'created_at': updated_user.created_at
+        }
+    }), 200
+
+
+@auth_bp.route('/profile', methods=['GET'])
+def profile_page():
+    """Serve the user profile and portfolio page"""
+    return render_template('profile.html')
 
 
 @auth_bp.route('/contests', methods=['GET'])
@@ -386,3 +467,160 @@ def get_active_contests():
             'message': 'Error retrieving contests',
             'error': str(e)
         }), 500
+
+
+# ============================================================
+# FORGOT PASSWORD & EMAIL VERIFICATION
+# ============================================================
+
+@auth_bp.route('/forgot-password', methods=['GET'])
+def forgot_password_page():
+    """Render the Forgot Password page."""
+    return render_template('forgot_password.html')
+
+
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    """
+    Request a password reset link/token
+    """
+    data = request.get_json() or {}
+    email = data.get('email')
+
+    if not email:
+        return jsonify({'message': 'Email is required'}), 400
+
+    user = auth_service.get_user_by_email(email)
+    if not user:
+        return jsonify({'message': 'Email does not exist'}), 404
+
+    secret_key = current_app.config.get('SECRET_KEY', 'a_default_secret_key')
+    payload = {
+        'reset_email': email,
+        'user_id': user.id,
+        'type': 'password_reset',
+        'exp': datetime.now(timezone.utc) + timedelta(minutes=15)
+    }
+    reset_token = jwt.encode(payload, secret_key, algorithm='HS256')
+
+    return jsonify({
+        'message': 'Reset token generated successfully. For testing, copy the token below.',
+        'token': reset_token
+    }), 200
+
+
+@auth_bp.route('/reset-password', methods=['GET'])
+def reset_password_page():
+    """Render the Reset Password page."""
+    token = request.args.get('token', '')
+    return render_template('reset_password.html', token=token)
+
+
+@auth_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    """
+    Reset password using a reset token
+    """
+    data = request.get_json() or {}
+    token = data.get('token')
+    password = data.get('password')
+    passwordconfirm = data.get('passwordconfirm')
+
+    if not token or not password or not passwordconfirm:
+        return jsonify({'message': 'All fields are required'}), 400
+
+    if password != passwordconfirm:
+        return jsonify({'message': 'Passwords do not match'}), 400
+
+    secret_key = current_app.config.get('SECRET_KEY', 'a_default_secret_key')
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+        if payload.get('type') != 'password_reset':
+            return jsonify({'message': 'Invalid token type'}), 400
+    except jwt.ExpiredSignatureError:
+        return jsonify({'message': 'Token has expired'}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({'message': 'Invalid token'}), 400
+
+    user_id = payload.get('user_id')
+    user = auth_service.get_user_by_id(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    password_hashed = generate_password_hash(password)
+    success = auth_service.update_password(user.id, password_hashed)
+
+    if not success:
+        return jsonify({'message': 'Failed to reset password'}), 500
+
+    return jsonify({'message': 'Password reset successful'}), 200
+
+
+@auth_bp.route('/verify-email', methods=['GET'])
+def verify_email_page():
+    """Render the Email Verification page."""
+    token = request.args.get('token', '')
+    return render_template('verify_email.html', token=token)
+
+
+@auth_bp.route('/verify-email', methods=['POST'])
+def verify_email():
+    """
+    Verify user email using a token
+    """
+    data = request.get_json() or {}
+    token = data.get('token')
+
+    if not token:
+        return jsonify({'message': 'Verification token is required'}), 400
+
+    secret_key = current_app.config.get('SECRET_KEY', 'a_default_secret_key')
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+        if payload.get('type') != 'email_verification':
+            return jsonify({'message': 'Invalid token type'}), 400
+    except jwt.ExpiredSignatureError:
+        return jsonify({'message': 'Verification token has expired'}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({'message': 'Invalid verification token'}), 400
+
+    user_id = payload.get('user_id')
+    user = auth_service.get_user_by_id(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    success = auth_service.update_status(user.id, 'active')
+    if not success:
+        return jsonify({'message': 'Failed to verify email'}), 500
+
+    return jsonify({'message': 'Email verified successfully'}), 200
+
+
+@auth_bp.route('/request-verification', methods=['POST'])
+def request_verification():
+    """
+    Request a new email verification token
+    """
+    data = request.get_json() or {}
+    email = data.get('email')
+
+    if not email:
+        return jsonify({'message': 'Email is required'}), 400
+
+    user = auth_service.get_user_by_email(email)
+    if not user:
+        return jsonify({'message': 'Email does not exist'}), 404
+
+    secret_key = current_app.config.get('SECRET_KEY', 'a_default_secret_key')
+    payload = {
+        'verify_email': email,
+        'user_id': user.id,
+        'type': 'email_verification',
+        'exp': datetime.now(timezone.utc) + timedelta(days=1)
+    }
+    verify_token = jwt.encode(payload, secret_key, algorithm='HS256')
+
+    return jsonify({
+        'message': 'Verification token generated successfully. For testing, copy the token below.',
+        'token': verify_token
+    }), 200

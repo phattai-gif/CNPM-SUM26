@@ -16,8 +16,15 @@
 \usepackage{enumitem}
 \usepackage{caption}
 \usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{float}
+\graphicspath{{images/}}
 \usepackage{microtype}
 \usepackage{indentfirst}
+
+% Fix longtable "Infinite glue shrinkage" warning
+\raggedbottom
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0pt}
@@ -118,6 +125,7 @@
 
 \pdfbookmark[1]{Contents}{toc}
 \begingroup
+\setcounter{tocdepth}{4}
 \renewcommand{\contentsname}{\centering Contents}
 \tableofcontents
 \endgroup
@@ -148,8 +156,6 @@ Finally, although we have worked hard to ensure accuracy, errors may still exist
     \hline
     \rowcolor{headerblue} \textbf{Acronym} & \textbf{Definition} & \textbf{Description} \\ \hline
     \endhead
-    \endfoot
-    \endlastfoot
     \textbf{API} & Application Programming Interface & A set of rules and protocols that allows different software applications to communicate with each other. \\ \hline
     \textbf{BA} & Business Analysis & The practice of enabling change in an enterprise by defining needs and recommending solutions that deliver value to stakeholders. \\ \hline
     \textbf{BR} & Business Rule & A rule that defines or constrains some aspect of business and always resolves to either true or false. \\ \hline
@@ -171,5 +177,6 @@ Finally, although we have worked hard to ensure accuracy, errors may still exist
 
 \input{I_Project_Introduction}
 \input{II_Project_Management_Plan}
+\input{III_Software_Requirement}
 
 \end{document}

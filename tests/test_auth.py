@@ -62,6 +62,33 @@ def test_auth_flow():
     print(f"   Response: {res.get_json()}")
     assert res.status_code == 200
 
+    # 5. Test Google Login API
+    import json
+    from unittest.mock import patch, MagicMock
+    
+    google_rand_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+    mock_google_response = {
+        "email": f"google_{google_rand_str}@example.com",
+        "name": f"Google User {google_rand_str}",
+        "picture": "https://example.com/avatar.jpg",
+        "sub": f"google_sub_{google_rand_str}"
+    }
+
+    mock_urlopen = MagicMock()
+    mock_response_obj = MagicMock()
+    mock_response_obj.status = 200
+    mock_response_obj.read.return_value = json.dumps(mock_google_response).encode('utf-8')
+    mock_urlopen.return_value.__enter__.return_value = mock_response_obj
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        res = client.post('/auth/google', json={"id_token": "mocked_google_id_token"})
+        print(f"\n5. POST /auth/google -> Status: {res.status_code}")
+        print(f"   Response: {res.get_json()}")
+        assert res.status_code == 200
+        google_json = res.get_json() or {}
+        assert google_json.get("token") is not None
+        assert google_json.get("user", {}).get("email") == f"google_{google_rand_str}@example.com"
+
     print("\n" + "=" * 55)
     print("=== TEST HOAN TAT SUCCESSFUL! ===")
     print("=" * 55)

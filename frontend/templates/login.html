@@ -6,7 +6,7 @@
   <title>Login</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
 </head>
-<body data-google-client-id="{{ config.GOOGLE_CLIENT_ID or '' }}">
+<body data-google-client-id="{{ config.GOOGLE_CLIENT_ID or google_client_id or '' }}">
   {% include '_nav.html' %}
   <div class="auth-container">
     <div class="auth-card">
@@ -18,23 +18,30 @@
 
         <label for="password">Password</label>
         <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Enter your password">
+        <p style="margin-top: 6px; text-align: right; font-size: 0.9rem;"><a href="{{ url_for('auth.forgot_password_page') }}" style="color: var(--primary-2); text-decoration: none;">Forgot Password?</a></p>
 
         <button type="submit">Login</button>
       </form>
 
-      {% if config.GOOGLE_CLIENT_ID %}
-      <div class="oauth-divider">or</div>
-      <div id="googleSignInButton"></div>
-      {% endif %}
+  {% if config.GOOGLE_CLIENT_ID or google_client_id %}
+      <div class="auth-separator">
+        <span>Or continue with</span>
+      </div>
+      <div id="googleBtn" class="google-btn-container"></div>
+  {% endif %}
 
       <div id="message" class="message"></div>
       <p class="secondary-text">Need an account? <a href="{{ url_for('auth.register_page') }}">Create one</a></p>
+      <p class="secondary-text" style="margin-top: 8px;">Already registered? <a href="{{ url_for('auth.verify_email_page') }}">Verify your email</a></p>
     </div>
   </div>
-  <script src="{{ url_for('static', filename='api_client.js') }}"></script>
-  {% if config.GOOGLE_CLIENT_ID %}
-  <script src="https://accounts.google.com/gsi/client" async defer onload="window.initializeGoogleSignIn && window.initializeGoogleSignIn()"></script>
+  <script>
+    window.google_client_id = "{{ google_client_id }}";
+  </script>
+  {% if config.GOOGLE_CLIENT_ID or google_client_id %}
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   {% endif %}
+  <script src="{{ url_for('static', filename='api_client.js') }}"></script>
   <script src="{{ url_for('static', filename='auth.js') }}"></script>
 </body>
 </html>
