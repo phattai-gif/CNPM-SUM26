@@ -1,6 +1,7 @@
 ﻿from typing import Optional
 
-from sqlalchemy import insert, select
+from sqlalchemy import func, insert, select
+from secrets import token_urlsafe
 from werkzeug.security import check_password_hash
 
 from domain.models.iauth_repository import IAuthRepository
@@ -85,6 +86,62 @@ class AuthRepository(IAuthRepository):
             return auth
         except Exception as e:
             print(f"Error logging in: {e}")
+            return None
+
+    def login_google(self, email: str, full_name: str = None, avatar_url: str = None) -> Optional[Auth]:
+        """Find an active account by verified Google email or create a participant."""
+        try:
+            user_obj = self.session.query(UserModel).filter(
+                func.lower(UserModel.email) == email.lower()
+            ).first()
+            if user_obj:
+                if user_obj.status != 'active':
+                    return None
+                if full_name and not user_obj.full_name:
+                    user_obj.full_name = full_name
+                if avatar_url and not user_obj.avatar_url:
+                    user_obj.avatar_url = avatar_url
+            else:
+                username_base = email.split('@', 1)[0][:40] or 'google_user'
+                username = username_base
+                while self.check_exist(username):
+                    username = f'{username_base}_{token_urlsafe(4).lower()}'[:50]
+
+                user_obj = UserModel(
+                    username=username,
+                    email=email,
+                    password_hash=token_urlsafe(32),
+                    full_name=full_name,
+                    avatar_url=avatar_url,
+                    status='active'
+                )
+                self.session.add(user_obj)
+                self.session.flush()
+
+                role_obj = self.session.query(RoleModel).filter_by(code='participant').first()
+                if role_obj is None:
+                    role_obj = RoleModel(
+                        code='participant',
+                        name='Participant',
+                        description='Default participant role',
+                    )
+                    self.session.add(role_obj)
+                    self.session.flush()
+                self.session.execute(insert(user_roles).values(user_id=user_obj.id, role_id=role_obj.id))
+
+            self.session.commit()
+            return Auth(
+                id=user_obj.id,
+                username=user_obj.username,
+                password='',
+                passwordcomfirm='',
+                email=user_obj.email,
+                role=self.get_user_role(user_obj.id) or 'participant',
+                full_name=user_obj.full_name
+            )
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error logging in with Google: {e}")
             return None
 
     def get_user_role(self, user_id: int) -> Optional[str]:

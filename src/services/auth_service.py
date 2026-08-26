@@ -32,6 +32,9 @@ class AuthService:
         )
         return self.repository.login(auth)
 
+    def login_google(self, email: str, full_name: str = None, avatar_url: str = None) -> Optional[Auth]:
+        return self.repository.login_google(email, full_name, avatar_url)
+
     def check_exist(self, username: str) -> bool:
         return self.repository.check_exist(username)
 
