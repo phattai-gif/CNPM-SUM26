@@ -25,6 +25,9 @@ def create_app():
         static_url_path='/static',
     )
     app.config.from_object(Config)
+    app.config['JSON_AS_ASCII'] = False
+    if hasattr(app, 'json'):
+        app.json.ensure_ascii = False
     Swagger(app)
     # Ensure templates in `src/templates` are also discoverable (fallback)
     try:

@@ -27,6 +27,7 @@ class SubmissionForm {
         this.authToken = this.session.token;
         this.isSubmitting = false;
         this.draftId = new URLSearchParams(window.location.search).get('draft_id') || new URLSearchParams(window.location.search).get('id') || null;
+        this.preferredContestId = new URLSearchParams(window.location.search).get('contest_id') || null;
         this.hasExistingImage = false;
 
         this.init();
@@ -113,8 +114,11 @@ class SubmissionForm {
                     contest.rounds.forEach(round => {
                         this.roundsList.push({
                             id: round.id,
-                            name: round.name,
+                            name: round.name || round.title || `Round ${round.round_number || round.id || ''}`,
+                            title: round.title || round.name || `Round ${round.round_number || round.id || ''}`,
                             deadline: round.deadline,
+                            status: round.status || '',
+                            contest_id: contest.id,
                             contest_name: contest.name || contest.title,
                             description: round.description
                         });
@@ -123,11 +127,15 @@ class SubmissionForm {
             });
             
             this.populateRoundSelect();
+            this.showRoundLoadState();
             if (this.draftId) {
                 await this.loadDraftData();
+            } else {
+                this.preselectRoundFromContext();
             }
         } catch (error) {
             console.warn('Could not load rounds:', error);
+            this.showRoundLoadState('Không tải được danh sách vòng thi. Vui lòng thử lại sau.');
             if (this.draftId) {
                 await this.loadDraftData();
             }
@@ -214,18 +222,52 @@ class SubmissionForm {
      */
     populateRoundSelect() {
         const roundSelect = document.getElementById('roundSelect');
+        if (!roundSelect) return;
+
+        roundSelect.innerHTML = '<option value="">-- Select a round --</option>';
         
         this.roundsList.forEach(round => {
             const option = document.createElement('option');
             option.value = round.id;
             const contestName = round.contest_name ? `[${round.contest_name}] ` : '';
             const deadline = round.deadline ? ` - Deadline: ${new Date(round.deadline).toLocaleDateString()}` : '';
-            option.textContent = `${contestName}${round.name}${deadline}`;
+            option.textContent = `${contestName}${round.name || round.title || 'Round'}${deadline}`;
             roundSelect.appendChild(option);
         });
 
         // Update round info when selection changes
         roundSelect.addEventListener('change', (e) => this.updateRoundInfo(e.target.value));
+    }
+
+    showRoundLoadState(message = '') {
+        const roundInfo = document.getElementById('roundInfo');
+        const roundSelect = document.getElementById('roundSelect');
+        if (!roundSelect) return;
+
+        if (this.roundsList.length > 0) {
+            if (roundInfo && !this.preferredContestId) {
+                roundInfo.innerHTML = '<div class="round-detail">Vui lòng chọn một vòng thi hợp lệ để tiếp tục.</div>';
+            }
+            return;
+        }
+
+        roundSelect.innerHTML = '<option value="">-- Chưa có vòng thi khả dụng --</option>';
+        if (roundInfo) {
+            roundInfo.innerHTML = `<div class="round-detail">${message || 'Hiện chưa có vòng thi đang mở để nhận bài nộp.'}</div>`;
+        }
+    }
+
+    preselectRoundFromContext() {
+        if (!this.preferredContestId) return;
+
+        const roundSelect = document.getElementById('roundSelect');
+        if (!roundSelect) return;
+
+        const preferredRound = this.roundsList.find((round) => String(round.contest_id) === String(this.preferredContestId));
+        if (!preferredRound) return;
+
+        roundSelect.value = String(preferredRound.id);
+        this.updateRoundInfo(preferredRound.id);
     }
 
     /**

@@ -5,6 +5,44 @@
     ROLE: 'authRole'
   };
 
+  const AUTH_ROUTE_PREFIXES = ['/auth/login', '/auth/signup', '/auth/register'];
+
+  function storageGet(key) {
+    const localValue = localStorage.getItem(key);
+    if (localValue !== null && localValue !== undefined && localValue !== '') {
+      return localValue;
+    }
+    return sessionStorage.getItem(key);
+  }
+
+  function storageSet(key, value) {
+    localStorage.setItem(key, value);
+    sessionStorage.setItem(key, value);
+  }
+
+  function storageRemove(key) {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  }
+
+  function normalizeRequestPath(url) {
+    try {
+      if (typeof url !== 'string') {
+        return new URL(url.url, window.location.origin).pathname;
+      }
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return new URL(url, window.location.origin).pathname;
+      }
+      return url;
+    } catch (error) {
+      return typeof url === 'string' ? url : '';
+    }
+  }
+
+  function isAuthRoute(path) {
+    return AUTH_ROUTE_PREFIXES.some((prefix) => path.startsWith(prefix));
+  }
+
   const apiClient = {
     STORAGE_KEYS,
 
@@ -14,21 +52,21 @@
       const accessToken = token || this.getSession().token || null;
 
       if (accessToken) {
-        localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
+        storageSet(STORAGE_KEYS.TOKEN, accessToken);
       } else {
-        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+        storageRemove(STORAGE_KEYS.TOKEN);
       }
 
       if (currentUser) {
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+        storageSet(STORAGE_KEYS.USER, JSON.stringify(currentUser));
       } else {
-        localStorage.removeItem(STORAGE_KEYS.USER);
+        storageRemove(STORAGE_KEYS.USER);
       }
 
       if (currentRole) {
-        localStorage.setItem(STORAGE_KEYS.ROLE, currentRole);
+        storageSet(STORAGE_KEYS.ROLE, currentRole);
       } else {
-        localStorage.removeItem(STORAGE_KEYS.ROLE);
+        storageRemove(STORAGE_KEYS.ROLE);
       }
 
       return { token: accessToken, user: currentUser, role: currentRole };
@@ -37,13 +75,13 @@
     getSession() {
       let user = null;
       try {
-        user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null');
+        user = JSON.parse(storageGet(STORAGE_KEYS.USER) || 'null');
       } catch (error) {
         user = null;
       }
 
-      const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-      const role = localStorage.getItem(STORAGE_KEYS.ROLE) || user?.role || null;
+      const token = storageGet(STORAGE_KEYS.TOKEN);
+      const role = storageGet(STORAGE_KEYS.ROLE) || user?.role || null;
 
       return { token, user, role };
     },
@@ -53,7 +91,7 @@
     },
 
     clearSession() {
-      Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
+      Object.values(STORAGE_KEYS).forEach((key) => storageRemove(key));
     },
 
     logout() {
@@ -101,7 +139,6 @@
     }
 
       if (response.status === 403) {
-        this.logout();
         throw new Error(payload?.message || 'You do not have permission for this action.');
       }
 
@@ -213,6 +250,57 @@
       return this.request(url, { ...options, method: 'DELETE' });
     }
   };
+
+  const originalFetch = window.fetch.bind(window);
+  if (!window.__authFetchInterceptorInstalled) {
+    window.fetch = function (input, init = {}) {
+      const session = apiClient.getSession();
+      const token = session && session.token ? session.token : null;
+
+      if (!token) {
+        return originalFetch(input, init);
+      }
+
+      const rawUrl = typeof input === 'string' ? input : input.url;
+      const path = normalizeRequestPath(rawUrl);
+      const isAbsolute = typeof rawUrl === 'string' && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'));
+      if (isAbsolute) {
+        try {
+          const absolute = new URL(rawUrl, window.location.origin);
+          if (absolute.origin !== window.location.origin) {
+            return originalFetch(input, init);
+          }
+        } catch (error) {
+          return originalFetch(input, init);
+        }
+      }
+
+      if (isAuthRoute(path)) {
+        return originalFetch(input, init);
+      }
+
+      const requestHeaders = new Headers((init && init.headers) || (typeof input !== 'string' ? input.headers : undefined) || {});
+      if (!requestHeaders.has('Authorization')) {
+        requestHeaders.set('Authorization', `Bearer ${token}`);
+      }
+
+      if (typeof input === 'string') {
+        return originalFetch(input, {
+          ...init,
+          headers: requestHeaders,
+          credentials: init.credentials || 'same-origin'
+        });
+      }
+
+      const mergedRequest = new Request(input, {
+        ...init,
+        headers: requestHeaders,
+        credentials: init.credentials || input.credentials || 'same-origin'
+      });
+      return originalFetch(mergedRequest);
+    };
+    window.__authFetchInterceptorInstalled = true;
+  }
 
   window.apiClient = apiClient;
   window.AuthSession = {

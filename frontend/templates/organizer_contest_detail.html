@@ -6,90 +6,289 @@
     <title>Chi tiết cuộc thi - Quản lý</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/hd_viewer.css">
     <style>
+        /* ===== DARK MODE THEME ===== */
         :root {
             --ui-ease: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+            --bg-dark: #080c14;
+            --bg-card: #111a26;
+            --bg-input: #0d1622;
+            --border-color: #1e2a3a;
+            --text-primary: #f0f4f8;
+            --text-secondary: #e8edf2;
+            --text-muted: #8899aa;
+            --accent: #f5a623;
+            --accent-hover: #e0960a;
+        }
+
+        body {
+            background: var(--bg-dark) !important;
+            color: var(--text-secondary) !important;
+            font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar-dark.bg-dark {
+            background: #0a111c !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar-dark .navbar-brand {
+            color: var(--text-primary) !important;
+            font-weight: 700;
+        }
+
+        .navbar-dark .nav-link {
+            color: var(--text-muted) !important;
+            transition: color 0.2s ease;
+        }
+        .navbar-dark .nav-link:hover {
+            color: var(--accent) !important;
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            border-color: var(--accent) !important;
+            box-shadow: 0 8px 40px rgba(245, 166, 35, 0.06) !important;
+        }
+
+        .card-header {
+            background: var(--bg-card) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+
+        .card-body {
+            color: var(--text-secondary) !important;
+        }
+
+        /* ===== TABLE ===== */
+        .table {
+            color: var(--text-secondary) !important;
+        }
+
+        .table-light {
+            background: #0d1622 !important;
+            color: var(--text-muted) !important;
+        }
+
+        .table-light th {
+            color: var(--text-muted) !important;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+
+        .table-hover tbody tr {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-hover tbody tr:hover {
+            background: rgba(245, 166, 35, 0.04) !important;
+            transform: translateY(-1px);
+            box-shadow: inset 3px 0 0 var(--accent);
+        }
+
+        .table td {
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .table .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        .table .text-danger {
+            color: #f87171 !important;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-outline-secondary {
+            color: var(--text-muted) !important;
+            border-color: var(--border-color) !important;
+            background: transparent !important;
+            transition: all 0.3s ease;
+            border-radius: 10px !important;
+        }
+        .btn-outline-secondary:hover {
+            color: var(--accent) !important;
+            border-color: var(--accent) !important;
+            background: rgba(245, 166, 35, 0.05) !important;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-primary {
+            color: var(--accent) !important;
+            border-color: var(--accent) !important;
+            background: transparent !important;
+            transition: all 0.3s ease;
+            border-radius: 10px !important;
+        }
+        .btn-outline-primary:hover {
+            background: var(--accent) !important;
+            color: #080c14 !important;
+            box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3) !important;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--accent) !important;
+            color: #080c14 !important;
+            border: none !important;
+            transition: all 0.3s ease;
+            border-radius: 10px !important;
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3) !important;
+        }
+
+        .btn-light {
+            background: #0d1622 !important;
+            color: var(--text-secondary) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px !important;
+        }
+        .btn-light:hover {
+            background: rgba(245, 166, 35, 0.05) !important;
+            color: var(--accent) !important;
+            border-color: var(--accent) !important;
+        }
+
+        .btn-outline-dark {
+            color: var(--accent) !important;
+            border-color: var(--accent) !important;
+            background: transparent !important;
+            border-radius: 10px !important;
+        }
+        .btn-outline-dark:hover {
+            background: var(--accent) !important;
+            color: #080c14 !important;
+        }
+
+        .btn-sm {
+            border-radius: 10px !important;
         }
 
         .action-btn {
             transition: transform var(--ui-ease), box-shadow var(--ui-ease), background-color var(--ui-ease), border-color var(--ui-ease);
         }
-
         .action-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 8px 18px rgba(13, 110, 253, 0.15);
         }
 
-        #submissions-tbody tr {
-            transition: transform var(--ui-ease), box-shadow var(--ui-ease), background-color var(--ui-ease);
+        /* ===== BADGES ===== */
+        .badge {
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
         }
 
-        #submissions-tbody tr:hover {
-            transform: translateY(-1px);
-            background-color: #f8fbff;
-            box-shadow: inset 3px 0 0 #0d6efd;
+        .badge.bg-success {
+            background: rgba(245, 166, 35, 0.15) !important;
+            color: var(--accent) !important;
+            border: 1px solid rgba(245, 166, 35, 0.25);
         }
 
-        .page-loader {
-            position: fixed;
-            inset: 0;
-            z-index: 1080;
-            background: rgba(248, 249, 250, 0.7);
-            backdrop-filter: blur(2px);
-            display: none;
-            align-items: center;
-            justify-content: center;
+        .badge.bg-secondary {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: var(--text-muted) !important;
+            border: 1px solid var(--border-color);
         }
 
-        .page-loader.show {
-            display: flex;
-            animation: fadeIn 180ms ease-in;
+        .bg-success-subtle {
+            background: rgba(245, 166, 35, 0.12) !important;
+            color: var(--accent) !important;
         }
 
-        .toast-wrap {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 1090;
-            width: min(90vw, 360px);
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
+        .bg-secondary-subtle {
+            background: rgba(255, 255, 255, 0.03) !important;
+            color: var(--text-muted) !important;
         }
 
-        .app-toast {
-            border-radius: 0.8rem;
-            padding: 0.8rem 0.95rem;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
-            color: #fff;
-            transform: translateY(-6px);
-            opacity: 0;
-            transition: transform var(--ui-ease), opacity var(--ui-ease);
+        .bg-warning-subtle {
+            background: rgba(245, 166, 35, 0.08) !important;
+            color: var(--accent) !important;
         }
 
-        .app-toast.show {
-            opacity: 1;
-            transform: translateY(0);
+        .text-success-emphasis {
+            color: var(--accent) !important;
+        }
+        .text-secondary-emphasis {
+            color: var(--text-muted) !important;
+        }
+        .text-warning-emphasis {
+            color: var(--accent) !important;
         }
 
-        .app-toast.success {
-            background: linear-gradient(135deg, #198754, #157347);
+        .border-success {
+            border-color: rgba(245, 166, 35, 0.25) !important;
+        }
+        .border-secondary {
+            border-color: var(--border-color) !important;
+        }
+        .border-warning {
+            border-color: rgba(245, 166, 35, 0.2) !important;
         }
 
-        .app-toast.warning {
-            background: linear-gradient(135deg, #fd7e14, #e86a00);
+        /* ===== TEXT ===== */
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+        .text-secondary {
+            color: var(--text-muted) !important;
+        }
+        .text-primary {
+            color: var(--accent) !important;
         }
 
-        .app-toast.error {
-            background: linear-gradient(135deg, #dc3545, #b02a37);
+        .fw-bold {
+            color: var(--text-primary) !important;
         }
 
+        .h5, h5 {
+            color: var(--text-primary) !important;
+        }
+
+        .small {
+            color: var(--text-muted) !important;
+        }
+
+        /* ===== LINKS ===== */
+        a:not(.btn):not(.nav-link) {
+            color: var(--accent) !important;
+            transition: color 0.2s ease;
+        }
+        a:not(.btn):not(.nav-link):hover {
+            color: var(--accent-hover) !important;
+        }
+
+        /* ===== SPINNER ===== */
+        .spinner-border {
+            border-color: var(--accent) !important;
+            border-right-color: transparent !important;
+        }
+
+        .spinner-border.text-primary {
+            color: var(--accent) !important;
+        }
+
+        /* ===== MODAL ===== */
         .review-modal {
             position: fixed;
             inset: 0;
             z-index: 1070;
-            background: rgba(15, 23, 42, 0.48);
-            backdrop-filter: blur(2px);
+            background: rgba(2, 6, 23, 0.7);
+            backdrop-filter: blur(6px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -104,8 +303,9 @@
         .review-modal-card {
             width: min(720px, 96vw);
             border-radius: 1rem;
-            background: #fff;
-            box-shadow: 0 16px 44px rgba(15, 23, 42, 0.22);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
             transform: translateY(8px);
             opacity: 0;
             transition: transform var(--ui-ease), opacity var(--ui-ease);
@@ -116,19 +316,157 @@
             transform: translateY(0);
         }
 
-        .fade-page-out {
-            animation: pageOut 220ms ease forwards;
+        .review-modal-card .border-bottom {
+            border-bottom: 1px solid var(--border-color) !important;
         }
 
+        .review-modal-card .p-3.border-bottom {
+            background: var(--bg-card);
+        }
+
+        /* ===== TOAST ===== */
+        .toast-wrap {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1090;
+            width: min(90vw, 360px);
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .app-toast {
+            border-radius: 0.8rem;
+            padding: 0.8rem 0.95rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            color: #fff;
+            transform: translateY(-6px);
+            opacity: 0;
+            transition: transform var(--ui-ease), opacity var(--ui-ease);
+            border: 1px solid transparent;
+        }
+
+        .app-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .app-toast.success {
+            background: var(--bg-card);
+            border-color: var(--accent);
+            color: var(--text-secondary);
+            box-shadow: 0 8px 30px rgba(245, 166, 35, 0.15);
+        }
+
+        .app-toast.warning {
+            background: var(--bg-card);
+            border-color: #f59e0b;
+            color: #fbbf24;
+        }
+
+        .app-toast.error {
+            background: var(--bg-card);
+            border-color: #dc2626;
+            color: #f87171;
+        }
+
+        /* ===== PAGE LOADER ===== */
+        .page-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 1080;
+            background: rgba(8, 12, 20, 0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-loader.show {
+            display: flex;
+            animation: fadeIn 180ms ease-in;
+        }
+
+        .page-loader .text-secondary {
+            color: var(--text-muted) !important;
+        }
+
+        /* ===== BORDER ===== */
+        .border {
+            border-color: var(--border-color) !important;
+        }
+
+        .bg-light {
+            background: #0d1622 !important;
+        }
+
+        /* ===== IMAGE PREVIEW ===== */
+        #modal-image-preview-wrap {
+            background: #0d1622 !important;
+            border-color: var(--border-color) !important;
+        }
+
+        #modal-image-preview {
+            border-radius: 0.5rem;
+            cursor: zoom-in;
+        }
+
+        #modal-image-preview-empty {
+            color: var(--text-muted) !important;
+        }
+
+        /* ===== ANIMATIONS ===== */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
+        }
+
+        .fade-page-out {
+            animation: pageOut 220ms ease forwards;
         }
 
         @keyframes pageOut {
             to {
                 opacity: 0;
                 transform: translateY(2px);
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1622;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-hover);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 12px;
+            }
+            .card {
+                border-radius: 14px !important;
+            }
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+            .review-modal-card {
+                width: 98vw;
+                margin: 0 8px;
+            }
+            .btn-sm {
+                font-size: 0.8rem;
+                padding: 4px 10px;
             }
         }
     </style>
@@ -220,8 +558,23 @@
                     <div class="text-muted small mb-1">Link sản phẩm</div>
                     <a id="modal-submission-link" href="#" target="_blank" rel="noopener noreferrer" class="text-break">Chưa có link</a>
                 </div>
+                <div class="mb-4">
+                    <div class="text-muted small mb-2">Xem nhanh ảnh nộp</div>
+                    <div class="border rounded p-2 bg-light text-center" id="modal-image-preview-wrap">
+                        <img
+                            id="modal-image-preview"
+                            src=""
+                            alt="Submission preview"
+                            style="display:none; max-width:100%; max-height:280px; object-fit:contain; border-radius:0.5rem; cursor:zoom-in;"
+                        >
+                        <div id="modal-image-preview-empty" class="text-muted small py-4">Chưa có ảnh để hiển thị</div>
+                    </div>
+                </div>
                 <div class="d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-light action-btn" onclick="closeSubmissionDetailModal()">Đóng</button>
+                    <button type="button" class="btn btn-outline-dark action-btn" id="open-hd-viewer-btn" onclick="openSubmissionHdViewerFromModal()">
+                        HD Viewer
+                    </button>
                     <button type="button" class="btn btn-primary action-btn" id="go-review-btn" onclick="goToReviewFromModal()">
                         Chi tiết / Review
                     </button>
@@ -230,11 +583,13 @@
         </div>
     </div>
 
+    <script src="/static/api_client.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const contestId = urlParams.get('contest_id') || urlParams.get('id');
         let submissionCache = [];
         let activeSubmissionId = null;
+        let activeSubmissionData = null;
 
         function setPageLoading(isLoading, message = 'Đang tải dữ liệu...') {
             const loader = document.getElementById('page-loader');
@@ -297,6 +652,79 @@
             };
         }
 
+        function isLikelyImageUrl(urlValue) {
+            const value = String(urlValue || '').trim().toLowerCase();
+            if (!value) return false;
+            if (value.includes('/uploads/')) return true;
+            if (value.includes('unsplash.com')) return true;
+            if (value.includes('cloudinary.com')) return true;
+            return /\.(png|jpg|jpeg|webp|gif|bmp|tiff)(\?.*)?$/.test(value);
+        }
+
+        function normalizeAttachmentList(rawValue) {
+            if (!rawValue) return [];
+            const source = Array.isArray(rawValue) ? rawValue : [rawValue];
+            return source
+                .map((item, index) => {
+                    if (!item) return null;
+                    if (typeof item === 'string') {
+                        return {
+                            label: `Attachment ${index + 1}`,
+                            url: item,
+                        };
+                    }
+                    if (typeof item === 'object') {
+                        const url = item.url || item.href || item.link || item.path || null;
+                        if (!url) return null;
+                        return {
+                            label: item.label || item.name || `Attachment ${index + 1}`,
+                            url,
+                        };
+                    }
+                    return null;
+                })
+                .filter((item) => item && item.url);
+        }
+
+        function buildViewerPayload(item) {
+            if (!item) {
+                return {
+                    items: [
+                        { key: 'main', label: 'Main Image', url: null },
+                        { key: 'negative', label: 'Negative Film', url: null },
+                        { key: 'contact', label: 'Contact Sheet', url: null },
+                    ],
+                    attachments: [],
+                };
+            }
+
+            const mainImageUrl =
+                item.main_image_url ||
+                item.image_hd_url ||
+                item.image_url ||
+                (isLikelyImageUrl(item.product_link) ? item.product_link : null);
+
+            const negativeFilmUrl = item.negative_film_url || item.negative_image_url || null;
+            const contactSheetUrl = item.contact_sheet_url || null;
+            const attachments = normalizeAttachmentList(item.proof_attachments || item.attachments || []);
+
+            if (item.product_link && !isLikelyImageUrl(item.product_link)) {
+                attachments.unshift({
+                    label: 'Product Link',
+                    url: item.product_link,
+                });
+            }
+
+            return {
+                items: [
+                    { key: 'main', label: 'Main Image', url: mainImageUrl },
+                    { key: 'negative', label: 'Negative Film', url: negativeFilmUrl },
+                    { key: 'contact', label: 'Contact Sheet', url: contactSheetUrl },
+                ],
+                attachments,
+            };
+        }
+
         function openSubmissionDetailModal(submissionId) {
             const modal = document.getElementById('submission-detail-modal');
             const item = submissionCache.find((sub) => String(sub.id) === String(submissionId));
@@ -306,6 +734,7 @@
             }
 
             activeSubmissionId = item.id;
+            activeSubmissionData = item;
             const statusInfo = getStatusPresentation(item.status);
 
             document.getElementById('modal-submission-id').textContent = `#${item.id || 'N/A'}`;
@@ -324,6 +753,29 @@
                 linkEl.textContent = 'Chưa có link sản phẩm';
             }
 
+            const viewerBtn = document.getElementById('open-hd-viewer-btn');
+            const previewImg = document.getElementById('modal-image-preview');
+            const previewEmpty = document.getElementById('modal-image-preview-empty');
+            if (viewerBtn) {
+                const payload = buildViewerPayload(item);
+                const mainImageTab = payload.items.find((tab) => tab && tab.key === 'main');
+                const mainImageUrl = mainImageTab ? mainImageTab.url : null;
+                const hasViewerData = payload.items.some((tab) => Boolean(tab && tab.url)) || payload.attachments.length > 0;
+                viewerBtn.disabled = !hasViewerData;
+
+                if (previewImg && previewEmpty) {
+                    if (mainImageUrl) {
+                        previewImg.src = mainImageUrl;
+                        previewImg.style.display = '';
+                        previewEmpty.style.display = 'none';
+                    } else {
+                        previewImg.removeAttribute('src');
+                        previewImg.style.display = 'none';
+                        previewEmpty.style.display = '';
+                    }
+                }
+            }
+
             modal.classList.add('show');
             modal.setAttribute('aria-hidden', 'false');
         }
@@ -333,7 +785,31 @@
             if (!modal) return;
             modal.classList.remove('show');
             modal.setAttribute('aria-hidden', 'true');
+            activeSubmissionData = null;
         }
+
+        function openSubmissionHdViewerFromModal() {
+            if (!activeSubmissionData) {
+                showToast('Không có dữ liệu để mở HD Viewer', 'warning');
+                return;
+            }
+            if (!window.HDImageViewer) {
+                showToast('HD Viewer chưa sẵn sàng', 'warning');
+                return;
+            }
+
+            const payload = buildViewerPayload(activeSubmissionData);
+            window.HDImageViewer.open({
+                title: `Submission #${activeSubmissionData.id || 'N/A'} · HD Viewer`,
+                items: payload.items,
+                attachments: payload.attachments,
+            });
+        }
+
+        document.getElementById('modal-image-preview-wrap').addEventListener('click', () => {
+            if (!activeSubmissionData) return;
+            openSubmissionHdViewerFromModal();
+        });
 
         function smoothRedirect(url) {
             document.body.classList.add('fade-page-out');
@@ -391,7 +867,7 @@
                 showToast('Lỗi kết nối khi tải thông tin cuộc thi', 'error');
             }
 
-            // 2. Lấy danh sách bài nộp (Thử lần lượt các API endpoint của backend)
+            // 2. Lấy danh sách bài nộp
             let submissions = [];
             try {
                 let subRes = await fetch(`/api/contests/${contestId}/submissions`);
@@ -416,7 +892,12 @@
                             id: submissionId,
                             title: sub.title || sub.submission_name || sub.name || (submissionId ? `Bài dự thi #${submissionId}` : 'Bài dự thi'),
                             product_link: productLink,
-                            status: sub.status || 'submitted'
+                            status: sub.status || 'submitted',
+                            image_hd_url: sub.image_hd_url || sub.image_url || null,
+                            main_image_url: sub.main_image_url || null,
+                            negative_film_url: sub.negative_film_url || sub.negative_image_url || null,
+                            contact_sheet_url: sub.contact_sheet_url || null,
+                            proof_attachments: sub.proof_attachments || sub.attachments || [],
                         };
                     });
                 } else {
@@ -470,55 +951,3 @@
                 const link = sub.product_link || '#';
                 const isDrive = link.includes('drive.google.com');
                 const subId = sub.id || 'N/A';
-                const title = sub.title || 'Bài dự thi #' + subId;
-                const status = sub.status || 'submitted';
-                const statusInfo = getStatusPresentation(status);
-
-                return `
-                    <tr>
-                        <td class="ps-3 fw-bold">#${subId}</td>
-                        <td class="fw-medium">${escapeHtml(title)}</td>
-                        <td>
-                            ${link
-                                ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary action-btn">
-                                    <i class="bi ${isDrive ? 'bi-google-drive' : 'bi-box-arrow-up-right'} me-1"></i>
-                                    ${isDrive ? 'Mở Google Drive' : 'Xem link'}
-                                   </a>`
-                                : '<span class="text-muted">Chưa có link</span>'}
-                        </td>
-                        <td>
-                            <span class="badge ${statusInfo.className}">
-                                ${escapeHtml(statusInfo.label)}
-                            </span>
-                        </td>
-                        <td class="text-end pe-3">
-                            <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
-                                <button type="button" class="btn btn-sm btn-outline-primary action-btn" onclick="openSubmissionDetailModal('${escapeHtml(subId)}')">
-                                    Chi tiết
-                                </button>
-                                <button type="button" class="btn btn-sm btn-primary action-btn" onclick="goToTask75Review('${escapeHtml(subId)}')">
-                                    Chấm điểm (Task 75)
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        document.getElementById('submission-detail-modal').addEventListener('click', (event) => {
-            if (event.target.id === 'submission-detail-modal') {
-                closeSubmissionDetailModal();
-            }
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                closeSubmissionDetailModal();
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', loadContestData);
-    </script>
-</body>
-</html>

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from infrastructure.models.app import UserModel
+from infrastructure.models.app import UserModel, ContestModel, RoundModel
 from api.schemas.auth import RegisterUserRequestSchema, RegisterUserResponseSchema, LoginUserRequestSchema, LoginUserResponseSchema
 from api.role_required import token_required
 from services.auth_service import AuthService
@@ -23,6 +23,19 @@ register_request_schema = RegisterUserRequestSchema()
 register_response_schema = RegisterUserResponseSchema()
 login_request_schema = LoginUserRequestSchema()
 login_response_schema = LoginUserResponseSchema()
+
+
+def _set_auth_cookie(response, token):
+  response.set_cookie(
+    'access_token',
+    token,
+    max_age=24 * 60 * 60,
+    httponly=True,
+    secure=False,
+    samesite='Lax',
+    path='/',
+  )
+  return response
 
 
 @auth_bp.route('/check_router', methods=['GET'])
@@ -140,11 +153,13 @@ def register():
     token = jwt.encode(payload, secret_key, algorithm='HS256')
 
     result = register_response_schema.dump(new_user)
-    return jsonify({
+    response = jsonify({
       'message': 'User registered successfully!',
       'token': token,
       'user': result
-    }), 201
+    })
+    _set_auth_cookie(response, token)
+    return response, 201
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -202,7 +217,7 @@ def login():
     secret_key = current_app.config.get('SECRET_KEY') or 'dev-secret-key-change-me-in-production-32chars'
     token = jwt.encode(payload, secret_key, algorithm='HS256')
 
-    return jsonify({
+    response = jsonify({
         'message': 'Login successful!',
         'token': token,
         'user': {
@@ -212,7 +227,9 @@ def login():
             'full_name': user.full_name,
             'role': user.role
         }
-    }), 200
+    })
+    _set_auth_cookie(response, token)
+    return response, 200
 
 
 @auth_bp.route('/login', methods=['GET'])
@@ -285,34 +302,68 @@ def get_active_contests():
           description: Unauthorized
     """
     try:
-        # Get all contests
-        all_contests = contest_service.get_all_contests()
-        
-        # Filter to only active contests with rounds
+        allowed_contest_statuses = {
+            'active',
+            'ongoing',
+            'published',
+            'open',
+        }
+        allowed_round_statuses = {
+            'active',
+            'ongoing',
+            'open',
+            'published',
+            'submission_open',
+            'upcoming',
+        }
+
+        session = contest_service.repository.session
+        all_contests = (
+            session.query(ContestModel)
+            .order_by(ContestModel.created_at.desc())
+            .all()
+        )
+
         active_contests = []
         for contest in all_contests:
-            if hasattr(contest, 'status') and contest.status in ['active', 'ongoing']:
-                contest_dict = contest.to_dict() if hasattr(contest, 'to_dict') else {
-                    'id': contest.id,
-                    'name': getattr(contest, 'name', ''),
-                    'title': getattr(contest, 'title', ''),
-                    'description': getattr(contest, 'description', ''),
-                    'status': getattr(contest, 'status', ''),
-                }
-                
-                # Get rounds for this contest
-                if hasattr(contest, 'rounds'):
-                    rounds = []
-                    for round_obj in contest.rounds:
-                        round_dict = round_obj.to_dict() if hasattr(round_obj, 'to_dict') else {
-                            'id': round_obj.id,
-                            'name': getattr(round_obj, 'name', ''),
-                            'deadline': getattr(round_obj, 'deadline', ''),
-                            'description': getattr(round_obj, 'description', ''),
-                        }
-                        rounds.append(round_dict)
-                    contest_dict['rounds'] = rounds
-                
+            contest_status = str(getattr(contest, 'status', '') or '').lower()
+            if contest_status not in allowed_contest_statuses:
+                continue
+
+            contest_dict = {
+                'id': contest.id,
+                'name': getattr(contest, 'name', '') or getattr(contest, 'title', ''),
+                'title': getattr(contest, 'title', ''),
+                'description': getattr(contest, 'description', ''),
+                'status': getattr(contest, 'status', ''),
+                'rounds': [],
+            }
+
+            round_models = (
+                session.query(RoundModel)
+                .filter_by(contest_id=contest.id)
+                .order_by(RoundModel.round_number.asc())
+                .all()
+            )
+
+            rounds = []
+            for round_obj in round_models:
+                round_status = str(getattr(round_obj, 'status', '') or '').lower()
+                if round_status and round_status not in allowed_round_statuses:
+                    continue
+
+                rounds.append({
+                    'id': round_obj.id,
+                    'name': getattr(round_obj, 'title', None) or getattr(round_obj, 'name', None) or f'Round {getattr(round_obj, "round_number", "")}',
+                    'title': getattr(round_obj, 'title', None) or getattr(round_obj, 'name', None) or f'Round {getattr(round_obj, "round_number", "")}',
+                    'round_number': getattr(round_obj, 'round_number', None),
+                    'deadline': getattr(round_obj, 'end_date', None).isoformat() if getattr(round_obj, 'end_date', None) else None,
+                    'description': getattr(round_obj, 'description', ''),
+                    'status': getattr(round_obj, 'status', ''),
+                })
+
+            contest_dict['rounds'] = rounds
+            if rounds:
                 active_contests.append(contest_dict)
         
         return jsonify({

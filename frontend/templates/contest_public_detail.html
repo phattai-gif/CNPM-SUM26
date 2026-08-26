@@ -1,25 +1,288 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chi tiết cuộc thi & Nộp bài</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <style>
-    body { background-color: #f1f5f9; color: #0f172a; font-family: system-ui, -apple-system, sans-serif; }
-    .card-custom { background: #ffffff; border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-    .submission-card { background: #ffffff; border-radius: 0.85rem; border: 1px solid #e2e8f0; transition: all 0.2s ease; overflow: hidden; }
-    .submission-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
-    
-    .cc-modal-backdrop { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(2,6,23,0.5); backdrop-filter: blur(6px); z-index:1400; }
-    .cc-modal { background:#ffffff; border-radius:1rem; padding:24px; margin:16px; box-shadow:0 20px 40px rgba(2,6,23,0.25); max-width:600px; width:96%; position:relative; }
-    .cc-close { position:absolute; right:16px; top:16px; border:0; background:transparent; font-size:24px; color:#64748b; cursor:pointer; }
-    
-    #cc-toast-wrapper { position:fixed; top:20px; right:20px; z-index:1500; display:flex; flex-direction:column; gap:8px; }
-    .cc-toast { background:#0f172a; color:#fff; padding:12px 18px; border-radius:12px; display:flex; align-items:center; gap:10px; min-width:240px; box-shadow:0 8px 30px rgba(2,6,23,0.3); transform:translateX(30px); opacity:0; transition:all .28s ease; }
-    .cc-toast.show { transform:translateX(0); opacity:1; }
-    .cc-toast.success { background:linear-gradient(90deg,#10b981,#059669); }
+    /* ===== DARK MODE THEME ===== */
+    body {
+      background-color: #080c14;
+      color: #e8edf2;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    /* ===== CARDS ===== */
+    .card-custom {
+      background: #111a26;
+      border-radius: 1rem;
+      border: 1px solid #1e2a3a;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+    .card-custom:hover {
+      border-color: #f5a623;
+      box-shadow: 0 4px 20px rgba(245, 166, 35, 0.06);
+    }
+
+    .submission-card {
+      background: #0d1622;
+      border-radius: 0.85rem;
+      border: 1px solid #1e2a3a;
+      transition: all 0.2s ease;
+      overflow: hidden;
+    }
+    .submission-card:hover {
+      transform: translateY(-3px);
+      border-color: #f5a623;
+      box-shadow: 0 8px 20px rgba(245, 166, 35, 0.08);
+    }
+
+    /* ===== TEXT COLORS ===== */
+    .text-dark {
+      color: #f0f4f8 !important;
+    }
+    .text-muted {
+      color: #8899aa !important;
+    }
+    .text-secondary {
+      color: #99abb8 !important;
+    }
+    .text-primary {
+      color: #f5a623 !important;
+    }
+
+    /* ===== BADGES ===== */
+    .badge-primary-subtle {
+      background: rgba(245, 166, 35, 0.15) !important;
+      color: #f5a623 !important;
+      border: 1px solid rgba(245, 166, 35, 0.25);
+    }
+    .badge-warning-subtle {
+      background: rgba(245, 166, 35, 0.12) !important;
+      color: #f5a623 !important;
+      border: 1px solid rgba(245, 166, 35, 0.2);
+    }
+    .badge {
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn-primary {
+      background: #f5a623;
+      color: #080c14;
+      border: none;
+      border-radius: 0.75rem;
+      padding: 10px 24px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      background: #e0960a;
+      color: #080c14;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
+    }
+
+    .btn-outline-primary {
+      color: #f5a623;
+      background: transparent;
+      border: 2px solid #f5a623;
+      border-radius: 0.75rem;
+      padding: 8px 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .btn-outline-primary:hover {
+      background: #f5a623;
+      color: #080c14;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(245, 166, 35, 0.2);
+    }
+
+    .btn-outline-secondary {
+      color: #6b7f94;
+      background: transparent;
+      border: 2px solid #1e2a3a;
+      border-radius: 0.75rem;
+      padding: 8px 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .btn-outline-secondary:hover {
+      color: #f5a623;
+      border-color: #f5a623;
+      background: rgba(245, 166, 35, 0.05);
+    }
+    .btn-outline-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ===== MODAL ===== */
+    .cc-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.7);
+      backdrop-filter: blur(6px);
+      z-index: 1400;
+    }
+    .cc-modal {
+      background: #111a26;
+      border: 1px solid #1e2a3a;
+      border-radius: 1rem;
+      padding: 24px;
+      margin: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      max-width: 600px;
+      width: 96%;
+      position: relative;
+    }
+    .cc-close {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      border: 0;
+      background: transparent;
+      font-size: 24px;
+      color: #8899aa;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    .cc-close:hover {
+      color: #f5a623;
+    }
+
+    /* ===== TOAST ===== */
+    #cc-toast-wrapper {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1500;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .cc-toast {
+      background: #0d1622;
+      color: #e8edf2;
+      padding: 12px 18px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 240px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      border: 1px solid #1e2a3a;
+      transform: translateX(30px);
+      opacity: 0;
+      transition: all .28s ease;
+    }
+    .cc-toast.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    .cc-toast.success {
+      background: #0d1622;
+      border-color: #f5a623;
+      box-shadow: 0 8px 30px rgba(245, 166, 35, 0.15);
+    }
+    .cc-toast.success::before {
+      content: '✓';
+      color: #f5a623;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    /* ===== FORM ELEMENTS ===== */
+    .form-control,
+    .form-select {
+      background: #0d1622;
+      border: 2px solid #1e2a3a;
+      color: #e8edf2;
+      border-radius: 0.75rem;
+      padding: 10px 14px;
+      transition: all 0.3s ease;
+    }
+    .form-control:focus,
+    .form-select:focus {
+      border-color: #f5a623;
+      box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
+      background: #0d1622;
+      color: #e8edf2;
+      outline: none;
+    }
+    .form-control::placeholder {
+      color: #6b7f94;
+    }
+    .form-select option {
+      background: #111a26;
+      color: #e8edf2;
+    }
+
+    /* ===== ICONS ===== */
+    .bi {
+      color: #f5a623;
+    }
+    .submission-card .bi {
+      color: #f5a623;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d1622;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #f5a623;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #e0960a;
+    }
+
+    /* ===== MISC ===== */
+    .text-danger {
+      color: #f87171 !important;
+    }
+    .text-warning-emphasis {
+      color: #f5a623 !important;
+    }
+    .border-warning-subtle {
+      border-color: rgba(245, 166, 35, 0.2) !important;
+    }
+
+    .container {
+      max-width: 960px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+      .card-custom {
+        padding: 16px !important;
+      }
+      .submission-card {
+        padding: 16px !important;
+      }
+      .btn-primary,
+      .btn-outline-primary {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -35,7 +298,7 @@
     <div class="card-custom p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 class="fw-bold m-0">Bài dự thi đã nộp</h4>
+          <h4 class="fw-bold m-0 text-light-gray">Bài dự thi đã nộp</h4>
           <small class="text-muted">Danh sách các sản phẩm đã tham gia trong cuộc thi này</small>
         </div>
         <button id="btnOpenModal" class="btn btn-primary px-3 py-2 fw-semibold rounded-3">
@@ -75,8 +338,8 @@
           root.innerHTML = `
             <div class="d-flex justify-content-between align-items-start">
               <div>
-                <span class="badge bg-primary-subtle text-primary mb-2 px-2 py-1">Trạng thái: ${c.status || 'published'}</span>
-                <h2 class="fw-bold text-dark mb-1">${c.title || 'Cuộc thi'}</h2>
+                <span class="badge badge-primary-subtle mb-2 px-2 py-1">Trạng thái: ${c.status || 'published'}</span>
+                <h2 class="fw-bold text-light-gray mb-1">${c.title || 'Cuộc thi'}</h2>
                 <p class="text-secondary mb-0">${c.description || 'Chưa có mô tả'}</p>
               </div>
             </div>
@@ -97,8 +360,7 @@
 
       let submissions = [];
       try {
-        let res = await fetch(`/submissions?contest_id=${targetContestId}`);
-        if (!res.ok) res = await fetch(`/api/contests/${targetContestId}/submissions`);
+        const res = await fetch(`/api/contests/${targetContestId}/public-submissions`);
         if (res.ok) {
           const result = await res.json();
           submissions = Array.isArray(result) ? result : (result.submissions || result.data || []);
@@ -115,31 +377,50 @@
         }
       });
 
-      if (combined.length > 0) {
-        container.innerHTML = combined.map((s, idx) => {
-          const link = s.product_link || s.image_hd_url || '#';
-          const isDrive = link.includes('drive.google.com');
+      const normalized = combined.map((submission) => {
+        const file = submission.file || {};
+        return {
+          ...submission,
+          product_link: submission.product_link || submission.submission_url || submission.link || submission.url || file.image_hd_url || submission.image_hd_url || null,
+          image_hd_url: submission.image_hd_url || file.image_hd_url || null,
+          thumbnail_url: submission.thumbnail_url || file.thumbnail_url || null,
+          detail_url: submission.detail_url || (submission.id ? `/my-submissions/${encodeURIComponent(submission.id)}` : null),
+        };
+      });
+
+      if (normalized.length > 0) {
+        container.innerHTML = normalized.map((s, idx) => {
+          const externalUrl = s.product_link || s.image_hd_url || s.thumbnail_url || null;
+          const targetHref = externalUrl || s.detail_url || null;
+          const isDrive = Boolean(targetHref && targetHref.includes('drive.google.com'));
+          const opensNewTab = Boolean(externalUrl);
+          const buttonLabel = externalUrl
+            ? (isDrive ? 'Mở Google Drive ↗' : 'Xem sản phẩm ↗')
+            : 'Xem chi tiết';
+          const buttonHtml = targetHref
+            ? `<a href="${targetHref}" ${opensNewTab ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn btn-outline-primary btn-sm w-100 fw-medium">
+                    <i class="bi ${externalUrl ? (isDrive ? 'bi-google-drive' : 'bi-box-arrow-up-right') : 'bi-eye'} me-1"></i>
+                    ${buttonLabel}
+                  </a>`
+            : '<button type="button" class="btn btn-outline-secondary btn-sm w-100 fw-medium" disabled>Chưa có liên kết sản phẩm</button>';
 
           return `
             <div class="col-md-6 col-lg-4">
               <div class="submission-card p-3 h-100 d-flex flex-column justify-content-between">
                 <div>
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                    <span class="badge badge-warning-subtle">
                       ${s.status || 'Chờ chấm'}
                     </span>
                     <small class="text-muted">#${s.id || (idx + 1)}</small>
                   </div>
-                  <h6 class="fw-bold text-dark mb-2 text-truncate">${s.title || 'Bài dự thi'}</h6>
+                  <h6 class="fw-bold text-light-gray mb-2 text-truncate">${s.title || 'Bài dự thi'}</h6>
                   <p class="text-muted small mb-3 text-truncate" style="max-height: 40px;">
                     ${s.story_description || 'Không có mô tả thêm'}
                   </p>
                 </div>
                 <div>
-                  <a href="${link}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm w-100 fw-medium">
-                    <i class="bi ${isDrive ? 'bi-google-drive' : 'bi-box-arrow-up-right'} me-1"></i>
-                    ${isDrive ? 'Mở Google Drive ↗' : 'Xem sản phẩm ↗'}
-                  </a>
+                  ${buttonHtml}
                 </div>
               </div>
             </div>
@@ -164,94 +445,17 @@
       setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
     }
 
-    function showSubmissionModal() {
-      let modal = document.getElementById('submissionModal');
-      if (!modal) {
-        const modalHtml = `
-          <div id="submissionModal" class="cc-modal-backdrop" style="display:none;">
-            <div class="cc-modal">
-              <button class="cc-close" id="subClose">&times;</button>
-              <h4 class="fw-bold mb-3">Nộp bài dự thi</h4>
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Tiêu đề bài dự thi</label>
-                <input id="sub_title" class="form-control" placeholder="Ví dụ: Thiết kế poster 2026" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Link sản phẩm (Google Drive / Figma / YouTube)</label>
-                <input id="sub_url" class="form-control" placeholder="https://drive.google.com/..." />
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Mô tả bài dự thi</label>
-                <textarea id="sub_desc" class="form-control" rows="3" placeholder="Giới thiệu ý tưởng..."></textarea>
-              </div>
-              <div class="d-flex justify-content-end gap-2">
-                <button id="subCancel" class="btn btn-light">Hủy</button>
-                <button id="subSend" class="btn btn-primary px-4">Gửi bài</button>
-              </div>
-            </div>
-          </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        modal = document.getElementById('submissionModal');
+    function openSubmissionForm() {
+      if (!currentContestId) {
+        showToast('Không xác định được cuộc thi để nộp bài', false);
+        return;
       }
-
-      document.getElementById('sub_title').value = '';
-      document.getElementById('sub_url').value = '';
-      document.getElementById('sub_desc').value = '';
-      modal.style.display = 'flex';
-
-      document.getElementById('subClose').onclick = () => modal.style.display = 'none';
-      document.getElementById('subCancel').onclick = () => modal.style.display = 'none';
-
-      document.getElementById('subSend').onclick = async () => {
-        const btn = document.getElementById('subSend');
-        const title = document.getElementById('sub_title').value.trim();
-        const url = document.getElementById('sub_url').value.trim();
-        const desc = document.getElementById('sub_desc').value.trim();
-
-        if (!title || !url) {
-          showToast('Vui lòng điền đủ Tiêu đề và Link sản phẩm', false);
-          return;
-        }
-
-        btn.disabled = true;
-        btn.textContent = 'Đang gửi...';
-
-        const newSubmission = {
-          id: Date.now(),
-          contest_id: String(currentContestId),
-          round_id: 1,
-          title: title,
-          product_link: url,
-          image_hd_url: url,
-          story_description: desc,
-          status: 'Chờ chấm',
-          file_hash: 'submission-' + Date.now()
-        };
-
-        let localSubs = JSON.parse(localStorage.getItem('custom_submissions') || '[]');
-        localSubs.push(newSubmission);
-        localStorage.setItem('custom_submissions', JSON.stringify(localSubs));
-
-        try {
-          await fetch('/submissions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newSubmission)
-          });
-        } catch (err) { console.error(err); }
-
-        modal.style.display = 'none';
-        showToast('Nộp bài thành công!', true);
-        btn.disabled = false;
-        btn.textContent = 'Gửi bài';
-
-        loadSubmissions(currentContestId);
-      };
+      window.location.href = `/submit?contest_id=${encodeURIComponent(currentContestId)}`;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       loadContest();
-      document.getElementById('btnOpenModal').onclick = showSubmissionModal;
+      document.getElementById('btnOpenModal').onclick = openSubmissionForm;
     });
   </script>
 </body>

@@ -100,7 +100,7 @@ def register_routes(app):
         app.add_url_rule(
             "/organizer/contest-config",
             "organizer_contest_config_page",
-            lambda: render_template("create_contest.html"),
+            role_required("organizer", "admin")(lambda: render_template("create_contest.html")),
         )
     except Exception:
         pass
@@ -224,6 +224,8 @@ def register_routes(app):
         from infrastructure.models.app import (
             ContestModel,
             RoundModel,
+            SubmissionFileModel,
+            SubmissionModel,
         )
 
         from infrastructure.databases.factory_database import (
@@ -395,6 +397,93 @@ def register_routes(app):
             "/api/contests/<int:contest_id>",
             "api_get_contest",
             api_get_contest,
+            methods=["GET"],
+        )
+
+        # ========================================================
+        # GET PUBLIC CONTEST SUBMISSIONS
+        # ========================================================
+
+        def api_get_public_contest_submissions(contest_id):
+            try:
+                session = get_database_session()
+
+                contest = (
+                    session
+                    .query(ContestModel)
+                    .filter_by(id=contest_id)
+                    .first()
+                )
+
+                if not contest:
+                    return jsonify({
+                        "message": "Not found",
+                        "submissions": [],
+                    }), 404
+
+                rows = (
+                    session
+                    .query(SubmissionModel, SubmissionFileModel)
+                    .join(
+                        RoundModel,
+                        SubmissionModel.round_id == RoundModel.id,
+                    )
+                    .outerjoin(
+                        SubmissionFileModel,
+                        SubmissionFileModel.submission_id == SubmissionModel.id,
+                    )
+                    .filter(RoundModel.contest_id == contest_id)
+                    .filter(SubmissionModel.status != "draft")
+                    .order_by(SubmissionModel.created_at.desc())
+                    .all()
+                )
+
+                submissions = []
+                for submission, submission_file in rows:
+                    image_url = (
+                        submission_file.image_hd_url
+                        if submission_file
+                        else None
+                    )
+                    thumbnail_url = (
+                        submission_file.thumbnail_url
+                        if submission_file
+                        else None
+                    )
+
+                    submissions.append({
+                        "id": submission.id,
+                        "round_id": submission.round_id,
+                        "title": submission.title,
+                        "story_description": submission.story_description,
+                        "status": submission.status,
+                        "final_score": (
+                            float(submission.final_score)
+                            if submission.final_score is not None
+                            else None
+                        ),
+                        "image_hd_url": image_url,
+                        "thumbnail_url": thumbnail_url,
+                        "product_link": image_url,
+                        "detail_url": f"/my-submissions/{submission.id}",
+                    })
+
+                return jsonify({
+                    "submissions": submissions,
+                    "total": len(submissions),
+                }), 200
+
+            except Exception as error:
+                return jsonify({
+                    "message": "Error",
+                    "error": str(error),
+                    "submissions": [],
+                }), 500
+
+        app.add_url_rule(
+            "/api/contests/<int:contest_id>/public-submissions",
+            "api_get_public_contest_submissions",
+            api_get_public_contest_submissions,
             methods=["GET"],
         )
 

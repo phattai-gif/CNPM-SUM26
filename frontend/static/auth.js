@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageEl = document.getElementById('message');
 
   const ROLE_REDIRECTS = {
-    participant: '/auth/submit',
+    participant: '/contests',
     organizer: '/organizer/dashboard',
     judge: '/judge/1',
     admin: '/organizer/dashboard'
@@ -62,8 +62,22 @@ document.addEventListener('DOMContentLoaded', () => {
     messageEl.className = success ? 'message success' : 'message error';
   };
 
-  const redirectToRole = (role) => {
-    const target = ROLE_REDIRECTS[(role || '').toLowerCase()] || '/';
+  const resolveParticipantTarget = async () => {
+    try {
+      const payload = await window.apiClient.get('/api/contests');
+      const contests = Array.isArray(payload?.contests) ? payload.contests : [];
+      const firstContest = contests.find((item) => item && item.id);
+      return firstContest ? `/contest/${encodeURIComponent(firstContest.id)}` : '/contests';
+    } catch (error) {
+      return '/contests';
+    }
+  };
+
+  const redirectToRole = async (role) => {
+    const normalizedRole = (role || '').toLowerCase();
+    const target = normalizedRole === 'participant'
+      ? await resolveParticipantTarget()
+      : (ROLE_REDIRECTS[normalizedRole] || '/');
     window.location.href = target;
   };
 
@@ -114,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
       showMessage('Login successful! Welcome, ' + (data.user?.username || username), true);
       setTimeout(() => {
         if (window.location.pathname === '/auth/login') {
-          window.location.href = '/organizer/dashboard';
           redirectToRole(data.user?.role || window.AuthSession.getSession().role);
         }
       }, 400);
@@ -157,11 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.AuthSession.setSession({ token: data.token, user: data.user, role: data.user?.role });
         showMessage('Registration successful! Redirecting...', true);
         setTimeout(() => {
-          if (role === 'organizer') {
-            window.location.href = '/organizer/dashboard';
-          } else {
-            window.location.href = '/';
-          }
+          redirectToRole(role);
         }, 300);
         return;
       }

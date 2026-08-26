@@ -5,23 +5,612 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Your Photograph - Film Photography Contest</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='submission.css') }}">
+    <style>
+        /* ===== DARK MODE ===== */
+        body {
+            background: #080c14 !important;
+            color: #ffffff !important;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px 20px 60px;
+        }
+
+        .submission-wrapper {
+            background: #111a26;
+            border: 1px solid #1e2a3a;
+            border-radius: 24px;
+            padding: 32px 36px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .submission-header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #1e2a3a;
+        }
+
+        /* === SỬA CHỮ "Submit Your Photograph" === */
+        .submission-header h1 {
+            font-size: 2rem;
+            font-weight: 900 !important;
+            color: #f5a623 !important;  /* MÀU VÀNG CAM NỔI BẬT */
+            margin: 0 0 8px;
+            text-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
+        }
+
+        .subtitle {
+            color: #aab8c5 !important;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #1e2a3a;
+        }
+        .form-section:last-of-type {
+            border-bottom: none;
+        }
+
+        /* ===== SECTION TITLE - MÀU ĐEN TRÊN NỀN VÀNG ===== */
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 800 !important;
+            color: #000000 !important;
+            background: #f5a623 !important;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 18px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 2px solid #e0960a;
+        }
+
+        .section-title .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #000000;
+            color: #f5a623;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .section-title .step-text {
+            color: #000000 !important;
+            font-weight: 800;
+        }
+
+        /* ===== FORM LABEL - MÀU ĐEN ===== */
+        .form-label {
+            display: block;
+            font-weight: 800 !important;
+            color: #000000 !important;
+            background: #f5a623 !important;
+            padding: 4px 12px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+
+        .required {
+            color: #000000 !important;
+            font-weight: 700;
+        }
+
+        /* ===== FORM TEXT - MÀU ĐEN ===== */
+        .form-text {
+            display: block;
+            color: #000000 !important;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            font-weight: 700;
+            background: #f5a623 !important;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .round-info {
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: #f5a623 !important;
+            border-radius: 10px;
+            border-left: 3px solid #e0960a;
+            display: none;
+            color: #000000 !important;
+            font-weight: 700;
+        }
+        .round-info.active {
+            display: block;
+        }
+
+        .section-hint {
+            color: #000000 !important;
+            font-size: 0.95rem;
+            margin: 0 0 16px;
+            padding: 12px 16px;
+            background: #f5a623 !important;
+            border-radius: 10px;
+            border-left: 3px solid #e0960a;
+            font-weight: 700;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #1e2a3a;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #0d1622;
+            color: #ffffff !important;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #f5a623;
+            box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
+            outline: none;
+            background: #0d1622;
+            color: #ffffff !important;
+        }
+
+        /* ===== SỬA LỖI PLACEHOLDER ===== */
+        .form-control::placeholder {
+            color: #f5a623 !important;
+            font-weight: 600;
+            opacity: 1 !important;
+        }
+
+        input.form-control::placeholder,
+        textarea.form-control::placeholder {
+            color: #f5a623 !important;
+            font-weight: 600;
+            opacity: 1 !important;
+        }
+
+        input.form-control::-webkit-input-placeholder,
+        textarea.form-control::-webkit-input-placeholder {
+            color: #f5a623 !important;
+            font-weight: 600;
+            opacity: 1 !important;
+        }
+
+        input.form-control::-moz-placeholder,
+        textarea.form-control::-moz-placeholder {
+            color: #f5a623 !important;
+            font-weight: 600;
+            opacity: 1 !important;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        select.form-control option {
+            background: #111a26;
+            color: #ffffff;
+        }
+
+        /* ===== CHECKBOX - CHỮ ĐEN ===== */
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: #000000 !important;
+            background: #f5a623 !important;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700 !important;
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #000000;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .metadata-grid .form-group {
+            margin-bottom: 0;
+        }
+
+        /* ===== VERIFICATION CARD - CHỮ ĐEN ===== */
+        .verification-card {
+            background: #f5a623 !important;
+            border: 2px solid #e0960a;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .verification-card h4 {
+            color: #000000 !important;
+            font-weight: 800 !important;
+            margin: 0 0 10px;
+            font-size: 1rem;
+        }
+
+        .verification-status {
+            color: #000000 !important;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .verification-status p {
+            margin: 0;
+        }
+
+        .image-upload-area {
+            margin-bottom: 18px;
+        }
+
+        /* ===== DRAG DROP ZONE - CHỮ ĐEN ===== */
+        .drag-drop-zone {
+            border: 2px dashed #f5a623;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            background: #f5a623 !important;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .drag-drop-zone:hover {
+            background: #e0960a !important;
+            border-color: #000000;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .drag-drop-zone h3 {
+            color: #000000 !important;
+            font-weight: 800 !important;
+            margin: 0 0 6px;
+        }
+
+        .drag-drop-zone p {
+            color: #000000 !important;
+            margin: 6px 0;
+            font-weight: 600;
+        }
+
+        .btn-upload {
+            display: inline-block;
+            background: #000000;
+            color: #f5a623 !important;
+            padding: 10px 28px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 0.95rem;
+        }
+        .btn-upload:hover {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .upload-hint {
+            color: #000000 !important;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .image-preview {
+            background: #0d1622;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .preview-container {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .image-info h4 {
+            color: #ffffff !important;
+            font-weight: 700;
+            margin: 12px 0 10px;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 12px;
+        }
+
+        .info-list li {
+            padding: 4px 0;
+            color: #aab8c5 !important;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #1e2a3a;
+        }
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+
+        .info-list strong {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
+        .btn-remove-image {
+            background: rgba(220, 38, 38, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(220, 38, 38, 0.25);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-remove-image:hover {
+            background: rgba(220, 38, 38, 0.2);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            padding-top: 16px;
+            border-top: 1px solid #1e2a3a;
+            margin-top: 8px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: #f5a623;
+            color: #080c14 !important;
+        }
+        .btn-primary:hover {
+            background: #e0960a;
+            box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #aab8c5 !important;
+            border: 2px solid #1e2a3a;
+        }
+        .btn-secondary:hover {
+            color: #f5a623 !important;
+            border-color: #f5a623;
+            background: rgba(245, 166, 35, 0.05);
+        }
+
+        .upload-progress {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #0d1622;
+            border-radius: 10px;
+            border: 1px solid #1e2a3a;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #1e2a3a;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #f5a623;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        #progressText {
+            color: #aab8c5 !important;
+            font-size: 0.85rem;
+            margin: 6px 0 0;
+        }
+
+        .draft-status {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(245, 166, 35, 0.08);
+            border: 1px solid rgba(245, 166, 35, 0.2);
+            border-radius: 10px;
+            color: #f5a623 !important;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .alert {
+            padding: 20px 24px;
+            border-radius: 14px;
+            margin-top: 20px;
+        }
+
+        .alert-success {
+            background: rgba(52, 211, 153, 0.08);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            color: #34d399 !important;
+        }
+
+        .alert-success h3 {
+            color: #34d399 !important;
+            margin: 0 0 8px;
+        }
+
+        .alert-error {
+            background: rgba(248, 113, 113, 0.08);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            color: #f87171 !important;
+        }
+
+        .alert-error h3 {
+            color: #f87171 !important;
+            margin: 0 0 8px;
+        }
+
+        .success-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #1e2a3a;
+            border-top-color: #f5a623;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner p {
+            color: #aab8c5 !important;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1622;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f5a623;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #e0960a;
+        }
+
+        @media (max-width: 768px) {
+            .submission-wrapper {
+                padding: 20px 16px;
+            }
+            .metadata-grid {
+                grid-template-columns: 1fr;
+            }
+            .verification-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-actions {
+                flex-direction: column;
+            }
+            .form-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .submission-header h1 {
+                font-size: 1.6rem;
+            }
+            .section-title {
+                font-size: 1.1rem;
+                padding: 10px 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .submission-wrapper {
+                padding: 14px 12px;
+                border-radius: 16px;
+            }
+            .section-title {
+                font-size: 1rem;
+                padding: 8px 12px;
+            }
+            .section-title .step-number {
+                width: 24px;
+                height: 24px;
+                font-size: 0.75rem;
+            }
+            .drag-drop-zone {
+                padding: 24px 16px;
+            }
+            .drag-drop-zone h3 {
+                font-size: 1rem;
+            }
+            .form-label {
+                font-size: 0.9rem;
+            }
+            .checkbox-label {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 </head>
 <body>
+    {% include '_nav.html' %}
     <div class="container">
         <div class="submission-wrapper">
-            <!-- Header -->
             <header class="submission-header">
                 <h1>📸 Submit Your Photograph</h1>
                 <p class="subtitle">Share your analog film photography with the community</p>
             </header>
 
-            <!-- Main Form -->
             <form id="submissionForm" class="submission-form">
-                <!-- SECTION 1: Round Selection -->
+                <!-- SECTION 1 -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">1</span>
-                        Select Competition
+                        <span class="step-text">Select Competition</span>
                     </h2>
                     <div class="form-group">
                         <label for="roundSelect" class="form-label">
@@ -29,21 +618,19 @@
                         </label>
                         <select id="roundSelect" name="round_id" class="form-control" required>
                             <option value="">-- Select a round --</option>
-                            <!-- Options will be populated by JavaScript -->
                         </select>
-                        <small class="form-text">Deadline information will appear here</small>
-                        <div id="roundInfo" class="round-info"></div>
+                        <small class="form-text">📌 Deadline information will appear here</small>
+                        <div id="roundInfo" class="round-info active">🏆 [tata] vongf 1</div>
                     </div>
                 </section>
 
-                <!-- SECTION 2: Image Upload -->
+                <!-- SECTION 2 -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">2</span>
-                        Upload Your Image
+                        <span class="step-text">Upload Your Image</span>
                     </h2>
                     
-                    <!-- Image Preview Area -->
                     <div class="image-upload-area" id="imageUploadArea">
                         <div class="drag-drop-zone" id="dragDropZone">
                             <div class="upload-icon">📷</div>
@@ -52,19 +639,11 @@
                             <label for="imageInput" class="btn-upload">
                                 Browse Files
                             </label>
-                            <input 
-                                type="file" 
-                                id="imageInput" 
-                                name="image" 
-                                accept=".jpg,.jpeg,.png,.tiff,.bmp,.gif"
-                                style="display: none;"
-                                required
-                            >
-                            <p class="upload-hint">Supported: JPG, PNG, TIFF, BMP, GIF (Max 20MB)</p>
+                            <input type="file" id="imageInput" name="image" accept=".jpg,.jpeg,.png,.tiff,.bmp,.gif" style="display: none;" required>
+                            <p class="upload-hint">✅ Supported: JPG, PNG, TIFF, BMP, GIF (Max 20MB)</p>
                         </div>
                     </div>
 
-                    <!-- Image Preview & Info -->
                     <div id="imagePreview" class="image-preview" style="display: none;">
                         <div class="preview-container">
                             <img id="previewImage" src="" alt="Preview" class="preview-image">
@@ -77,130 +656,64 @@
                                 <li><strong>Dimensions:</strong> <span id="infoDimensions">-</span></li>
                                 <li><strong>EXIF Data:</strong> <span id="infoExifStatus">-</span></li>
                             </ul>
-                            <button type="button" class="btn-remove-image" id="removeImageBtn">
-                                ✕ Remove Image
-                            </button>
+                            <button type="button" class="btn-remove-image" id="removeImageBtn">✕ Remove Image</button>
                         </div>
                     </div>
                 </section>
 
-                <!-- SECTION 3: Submission Details -->
+                <!-- SECTION 3 -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">3</span>
-                        Submission Details
+                        <span class="step-text">Submission Details</span>
                     </h2>
                     
                     <div class="form-group">
-                        <label for="titleInput" class="form-label">
-                            Title <span class="required">*</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            id="titleInput" 
-                            name="title" 
-                            class="form-control"
-                            placeholder="Give your photograph a title"
-                            maxlength="200"
-                            required
-                        >
-                        <small class="form-text" id="titleCount">0/200 characters</small>
+                        <label for="titleInput" class="form-label">Title <span class="required">*</span></label>
+                        <input type="text" id="titleInput" name="title" class="form-control" placeholder="Give your photograph a title" maxlength="200" required>
+                        <small class="form-text" id="titleCount">📝 0/200 characters</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="descriptionInput" class="form-label">
-                            Story Description
-                        </label>
-                        <textarea 
-                            id="descriptionInput" 
-                            name="story_description" 
-                            class="form-control"
-                            placeholder="Tell the story behind this photograph... (Optional)"
-                            rows="4"
-                            maxlength="1000"
-                        ></textarea>
-                        <small class="form-text" id="descriptionCount">0/1000 characters</small>
+                        <label for="descriptionInput" class="form-label">Story Description</label>
+                        <textarea id="descriptionInput" name="story_description" class="form-control" placeholder="Tell the story behind this photograph... (Optional)" rows="4" maxlength="1000"></textarea>
+                        <small class="form-text" id="descriptionCount">📝 0/1000 characters</small>
                     </div>
                 </section>
 
-                <!-- SECTION 4: Film Metadata -->
+                <!-- SECTION 4 -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">4</span>
-                        Film & Camera Metadata (Optional)
+                        <span class="step-text">Film & Camera Metadata (Optional)</span>
                     </h2>
-                    
                     <p class="section-hint">📝 Provide details about your film and camera setup. This helps verify authenticity.</p>
 
                     <div class="metadata-grid">
                         <div class="form-group">
                             <label for="cameraBodies" class="form-label">Camera Body</label>
-                            <input 
-                                type="text" 
-                                id="cameraBodies" 
-                                name="camera_body" 
-                                class="form-control"
-                                placeholder="e.g., Canon EOS 5D Mark IV"
-                            >
+                            <input type="text" id="cameraBodies" name="camera_body" class="form-control" placeholder="e.g., Canon EOS 5D Mark IV">
                         </div>
-
                         <div class="form-group">
                             <label for="lensInput" class="form-label">Lens</label>
-                            <input 
-                                type="text" 
-                                id="lensInput" 
-                                name="lens" 
-                                class="form-control"
-                                placeholder="e.g., 50mm f/1.8"
-                            >
+                            <input type="text" id="lensInput" name="lens" class="form-control" placeholder="e.g., 50mm f/1.8">
                         </div>
-
                         <div class="form-group">
                             <label for="filmStockInput" class="form-label">Film Stock</label>
-                            <input 
-                                type="text" 
-                                id="filmStockInput" 
-                                name="film_stock" 
-                                class="form-control"
-                                placeholder="e.g., Kodak Portra 400"
-                            >
+                            <input type="text" id="filmStockInput" name="film_stock" class="form-control" placeholder="e.g., Kodak Portra 400">
                         </div>
-
                         <div class="form-group">
                             <label for="filmIsoInput" class="form-label">Film ISO</label>
-                            <input 
-                                type="number" 
-                                id="filmIsoInput" 
-                                name="film_iso" 
-                                class="form-control"
-                                placeholder="e.g., 400"
-                                min="50"
-                                max="3200"
-                            >
+                            <input type="number" id="filmIsoInput" name="film_iso" class="form-control" placeholder="e.g., 400" min="50" max="3200">
                         </div>
-
                         <div class="form-group">
                             <label for="labNameInput" class="form-label">Lab Name</label>
-                            <input 
-                                type="text" 
-                                id="labNameInput" 
-                                name="lab_name" 
-                                class="form-control"
-                                placeholder="e.g., Local Film Lab"
-                            >
+                            <input type="text" id="labNameInput" name="lab_name" class="form-control" placeholder="e.g., Local Film Lab">
                         </div>
-
                         <div class="form-group">
                             <label for="scannerInfoInput" class="form-label">Scanner Info</label>
-                            <input 
-                                type="text" 
-                                id="scannerInfoInput" 
-                                name="scanner_info" 
-                                class="form-control"
-                                placeholder="e.g., Epson Perfection V550"
-                            >
+                            <input type="text" id="scannerInfoInput" name="scanner_info" class="form-control" placeholder="e.g., Epson Perfection V550">
                         </div>
-
                         <div class="form-group">
                             <label for="developmentProcessSelect" class="form-label">Development Process</label>
                             <select id="developmentProcessSelect" name="development_process" class="form-control">
@@ -212,113 +725,75 @@
                                 <option value="Pull">Pull Processing</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label for="locationInput" class="form-label">Taken at Location</label>
-                            <input 
-                                type="text" 
-                                id="locationInput" 
-                                name="taken_at_location" 
-                                class="form-control"
-                                placeholder="e.g., Downtown Park, City Name"
-                            >
+                            <input type="text" id="locationInput" name="taken_at_location" class="form-control" placeholder="e.g., Downtown Park, City Name">
                         </div>
                     </div>
                 </section>
 
-                <!-- SECTION 5: Verification Status -->
+                <!-- SECTION 5 -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">5</span>
-                        Verification & Validation
+                        <span class="step-text">Verification & Validation</span>
                     </h2>
 
                     <div class="verification-grid">
-                        <!-- AI Detection Status -->
                         <div class="verification-card">
                             <h4>🤖 AI Detection</h4>
-                            <div id="aiDetectionStatus" class="verification-status status-pending">
-                                <p>Pending image upload</p>
-                            </div>
+                            <div id="aiDetectionStatus" class="verification-status"><p>⏳ Pending image upload</p></div>
                         </div>
-
-                        <!-- Duplicate Detection Status -->
                         <div class="verification-card">
                             <h4>🔍 Duplicate Check</h4>
-                            <div id="duplicateDetectionStatus" class="verification-status status-pending">
-                                <p>Pending submission</p>
-                            </div>
+                            <div id="duplicateDetectionStatus" class="verification-status"><p>⏳ Pending submission</p></div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label class="checkbox-label">
-                            <input 
-                                type="checkbox" 
-                                id="agreeTerms" 
-                                name="agree_terms"
-                                required
-                            >
-                            I confirm that this photograph is my original work and I have the rights to submit it
+                            <input type="checkbox" id="agreeTerms" name="agree_terms" required>
+                            ✅ I confirm that this photograph is my original work and I have the rights to submit it
                         </label>
                     </div>
                 </section>
 
-                <!-- Form Actions -->
                 <div class="form-actions">
-                    <button type="reset" class="btn btn-secondary" id="resetBtn">
-                        ↻ Clear Form
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="draftBtn">
-                        📝 Save Draft
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                        ✓ Submit Photograph
-                    </button>
+                    <button type="reset" class="btn btn-secondary" id="resetBtn">↻ Clear Form</button>
+                    <button type="button" class="btn btn-secondary" id="draftBtn">📝 Save Draft</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">✓ Submit Photograph</button>
                 </div>
 
                 <div id="uploadProgress" class="upload-progress" style="display: none;">
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill"></div>
-                    </div>
+                    <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
                     <p id="progressText">0% uploaded</p>
                 </div>
 
                 <div id="draftStatus" class="draft-status" style="display: none;"></div>
             </form>
 
-            <!-- Loading Spinner -->
             <div id="loadingSpinner" class="loading-spinner" style="display: none;">
                 <div class="spinner"></div>
                 <p>Processing your submission...</p>
             </div>
 
-            <!-- Success Message -->
             <div id="successMessage" class="alert alert-success" style="display: none;">
                 <h3>✓ Submission Successful!</h3>
                 <p id="successText"></p>
                 <div class="success-actions">
-                    <button type="button" class="btn btn-primary" id="viewSubmissionBtn">
-                        View Submission
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="submitAnotherBtn">
-                        Submit Another
-                    </button>
+                    <button type="button" class="btn btn-primary" id="viewSubmissionBtn">View Submission</button>
+                    <button type="button" class="btn btn-secondary" id="submitAnotherBtn">Submit Another</button>
                 </div>
             </div>
 
-            <!-- Error Message -->
             <div id="errorMessage" class="alert alert-error" style="display: none;">
                 <h3>✕ Submission Failed</h3>
                 <p id="errorText"></p>
-                <button type="button" class="btn btn-secondary" id="dismissErrorBtn">
-                    Dismiss
-                </button>
+                <button type="button" class="btn btn-secondary" id="dismissErrorBtn">Dismiss</button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="{{ url_for('static', filename='api_client.js') }}"></script>
     <script src="{{ url_for('static', filename='submission.js') }}"></script>
 </body>
