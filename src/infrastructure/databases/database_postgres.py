@@ -33,13 +33,6 @@ class DatabasePostgres(AbstractDatabase):
 
         with self.engine.begin() as connection:
             connection.execute(
-                text(
-                    "ALTER TABLE app.users "
-                    "ADD COLUMN IF NOT EXISTS email_verified "
-                    "BOOLEAN NOT NULL DEFAULT FALSE;"
-                )
-            )
-            connection.execute(
                 text("CREATE SCHEMA IF NOT EXISTS app")
             )
             connection.execute(
@@ -49,6 +42,13 @@ class DatabasePostgres(AbstractDatabase):
         Base.metadata.create_all(bind=self.engine)
 
         with self.engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE app.users "
+                    "ADD COLUMN IF NOT EXISTS email_verified "
+                    "BOOLEAN NOT NULL DEFAULT FALSE;"
+                )
+            )
             connection.execute(
                 text(
                     "ALTER TABLE app.submission_files "
