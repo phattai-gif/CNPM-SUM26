@@ -563,22 +563,6 @@ class SubmissionService:
                         "file_type": (
                             normalized_file_type
                         ),
-                        "height_px": (
-                            storage_info[
-                                "height"
-                            ]
-                        ),
-                        "file_size_bytes": (
-                            storage_info[
-                                "file_size"
-                            ]
-                        ),
-                        "phash": phash_val,
-                        "ahash": ahash_val,
-                        "file_type": file_item.get(
-                            "file_type",
-                            "main_image",
-                        ),
                     }
                 )
             )
@@ -819,6 +803,36 @@ class SubmissionService:
                 from infrastructure.repositories.submission_repository import SubmissionRepository
                 repo = SubmissionRepository()
 
+                def notify_fraud(risk, f_type):
+                    if risk in ["medium", "high"]:
+                        try:
+                            from infrastructure.models.app import SubmissionModel, UserModel, RoleModel, user_roles
+                            from services.notification_service import NotificationService
+                            from infrastructure.repositories.notification_repository import NotificationRepository
+                            notif_repo = NotificationRepository(session=repo.session)
+                            notif_service = NotificationService(repository=notif_repo)
+                            sub = repo.session.query(SubmissionModel).filter_by(id=sub_id).first()
+                            if not sub or not sub.round or not sub.round.contest: return
+                            contest = sub.round.contest
+                            t = f"Cảnh báo gian lận mức độ {risk.upper()}"
+                            b = f"Phát hiện rủi ro {f_type} ở bài dự thi #{sub_id}."
+                            
+                            notif_service.create_notification(
+                                user_id=contest.created_by, title=t, body=b,
+                                contest_id=contest.id, notification_type="fraud_alert"
+                            )
+                            
+                            admins = repo.session.query(UserModel).join(user_roles).join(RoleModel).filter(RoleModel.code == 'admin').all()
+                            for admin in admins:
+                                if admin.id != contest.created_by:
+                                    notif_service.create_notification(
+                                        user_id=admin.id, title=t, body=b,
+                                        contest_id=contest.id, notification_type="fraud_alert"
+                                    )
+                        except Exception as e:
+                            print(f"Failed to send fraud notification: {e}")
+
+
                 # --- AI Detection ---
                 if hd_url:
                     try:
@@ -854,6 +868,7 @@ class SubmissionService:
                             flag_type="AI_METADATA",
                             status="completed",
                         )
+                        notify_fraud(risk_level, "AI_METADATA")
                         repo.save_ai_analysis_report(
                             submission_id=sub_id,
                             ai_flag_id=saved_flag.id,
@@ -900,6 +915,7 @@ class SubmissionService:
                             flag_type="duplicate_similarity",
                             status="completed",
                         )
+                        notify_fraud(risk_level, "duplicate_similarity")
                         matched_sub_id = dup_result.get("matched_submission_id")
                         repo.save_ai_analysis_report(
                             submission_id=sub_id,
