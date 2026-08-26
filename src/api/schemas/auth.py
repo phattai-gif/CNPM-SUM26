@@ -29,6 +29,11 @@ class LoginUserRequestSchema(Schema):
     password = fields.Str(required=True)
 
 
+class GoogleLoginRequestSchema(Schema):
+    id_token = fields.Str(required=False)
+    credential = fields.Str(required=False)
+
+
 class LoginUserResponseSchema(Schema):
     id = fields.Int()
     username = fields.Str()

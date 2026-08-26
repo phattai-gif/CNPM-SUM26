@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Scratch / temp files
+scratch/
+pyrefly.toml
+
 # LaTeX build files
 *.aux
 *.log
@@ -227,3 +231,5 @@ __marimo__/
 *.sqlite3
 src/static/uploads/
 frontend/static/uploads/
+
+docs/latex/main.pdf
