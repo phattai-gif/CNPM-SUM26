@@ -181,3 +181,29 @@ class AuthRepository(IAuthRepository):
             print(f"Error updating user profile: {e}")
             return None
 
+    def update_password(self, user_id: int, password_hash: str) -> bool:
+        try:
+            user_obj = self.session.query(UserModel).filter_by(id=user_id).first()
+            if not user_obj:
+                return False
+            user_obj.password_hash = password_hash
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error updating password: {e}")
+            return False
+
+    def update_status(self, user_id: int, status: str) -> bool:
+        try:
+            user_obj = self.session.query(UserModel).filter_by(id=user_id).first()
+            if not user_obj:
+                return False
+            user_obj.status = status
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error updating status: {e}")
+            return False
+
