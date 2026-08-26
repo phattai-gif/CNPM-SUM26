@@ -6,6 +6,9 @@
     "python.autoComplete.extraPaths": [
         "${workspaceFolder}/src"
     ],
+    "files.associations": {
+        "src/migrations/schema.sql": "plaintext"
+    },
     "terminal.integrated.env.windows": {
         "PYTHONPATH": "${workspaceFolder}/src"
     },

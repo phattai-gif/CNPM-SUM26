@@ -96,13 +96,11 @@ def test_get_submission_details_success():
         created_at=datetime(2024, 1, 1, 11, 0, 2),
     )
 
-    with patch.object(submission_controller_module.submission_service, 'get_submission_by_id', return_value=(mock_submission, mock_file, mock_film_metadata)), \
-         patch.object(submission_controller_module.submission_repo, 'get_by_id_with_details', return_value=(mock_submission, mock_file, mock_film_metadata)), \
-         patch.object(submission_controller_module.submission_service, 'get_submission_detail', return_value=None):
-        response = client.get(
-            '/submissions/123',
-            headers={'Authorization': f'Bearer {token}'}
-        )
+    mock_svc = MagicMock()
+    mock_svc.get_submission_detail.return_value = None
+    mock_svc.get_submission_by_id.return_value = (mock_submission, mock_file, mock_film_metadata)
+    patch_controller_attr('submission_service', mock_svc)
+
     mock_repo = MagicMock()
     mock_repo.get_by_id_with_details.return_value = (mock_submission, mock_file, mock_film_metadata)
     mock_repo.get_ai_flag.return_value = None
@@ -112,7 +110,6 @@ def test_get_submission_details_success():
         '/submissions/123',
         headers={'Authorization': f'Bearer {token}'}
     )
-
 
     if response.status_code != 200:
         print(f"DEBUG status={response.status_code}, data={response.get_json()}")
@@ -129,14 +126,10 @@ def test_get_submission_details_not_found():
     client = app.test_client()
     token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'))
 
-    with patch.object(submission_controller_module.submission_service, 'get_submission_by_id', return_value=None), \
-         patch.object(submission_controller_module.submission_repo, 'get_by_id_with_details', return_value=None), \
-         patch.object(submission_controller_module.submission_service, 'get_submission_detail', return_value=None):
-        response = client.get(
-            '/submissions/999',
-            headers={'Authorization': f'Bearer {token}'}
-        )
-
+    mock_svc = MagicMock()
+    mock_svc.get_submission_detail.return_value = None
+    mock_svc.get_submission_by_id.return_value = None
+    patch_controller_attr('submission_service', mock_svc)
 
     mock_repo = MagicMock()
     mock_repo.get_by_id_with_details.return_value = None
@@ -220,11 +213,31 @@ def test_post_submission_multipart_success(tmp_path):
 def test_post_submission_multiple_images(tmp_path):
     app = create_app()
     client = app.test_client()
-    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'))
 
-    img1 = create_sample_image(width=100, height=100, color=(255, 0, 0))
-    img2 = create_sample_image(width=200, height=200, color=(0, 255, 0))
-    img3 = create_sample_image(width=300, height=300, color=(0, 0, 255))
+    token = generate_token(
+        app.config.get(
+            "SECRET_KEY",
+            "a_default_secret_key",
+        )
+    )
+
+    img1 = create_sample_image(
+        width=100,
+        height=100,
+        color=(255, 0, 0),
+    )
+
+    img2 = create_sample_image(
+        width=200,
+        height=200,
+        color=(0, 255, 0),
+    )
+
+    img3 = create_sample_image(
+        width=300,
+        height=300,
+        color=(0, 0, 255),
+    )
 
     mock_submission = MockObject(
         id=77,
@@ -236,35 +249,98 @@ def test_post_submission_multiple_images(tmp_path):
         submitted_at=datetime.now(timezone.utc),
     )
 
-    adapter = LocalStorageAdapter(upload_folder=str(tmp_path), base_url="/static/uploads")
-    storage_svc = StorageService(adapter=adapter)
-    mock_repo = MagicMock()
-    mock_repo.create_submission.return_value = mock_submission
+    adapter = LocalStorageAdapter(
+        upload_folder=str(tmp_path),
+        base_url="/static/uploads",
+    )
 
-    custom_svc = SubmissionService(submission_repo=mock_repo, storage_service=storage_svc)
-    patch_controller_attr('submission_service', custom_svc)
+    storage_svc = StorageService(
+        adapter=adapter,
+    )
+
+    mock_repo = MagicMock()
+
+    mock_repo.create_submission.return_value = (
+        mock_submission
+    )
+
+    custom_svc = SubmissionService(
+        submission_repo=mock_repo,
+        storage_service=storage_svc,
+    )
+
+    patch_controller_attr(
+        "submission_service",
+        custom_svc,
+    )
 
     data = {
-        'round_id': '2',
-        'title': 'Multi Image Entry',
-        'film_stock': 'Fuji C200',
-        'file1': (io.BytesIO(img1), 'image1.jpg', 'image/jpeg'),
-        'file2': (io.BytesIO(img2), 'image2.jpg', 'image/jpeg'),
-        'file3': (io.BytesIO(img3), 'image3.jpg', 'image/jpeg'),
+        "round_id": "2",
+        "title": "Multi Image Entry",
+        "film_stock": "Fuji C200",
+
+        "main_image": (
+            io.BytesIO(img1),
+            "image1.jpg",
+            "image/jpeg",
+        ),
+
+        "negative": [
+            (
+                io.BytesIO(img2),
+                "image2.jpg",
+                "image/jpeg",
+            ),
+            (
+                io.BytesIO(img3),
+                "image3.jpg",
+                "image/jpeg",
+            ),
+        ],
     }
 
     res = client.post(
-        '/submissions',
+        "/submissions",
         data=data,
-        content_type='multipart/form-data',
-        headers={'Authorization': f'Bearer {token}'}
+        content_type="multipart/form-data",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
     )
 
+    print("STATUS CODE:", res.status_code)
+    print("RESPONSE:", res.get_json())
+
     assert res.status_code == 201
+
     assert mock_repo.create_submission.called
-    kwargs = mock_repo.create_submission.call_args[1]
-    assert len(kwargs['files_data']) == 3
-    hashes = [f['file_hash'] for f in kwargs['files_data']]
+
+    kwargs = (
+        mock_repo
+        .create_submission
+        .call_args[1]
+    )
+
+    assert "files_data" in kwargs
+
+    files_data = kwargs["files_data"]
+
+    assert len(files_data) == 3
+
+    file_types = [
+        file_data["file_type"]
+        for file_data in files_data
+    ]
+
+    assert file_types.count("main_image") == 1
+    assert file_types.count("negative") == 2
+
+    hashes = [
+        file_data["file_hash"]
+        for file_data in files_data
+    ]
+
+    assert len(hashes) == 3
     assert len(set(hashes)) == 3
 
 
@@ -338,9 +414,10 @@ def test_post_submission_missing_file():
 
     assert res.status_code == 400
     res_data = res.get_json()
-    assert 'No image file provided' in res_data['message']
-
-
+    assert (
+        "main_image is required" in res_data["message"]
+        or "No image file provided" in res_data["message"]
+    )
 # Test 5 — Round không tồn tại
 def test_post_submission_round_not_exists(tmp_path):
     app = create_app()
@@ -575,31 +652,65 @@ def test_update_submission_evaluated_error():
 
 def test_submit_draft_owner_success():
     app = create_app()
+    app.config['TESTING'] = True
+    app.config['PROPAGATE_EXCEPTIONS'] = True
     client = app.test_client()
-    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=10)
+    token = generate_token(
+        app.config.get('SECRET_KEY', 'a_default_secret_key'),
+        user_id=10
+    )
 
-    mock_sub = MockObject(id=101, user_id=10, status="draft", title="Official Entry")
-    mock_file = MockObject(id=1, image_hd_url="https://example.com/hd.jpg")
-    mock_meta = MockObject(film_stock="Kodak Portra 400")
+    mock_sub = MockObject(
+        id=101,
+        user_id=10,
+        status="draft",
+        title="Official Entry"
+    )
+
+    mock_file = MockObject(
+        id=1,
+        image_hd_url="https://example.com/hd.jpg"
+    )
+
+    mock_meta = MockObject(
+        film_stock="Kodak Portra 400"
+    )
 
     mock_repo = MagicMock()
-    mock_repo.get_by_id_with_details.return_value = (mock_sub, mock_file, mock_meta)
-    mock_repo.update_status.return_value = MockObject(id=101, status="submitted")
+    mock_repo.get_by_id_with_details.return_value = (
+        mock_sub,
+        mock_file,
+        mock_meta
+    )
 
-    custom_svc = SubmissionService(submission_repo=mock_repo)
-    patch_controller_attr('submission_service', custom_svc)
+    mock_repo.update_status.return_value = MockObject(
+        id=101,
+        status="submitted"
+    )
+
+    custom_svc = SubmissionService(
+        submission_repo=mock_repo
+    )
+
+    patch_controller_attr(
+        'submission_service',
+        custom_svc
+    )
 
     res = client.post(
         '/submissions/101/submit',
-        headers={'Authorization': f'Bearer {token}'}
+        headers={
+            'Authorization': f'Bearer {token}'
+        }
     )
 
+    print("STATUS:", res.status_code)
+    print("JSON:", res.get_json())
     assert res.status_code == 200
     res_data = res.get_json()
+
     assert res_data['message'] == "Submission submitted successfully"
     assert res_data['submission']['status'] == "submitted"
-
-
 def test_submit_not_found():
     app = create_app()
     client = app.test_client()

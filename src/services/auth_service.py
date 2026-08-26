@@ -1,4 +1,4 @@
-﻿from typing import Optional
+from typing import Optional
 from domain.models.auth import Auth
 from domain.models.iauth_repository import IAuthRepository
 
@@ -32,6 +32,9 @@ class AuthService:
         )
         return self.repository.login(auth)
 
+    def login_google(self, email: str, full_name: str = None, avatar_url: str = None) -> Optional[Auth]:
+        return self.repository.login_google(email, full_name, avatar_url)
+
     def check_exist(self, username: str) -> bool:
         return self.repository.check_exist(username)
 
@@ -43,4 +46,19 @@ class AuthService:
 
     def get_user_by_id(self, user_id: int) -> Optional[Auth]:
         return self.repository.get_user_by_id(user_id)
+
+    def get_user_by_email(self, email: str) -> Optional[Auth]:
+        return self.repository.get_user_by_email(email)
+
+    def update_profile(self, user_id: int, full_name: Optional[str] = None, bio: Optional[str] = None, avatar_url: Optional[str] = None) -> Optional[Auth]:
+        return self.repository.update_profile(user_id=user_id, full_name=full_name, bio=bio, avatar_url=avatar_url)
+
+    def update_password(self, user_id: int, password_hash: str) -> bool:
+        return self.repository.update_password(user_id, password_hash)
+
+    def update_status(self, user_id: int, status: str) -> bool:
+        return self.repository.update_status(user_id, status)
+
+    def update_email_verified(self, user_id: int, verified: bool = True) -> bool:
+        return self.repository.update_email_verified(user_id, verified)
 

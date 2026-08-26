@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS app.users (
     avatar_url VARCHAR(512),
     bio TEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'active',
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -146,6 +147,7 @@ CREATE TABLE IF NOT EXISTS app.submission_files (
     file_hash VARCHAR(64) NOT NULL,
     phash VARCHAR(64),
     ahash VARCHAR(64),
+    file_type VARCHAR(50) DEFAULT 'main_image' NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

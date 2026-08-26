@@ -34,6 +34,17 @@ class Config:
         "SECRET_KEY"
     ) or "dev-secret-key-change-me-in-production-32chars"
 
+    GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+
+    SMTP_HOST = os.environ.get("SMTP_HOST")
+    SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+    SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
+    SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+    SMTP_FROM = os.environ.get("SMTP_FROM")
+    SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "true").lower() in ["true", "1"]
+    SMTP_USE_SSL = os.environ.get("SMTP_USE_SSL", "false").lower() in ["true", "1"]
+    SMTP_TIMEOUT = int(os.environ.get("SMTP_TIMEOUT", "10"))
+
     DEBUG = os.environ.get(
         "DEBUG",
         "False",

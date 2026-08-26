@@ -178,6 +178,7 @@
     <nav class="app-nav-left" aria-label="Điều hướng chính">
       <a href="/contests" class="app-nav-link primary">Danh sách cuộc thi</a>
       <a href="/leaderboard" class="app-nav-link">Bảng xếp hạng</a>
+      <a href="/my-submissions" id="nav-submissions-link" class="app-nav-link is-hidden">Bài dự thi của tôi</a>
       <a href="/organizer/dashboard" id="nav-organizer-link" class="app-nav-btn app-nav-btn-solid">Quản lý</a>
     </nav>
 
@@ -185,7 +186,10 @@
       <a href="/auth/login" id="nav-login" class="app-nav-btn app-nav-btn-outline">Đăng nhập</a>
       <a href="/auth/register" id="nav-register" class="app-nav-btn app-nav-btn-solid">Đăng ký</a>
 
-      <span id="nav-username" class="app-nav-user is-hidden"></span>
+      <a href="/profile" id="nav-profile-link" class="app-nav-btn app-nav-btn-outline is-hidden" title="Xem Hồ sơ & Portfolio">
+        <span id="nav-avatar" style="margin-right: 6px; font-size: 1.1rem;">👤</span>
+        <span id="nav-username" class="app-nav-user" style="padding:0; max-width:150px;"></span>
+      </a>
       <button type="button" id="nav-logout" class="app-nav-btn app-nav-btn-outline is-hidden">Đăng xuất</button>
     </div>
   </div>
@@ -210,6 +214,8 @@
       const userKey = 'authUser';
 
       const organizerLink = document.getElementById('nav-organizer-link');
+      const submissionsLink = document.getElementById('nav-submissions-link');
+      const profileLink = document.getElementById('nav-profile-link');
       const loginLink = document.getElementById('nav-login');
       const registerLink = document.getElementById('nav-register');
       const usernameLabel = document.getElementById('nav-username');
@@ -257,6 +263,9 @@
         const canManage = role === 'organizer' || role === 'admin';
 
         setHidden(organizerLink, !isLoggedIn || !canManage);
+        setHidden(organizerLink, !isLoggedIn);
+        setHidden(submissionsLink, !isLoggedIn);
+        setHidden(profileLink, !isLoggedIn);
         setHidden(loginLink, isLoggedIn);
         setHidden(registerLink, isLoggedIn);
         setHidden(usernameLabel, !isLoggedIn);
