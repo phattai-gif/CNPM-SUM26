@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from domain.models.isubmission_repository import ISubmissionRepository
@@ -16,16 +17,14 @@ from infrastructure.models.app import (
     AIFlagModel,
     AIAnalysisReportModel,
     RoundModel,
-
     ContestModel,
     JudgeAssignmentModel,
     ScoreModel,
     ScoreFeedbackModel,
     CriteriaModel,
-
-    JudgeAssignmentModel,
-
+    DigitalArchiveExhibitModel,
 )
+
 
 
 class SubmissionRepository(ISubmissionRepository):
@@ -1633,3 +1632,297 @@ class SubmissionRepository(ISubmissionRepository):
                 submissions
             )
         )
+
+    def get_public_gallery(
+        self,
+        film_stock: Optional[str] = None,
+        camera_model: Optional[str] = None,
+        contest_id: Optional[int] = None,
+        year: Optional[int] = None,
+        page: int = 1,
+        limit: int = 20,
+    ) -> Tuple[List[dict], int]:
+
+        try:
+            # =====================================================
+            # PUBLIC SUBMISSIONS ONLY
+            # =====================================================
+
+            query = (
+                self.session
+                .query(SubmissionModel)
+                .filter(
+                    SubmissionModel.status.in_(
+                        ["published", "approved"]
+                    )
+                )
+            )
+
+            # =====================================================
+            # FILTER: CONTEST
+            # =====================================================
+
+            if contest_id is not None:
+                query = (
+                    query
+                    .join(
+                        RoundModel,
+                        SubmissionModel.round_id
+                        == RoundModel.id,
+                    )
+                    .filter(
+                        RoundModel.contest_id
+                        == contest_id
+                    )
+                )
+
+            # =====================================================
+            # FILTER: FILM STOCK / CAMERA MODEL
+            # =====================================================
+
+            if film_stock or camera_model:
+                query = query.join(
+                    SubmissionFilmMetadataModel,
+                    SubmissionModel.id
+                    == SubmissionFilmMetadataModel.submission_id,
+                )
+
+                if film_stock:
+                    query = query.filter(
+                        SubmissionFilmMetadataModel.film_stock.ilike(
+                            f"%{film_stock.strip()}%"
+                        )
+                    )
+
+                if camera_model:
+                    query = query.filter(
+                        SubmissionFilmMetadataModel.camera_body.ilike(
+                            f"%{camera_model.strip()}%"
+                        )
+                    )
+
+            # =====================================================
+            # FILTER: YEAR
+            # =====================================================
+
+            if year is not None:
+                date_col = func.coalesce(
+                    SubmissionModel.submitted_at,
+                    SubmissionModel.created_at,
+                )
+
+                query = query.filter(
+                    func.extract("year", date_col) == year
+                )
+
+            # =====================================================
+            # TOTAL
+            # =====================================================
+
+            total = query.count()
+
+            # =====================================================
+            # PAGINATION
+            # =====================================================
+
+            offset = (page - 1) * limit
+
+            submissions = (
+                query
+                .order_by(
+                    SubmissionModel.created_at.desc(),
+                    SubmissionModel.id.desc(),
+                )
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+
+            # =====================================================
+            # BUILD RESULT
+            # =====================================================
+
+            items = []
+
+            for sub in submissions:
+
+                # -------------------------------------------------
+                # IMAGE
+                # -------------------------------------------------
+
+                main_file = (
+                    self.session
+                    .query(SubmissionFileModel)
+                    .filter(
+                        SubmissionFileModel.submission_id == sub.id,
+                        SubmissionFileModel.file_type == "main_image",
+                    )
+                    .order_by(
+                        SubmissionFileModel.id.asc()
+                    )
+                    .first()
+                )
+
+                if main_file is None:
+                    main_file = (
+                        self.session
+                        .query(SubmissionFileModel)
+                        .filter(
+                            SubmissionFileModel.submission_id == sub.id
+                        )
+                        .order_by(
+                            SubmissionFileModel.id.asc()
+                        )
+                        .first()
+                    )
+
+                thumbnail_url = None
+                image_hd_url = None
+
+                if main_file:
+                    thumbnail_url = (
+                        main_file.thumbnail_url
+                        or main_file.image_hd_url
+                    )
+
+                    image_hd_url = (
+                        main_file.image_hd_url
+                        or main_file.thumbnail_url
+                    )
+
+                # -------------------------------------------------
+                # FILM METADATA
+                # -------------------------------------------------
+
+                meta = (
+                    self.session
+                    .query(SubmissionFilmMetadataModel)
+                    .filter(
+                        SubmissionFilmMetadataModel.submission_id
+                        == sub.id
+                    )
+                    .first()
+                )
+
+                film_stock_value = None
+                camera_model_value = None
+
+                if meta:
+                    film_stock_value = meta.film_stock
+                    camera_model_value = meta.camera_body
+
+                # -------------------------------------------------
+                # YEAR
+                # -------------------------------------------------
+
+                submission_date = (
+                    sub.submitted_at
+                    or sub.created_at
+                )
+
+                year_value = (
+                    submission_date.year
+                    if submission_date
+                    else None
+                )
+
+                # -------------------------------------------------
+                # CONTEST
+                # -------------------------------------------------
+
+                contest_data = None
+
+                round_obj = (
+                    self.session
+                    .query(RoundModel)
+                    .filter(
+                        RoundModel.id == sub.round_id
+                    )
+                    .first()
+                )
+
+                if round_obj:
+                    contest_obj = (
+                        self.session
+                        .query(ContestModel)
+                        .filter(
+                            ContestModel.id
+                            == round_obj.contest_id
+                        )
+                        .first()
+                    )
+
+                    if contest_obj:
+                        contest_data = {
+                            "id": contest_obj.id,
+                            "title": contest_obj.title,
+                        }
+
+                # -------------------------------------------------
+                # WINNER
+                # -------------------------------------------------
+
+                is_winner = False
+
+                try:
+                    exhibit = (
+                        self.session
+                        .query(
+                            DigitalArchiveExhibitModel
+                        )
+                        .filter(
+                            DigitalArchiveExhibitModel.submission_id
+                            == sub.id
+                        )
+                        .first()
+                    )
+
+                    if exhibit:
+                        award_title = getattr(
+                            exhibit,
+                            "award_title",
+                            None,
+                        )
+
+                        is_winner = bool(award_title)
+
+                except Exception:
+                    is_winner = False
+
+                # -------------------------------------------------
+                # SCORE
+                # -------------------------------------------------
+
+                score_value = None
+
+                if sub.final_score is not None:
+                    score_value = float(
+                        sub.final_score
+                    )
+
+                # -------------------------------------------------
+                # RESULT
+                # -------------------------------------------------
+
+                items.append(
+                    {
+                        "id": sub.id,
+                        "title": sub.title or "",
+                        "thumbnail_url": thumbnail_url,
+                        "image_hd_url": image_hd_url,
+                        "metadata": {
+                            "film_stock": film_stock_value,
+                            "camera_model": camera_model_value,
+                            "year": year_value,
+                        },
+                        "contest": contest_data,
+                        "score": score_value,
+                        "is_winner": is_winner,
+                    }
+                )
+
+            return items, total
+
+        except Exception:
+            self.session.rollback()
+            raise
