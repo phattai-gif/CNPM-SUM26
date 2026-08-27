@@ -1,8 +1,9 @@
 <header class="app-nav-header">
   <style>
+    /* ===== DARK MODE NAVIGATION ===== */
     .app-nav-header {
-      background: #fff;
-      border-bottom: 1px solid #e6e6e6;
+      background: #080c14;
+      border-bottom: 1px solid #1a2636;
       padding: 12px 20px;
       margin-bottom: 18px;
     }
@@ -24,9 +25,10 @@
       gap: 10px;
     }
 
+    /* ===== NAV LINKS ===== */
     .app-nav-link {
       text-decoration: none;
-      color: #374151;
+      color: #99abb8;
       font-weight: 600;
       padding: 8px 12px;
       border-radius: 8px;
@@ -34,16 +36,21 @@
     }
 
     .app-nav-link:hover {
-      background: #f3f4f6;
-      color: #111827;
+      background: rgba(245, 166, 35, 0.08);
+      color: #f5a623;
     }
 
     .app-nav-link.primary {
-      color: #111827;
+      color: #f0f4f8;
       font-size: 1.02rem;
       font-weight: 700;
     }
 
+    .app-nav-link.primary:hover {
+      color: #f5a623;
+    }
+
+    /* ===== BUTTONS ===== */
     .app-nav-btn {
       text-decoration: none;
       display: inline-flex;
@@ -64,29 +71,35 @@
       transform: translateY(-1px);
     }
 
+    /* Outline button */
     .app-nav-btn-outline {
-      color: #374151;
-      background: #fff;
-      border-color: #d1d5db;
+      color: #99abb8;
+      background: transparent;
+      border-color: #1e2a3a;
     }
 
     .app-nav-btn-outline:hover {
-      background: #f9fafb;
-      color: #111827;
+      background: rgba(245, 166, 35, 0.08);
+      color: #f5a623;
+      border-color: #f5a623;
     }
 
+    /* Solid button (Đăng ký / Quản lý) */
     .app-nav-btn-solid {
-      color: #fff;
-      background: #2563eb;
-      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.24);
+      color: #080c14;
+      background: #f5a623;
+      box-shadow: 0 6px 14px rgba(245, 166, 35, 0.24);
     }
 
     .app-nav-btn-solid:hover {
-      background: #1d4ed8;
+      background: #e0960a;
+      color: #080c14;
+      box-shadow: 0 8px 20px rgba(245, 166, 35, 0.35);
     }
 
+    /* ===== USER NAME ===== */
     .app-nav-user {
-      color: #111827;
+      color: #f0f4f8;
       font-weight: 700;
       padding: 8px 6px;
       max-width: 230px;
@@ -95,10 +108,44 @@
       text-overflow: ellipsis;
     }
 
+    /* ===== FLASH MESSAGES ===== */
+    .alert {
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .alert-warning {
+      background: rgba(245, 166, 35, 0.12);
+      color: #f5a623;
+      border: 1px solid rgba(245, 166, 35, 0.25);
+    }
+
+    .alert-success {
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.25);
+    }
+
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+
+    .alert-info {
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    /* ===== UTILITY ===== */
     .is-hidden {
       display: none !important;
     }
 
+    /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
       .app-nav-header {
         padding: 10px 14px;
@@ -113,6 +160,17 @@
         width: 100%;
         flex-wrap: wrap;
       }
+
+      .app-nav-btn,
+      .app-nav-link {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+      }
+
+      .app-nav-user {
+        max-width: 140px;
+        font-size: 0.85rem;
+      }
     }
   </style>
 
@@ -125,8 +183,8 @@
     </nav>
 
     <div class="app-nav-right" id="nav-right-auth">
-      <a href="/login" id="nav-login" class="app-nav-btn app-nav-btn-outline">Đăng nhập</a>
-      <a href="/register" id="nav-register" class="app-nav-btn app-nav-btn-solid">Đăng ký</a>
+      <a href="/auth/login" id="nav-login" class="app-nav-btn app-nav-btn-outline">Đăng nhập</a>
+      <a href="/auth/register" id="nav-register" class="app-nav-btn app-nav-btn-solid">Đăng ký</a>
 
       <a href="/profile" id="nav-profile-link" class="app-nav-btn app-nav-btn-outline is-hidden" title="Xem Hồ sơ & Portfolio">
         <span id="nav-avatar" style="margin-right: 6px; font-size: 1.1rem;">👤</span>
@@ -135,6 +193,20 @@
       <button type="button" id="nav-logout" class="app-nav-btn app-nav-btn-outline is-hidden">Đăng xuất</button>
     </div>
   </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="app-nav-wrap" style="padding-top: 0;">
+        <div style="width: 100%; display: grid; gap: 8px; margin-top: 10px;">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'warning' if category == 'warning' else category }} mb-0" role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  {% endwith %}
 
   <script>
     (function () {
@@ -155,15 +227,19 @@
         }
 
         let user = null;
+        let role = null;
         try {
           user = JSON.parse(localStorage.getItem(userKey) || 'null');
         } catch (error) {
           user = null;
         }
 
+        role = localStorage.getItem('authRole') || sessionStorage.getItem('authRole') || (user && user.role) || null;
+
         return {
           token: localStorage.getItem(tokenKey),
-          user
+          user,
+          role
         };
       }
 
@@ -183,7 +259,10 @@
       function renderByAuthState() {
         const session = safeGetSession();
         const isLoggedIn = Boolean(session && session.token);
+        const role = String((session && session.role) || (session && session.user && session.user.role) || '').toLowerCase();
+        const canManage = role === 'organizer' || role === 'admin';
 
+        setHidden(organizerLink, !isLoggedIn || !canManage);
         setHidden(organizerLink, !isLoggedIn);
         setHidden(submissionsLink, !isLoggedIn);
         setHidden(profileLink, !isLoggedIn);
@@ -202,6 +281,9 @@
         localStorage.removeItem('authToken');
         localStorage.removeItem('authUser');
         localStorage.removeItem('authRole');
+        sessionStorage.removeItem('authToken');
+        sessionStorage.removeItem('authUser');
+        sessionStorage.removeItem('authRole');
       }
 
       if (logoutButton) {
@@ -212,7 +294,7 @@
           }
 
           clearAuthStorage();
-          window.location.href = '/login';
+          window.location.href = '/auth/login';
         });
       }
 

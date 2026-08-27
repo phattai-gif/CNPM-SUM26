@@ -525,19 +525,51 @@ class ScoreService:
         )
 
         image_url = None
+        media_assets = {
+            "main_image_url": None,
+            "negative_film_url": None,
+            "contact_sheet_url": None,
+        }
+        proof_attachments = []
 
         try:
-            file_row = (
+            file_rows = (
                 self.submission_repo.session
                 .query(SubmissionFileModel)
                 .filter_by(submission_id=submission_id)
                 .order_by(SubmissionFileModel.id.asc())
-                .first()
+                .all()
             )
-            if file_row is not None:
-                image_url = getattr(file_row, "image_hd_url", None)
+
+            file_urls = []
+            for file_row in file_rows or []:
+                candidate_url = getattr(file_row, "image_hd_url", None)
+                if candidate_url and candidate_url not in file_urls:
+                    file_urls.append(candidate_url)
+
+            if file_urls:
+                image_url = file_urls[0]
+                media_assets["main_image_url"] = file_urls[0]
+            if len(file_urls) > 1:
+                media_assets["negative_film_url"] = file_urls[1]
+            if len(file_urls) > 2:
+                media_assets["contact_sheet_url"] = file_urls[2]
+            if len(file_urls) > 3:
+                proof_attachments = [
+                    {
+                        "label": f"Proof Attachment {index + 1}",
+                        "url": file_urls[index],
+                    }
+                    for index in range(3, len(file_urls))
+                ]
         except Exception:
             image_url = None
+            media_assets = {
+                "main_image_url": None,
+                "negative_film_url": None,
+                "contact_sheet_url": None,
+            }
+            proof_attachments = []
 
         criteria_list = (
             self.contest_repo.get_criteria_by_round_id(
@@ -627,6 +659,8 @@ class ScoreService:
         return {
             "submission": self._serialize_submission(submission),
             "image_url": image_url,
+            "media_assets": media_assets,
+            "proof_attachments": proof_attachments,
             "round": None if round_obj is None else {
                 "id": round_obj.id,
                 "contest_id": round_obj.contest_id,

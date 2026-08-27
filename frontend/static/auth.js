@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageEl = document.getElementById('message');
 
   const ROLE_REDIRECTS = {
-    participant: '/auth/submit',
+    participant: '/contests',
     organizer: '/organizer/dashboard',
     judge: '/judge/1',
     admin: '/organizer/dashboard'
@@ -62,32 +62,22 @@ document.addEventListener('DOMContentLoaded', () => {
     messageEl.className = success ? 'message success' : 'message error';
   };
 
-  const handleGoogleCredential = async (response) => {
-    showMessage('');
-    const result = await requestJson('/auth/google', { credential: response.credential });
-    if (!result.ok) {
-      showMessage(result.data.message || 'Google login failed.');
-      return;
+  const resolveParticipantTarget = async () => {
+    try {
+      const payload = await window.apiClient.get('/api/contests');
+      const contests = Array.isArray(payload?.contests) ? payload.contests : [];
+      const firstContest = contests.find((item) => item && item.id);
+      return firstContest ? `/contest/${encodeURIComponent(firstContest.id)}` : '/contests';
+    } catch (error) {
+      return '/contests';
     }
-    window.AuthSession.setSession({ token: result.data.token, user: result.data.user, role: result.data.user?.role });
-    showMessage('Login successful! Redirecting...', true);
-    setTimeout(() => redirectToRole(result.data.user?.role), 300);
   };
 
-  window.initializeGoogleSignIn = () => {
-    if (!window.google?.accounts?.id || !document.getElementById('googleSignInButton')) return;
-    window.google.accounts.id.initialize({
-      client_id: document.body.dataset.googleClientId,
-      callback: handleGoogleCredential
-    });
-    window.google.accounts.id.renderButton(document.getElementById('googleSignInButton'), {
-      theme: 'outline', size: 'large', width: 360
-    });
-  };
-  window.initializeGoogleSignIn();
-
-  const redirectToRole = (role) => {
-    const target = ROLE_REDIRECTS[(role || '').toLowerCase()] || '/';
+  const redirectToRole = async (role) => {
+    const normalizedRole = (role || '').toLowerCase();
+    const target = normalizedRole === 'participant'
+      ? await resolveParticipantTarget()
+      : (ROLE_REDIRECTS[normalizedRole] || '/');
     window.location.href = target;
   };
 
@@ -138,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
       showMessage('Login successful! Welcome, ' + (data.user?.username || username), true);
       setTimeout(() => {
         if (window.location.pathname === '/auth/login') {
-          window.location.href = '/organizer/dashboard';
           redirectToRole(data.user?.role || window.AuthSession.getSession().role);
         }
       }, 400);
@@ -238,11 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.AuthSession.setSession({ token: data.token, user: data.user, role: data.user?.role });
         showMessage('Registration successful! Redirecting...', true);
         setTimeout(() => {
-          if (role === 'organizer') {
-            window.location.href = '/organizer/dashboard';
-          } else {
-            window.location.href = '/';
-          }
+          redirectToRole(role);
         }, 300);
         return;
       }

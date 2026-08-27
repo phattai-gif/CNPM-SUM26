@@ -3,9 +3,6 @@ from pathlib import Path
 from create_app import create_app
 
 load_dotenv()
-from pathlib import Path
-
-from pathlib import Path
 from flask import Flask, jsonify, redirect, url_for, render_template
 from jinja2 import ChoiceLoader, FileSystemLoader
 from flasgger import Swagger
@@ -105,6 +102,9 @@ def create_app():
     # --------------------------------------------------------
 
     app.config.from_object(Config)
+    app.config['JSON_AS_ASCII'] = False
+    if hasattr(app, 'json'):
+        app.json.ensure_ascii = False
 
     # --------------------------------------------------------
     # SWAGGER
@@ -267,7 +267,6 @@ def create_app():
             submission_id=submission_id,
         )
 
-    @app.route("/submit")
     @app.route('/profile')
     def profile_page_root():
         return render_template('profile.html')
