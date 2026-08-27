@@ -1,10 +1,7 @@
 from sqlalchemy import BigInteger, Boolean, Integer, inspect, text
 from sqlalchemy.exc import SQLAlchemyError
-
 from infrastructure.databases.abstract_database import AbstractDatabase
 from infrastructure.databases.base import Base
-
-
 class DatabasePostgres(AbstractDatabase):
     def __init__(self):
         super().__init__()
@@ -42,11 +39,27 @@ class DatabasePostgres(AbstractDatabase):
 
         Base.metadata.create_all(bind=self.engine)
 
+        with self.engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE app.submission_files "
+                    "ADD COLUMN IF NOT EXISTS file_type "
+                    "VARCHAR(50) DEFAULT 'main_image' NOT NULL;"
+                )
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE app.submission_files "
+                    "ADD COLUMN IF NOT EXISTS updated_at "
+                    "TIMESTAMP WITH TIME ZONE "
+                    "DEFAULT CURRENT_TIMESTAMP;"
+
         try:
             with self.engine.begin() as connection:
                 self._add_postgres_column_if_missing(
                     connection, "users", "email_verified",
                     "BOOLEAN NOT NULL DEFAULT FALSE"
+
                 )
                 self._add_postgres_column_if_missing(
                     connection, "submission_files", "file_type",
@@ -117,3 +130,4 @@ class DatabasePostgres(AbstractDatabase):
                             f"{column_type}{nullable}"
                         )
                     )
+                    

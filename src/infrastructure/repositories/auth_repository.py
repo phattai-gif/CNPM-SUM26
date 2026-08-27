@@ -1,9 +1,7 @@
 from typing import Optional
-
 from sqlalchemy import func, insert, select
 from secrets import token_urlsafe
 from werkzeug.security import check_password_hash
-
 from domain.models.iauth_repository import IAuthRepository
 from domain.models.auth import Auth
 from infrastructure.databases.factory_database import FactoryDatabase as db_factory
@@ -281,6 +279,9 @@ class AuthRepository(IAuthRepository):
             return True
         except Exception as e:
             self.session.rollback()
+
+            print(f"Error updating status: {e}")
+
             print(f"Error updating user status: {e}")
             return False
 

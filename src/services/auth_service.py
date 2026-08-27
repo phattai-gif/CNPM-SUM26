@@ -1,8 +1,6 @@
 from typing import Optional
 from domain.models.auth import Auth
 from domain.models.iauth_repository import IAuthRepository
-
-
 class AuthService:
     def __init__(self, repository: IAuthRepository):
         self.repository = repository
@@ -54,6 +52,12 @@ class AuthService:
         return self.repository.update_profile(user_id=user_id, full_name=full_name, bio=bio, avatar_url=avatar_url)
 
     def update_password(self, user_id: int, password_hash: str) -> bool:
+
+        return self.repository.update_password(user_id=user_id, password_hash=password_hash)
+
+    def update_status(self, user_id: int, status: str) -> bool:
+        return self.repository.update_status(user_id=user_id, status=status)
+
         return self.repository.update_password(user_id, password_hash)
 
     def update_status(self, user_id: int, status: str) -> bool:
@@ -61,4 +65,5 @@ class AuthService:
 
     def update_email_verified(self, user_id: int, verified: bool = True) -> bool:
         return self.repository.update_email_verified(user_id, verified)
+
 
