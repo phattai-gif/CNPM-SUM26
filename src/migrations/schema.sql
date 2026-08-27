@@ -90,6 +90,8 @@ CREATE TABLE IF NOT EXISTS app.contest_settings (
     scoring_mode VARCHAR(50) NOT NULL DEFAULT 'weighted',
     judges_visible BOOLEAN NOT NULL DEFAULT FALSE,
     announcement_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    ai_duplicate_threshold FLOAT NOT NULL DEFAULT 70.0,
+    ai_risk_threshold FLOAT NOT NULL DEFAULT 70.0,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
