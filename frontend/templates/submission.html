@@ -666,6 +666,102 @@
                     <h2 class="section-title">
                         <span class="step-number">3</span>
                         <span class="step-text">Submission Details</span>
+                <!-- SECTION 3: Proof Attachments -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <span class="step-number">3</span>
+                        Proof Attachments
+                        <span class="proof-optional-badge">Optional</span>
+                    </h2>
+
+                    <p class="section-hint">🎞️ Upload proof of your analog process. These files help verify authenticity but are not required to submit.</p>
+
+                    <div class="proof-attachments-grid">
+
+                        <!-- Negative Film -->
+                        <div class="proof-attachment-card" id="negativeFilmCard">
+                            <div class="proof-card-header">
+                                <span class="proof-icon">🎞️</span>
+                                <div>
+                                    <h4 class="proof-card-title">Negative Film</h4>
+                                    <p class="proof-card-desc">Scan or photo of your film negative strip</p>
+                                </div>
+                            </div>
+
+                            <!-- Upload zone (shown when no file selected) -->
+                            <div class="proof-upload-zone" id="negativeFilmZone">
+                                <div class="proof-zone-inner">
+                                    <span class="proof-zone-icon">⬆</span>
+                                    <p class="proof-zone-text">Drag & drop or</p>
+                                    <label for="negativeFilmInput" class="btn-upload-proof">Browse</label>
+                                    <input
+                                        type="file"
+                                        id="negativeFilmInput"
+                                        name="negative_film"
+                                        accept=".jpg,.jpeg,.png,.webp"
+                                        style="display: none;"
+                                    >
+                                    <p class="proof-zone-hint">JPG, PNG, WEBP · Max 20MB</p>
+                                </div>
+                            </div>
+
+                            <!-- Preview (shown after file selected) -->
+                            <div class="proof-preview" id="negativeFilmPreview" style="display: none;">
+                                <img id="negativeFilmThumb" src="" alt="Negative Film Preview" class="proof-thumbnail">
+                                <div class="proof-file-info">
+                                    <span class="proof-file-name" id="negativeFilmName">-</span>
+                                    <span class="proof-file-size" id="negativeFilmSize">-</span>
+                                </div>
+                                <button type="button" class="btn-remove-proof" id="removeNegativeFilmBtn" title="Remove file">✕</button>
+                            </div>
+                        </div>
+
+                        <!-- Contact Sheet -->
+                        <div class="proof-attachment-card" id="contactSheetCard">
+                            <div class="proof-card-header">
+                                <span class="proof-icon">📋</span>
+                                <div>
+                                    <h4 class="proof-card-title">Contact Sheet</h4>
+                                    <p class="proof-card-desc">Contact print showing all frames from your roll</p>
+                                </div>
+                            </div>
+
+                            <!-- Upload zone -->
+                            <div class="proof-upload-zone" id="contactSheetZone">
+                                <div class="proof-zone-inner">
+                                    <span class="proof-zone-icon">⬆</span>
+                                    <p class="proof-zone-text">Drag & drop or</p>
+                                    <label for="contactSheetInput" class="btn-upload-proof">Browse</label>
+                                    <input
+                                        type="file"
+                                        id="contactSheetInput"
+                                        name="contact_sheet"
+                                        accept=".jpg,.jpeg,.png,.webp"
+                                        style="display: none;"
+                                    >
+                                    <p class="proof-zone-hint">JPG, PNG, WEBP · Max 20MB</p>
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div class="proof-preview" id="contactSheetPreview" style="display: none;">
+                                <img id="contactSheetThumb" src="" alt="Contact Sheet Preview" class="proof-thumbnail">
+                                <div class="proof-file-info">
+                                    <span class="proof-file-name" id="contactSheetName">-</span>
+                                    <span class="proof-file-size" id="contactSheetSize">-</span>
+                                </div>
+                                <button type="button" class="btn-remove-proof" id="removeContactSheetBtn" title="Remove file">✕</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- SECTION 4: Submission Details -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <span class="step-number">4</span>
+                        Submission Details
                     </h2>
                     
                     <div class="form-group">
@@ -686,6 +782,11 @@
                     <h2 class="section-title">
                         <span class="step-number">4</span>
                         <span class="step-text">Film & Camera Metadata (Optional)</span>
+                <!-- SECTION 5: Film Metadata -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <span class="step-number">5</span>
+                        Film & Camera Metadata (Optional)
                     </h2>
                     <p class="section-hint">📝 Provide details about your film and camera setup. This helps verify authenticity.</p>
 
@@ -737,6 +838,11 @@
                     <h2 class="section-title">
                         <span class="step-number">5</span>
                         <span class="step-text">Verification & Validation</span>
+                <!-- SECTION 6: Verification Status -->
+                <section class="form-section">
+                    <h2 class="section-title">
+                        <span class="step-number">6</span>
+                        Verification & Validation
                     </h2>
 
                     <div class="verification-grid">

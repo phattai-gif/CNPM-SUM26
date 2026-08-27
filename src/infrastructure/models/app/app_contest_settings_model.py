@@ -1,6 +1,6 @@
-﻿"""Contest settings ORM model."""
+"""Contest settings ORM model."""
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Integer, String, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -19,6 +19,8 @@ class ContestSettingsModel(Base):
     scoring_mode = Column(String(50), nullable=False, default="weighted")
     judges_visible = Column(Boolean, nullable=False, default=False)
     announcement_enabled = Column(Boolean, nullable=False, default=True)
+    ai_duplicate_threshold = Column(Float, nullable=False, default=70.0)
+    ai_risk_threshold = Column(Float, nullable=False, default=70.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

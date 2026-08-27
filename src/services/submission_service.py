@@ -802,6 +802,21 @@ class SubmissionService:
             def ai_pipeline_thread(sub_id, hd_url, f_bytes, metadata):
                 from infrastructure.repositories.submission_repository import SubmissionRepository
                 repo = SubmissionRepository()
+                
+                # Fetch settings for thresholds
+                duplicate_threshold = 70.0
+                ai_risk_threshold = 70.0
+                try:
+                    from infrastructure.models.app import SubmissionModel, ContestSettingsModel
+                    sub_for_settings = repo.session.query(SubmissionModel).filter_by(id=sub_id).first()
+                    if sub_for_settings and sub_for_settings.round and sub_for_settings.round.contest:
+                        c_id = sub_for_settings.round.contest.id
+                        c_settings = repo.session.query(ContestSettingsModel).filter_by(contest_id=c_id).first()
+                        if c_settings:
+                            duplicate_threshold = float(c_settings.ai_duplicate_threshold)
+                            ai_risk_threshold = float(c_settings.ai_risk_threshold)
+                except Exception as e:
+                    print(f"Failed to fetch contest settings for AI thresholds: {e}")
 
                 def notify_fraud(risk, f_type):
                     if risk in ["medium", "high"]:
@@ -856,7 +871,9 @@ class SubmissionService:
                         comp_risk = comparison_result.get("risk_level", "safe")
 
                         risk_level = "safe"
-                        if "high" in [base_risk, comp_risk]:
+                        if ai_score >= ai_risk_threshold:
+                            risk_level = "high"
+                        elif "high" in [base_risk, comp_risk]:
                             risk_level = "high"
                         elif "medium" in [base_risk, comp_risk]:
                             risk_level = "medium"
@@ -878,6 +895,9 @@ class SubmissionService:
                                 "exif_data": ai_result.get("exif_data", {}),
                                 "raw_exif": ai_result.get("raw_exif", {}),
                                 "metadata_comparison": comparison_result,
+                                "applied_thresholds": {
+                                    "ai_risk": ai_risk_threshold
+                                }
                             },
                         )
                     except Exception as e:
@@ -905,7 +925,7 @@ class SubmissionService:
                         risk_level = "safe"
                         if is_dup:
                             risk_level = "high"
-                        elif similarity >= 70.0:
+                        elif similarity >= duplicate_threshold:
                             risk_level = "medium"
 
                         saved_flag = repo.save_ai_flag(
@@ -922,7 +942,12 @@ class SubmissionService:
                             ai_flag_id=saved_flag.id,
                             ai_model_name="Duplicate Detection Engine",
                             ai_confidence_score=similarity,
-                            raw_details=dup_result,
+                            raw_details={
+                                **dup_result,
+                                "applied_thresholds": {
+                                    "duplicate": duplicate_threshold
+                                }
+                            },
                             similarity_matched_submission_id=matched_sub_id,
                         )
                     except Exception as e:
