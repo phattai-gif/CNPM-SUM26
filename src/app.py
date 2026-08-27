@@ -1,4 +1,4 @@
-﻿from dotenv import load_dotenv
+from dotenv import load_dotenv
 from pathlib import Path
 from create_app import create_app
 
@@ -227,6 +227,24 @@ def create_app():
         )
 
     # --------------------------------------------------------
+    # PUBLIC GALLERY BLUEPRINT
+    # --------------------------------------------------------
+
+    try:
+        from api.controllers.gallery_controller import (
+            gallery_bp,
+        )
+
+        if gallery_bp.name not in app.blueprints:
+            app.register_blueprint(gallery_bp)
+
+    except Exception as error:
+        print(
+            "Warning: public gallery blueprint registration "
+            f"failed: {error}"
+        )
+
+    # --------------------------------------------------------
     # SHORT REDIRECT ROUTES
     # --------------------------------------------------------
 
@@ -280,6 +298,18 @@ def create_app():
         return render_template(
             "submission.html"
         )
+
+    # --------------------------------------------------------
+    # PUBLIC GALLERY UI
+    # --------------------------------------------------------
+
+    @app.route('/gallery')
+    def public_gallery_page():
+        return render_template("gallery.html")
+
+    @app.route('/gallery/<int:submission_id>')
+    def public_gallery_detail_page(submission_id):
+        return render_template("gallery_detail.html", submission_id=submission_id)
 
     # --------------------------------------------------------
     # LEADERBOARD DEMO
