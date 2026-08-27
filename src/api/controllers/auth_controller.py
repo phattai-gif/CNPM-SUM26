@@ -331,9 +331,8 @@ def register_page():
 
 
 @auth_bp.route('/submit', methods=['GET'])
-@token_required
 def submission_page():
-    """Serve the submission form page for participants"""
+    """Serve the submission form; protected APIs validate the stored JWT."""
     return render_template('submission.html')
 
 
