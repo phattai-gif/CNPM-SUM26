@@ -1,5 +1,4 @@
 from flask import (
-    Blueprint,
     jsonify,
     request,
     redirect,
@@ -34,8 +33,8 @@ from api.controllers.contest_settings_controller import (
     contest_settings_bp,
 )
 from api.controllers.moderator_controller import moderator_bp
-from api.role_required import role_required
 from api.controllers.admin_controller import admin_bp
+from api.controllers.certificate_controller import certificate_bp
 from api.role_required import role_required
 from services.score_service import ScoreService
 
@@ -51,13 +50,15 @@ def register_routes(app):
     app.register_blueprint(submission_bp)
     app.register_blueprint(submission_review_bp)
     app.register_blueprint(contest_bp)
-        # Finalize round API alias
+
+    # Finalize round API alias
     app.add_url_rule(
-            "/rounds/<int:round_id>/finalize",
-            "finalize_round_root",
-            finalize_round,
-            methods=["POST"],
-        )
+        "/rounds/<int:round_id>/finalize",
+        "finalize_round_root",
+        finalize_round,
+        methods=["POST"],
+    )
+
     app.register_blueprint(contest_public_bp)
     app.register_blueprint(judge_bp)
 
@@ -70,6 +71,9 @@ def register_routes(app):
     app.register_blueprint(score_bp)
     app.register_blueprint(moderator_bp)
     app.register_blueprint(admin_bp)
+
+    # FE06.4 - Certificate & Social Sharing
+    app.register_blueprint(certificate_bp)
 
     # ============================================================
     # PUBLIC UI ROUTES
@@ -100,7 +104,9 @@ def register_routes(app):
         app.add_url_rule(
             "/organizer/contest-config",
             "organizer_contest_config_page",
-            role_required("organizer", "admin")(lambda: render_template("create_contest.html")),
+            role_required("organizer", "admin")(
+                lambda: render_template("create_contest.html")
+            ),
         )
     except Exception:
         pass
@@ -121,6 +127,38 @@ def register_routes(app):
             "/login",
             "login",
             lambda: render_template("login.html"),
+        )
+    except Exception:
+        pass
+
+    # Register
+    try:
+        app.add_url_rule(
+            "/register",
+            "register",
+            lambda: render_template("register.html"),
+        )
+    except Exception:
+        pass
+
+    # Legacy explore
+    try:
+        app.add_url_rule(
+            "/explore",
+            "explore",
+            lambda: redirect("/contests"),
+        )
+    except Exception:
+        pass
+
+    # Public contest detail
+    try:
+        app.add_url_rule(
+            "/contest/<int:contest_id>",
+            "public_contest_page",
+            lambda contest_id: render_template(
+                "contest_public_detail.html"
+            ),
         )
     except Exception:
         pass
@@ -171,48 +209,7 @@ def register_routes(app):
             api_get_judge_submission_review_detail,
             methods=["GET"],
         )
-    except Exception:
-        pass
 
-    # Register
-    try:
-        app.add_url_rule(
-            "/register",
-            "register",
-            lambda: render_template("register.html"),
-        )
-    except Exception:
-        pass
-
-    # Legacy explore
-    try:
-        app.add_url_rule(
-            "/explore",
-            "explore",
-            lambda: redirect("/contests"),
-        )
-    except Exception:
-        pass
-
-    # Public contest detail
-    try:
-        app.add_url_rule(
-            "/contest/<int:contest_id>",
-            "public_contest_page",
-            lambda contest_id: render_template(
-                "contest_public_detail.html"
-            ),
-        )
-    except Exception:
-        pass
-
-    # Judge review center page
-    try:
-        app.add_url_rule(
-            "/judge/review",
-            "judge_review_center",
-            lambda: render_template("submission_review.html"),
-        )
     except Exception:
         pass
 
@@ -423,28 +420,40 @@ def register_routes(app):
 
                 rows = (
                     session
-                    .query(SubmissionModel, SubmissionFileModel)
+                    .query(
+                        SubmissionModel,
+                        SubmissionFileModel,
+                    )
                     .join(
                         RoundModel,
                         SubmissionModel.round_id == RoundModel.id,
                     )
                     .outerjoin(
                         SubmissionFileModel,
-                        SubmissionFileModel.submission_id == SubmissionModel.id,
+                        SubmissionFileModel.submission_id
+                        == SubmissionModel.id,
                     )
-                    .filter(RoundModel.contest_id == contest_id)
-                    .filter(SubmissionModel.status != "draft")
-                    .order_by(SubmissionModel.created_at.desc())
+                    .filter(
+                        RoundModel.contest_id == contest_id
+                    )
+                    .filter(
+                        SubmissionModel.status != "draft"
+                    )
+                    .order_by(
+                        SubmissionModel.created_at.desc()
+                    )
                     .all()
                 )
 
                 submissions = []
+
                 for submission, submission_file in rows:
                     image_url = (
                         submission_file.image_hd_url
                         if submission_file
                         else None
                     )
+
                     thumbnail_url = (
                         submission_file.thumbnail_url
                         if submission_file
@@ -455,7 +464,9 @@ def register_routes(app):
                         "id": submission.id,
                         "round_id": submission.round_id,
                         "title": submission.title,
-                        "story_description": submission.story_description,
+                        "story_description": (
+                            submission.story_description
+                        ),
                         "status": submission.status,
                         "final_score": (
                             float(submission.final_score)
@@ -465,7 +476,10 @@ def register_routes(app):
                         "image_hd_url": image_url,
                         "thumbnail_url": thumbnail_url,
                         "product_link": image_url,
-                        "detail_url": f"/my-submissions/{submission.id}",
+                        "detail_url": (
+                            f"/my-submissions/"
+                            f"{submission.id}"
+                        ),
                     })
 
                 return jsonify({
@@ -510,7 +524,6 @@ def register_routes(app):
     # ============================================================
 
     try:
-
         # --------------------------------------------------------
         # ORGANIZER
         # --------------------------------------------------------
@@ -549,6 +562,7 @@ def register_routes(app):
             from infrastructure.databases.factory_database import (
                 FactoryDatabase,
             )
+
             from infrastructure.models.app import (
                 CriteriaModel,
                 JudgeAssignmentModel,
@@ -583,8 +597,10 @@ def register_routes(app):
                     session
                     .query(JudgeAssignmentModel)
                     .filter(
-                        JudgeAssignmentModel.round_id == submission.round_id,
-                        JudgeAssignmentModel.judge_id == user_id,
+                        JudgeAssignmentModel.round_id
+                        == submission.round_id,
+                        JudgeAssignmentModel.judge_id
+                        == user_id,
                     )
                     .all()
                 )
@@ -603,37 +619,60 @@ def register_routes(app):
             submission_file = (
                 session
                 .query(SubmissionFileModel)
-                .filter_by(submission_id=submission.id)
+                .filter_by(
+                    submission_id=submission.id
+                )
                 .first()
             )
+
             film_metadata = (
                 session
                 .query(SubmissionFilmMetadataModel)
-                .filter_by(submission_id=submission.id)
+                .filter_by(
+                    submission_id=submission.id
+                )
                 .first()
             )
+
             criteria_models = (
                 session
                 .query(CriteriaModel)
-                .filter_by(round_id=submission.round_id)
-                .order_by(CriteriaModel.id.asc())
-                .all()
-            )
-            round_submissions = (
-                session
-                .query(SubmissionModel)
-                .filter_by(round_id=submission.round_id)
-                .order_by(SubmissionModel.id.asc())
+                .filter_by(
+                    round_id=submission.round_id
+                )
+                .order_by(
+                    CriteriaModel.id.asc()
+                )
                 .all()
             )
 
-            ordered_ids = [item.id for item in round_submissions]
-            current_index = ordered_ids.index(submission.id)
+            round_submissions = (
+                session
+                .query(SubmissionModel)
+                .filter_by(
+                    round_id=submission.round_id
+                )
+                .order_by(
+                    SubmissionModel.id.asc()
+                )
+                .all()
+            )
+
+            ordered_ids = [
+                item.id
+                for item in round_submissions
+            ]
+
+            current_index = ordered_ids.index(
+                submission.id
+            )
+
             previous_submission_id = (
                 ordered_ids[current_index - 1]
                 if current_index > 0
                 else None
             )
+
             next_submission_id = (
                 ordered_ids[current_index + 1]
                 if current_index < len(ordered_ids) - 1
@@ -693,14 +732,22 @@ def register_routes(app):
                         "id": criteria.id,
                         "name": criteria.name,
                         "description": criteria.description,
-                        "max_score": float(criteria.max_score),
-                        "weight": float(criteria.weight),
+                        "max_score": float(
+                            criteria.max_score
+                        ),
+                        "weight": float(
+                            criteria.weight
+                        ),
                     }
                     for criteria in criteria_models
                 ],
                 "navigation": {
-                    "previous_submission_id": previous_submission_id,
-                    "next_submission_id": next_submission_id,
+                    "previous_submission_id": (
+                        previous_submission_id
+                    ),
+                    "next_submission_id": (
+                        next_submission_id
+                    ),
                 },
             }), 200
 
