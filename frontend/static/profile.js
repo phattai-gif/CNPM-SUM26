@@ -22,9 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
             this.profileAvatarInitial = document.getElementById('profileAvatarInitial');
 
             // DOM Elements - Navbar
-            this.navUserName = document.getElementById('navUserName');
-            this.navUserAvatar = document.getElementById('navUserAvatar');
-            this.logoutBtn = document.getElementById('logoutBtn');
+            this.navUserName = document.getElementById('nav-username') || document.getElementById('navUserName');
+            this.navUserAvatar = document.getElementById('nav-avatar') || document.getElementById('navUserAvatar');
+            this.logoutBtn = document.getElementById('nav-logout') || document.getElementById('logoutBtn');
 
             // DOM Elements - Stats
             this.statTotalPhotos = document.getElementById('statTotalPhotos');
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.AuthSession.logout();
                     } else {
                         localStorage.clear();
-                        window.location.href = '/login';
+                        window.location.href = '/auth/login';
                     }
                 });
             }
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.profileUsername.textContent = '@guest';
             this.profileEmail.textContent = 'Chưa đăng nhập';
             this.profileRolePill.textContent = 'GUEST';
-            this.profileBioText.innerHTML = 'Vui lòng <a href="/login" style="color:var(--accent-amber); font-weight:700;">Đăng Nhập</a> để quản lý hồ sơ và tác phẩm nhiếp ảnh cá nhân.';
+            this.profileBioText.innerHTML = 'Vui lòng <a href="/auth/login" style="color:var(--accent-amber); font-weight:700;">Đăng Nhập</a> để quản lý hồ sơ và tác phẩm nhiếp ảnh cá nhân.';
             this.statTotalPhotos.textContent = '0';
             this.statApprovedPhotos.textContent = '0';
             this.statHighScore.textContent = '--';
@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const data = await window.apiClient.get('/submissions/my-submissions');
+                const data = await window.apiClient.get('/submissions/my');
                 this.submissions = data.submissions || [];
 
                 this.updatePortfolioStats();

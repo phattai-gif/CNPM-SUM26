@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.userNameEl = document.getElementById('userName');
             this.userAvatarEl = document.getElementById('userAvatar');
             this.logoutBtn = document.getElementById('logoutBtn');
+            this.brandHomeLink = document.getElementById('brandHomeLink');
             
             // Stat counters
             this.statTotal = document.getElementById('statTotal');
@@ -44,11 +45,19 @@ document.addEventListener('DOMContentLoaded', () => {
         setupUser() {
             const session = window.AuthSession ? window.AuthSession.getSession() : {};
             const user = session.user || {};
+            const role = String(session.role || user.role || '').toLowerCase();
+            const canManage = role === 'organizer' || role === 'admin';
+
+            if (this.brandHomeLink) {
+                this.brandHomeLink.href = canManage ? '/organizer/dashboard' : '/contests';
+            }
             
-            if (user && (user.username || user.full_name)) {
+            if (this.userNameEl && user && (user.username || user.full_name)) {
                 const displayName = user.full_name || user.username;
                 this.userNameEl.textContent = displayName;
-                this.userAvatarEl.textContent = displayName.charAt(0).toUpperCase();
+                if (this.userAvatarEl) {
+                    this.userAvatarEl.textContent = displayName.charAt(0).toUpperCase();
+                }
             }
 
             if (this.logoutBtn) {
@@ -101,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const data = await window.apiClient.get('/submissions/my-submissions');
+                const data = await window.apiClient.get('/submissions/my');
                 this.submissions = data.submissions || [];
 
                 this.updateStats();

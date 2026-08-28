@@ -14,7 +14,7 @@ from services.contest_service import ContestService
 from services.email_service import email_service
 from urllib.parse import urlencode
 
-PUBLIC_SIGNUP_ROLES = {'participant'}
+PUBLIC_SIGNUP_ROLES = {'participant', 'organizer'}
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 

@@ -2502,27 +2502,39 @@ def submit_draft(
         status: Optional[str] = None,
         ai_flag: Optional[str] = None,
     ) -> Dict[str, Any]:
+        """
+        Return submissions for the current participant.
 
-        rows = (
-            self.submission_repo
-            .get_participant_submissions(
-                user_id=user_id,
-                round_id=round_id,
-                status=status,
-                ai_flag=ai_flag,
-            )
+        This method is consumed by `submission_controller.get_my_submissions`.
+        It always returns a dictionary payload to keep the controller contract
+        stable across legacy/new repository return shapes.
+        """
+
+        rows = self.submission_repo.get_participant_submissions(
+            user_id=user_id,
+            round_id=round_id,
+            status=status,
+            ai_flag=ai_flag,
         )
 
-        submissions = []
+        submissions: List[Dict[str, Any]] = []
 
-        for row in rows:
+        for row in rows or []:
+            sub = None
+            file_obj = None
+            meta_obj = None
+            ai_obj = None
 
-            (
-                sub,
-                file_obj,
-                meta_obj,
-                ai_obj,
-            ) = row
+            if isinstance(row, tuple):
+                sub = row[0] if len(row) > 0 else None
+                file_obj = row[1] if len(row) > 1 else None
+                meta_obj = row[2] if len(row) > 2 else None
+                ai_obj = row[3] if len(row) > 3 else None
+            else:
+                sub = row
+
+            if sub is None:
+                continue
 
             submissions.append(
                 self._format_submission_dict(
@@ -2534,7 +2546,9 @@ def submit_draft(
             )
 
         return {
+            "message": "My submissions retrieved successfully",
             "submissions": submissions,
+            "count": len(submissions),
             "total": len(submissions),
         }
 
