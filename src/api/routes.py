@@ -28,6 +28,7 @@ from api.controllers.contest_controller import (
     finalize_round,
 )
 
+from api.controllers.gallery_controller import gallery_bp
 from api.controllers.judge_controller import judge_bp
 from api.controllers.notification_controller import notification_bp
 from api.controllers.contest_settings_controller import (
@@ -59,6 +60,7 @@ def register_routes(app):
             methods=["POST"],
         )
     app.register_blueprint(contest_public_bp)
+    app.register_blueprint(gallery_bp)
     app.register_blueprint(judge_bp)
 
     # ============================================================
