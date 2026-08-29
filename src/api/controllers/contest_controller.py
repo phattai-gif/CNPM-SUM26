@@ -802,6 +802,65 @@ def update_contest_configuration(contest_id):
 # Finalize Round Scores API (Chá»‘t Ä‘iá»ƒm vÃ²ng thi)
 # -------------------------------------------------------------------------
 
+@contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/winners', methods=['GET'])
+@role_required('organizer', 'admin')
+def get_round_winners(contest_id, round_id):
+    """Return leaderboard candidates for organizer winner approval."""
+    try:
+        data, error = score_service.get_winner_candidates(contest_id, round_id)
+        if error == 'contest_not_found':
+            return jsonify({'success': False, 'message': 'Contest not found'}), 404
+        if error == 'round_not_found':
+            return jsonify({'success': False, 'message': 'Round not found'}), 404
+        if error == 'round_not_in_contest':
+            return jsonify({'success': False, 'message': 'Round does not belong to this contest'}), 400
+        if error:
+            return jsonify({'success': False, 'message': f'Unable to load winner candidates: {error}'}), 400
+
+        return jsonify({**data, 'success': True}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'System error while loading winner candidates', 'error': str(e)}), 500
+
+
+@contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/winners/<int:submission_id>', methods=['PATCH'])
+@role_required('organizer', 'admin')
+def decide_winner(contest_id, round_id, submission_id):
+    """Approve or reject a winner candidate and publish to the archive when approved."""
+    payload = request.get_json(silent=True) or {}
+    decision = str(payload.get('decision', '')).strip().lower()
+    award_title = payload.get('award_title')
+    reason = payload.get('reason')
+
+    try:
+        result, error = score_service.handle_winner_decision(
+            contest_id=contest_id,
+            round_id=round_id,
+            submission_id=submission_id,
+            decision=decision,
+            award_title=award_title,
+            reason=reason,
+        )
+
+        if error == 'invalid_decision':
+            return jsonify({'success': False, 'message': 'Decision must be approve or reject'}), 400
+        if error == 'contest_not_found':
+            return jsonify({'success': False, 'message': 'Contest not found'}), 404
+        if error == 'round_not_found':
+            return jsonify({'success': False, 'message': 'Round not found'}), 404
+        if error == 'round_not_in_contest':
+            return jsonify({'success': False, 'message': 'Round does not belong to this contest'}), 400
+        if error == 'submission_not_found':
+            return jsonify({'success': False, 'message': 'Submission not found'}), 404
+        if error == 'submission_not_in_round':
+            return jsonify({'success': False, 'message': 'Submission does not belong to this round'}), 400
+        if error:
+            return jsonify({'success': False, 'message': f'Unable to update winner status: {error}'}), 400
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'System error while processing winner decision', 'error': str(e)}), 500
+
+
 @contest_bp.route('/rounds/<int:round_id>/finalize', methods=['POST'])
 @contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/finalize', methods=['POST'])
 @role_required('organizer', 'admin')
