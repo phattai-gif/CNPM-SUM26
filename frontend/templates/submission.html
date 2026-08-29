@@ -16,7 +16,7 @@
             </header>
 
             <form id="submissionForm" class="submission-form">
-                <!-- SECTION 1 -->
+                <!-- SECTION 1: Select Competition -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">1</span>
@@ -30,11 +30,11 @@
                             <option value="">-- Select a round --</option>
                         </select>
                         <small class="form-text">📌 Deadline information will appear here</small>
-                        <div id="roundInfo" class="round-info active">🏆 [tata] vongf 1</div>
+                        <div id="roundInfo" class="round-info"></div>
                     </div>
                 </section>
 
-                <!-- SECTION 2 -->
+                <!-- SECTION 2: Upload Main Image -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">2</span>
@@ -71,23 +71,17 @@
                     </div>
                 </section>
 
-                <!-- SECTION 3 -->
+                <!-- SECTION 3: Proof Attachments (Optional) -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">3</span>
-                        <span class="step-text">Submission Details</span>
-                <!-- SECTION 3: Proof Attachments -->
-                <section class="form-section">
-                    <h2 class="section-title">
-                        <span class="step-number">3</span>
-                        Proof Attachments
+                        <span class="step-text">Proof Attachments</span>
                         <span class="proof-optional-badge">Optional</span>
                     </h2>
 
                     <p class="section-hint">🎞️ Upload proof of your analog process. These files help verify authenticity but are not required to submit.</p>
 
                     <div class="proof-attachments-grid">
-
                         <!-- Negative Film -->
                         <div class="proof-attachment-card" id="negativeFilmCard">
                             <div class="proof-card-header">
@@ -98,24 +92,16 @@
                                 </div>
                             </div>
 
-                            <!-- Upload zone (shown when no file selected) -->
                             <div class="proof-upload-zone" id="negativeFilmZone">
                                 <div class="proof-zone-inner">
                                     <span class="proof-zone-icon">⬆</span>
                                     <p class="proof-zone-text">Drag & drop or</p>
                                     <label for="negativeFilmInput" class="btn-upload-proof">Browse</label>
-                                    <input
-                                        type="file"
-                                        id="negativeFilmInput"
-                                        name="negative_film"
-                                        accept=".jpg,.jpeg,.png,.webp"
-                                        style="display: none;"
-                                    >
+                                    <input type="file" id="negativeFilmInput" name="negative_film" accept=".jpg,.jpeg,.png,.webp" style="display: none;">
                                     <p class="proof-zone-hint">JPG, PNG, WEBP · Max 20MB</p>
                                 </div>
                             </div>
 
-                            <!-- Preview (shown after file selected) -->
                             <div class="proof-preview" id="negativeFilmPreview" style="display: none;">
                                 <img id="negativeFilmThumb" src="" alt="Negative Film Preview" class="proof-thumbnail">
                                 <div class="proof-file-info">
@@ -136,24 +122,16 @@
                                 </div>
                             </div>
 
-                            <!-- Upload zone -->
                             <div class="proof-upload-zone" id="contactSheetZone">
                                 <div class="proof-zone-inner">
                                     <span class="proof-zone-icon">⬆</span>
                                     <p class="proof-zone-text">Drag & drop or</p>
                                     <label for="contactSheetInput" class="btn-upload-proof">Browse</label>
-                                    <input
-                                        type="file"
-                                        id="contactSheetInput"
-                                        name="contact_sheet"
-                                        accept=".jpg,.jpeg,.png,.webp"
-                                        style="display: none;"
-                                    >
+                                    <input type="file" id="contactSheetInput" name="contact_sheet" accept=".jpg,.jpeg,.png,.webp" style="display: none;">
                                     <p class="proof-zone-hint">JPG, PNG, WEBP · Max 20MB</p>
                                 </div>
                             </div>
 
-                            <!-- Preview -->
                             <div class="proof-preview" id="contactSheetPreview" style="display: none;">
                                 <img id="contactSheetThumb" src="" alt="Contact Sheet Preview" class="proof-thumbnail">
                                 <div class="proof-file-info">
@@ -163,7 +141,6 @@
                                 <button type="button" class="btn-remove-proof" id="removeContactSheetBtn" title="Remove file">✕</button>
                             </div>
                         </div>
-
                     </div>
                 </section>
 
@@ -171,7 +148,7 @@
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">4</span>
-                        Submission Details
+                        <span class="step-text">Submission Details</span>
                     </h2>
                     
                     <div class="form-group">
@@ -187,27 +164,22 @@
                     </div>
                 </section>
 
-                <!-- SECTION 4 -->
-                <section class="form-section">
-                    <h2 class="section-title">
-                        <span class="step-number">4</span>
-                        <span class="step-text">Film & Camera Metadata (Optional)</span>
-                <!-- SECTION 5: Film Metadata -->
+                <!-- SECTION 5: Film Metadata (Optional) -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">5</span>
-                        Film & Camera Metadata (Optional)
+                        <span class="step-text">Film & Camera Metadata (Optional)</span>
                     </h2>
                     <p class="section-hint">📝 Provide details about your film and camera setup. This helps verify authenticity.</p>
 
                     <div class="metadata-grid">
                         <div class="form-group">
                             <label for="cameraBodies" class="form-label">Camera Body</label>
-                            <input type="text" id="cameraBodies" name="camera_body" class="form-control" placeholder="e.g., Canon EOS 5D Mark IV">
+                            <input type="text" id="cameraBodies" name="camera_body" class="form-control" placeholder="e.g., Leica M6 / Canon AE-1">
                         </div>
                         <div class="form-group">
                             <label for="lensInput" class="form-label">Lens</label>
-                            <input type="text" id="lensInput" name="lens" class="form-control" placeholder="e.g., 50mm f/1.8">
+                            <input type="text" id="lensInput" name="lens" class="form-control" placeholder="e.g., 50mm f/1.4">
                         </div>
                         <div class="form-group">
                             <label for="filmStockInput" class="form-label">Film Stock</label>
@@ -223,12 +195,12 @@
                         </div>
                         <div class="form-group">
                             <label for="scannerInfoInput" class="form-label">Scanner Info</label>
-                            <input type="text" id="scannerInfoInput" name="scanner_info" class="form-control" placeholder="e.g., Epson Perfection V550">
+                            <input type="text" id="scannerInfoInput" name="scanner_info" class="form-control" placeholder="e.g., Fuji Frontier SP3000">
                         </div>
                         <div class="form-group">
                             <label for="developmentProcessSelect" class="form-label">Development Process</label>
                             <select id="developmentProcessSelect" name="development_process" class="form-control">
-                                <option value="">-- Select --</option>
+                                <option value="">-- Select process --</option>
                                 <option value="C-41">C-41 (Color Negative)</option>
                                 <option value="E-6">E-6 (Slide/Transparency)</option>
                                 <option value="B&W">B&W (Black & White)</option>
@@ -238,21 +210,16 @@
                         </div>
                         <div class="form-group">
                             <label for="locationInput" class="form-label">Taken at Location</label>
-                            <input type="text" id="locationInput" name="taken_at_location" class="form-control" placeholder="e.g., Downtown Park, City Name">
+                            <input type="text" id="locationInput" name="taken_at_location" class="form-control" placeholder="e.g., Hanoi, Vietnam">
                         </div>
                     </div>
                 </section>
 
-                <!-- SECTION 5 -->
-                <section class="form-section">
-                    <h2 class="section-title">
-                        <span class="step-number">5</span>
-                        <span class="step-text">Verification & Validation</span>
                 <!-- SECTION 6: Verification Status -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">6</span>
-                        Verification & Validation
+                        <span class="step-text">Verification & Validation</span>
                     </h2>
 
                     <div class="verification-grid">
@@ -269,7 +236,7 @@
                     <div class="form-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="agreeTerms" name="agree_terms" required>
-                            ✅ I confirm that this photograph is my original work and I have the rights to submit it
+                            <span>I confirm that this photograph is my original work and I have full rights to submit it</span>
                         </label>
                     </div>
                 </section>
