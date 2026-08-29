@@ -6,156 +6,213 @@
     <title>Kết quả cuộc thi - Leaderboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background: #080c14 !important;
-            padding: 24px;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-            color: #e8edf2 !important;
-            min-height: 100vh;
-        }
+      /* Reuse dashboard/admin styles to match bài 97 */
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #080c14;
+        color: #e8edf2;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+      .page-shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 48px 20px;
+      }
 
-        h1 {
-            color: #f0f4f8 !important;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        background: #f5a623;
+        color: #080c14;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
 
-        .text-muted {
-            color: #8899aa !important;
-        }
+      .btn-outline {
+        background: transparent;
+        color: #99abb8;
+        border: 1px solid #1e2a3a;
+      }
 
-        /* ===== WINNERS SECTION ===== */
-        .winners {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
+      .btn-outline:hover {
+        background: rgba(245, 166, 35, 0.08);
+        color: #f5a623;
+        border-color: #f5a623;
+      }
 
-        .winner {
-            background: #111a26 !important;
-            border: 1px solid #1e2a3a !important;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            flex: 1;
-            min-width: 200px;
-        }
+      h1 { color: #f0f4f8; font-weight: 700; margin-bottom: 8px; }
+      .text-muted { color: #8899aa; }
 
-        .rank-badge {
-            width: 36px;
-            height: 36px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-        .rank-1 { background: #f5a623 !important; color: #080c14 !important; }
-        .rank-2 { background: #9ca3af !important; color: #080c14 !important; }
-        .rank-3 { background: #cd7f32 !important; color: #fff !important; }
+      /* Winners and leaderboard visuals updated to match admin theme */
+      .winners { display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+      .winner { background:#111a26; border:1px solid #1e2a3a; border-radius:12px; padding:16px; box-shadow:0 4px 16px rgba(0,0,0,0.3); flex:1; min-width:200px; }
+      .rank-badge { width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; font-weight:700; flex-shrink:0; }
+      .rank-1 { background:#f5a623; color:#080c14; } .rank-2 { background:#9ca3af; color:#080c14; } .rank-3 { background:#cd7f32; color:#fff; }
 
-        /* ===== LEADERBOARD TABLE ===== */
-        .leaderboard {
-            background: #111a26 !important;
-            border: 1px solid #1e2a3a !important;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
+      .leaderboard { background:#111a26; border:1px solid #1e2a3a; padding:20px; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.3); }
+      .leaderboard h3 { color:#f0f4f8; font-weight:600; margin:0 0 16px; }
 
-        .leaderboard h3 {
-            color: #f0f4f8 !important;
-            font-weight: 600;
-            margin: 0 0 16px;
-        }
-
-        .table {
-            border-collapse: collapse;
-            background: #111a26 !important;
-            width: 100%;
-            margin-bottom: 0;
-        }
-
-        .table thead th {
-            background: #0d1622 !important;
-            color: #f5a623 !important;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            border-bottom: 2px solid #1e2a3a !important;
-            padding: 14px 16px !important;
-        }
-
-        .table tbody tr {
-            background: #111a26 !important;
-            border-bottom: 1px solid #1e2a3a !important;
-        }
-
-        /* Ép toàn bộ chữ trong bảng hiển thị màu trắng sáng rõ nét */
-        .table tbody td {
-            color: #f0f4f8 !important;
-            padding: 14px 16px !important;
-            background: transparent !important;
-        }
-
-        .table tbody td:first-child {
-            font-weight: 700;
-            color: #f5a623 !important;
-        }
-
-        .text-end {
-            text-align: right;
-        }
+      table { width:100%; border-collapse:collapse; background:transparent; }
+      thead th { background:#0d1622; color:#99abb8; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; padding:14px 16px; border-bottom:1px solid #1e2a3a; }
+      tbody tr { border-bottom:1px solid #1e2a3a; }
+      tbody td { color:#e8edf2; padding:14px 16px; }
+      tbody td:first-child { color:#f5a623; font-weight:700; }
+      .text-end { text-align:right; }
     </style>
 </head>
 <body>
     {% include '_nav.html' %}
-    <div class="container">
+    <div class="page-shell">
         <h1 class="mb-3">Kết quả cuộc thi</h1>
         <p class="text-muted">Bảng xếp hạng cuối cùng và các tác phẩm đạt giải.</p>
 
         <section class="leaderboard">
             <h3>Leaderboard</h3>
-            <div class="table-responsive">
-                <table class="table">
+
+            <div style="display:flex; gap:18px; margin-bottom:16px; align-items:center; justify-content:space-between;">
+                <div>
+                    <label for="round-id-input" class="text-muted">Round ID:</label>
+                    <input id="round-id-input" type="number" style="padding:6px 8px; border-radius:6px; border:1px solid #243241; background:#081018; color:#e8edf2;" />
+                    <button id="load-leaderboard-btn" class="btn" style="margin-left:8px;">Tải bảng xếp hạng</button>
+                </div>
+                <div>
+                    <button id="show-exhibits-btn" class="btn btn-outline">Xem Gallery đã xuất bản</button>
+                </div>
+            </div>
+
+            <div id="winners-section" class="winners" aria-live="polite">
+                <!-- Winners will be rendered here -->
+            </div>
+
+            <div id="leaderboard-table-wrap" class="table-responsive leaderboard">
+                <table id="leaderboard-table" class="table">
                     <thead>
                         <tr>
                             <th>Hạng</th>
                             <th>Tác giả</th>
                             <th>Tên bài</th>
                             <th class="text-end">Tổng điểm</th>
+                            <th>Hành động</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>Nguyễn Thị C</td>
-                            <td>Hoàng hôn trên sông</td>
-                            <td class="text-end">97</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Trần Văn D</td>
-                            <td>Bến cảng sớm mai</td>
-                            <td class="text-end">92</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>Lê Văn E</td>
-                            <td>Mưa rơi phố nhỏ</td>
-                            <td class="text-end">89</td>
-                        </tr>
+                    <tbody id="leaderboard-body">
+                        <tr><td colspan="5" class="empty-state">Chưa có dữ liệu. Vui lòng nhập `round_id` và bấm "Tải bảng xếp hạng".</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
     </div>
 </body>
+    <script src="/static/api_client.js"></script>
+    <script>
+        function escapeHtml(s){return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");}
+
+        async function fetchLeaderboard(roundId){
+            if(!roundId) throw new Error('roundId required');
+            return await window.apiClient.get(`/organizer/rounds/${encodeURIComponent(roundId)}/leaderboard`);
+        }
+
+        function renderWinners(leaderboard){
+            const container = document.getElementById('winners-section');
+            container.innerHTML = '';
+            const top = (leaderboard || []).slice(0,3);
+            if(!top.length){ container.innerHTML = '<p class="empty-state">Không có người thắng.</p>'; return; }
+            top.forEach((item, idx)=>{
+                const rank = item.rank || (idx+1);
+                const div = document.createElement('div'); div.className='winner';
+                div.innerHTML = `
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <div class="rank-badge rank-${rank}">${rank}</div>
+                        <div>
+                            <div style="font-weight:700; font-size:1rem;">#${escapeHtml(item.submission_id)} - ${escapeHtml(item.title||item.submission_title||'Untitled')}</div>
+                            <div class="muted">Tác giả: ${escapeHtml(item.author||item.user_id||'-')} | Điểm: ${escapeHtml(item.final_score||item.total_score||'-')}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-success btn-sm approve-winner" data-id="${escapeHtml(item.submission_id)}">Approve</button>
+                        <button class="btn btn-danger btn-sm reject-winner" data-id="${escapeHtml(item.submission_id)}">Reject</button>
+                        <button class="btn btn-outline btn-sm publish-winner" data-id="${escapeHtml(item.submission_id)}">Publish to Gallery</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            // attach handlers
+            container.querySelectorAll('.approve-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
+                const id = ev.target.dataset.id;
+                try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/approve-winner`); alert('Approved'); }catch(e){ alert(e.message||e); }
+            }));
+
+            container.querySelectorAll('.reject-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
+                const id = ev.target.dataset.id;
+                try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/reject-winner`); alert('Rejected'); }catch(e){ alert(e.message||e); }
+            }));
+
+            container.querySelectorAll('.publish-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
+                const id = ev.target.dataset.id;
+                try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/publish`); alert('Published to gallery'); }catch(e){ alert(e.message||e); }
+            }));
+        }
+
+        function renderLeaderboardTable(leaderboard){
+            const body = document.getElementById('leaderboard-body');
+            if(!leaderboard || !leaderboard.length){ body.innerHTML = '<tr><td colspan="5" class="empty-state">Không có dữ liệu.</td></tr>'; return; }
+            body.innerHTML = leaderboard.map(item=>{
+                const title = escapeHtml(item.title||item.submission_title||'Untitled');
+                const author = escapeHtml(item.author||item.user_id||'-');
+                const score = escapeHtml(item.final_score||item.total_score||'-');
+                return `<tr>
+                    <td>${escapeHtml(item.rank)}</td>
+                    <td>${author}</td>
+                    <td>${title}</td>
+                    <td class="text-end">${score}</td>
+                    <td>
+                        <button class="btn btn-success btn-sm approve-row" data-id="${escapeHtml(item.submission_id)}">Approve</button>
+                        <button class="btn btn-danger btn-sm reject-row" data-id="${escapeHtml(item.submission_id)}">Reject</button>
+                        <button class="btn btn-outline btn-sm publish-row" data-id="${escapeHtml(item.submission_id)}">Publish</button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            // attach handlers
+            document.querySelectorAll('.approve-row').forEach(b=>b.addEventListener('click', async (ev)=>{ const id=ev.target.dataset.id; try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/approve-winner`); alert('Approved'); }catch(e){ alert(e.message||e); }}));
+            document.querySelectorAll('.reject-row').forEach(b=>b.addEventListener('click', async (ev)=>{ const id=ev.target.dataset.id; try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/reject-winner`); alert('Rejected'); }catch(e){ alert(e.message||e); }}));
+            document.querySelectorAll('.publish-row').forEach(b=>b.addEventListener('click', async (ev)=>{ const id=ev.target.dataset.id; try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/publish`); alert('Published'); }catch(e){ alert(e.message||e); }}));
+        }
+
+        async function loadAndRender(){
+            const roundId = document.getElementById('round-id-input').value || new URLSearchParams(window.location.search).get('round_id');
+            if(!roundId){ alert('Vui lòng nhập round_id'); return; }
+            try{
+                const data = await fetchLeaderboard(roundId);
+                const leaderboard = data && data.leaderboard ? data.leaderboard : (data.results || []);
+                renderWinners(leaderboard);
+                renderLeaderboardTable(leaderboard);
+            }catch(e){
+                alert(e.message||e);
+            }
+        }
+
+        document.getElementById('load-leaderboard-btn').addEventListener('click', loadAndRender);
+        document.getElementById('show-exhibits-btn').addEventListener('click', async ()=>{
+            try{
+                const resp = await window.apiClient.get('/organizer/exhibits');
+                const list = resp.exhibits || [];
+                const html = list.map(e=>`<div class="winner" style="display:block;">Exhibit #${e.id} - submission ${e.submission_id} (published ${e.published_at || ''})</div>`).join('');
+                const container = document.getElementById('winners-section');
+                container.innerHTML = html || '<p class="empty-state">Chưa có gallery nào được xuất bản.</p>';
+            }catch(e){ alert(e.message||e); }
+        });
+
+        // auto-load if round_id present in URL
+        (function(){ const qs = new URLSearchParams(window.location.search); const r = qs.get('round_id'); if(r){ document.getElementById('round-id-input').value = r; loadAndRender(); }})();
+    </script>
 </html>
