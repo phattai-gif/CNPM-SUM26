@@ -28,6 +28,7 @@ from .app_audit_log_model import AuditLogModel
 from .app_contest_settings_model import ContestSettingsModel
 from .app_notification_model import NotificationModel
 from .app_submission_review_model import SubmissionReviewModel
+from .app_vote_model import VoteModel
 
 __all__ = [
     "UserModel",
@@ -53,4 +54,5 @@ __all__ = [
     "ContestSettingsModel",
     "NotificationModel",
     "SubmissionReviewModel",
+    "VoteModel",
 ]
