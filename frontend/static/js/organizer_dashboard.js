@@ -146,8 +146,10 @@ function renderContests(contests) {
 
 function renderMetrics(metrics) {
   if (!metrics) return;
+  const contests = document.getElementById('overview-contests');
   const subs = document.getElementById('overview-submissions');
   const judges = document.getElementById('overview-judges');
+  if (contests) contests.textContent = (metrics.contests ?? metrics.total_contests ?? dashboardState.contests.length ?? '-');
   if (subs) subs.textContent = (metrics.submissions ?? metrics.submissions_count ?? '-');
   if (judges) judges.textContent = (metrics.judges ?? metrics.judges_count ?? '-');
 }

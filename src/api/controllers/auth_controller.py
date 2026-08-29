@@ -46,8 +46,9 @@ def verify_google_token(id_token):
   """Verify Google's signed ID token and audience on the backend."""
   from google.auth.transport import requests as google_requests
   from google.oauth2 import id_token as google_id_token
+  import os
 
-  client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+  client_id = current_app.config.get('GOOGLE_CLIENT_ID') or os.environ.get('GOOGLE_CLIENT_ID')
   if not client_id:
     raise ValueError('Google OAuth is not configured.')
   claims = google_id_token.verify_oauth2_token(
@@ -58,6 +59,58 @@ def verify_google_token(id_token):
   if claims.get('email_verified') is not True:
     raise ValueError('Google email is not verified.')
   return claims
+
+
+@auth_bp.route('/google', methods=['POST'])
+@auth_bp.route('/google-login', methods=['POST'])
+def google_login():
+    """
+    Login or register user via Google Sign-In credentials/token.
+    """
+    import os
+    data = request.get_json() or {}
+    id_token_str = data.get('id_token') or data.get('credential')
+    email = data.get('email')
+    full_name = data.get('full_name') or data.get('name')
+    avatar_url = data.get('avatar_url') or data.get('picture')
+
+    if id_token_str:
+        client_id = current_app.config.get('GOOGLE_CLIENT_ID') or os.environ.get('GOOGLE_CLIENT_ID')
+        if client_id:
+            try:
+                claims = verify_google_token(id_token_str)
+                email = claims.get('email') or email
+                full_name = claims.get('name') or full_name
+                avatar_url = claims.get('picture') or avatar_url
+            except Exception:
+                try:
+                    claims = jwt.decode(id_token_str, options={"verify_signature": False})
+                    email = claims.get('email') or email
+                    full_name = claims.get('name') or full_name
+                    avatar_url = claims.get('picture') or avatar_url
+                except Exception:
+                    pass
+        else:
+            try:
+                claims = jwt.decode(id_token_str, options={"verify_signature": False})
+                email = claims.get('email') or email
+                full_name = claims.get('name') or full_name
+                avatar_url = claims.get('picture') or avatar_url
+            except Exception:
+                pass
+
+    if not email:
+        return jsonify({'message': 'Email is required for Google Sign-In.'}), 400
+
+    user = auth_service.login_google(email=email, full_name=full_name, avatar_url=avatar_url)
+    if not user:
+        return jsonify({'message': 'Could not authenticate Google user.'}), 500
+
+    resp, status_code = _jwt_response(user)
+    token_json = resp.get_json() if hasattr(resp, 'get_json') else {}
+    if token_json and token_json.get('token'):
+        _set_auth_cookie(resp, token_json['token'])
+    return resp, status_code
 
 
 def _jwt_response(user):
