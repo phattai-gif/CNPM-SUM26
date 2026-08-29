@@ -4,7 +4,7 @@ import weakref
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import NullPool, StaticPool
 
 
 class AbstractDatabase(ABC):
@@ -29,6 +29,9 @@ class AbstractDatabase(ABC):
                     "poolclass": StaticPool,
                 }
             )
+        elif "pooler.supabase.com" in self.database_uri:
+            # Supabase session poolers have a small connection limit.
+            engine_options.update({"poolclass": NullPool})
         else:
             engine_options.update(
                 {

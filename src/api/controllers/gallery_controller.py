@@ -49,7 +49,7 @@ def get_public_gallery():
         if limit < 1 or limit > 100:
             limit = 12
 
-        # Base query for public submissions (not draft)
+        # Public gallery is restricted to winner-approved submissions only.
         query = (
             session.query(
                 SubmissionModel,
@@ -63,7 +63,7 @@ def get_public_gallery():
             .join(UserModel, SubmissionModel.user_id == UserModel.id)
             .outerjoin(SubmissionFileModel, SubmissionFileModel.submission_id == SubmissionModel.id)
             .outerjoin(SubmissionFilmMetadataModel, SubmissionFilmMetadataModel.submission_id == SubmissionModel.id)
-            .filter(SubmissionModel.status != 'draft')
+            .filter(SubmissionModel.status == 'winner')
         )
 
         # Filters
@@ -176,7 +176,7 @@ def get_gallery_filters():
         film_stocks_rows = (
             session.query(distinct(SubmissionFilmMetadataModel.film_stock))
             .join(SubmissionModel, SubmissionFilmMetadataModel.submission_id == SubmissionModel.id)
-            .filter(SubmissionModel.status != 'draft')
+            .filter(SubmissionModel.status == 'winner')
             .filter(SubmissionFilmMetadataModel.film_stock.isnot(None))
             .filter(SubmissionFilmMetadataModel.film_stock != '')
             .all()
@@ -187,7 +187,7 @@ def get_gallery_filters():
         cameras_rows = (
             session.query(distinct(SubmissionFilmMetadataModel.camera_body))
             .join(SubmissionModel, SubmissionFilmMetadataModel.submission_id == SubmissionModel.id)
-            .filter(SubmissionModel.status != 'draft')
+            .filter(SubmissionModel.status == 'winner')
             .filter(SubmissionFilmMetadataModel.camera_body.isnot(None))
             .filter(SubmissionFilmMetadataModel.camera_body != '')
             .all()
@@ -199,7 +199,7 @@ def get_gallery_filters():
             session.query(distinct(ContestModel.id), ContestModel.title)
             .join(RoundModel, RoundModel.contest_id == ContestModel.id)
             .join(SubmissionModel, SubmissionModel.round_id == RoundModel.id)
-            .filter(SubmissionModel.status != 'draft')
+            .filter(SubmissionModel.status == 'winner')
             .all()
         )
         contests = [{"id": r[0], "title": r[1]} for r in contests_rows]
@@ -208,7 +208,7 @@ def get_gallery_filters():
         # Years
         years_rows = (
             session.query(distinct(extract('year', SubmissionModel.created_at)))
-            .filter(SubmissionModel.status != 'draft')
+            .filter(SubmissionModel.status == 'winner')
             .all()
         )
         years = sorted([int(r[0]) for r in years_rows if r[0] is not None], reverse=True)
@@ -255,7 +255,7 @@ def get_public_submission_detail(submission_id):
             .outerjoin(SubmissionFileModel, SubmissionFileModel.submission_id == SubmissionModel.id)
             .outerjoin(SubmissionFilmMetadataModel, SubmissionFilmMetadataModel.submission_id == SubmissionModel.id)
             .filter(SubmissionModel.id == submission_id)
-            .filter(SubmissionModel.status != 'draft')
+            .filter(SubmissionModel.status == 'winner')
             .first()
         )
 
