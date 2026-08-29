@@ -15,18 +15,25 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1200px; /* constrain overall page width to match other pages */
             margin: 0 auto;
             padding: 24px 20px 60px;
         }
 
+        /* make submission card centered and limited so highlighted yellow blocks don't overflow */
         .submission-wrapper {
+            max-width: 980px;
+            margin: 0 auto;
             background: #111a26;
             border: 1px solid #1e2a3a;
             border-radius: 24px;
             padding: 32px 36px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            box-sizing: border-box;
         }
+
+        /* (moved above) */
 
         .submission-header {
             text-align: center;
@@ -72,6 +79,8 @@
             padding: 12px 18px;
             border-radius: 12px;
             border: 2px solid #e0960a;
+            box-sizing: border-box;
+            max-width: 100%;
         }
 
         .section-title .step-number {
@@ -103,6 +112,8 @@
             border-radius: 6px;
             margin-bottom: 6px;
             font-size: 1rem;
+            box-sizing: border-box;
+            max-width: 100%;
         }
 
         .required {
@@ -120,6 +131,8 @@
             background: #f5a623 !important;
             padding: 4px 10px;
             border-radius: 6px;
+            box-sizing: border-box;
+            max-width: 100%;
         }
 
         .round-info {
@@ -145,6 +158,8 @@
             border-radius: 10px;
             border-left: 3px solid #e0960a;
             font-weight: 700;
+            box-sizing: border-box;
+            max-width: 100%;
         }
 
         .form-control {
@@ -274,6 +289,9 @@
             background: #f5a623 !important;
             transition: all 0.3s ease;
             cursor: pointer;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
         }
         .drag-drop-zone:hover {
             background: #e0960a !important;
@@ -329,6 +347,7 @@
             border-radius: 12px;
             padding: 16px;
             margin-top: 12px;
+            box-sizing: border-box;
         }
 
         .preview-container {
@@ -544,6 +563,8 @@
         @media (max-width: 768px) {
             .submission-wrapper {
                 padding: 20px 16px;
+                max-width: 100%;
+                margin: 0 12px;
             }
             .metadata-grid {
                 grid-template-columns: 1fr;
