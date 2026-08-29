@@ -40,34 +40,42 @@ from sqlalchemy import text
 
 engine = db_factory.get_database("POSTGREE").engine
 
-# Tắt FK enforcement để SQLite cho phép insert test data
+# Tắt FK enforcement cho SQLite nếu cần
 with engine.connect() as conn:
-    conn.execute(text("PRAGMA foreign_keys = OFF"))
-    conn.commit()
+    if engine.dialect.name == 'sqlite':
+        conn.execute(text("PRAGMA foreign_keys = OFF"))
+        conn.commit()
 
-# Xoá bảng ai_flags nếu tồn tại (để tái tạo với INTEGER PK phù hợp SQLite)
+# Xoá bảng ai_flags nếu tồn tại
 with engine.connect() as conn:
     conn.execute(text("DROP TABLE IF EXISTS ai_flags"))
     conn.commit()
 
-# Base.metadata.create_all(engine)
-
-
-# Tạo lại bảng ai_flags với INTEGER PRIMARY KEY (SQLite autoincrement)
+# Tạo lại bảng ai_flags phù hợp với dialect
 with engine.connect() as conn:
-    conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS ai_flags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            submission_id INTEGER NOT NULL,
-            flag_type VARCHAR(50) NOT NULL,
-            confidence_score NUMERIC(5, 2) NOT NULL,
-            risk_level VARCHAR(20) NOT NULL DEFAULT 'medium',
-            status VARCHAR(20) NOT NULL DEFAULT 'pending',
-            reviewed_by INTEGER,
-            reviewed_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """))
+    if engine.dialect.name == 'sqlite':
+        create_sql = """
+            CREATE TABLE IF NOT EXISTS ai_flags (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                submission_id INTEGER,
+                ai_probability REAL,
+                status VARCHAR(50),
+                flagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                details TEXT
+            )
+        """
+    else:
+        create_sql = """
+            CREATE TABLE IF NOT EXISTS ai_flags (
+                id SERIAL PRIMARY KEY,
+                submission_id INTEGER,
+                ai_probability DOUBLE PRECISION,
+                status VARCHAR(50),
+                flagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                details TEXT
+            )
+        """
+    conn.execute(text(create_sql))
     conn.commit()
 
 

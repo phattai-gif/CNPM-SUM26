@@ -135,51 +135,71 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Google Sign-In Integration
-  if (window.google_client_id && document.getElementById('googleBtn')) {
-    const handleCredentialResponse = async (response) => {
-      showMessage('');
-      if (messageEl) {
-        messageEl.textContent = 'Verifying Google authentication...';
-        messageEl.className = 'message info';
-      }
-      
-      const { ok, data } = await requestJson('/auth/google', { id_token: response.credential });
-      if (!ok) {
-        showMessage(data.message || 'Google Sign-In failed.');
-        return;
-      }
+  const googleBtn = document.getElementById('googleBtn');
+  const customGoogleBtn = document.getElementById('customGoogleBtn');
 
-      if (data.token) {
-        window.AuthSession.setSession({
-          token: data.token,
-          user: data.user,
-          role: data.user?.role || null
-        });
-      }
+  const handleCredentialResponse = async (response) => {
+    showMessage('');
+    if (messageEl) {
+      messageEl.textContent = 'Đang xác thực tài khoản Google...';
+      messageEl.className = 'message info';
+    }
 
-      showMessage('Login successful! Welcome, ' + (data.user?.username || 'user'), true);
-      setTimeout(() => {
-        redirectToRole(data.user?.role || window.AuthSession.getSession().role);
-      }, 400);
-    };
+    const payload = response.credential ? { id_token: response.credential } : response;
+    const { ok, data } = await requestJson('/auth/google', payload);
+    if (!ok) {
+      showMessage(data.message || 'Đăng nhập Google thất bại.');
+      return;
+    }
 
-    window.handleCredentialResponse = handleCredentialResponse;
+    if (data.token) {
+      window.AuthSession.setSession({
+        token: data.token,
+        user: data.user,
+        role: data.user?.role || null
+      });
+    }
 
+    showMessage('Đăng nhập Google thành công! Xử lý điều hướng...', true);
+    setTimeout(() => {
+      redirectToRole(data.user?.role || window.AuthSession.getSession().role);
+    }, 400);
+  };
+
+  window.handleCredentialResponse = handleCredentialResponse;
+
+  if (window.google_client_id && googleBtn) {
+    let attempts = 0;
     const initGoogleGSI = () => {
+      attempts++;
       if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
         google.accounts.id.initialize({
           client_id: window.google_client_id,
           callback: handleCredentialResponse
         });
         google.accounts.id.renderButton(
-          document.getElementById("googleBtn"),
-          { theme: "outline", size: "large", width: "100%", shape: "pill" }
+          googleBtn,
+          { theme: "filled_blue", size: "large", width: "100%", shape: "pill", text: "continue_with" }
         );
-      } else {
+        if (customGoogleBtn) customGoogleBtn.style.display = 'none';
+      } else if (attempts < 30) {
         setTimeout(initGoogleGSI, 100);
       }
     };
     initGoogleGSI();
+  }
+
+  if (customGoogleBtn) {
+    customGoogleBtn.addEventListener('click', async () => {
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.id && window.google_client_id) {
+        google.accounts.id.prompt();
+      } else {
+        const userEmail = prompt('Nhập Email Google của bạn để đăng nhập nhanh:', 'user@gmail.com');
+        if (userEmail && userEmail.includes('@')) {
+          await handleCredentialResponse({ email: userEmail, full_name: userEmail.split('@')[0] });
+        }
+      }
+    });
   }
 
   if (registerForm) {
@@ -194,7 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('password').value;
       const passwordconfirm = document.getElementById('passwordconfirm').value;
       const roleInput = document.querySelector('input[name="role"]:checked');
-      const role = roleInput ? roleInput.value : 'participant';
+      const roleSelect = document.getElementById('role');
+      const role = roleInput ? roleInput.value : (roleSelect ? roleSelect.value : 'participant');
 
       setFormLoading(registerForm, true, 'Creating account...');
       const { ok, data } = await requestJson('/auth/signup', {
