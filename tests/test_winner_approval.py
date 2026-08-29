@@ -185,3 +185,25 @@ def test_organizer_can_approve_and_reject_winner(client, organizer_contest_data)
     updated_submission = db.session.query(SubmissionModel).filter_by(id=first_place.id).first()
     assert updated_submission.status == "rejected"
     assert db.session.query(DigitalArchiveExhibitModel).filter_by(submission_id=first_place.id).count() == 0
+
+
+def test_public_gallery_shows_only_approved_winners(client, organizer_contest_data):
+    contest = organizer_contest_data["contest"]
+    round_obj = organizer_contest_data["round"]
+    first_place_id = organizer_contest_data["first_place"].id
+    second_place_id = organizer_contest_data["second_place"].id
+    token = create_jwt_token(organizer_contest_data["organizer"].id, username="organizer_user", role="organizer")
+
+    client.patch(
+        f"/organizer/contests/{contest.id}/rounds/{round_obj.id}/winners/{first_place_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"decision": "approve", "award_title": "First Prize"},
+    )
+
+    public_response = client.get("/api/gallery?page=1&limit=10")
+    assert public_response.status_code == 200
+
+    gallery_payload = public_response.get_json()
+    public_ids = [item["id"] for item in gallery_payload.get("submissions", [])]
+    assert first_place_id in public_ids
+    assert second_place_id not in public_ids
