@@ -397,6 +397,33 @@ class ScoreService:
                 "total_score": item["total_score"],
             })
 
+        # Enrich leaderboard entries with a representative image URL (thumbnail if available)
+        try:
+            from infrastructure.models.app import SubmissionFileModel as _SFile
+            session = getattr(self.submission_repo, "session", None)
+
+            for entry in leaderboard:
+                entry_image = None
+                try:
+                    if session is not None:
+                        file_row = (
+                            session
+                            .query(_SFile)
+                            .filter_by(submission_id=entry.get("submission_id"))
+                            .order_by(_SFile.id.asc())
+                            .first()
+                        )
+                        if file_row is not None:
+                            # prefer thumbnail when available
+                            entry_image = getattr(file_row, "thumbnail_url", None) or getattr(file_row, "image_hd_url", None)
+                except Exception:
+                    entry_image = None
+
+                entry["image_url"] = entry_image
+        except Exception:
+            # best-effort only; do not fail leaderboard if enrichment fails
+            pass
+
         return {
             "message": "Round finalized successfully",
             "round_id": round_id,

@@ -102,6 +102,64 @@ submission_service = SubmissionService(
     submission_repo=submission_repo,
 )
 
+
+def _service_get_my_submissions_fallback(
+    user_id,
+    round_id=None,
+    status=None,
+    ai_flag=None,
+):
+    rows = submission_repo.get_participant_submissions(
+        user_id=user_id,
+        round_id=round_id,
+        status=status,
+        ai_flag=ai_flag,
+    )
+
+    fallback_items = []
+    for row in rows or []:
+        sub = row[0] if isinstance(row, tuple) and len(row) > 0 else row
+        file_obj = row[1] if isinstance(row, tuple) and len(row) > 1 else None
+        meta_obj = row[2] if isinstance(row, tuple) and len(row) > 2 else None
+        ai_obj = row[3] if isinstance(row, tuple) and len(row) > 3 else None
+
+        if sub is None:
+            continue
+
+        if hasattr(submission_service, "_format_submission_dict"):
+            fallback_items.append(
+                submission_service._format_submission_dict(
+                    sub,
+                    file_obj,
+                    meta_obj,
+                    ai_obj,
+                )
+            )
+        else:
+            fallback_items.append(
+                _serialize_submission_detail(
+                    sub,
+                    files=file_obj,
+                    film_metadata=meta_obj,
+                )
+            )
+
+    return {
+        "message": "My submissions retrieved successfully",
+        "submissions": fallback_items,
+        "count": len(fallback_items),
+        "total": len(fallback_items),
+    }
+
+
+# Safety net: if runtime class version lacks this method, attach fallback.
+if not hasattr(submission_service, "get_my_submissions"):
+    setattr(
+        submission_service,
+        "get_my_submissions",
+        _service_get_my_submissions_fallback,
+    )
+
 score_service = ScoreService()
 
 
@@ -1287,12 +1345,63 @@ def get_my_submissions():
         ), 400
 
     try:
-        data = submission_service.get_my_submissions(
-            user_id=user_id,
-            round_id=round_id,
-            status=status,
-            ai_flag=ai_flag,
+        get_my_submissions_fn = getattr(
+            submission_service,
+            "get_my_submissions",
+            None,
         )
+
+        if callable(get_my_submissions_fn):
+            data = get_my_submissions_fn(
+                user_id=user_id,
+                round_id=round_id,
+                status=status,
+                ai_flag=ai_flag,
+            )
+        else:
+            # Safety fallback for stale runtime instances that were created
+            # before SubmissionService had get_my_submissions.
+            rows = submission_repo.get_participant_submissions(
+                user_id=user_id,
+                round_id=round_id,
+                status=status,
+                ai_flag=ai_flag,
+            )
+
+            fallback_items = []
+            for row in rows or []:
+                sub = row[0] if isinstance(row, tuple) and len(row) > 0 else row
+                file_obj = row[1] if isinstance(row, tuple) and len(row) > 1 else None
+                meta_obj = row[2] if isinstance(row, tuple) and len(row) > 2 else None
+                ai_obj = row[3] if isinstance(row, tuple) and len(row) > 3 else None
+
+                if sub is None:
+                    continue
+
+                if hasattr(submission_service, "_format_submission_dict"):
+                    fallback_items.append(
+                        submission_service._format_submission_dict(
+                            sub,
+                            file_obj,
+                            meta_obj,
+                            ai_obj,
+                        )
+                    )
+                else:
+                    fallback_items.append(
+                        _serialize_submission_detail(
+                            sub,
+                            files=file_obj,
+                            film_metadata=meta_obj,
+                        )
+                    )
+
+            data = {
+                "message": "My submissions retrieved successfully",
+                "submissions": fallback_items,
+                "count": len(fallback_items),
+                "total": len(fallback_items),
+            }
 
         if isinstance(data, dict):
             return jsonify(data), 200
