@@ -22,9 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
             this.profileAvatarInitial = document.getElementById('profileAvatarInitial');
 
             // DOM Elements - Navbar
-            this.navUserName = document.getElementById('navUserName');
-            this.navUserAvatar = document.getElementById('navUserAvatar');
-            this.logoutBtn = document.getElementById('logoutBtn');
+            this.navUserName = document.getElementById('nav-username') || document.getElementById('navUserName');
+            this.navUserAvatar = document.getElementById('nav-avatar') || document.getElementById('navUserAvatar');
+            this.logoutBtn = document.getElementById('nav-logout') || document.getElementById('logoutBtn');
 
             // DOM Elements - Stats
             this.statTotalPhotos = document.getElementById('statTotalPhotos');
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.AuthSession.logout();
                     } else {
                         localStorage.clear();
-                        window.location.href = '/login';
+                        window.location.href = '/auth/login';
                     }
                 });
             }
@@ -252,14 +252,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const displayName = user.full_name || user.username || 'Nhiếp Ảnh Gia';
             const username = user.username ? `@${user.username}` : '@photographer';
             const email = user.email || 'Chưa cập nhật email';
-            const role = (user.role || 'Participant').toUpperCase();
+            const rawRole = (user.role || 'participant').toLowerCase();
+            const roleDisplay = rawRole === 'organizer' ? 'ORGANIZER' : (user.role || 'Participant').toUpperCase();
             const bio = user.bio || 'Chưa cập nhật tiểu sử nghệ sĩ. Hãy bấm "Chỉnh Sửa Hồ Sơ" để giới thiệu bản thân và chia sẻ niềm đam mê ảnh phim analog!';
             const initial = displayName.charAt(0).toUpperCase();
 
             this.profileFullName.textContent = displayName;
             this.profileUsername.textContent = username;
             this.profileEmail.textContent = email;
-            this.profileRolePill.textContent = role;
+            
+            if (this.profileRolePill) {
+                this.profileRolePill.textContent = roleDisplay;
+                this.profileRolePill.className = `role-pill role-${rawRole}`;
+            }
+
+            const btnDash = document.getElementById('btnOrganizerDashboard');
+            if (btnDash) {
+                btnDash.style.display = (rawRole === 'organizer' || rawRole === 'admin') ? 'inline-flex' : 'none';
+            }
+
             this.profileBioText.textContent = bio;
 
             if (user.created_at) {
@@ -382,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.profileUsername.textContent = '@guest';
             this.profileEmail.textContent = 'Chưa đăng nhập';
             this.profileRolePill.textContent = 'GUEST';
-            this.profileBioText.innerHTML = 'Vui lòng <a href="/login" style="color:var(--accent-amber); font-weight:700;">Đăng Nhập</a> để quản lý hồ sơ và tác phẩm nhiếp ảnh cá nhân.';
+            this.profileBioText.innerHTML = 'Vui lòng <a href="/auth/login" style="color:var(--accent-amber); font-weight:700;">Đăng Nhập</a> để quản lý hồ sơ và tác phẩm nhiếp ảnh cá nhân.';
             this.statTotalPhotos.textContent = '0';
             this.statApprovedPhotos.textContent = '0';
             this.statHighScore.textContent = '--';
@@ -405,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const data = await window.apiClient.get('/submissions/my-submissions');
+                const data = await window.apiClient.get('/submissions/my');
                 this.submissions = data.submissions || [];
 
                 this.updatePortfolioStats();

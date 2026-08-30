@@ -1,16 +1,17 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Organizer Dashboard</title>
     <link rel="stylesheet" href="/static/auth.css">
     <style>
+      /* ===== DARK MODE THEME ===== */
       body {
         margin: 0;
         min-height: 100vh;
-        background: #f3f6fb;
-        color: #1f2937;
+        background: #080c14;
+        color: #e8edf2;
         font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       }
 
@@ -20,14 +21,21 @@
         padding: 48px 20px;
       }
 
+      /* ===== PANEL / CARD ===== */
       .panel {
-        background: #fff;
-        border: 1px solid #e5e7eb;
+        background: #111a26;
+        border: 1px solid #1e2a3a;
         border-radius: 18px;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         padding: 28px;
+        transition: all 0.3s ease;
+      }
+      .panel:hover {
+        border-color: #f5a623;
+        box-shadow: 0 10px 40px rgba(245, 166, 35, 0.06);
       }
 
+      /* ===== PAGE HEADER ===== */
       .page-header {
         display: flex;
         align-items: center;
@@ -40,9 +48,11 @@
       h1 {
         margin: 0;
         font-size: clamp(1.8rem, 2vw, 2.4rem);
-        color: #111827;
+        color: #f0f4f8;
+        font-weight: 700;
       }
 
+      /* ===== BUTTONS ===== */
       .btn {
         display: inline-flex;
         align-items: center;
@@ -50,45 +60,88 @@
         text-decoration: none;
         border-radius: 12px;
         padding: 12px 18px;
-        background: linear-gradient(135deg, #4f46e5, #2563eb);
-        color: #fff;
+        background: #f5a623;
+        color: #080c14;
         font-weight: 600;
-        transition: filter 0.2s ease;
+        border: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
       }
 
-      .btn:hover { filter: brightness(1.05); }
+      .btn:hover {
+        background: #e0960a;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
+        filter: none;
+      }
 
+      .btn-outline {
+        background: transparent;
+        color: #99abb8;
+        border: 1px solid #1e2a3a;
+        transition: all 0.3s ease;
+      }
+
+      .btn-outline:hover {
+        background: rgba(245, 166, 35, 0.08);
+        color: #f5a623;
+        border-color: #f5a623;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(245, 166, 35, 0.15);
+      }
+
+      .btn-danger {
+        background: #dc2626;
+        color: #fff;
+      }
+
+      .btn-danger:hover {
+        background: #b91c1c;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
+      }
+
+      .btn-sm {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        border-radius: 10px;
+      }
+
+      /* ===== TABLE ===== */
       table {
         width: 100%;
         border-collapse: collapse;
-        background: #fff;
+        background: transparent;
         overflow: hidden;
       }
 
       th, td {
         text-align: left;
         padding: 14px 16px;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid #1e2a3a;
+        color: #e8edf2;
       }
 
       thead th {
-        background: #f9fafb;
-        color: #374151;
+        background: #0d1622;
+        color: #99abb8;
         font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        font-weight: 600;
       }
 
       tbody tr:hover {
-        background: #f9fafb;
+        background: rgba(245, 166, 35, 0.04);
       }
 
       .empty-state {
         margin: 0;
-        color: #6b7280;
+        color: #6b7f94;
         font-size: 1rem;
       }
 
+      /* ===== MANAGER GRID ===== */
       .manager-grid {
         display: grid;
         grid-template-columns: minmax(280px, 360px) 1fr;
@@ -97,16 +150,21 @@
       }
 
       .manager-card {
-        border: 1px solid #e5e7eb;
+        border: 1px solid #1e2a3a;
         border-radius: 16px;
-        background: #fcfdff;
+        background: #0d1622;
         padding: 18px;
+        transition: all 0.3s ease;
+      }
+      .manager-card:hover {
+        border-color: #f5a623;
       }
 
       .manager-card h2,
       .manager-card h3 {
         margin: 0 0 12px;
         font-size: 1.05rem;
+        color: #f0f4f8;
       }
 
       .manager-stack {
@@ -114,28 +172,44 @@
         gap: 14px;
       }
 
+      /* ===== FORM FIELDS ===== */
       .field-label {
         display: block;
         margin-bottom: 6px;
-        color: #374151;
+        color: #99abb8;
         font-size: 0.9rem;
         font-weight: 600;
       }
 
       .field-input {
         width: 100%;
-        border: 1px solid #d1d5db;
+        border: 2px solid #1e2a3a;
         border-radius: 10px;
         padding: 10px 12px;
         font-size: 0.95rem;
-        background: #fff;
+        background: #0d1622;
+        color: #e8edf2;
+        transition: all 0.3s ease;
       }
 
+      .field-input:focus {
+        border-color: #f5a623;
+        box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
+        outline: none;
+      }
+
+      .field-input option {
+        background: #111a26;
+        color: #e8edf2;
+      }
+
+      /* ===== MUTED TEXT ===== */
       .muted {
-        color: #6b7280;
+        color: #6b7f94;
         font-size: 0.92rem;
       }
 
+      /* ===== JUDGE / ASSIGNMENT LISTS ===== */
       .judge-list,
       .assignment-list {
         display: grid;
@@ -145,12 +219,32 @@
         padding-right: 4px;
       }
 
+      /* Scrollbar for lists */
+      .judge-list::-webkit-scrollbar,
+      .assignment-list::-webkit-scrollbar {
+        width: 6px;
+      }
+      .judge-list::-webkit-scrollbar-track,
+      .assignment-list::-webkit-scrollbar-track {
+        background: #0d1622;
+      }
+      .judge-list::-webkit-scrollbar-thumb,
+      .assignment-list::-webkit-scrollbar-thumb {
+        background: #f5a623;
+        border-radius: 10px;
+      }
+
       .judge-card,
       .assignment-card {
-        border: 1px solid #e5e7eb;
+        border: 1px solid #1e2a3a;
         border-radius: 12px;
-        background: #fff;
+        background: #111a26;
         padding: 12px;
+        transition: all 0.3s ease;
+      }
+      .judge-card:hover,
+      .assignment-card:hover {
+        border-color: #f5a623;
       }
 
       .judge-card-top,
@@ -159,6 +253,11 @@
         justify-content: space-between;
         align-items: flex-start;
         gap: 10px;
+      }
+
+      .judge-card-top strong,
+      .assignment-card-top strong {
+        color: #f0f4f8;
       }
 
       .judge-stats {
@@ -170,11 +269,12 @@
 
       .stat-pill {
         border-radius: 999px;
-        background: #eef2ff;
-        color: #3730a3;
+        background: rgba(245, 166, 35, 0.15);
+        color: #f5a623;
         padding: 4px 8px;
         font-size: 0.78rem;
         font-weight: 600;
+        border: 1px solid rgba(245, 166, 35, 0.2);
       }
 
       .action-row {
@@ -184,22 +284,38 @@
         margin-top: 14px;
       }
 
-      .btn-outline {
-        background: #fff;
-        color: #374151;
-        border: 1px solid #d1d5db;
+      /* ===== OVERVIEW CARDS ===== */
+      #overview {
+        display: flex;
+        gap: 18px;
+        margin-bottom: 18px;
       }
 
-      .btn-danger {
-        background: #dc2626;
+      #overview > div {
+        flex: 0 0 180px;
+        background: #0d1622;
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #1e2a3a;
+        transition: all 0.3s ease;
+      }
+      #overview > div:hover {
+        border-color: #f5a623;
       }
 
-      .btn-sm {
-        padding: 8px 12px;
-        font-size: 0.88rem;
-        border-radius: 10px;
+      #overview > div > div:first-child {
+        font-size: 0.9rem;
+        color: #6b7f94;
       }
 
+      #overview > div > div:last-child {
+        font-weight: 600;
+        font-size: 1.4rem;
+        color: #f5a623;
+      }
+
+      /* ===== TOAST ===== */
       .toast {
         position: fixed;
         right: 20px;
@@ -209,15 +325,66 @@
         max-width: 360px;
         border-radius: 12px;
         padding: 12px 14px;
-        color: #fff;
-        background: #111827;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.2);
+        color: #080c14;
+        background: #f5a623;
+        box-shadow: 0 10px 28px rgba(245, 166, 35, 0.3);
         display: none;
+        font-weight: 500;
       }
 
+      /* ===== ERROR TEXT ===== */
+      .text-danger {
+        color: #f87171 !important;
+      }
+
+      /* ===== SCROLLBAR ===== */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0d1622;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #f5a623;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #e0960a;
+      }
+
+      /* ===== RESPONSIVE ===== */
       @media (max-width: 960px) {
         .manager-grid {
           grid-template-columns: 1fr;
+        }
+        #overview {
+          flex-wrap: wrap;
+        }
+        #overview > div {
+          flex: 1 1 140px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .page-shell {
+          padding: 24px 14px;
+        }
+        .panel {
+          padding: 18px;
+        }
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        #overview > div {
+          flex: 1 1 100%;
+        }
+        table {
+          font-size: 0.85rem;
+        }
+        th, td {
+          padding: 10px 12px;
         }
       }
     </style>
@@ -231,14 +398,18 @@
       </div>
 
       <div id="dashboard" class="panel" data-organizer-id="{{ organizer_id }}" data-api-token="{{ api_token }}">
-        <div id="overview" style="margin-bottom:18px; display:flex; gap:18px;">
-          <div style="flex:0 0 180px; background:#f9fafb; padding:12px; border-radius:8px; text-align:center;">
-            <div style="font-size:0.9rem; color:#6b7280;">Submissions</div>
-            <div id="overview-submissions" style="font-weight:600; font-size:1.4rem;">—</div>
+        <div id="overview">
+          <div>
+            <div>Cuộc Thi Quản Lý</div>
+            <div id="overview-contests">—</div>
           </div>
-          <div style="flex:0 0 180px; background:#f9fafb; padding:12px; border-radius:8px; text-align:center;">
-            <div style="font-size:0.9rem; color:#6b7280;">Judges</div>
-            <div id="overview-judges" style="font-weight:600; font-size:1.4rem;">—</div>
+          <div>
+            <div>Tổng Bài Dự Thi</div>
+            <div id="overview-submissions">—</div>
+          </div>
+          <div>
+            <div>Giám Khảo Hệ Thống</div>
+            <div id="overview-judges">—</div>
           </div>
         </div>
 

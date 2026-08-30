@@ -43,3 +43,7 @@ class IAuthRepository(ABC):
     @abstractmethod
     def update_status(self, user_id: int, status: str) -> bool:
         pass
+
+    @abstractmethod
+    def update_email_verified(self, user_id: int, verified: bool = True) -> bool:
+        pass

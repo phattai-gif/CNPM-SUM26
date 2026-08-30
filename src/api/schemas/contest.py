@@ -35,6 +35,8 @@ class ContestCreateRequestSchema(Schema):
     status = fields.Str(load_default='draft')
     start_date = fields.Str(allow_none=True)
     end_date = fields.Str(allow_none=True)
+    categories = fields.List(fields.Dict(), load_default=[])
+    awards = fields.List(fields.Dict(), load_default=[])
 
 
 class ContestUpdateRequestSchema(Schema):
@@ -45,6 +47,8 @@ class ContestUpdateRequestSchema(Schema):
     status = fields.Str()
     start_date = fields.Str(allow_none=True)
     end_date = fields.Str(allow_none=True)
+    categories = fields.List(fields.Dict())
+    awards = fields.List(fields.Dict())
 
 
 class ContestRulesUpdateRequestSchema(Schema):

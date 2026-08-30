@@ -10,11 +10,11 @@
 :root {
   --bg-from:      #0f172a;
   --bg-to:        #1e1b4b;
-  --card-bg:      rgba(255, 255, 255, 0.97);
-  --border:       rgba(255, 255, 255, 0.12);
-  --text:         #111827;
-  --muted:        #6b7280;
-  --label:        #374151;
+  --card-bg:      rgba(17, 26, 38, 0.96);
+  --border:       rgba(49, 67, 86, 0.9);
+  --text:         #f0f4f8;
+  --muted:        #b0c4de;
+  --label:        #f0f4f8;
 
   /* Brand */
   --indigo:       #6366f1;
@@ -29,12 +29,12 @@
   --grad-green:   linear-gradient(135deg, #10b981, #059669);
 
   /* States */
-  --success-bg:   #ecfdf5;
-  --success-bd:   #6ee7b7;
-  --success-text: #065f46;
-  --error-bg:     #fff1f2;
-  --error-bd:     #fda4af;
-  --error-text:   #881337;
+  --success-bg:   rgba(52, 211, 153, 0.12);
+  --success-bd:   rgba(52, 211, 153, 0.24);
+  --success-text: #34d399;
+  --error-bg:     rgba(248, 113, 113, 0.12);
+  --error-bd:     rgba(248, 113, 113, 0.24);
+  --error-text:   #f87171;
 
   /* Elevation */
   --shadow-card:  0 24px 60px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2);
@@ -48,12 +48,10 @@
 /* ── Body / Background ────────────────────────────────────── */
 body {
   min-height: 100vh;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, sans-serif;
   background: linear-gradient(135deg, var(--bg-from) 0%, var(--bg-to) 100%);
   color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   padding: 24px 16px;
   position: relative;
   overflow-x: hidden;
@@ -97,6 +95,7 @@ body::after {
 .rp-wrapper {
   width: 100%;
   max-width: 480px;
+  margin: 32px auto 0;
   animation: card-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -112,7 +111,7 @@ body::after {
   padding: 40px 40px 36px;
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(49, 67, 86, 0.9);
 }
 
 /* ── Icon badge ───────────────────────────────────────────── */
@@ -140,7 +139,7 @@ body::after {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--indigo);
-  background: #eef2ff;
+  background: rgba(245, 166, 35, 0.12);
   padding: 3px 10px;
   border-radius: 100px;
   margin-bottom: 12px;
@@ -208,12 +207,12 @@ body::after {
 .rp-field textarea {
   width: 100%;
   padding: 13px 16px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid #314356;
   border-radius: 12px;
   font-size: 0.95rem;
   font-family: 'Inter', sans-serif;
   color: var(--text);
-  background: #fafafa;
+  background: #0d1622;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   outline: none;
   resize: none;
@@ -229,7 +228,7 @@ body::after {
 .rp-field input:focus,
 .rp-field textarea:focus {
   border-color: var(--indigo);
-  background: #fff;
+  background: #111a26;
   box-shadow: var(--shadow-input);
 }
 
@@ -315,8 +314,9 @@ body::after {
 }
 
 .rp-btn.secondary {
-  background: #f1f5f9;
-  color: #374151;
+  background: transparent;
+  color: #b0c4de;
+  border: 1px solid #314356;
   box-shadow: none;
 }
 
@@ -403,7 +403,7 @@ body::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: #e5e7eb;
+  background: #314356;
 }
 
 /* ── Section heading (for secondary section) ──────────────── */

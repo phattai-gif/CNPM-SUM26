@@ -34,3 +34,24 @@ class ModeratorDashboardService:
                 'pages': (total + per_page - 1) // per_page,
             },
         }
+
+    def ai_report(self, user_id, user_role, submission_id, contest_id=None):
+        report = self.repository.get_submission_ai_report(
+            self._scope(user_id, user_role, contest_id),
+            submission_id,
+        )
+        if not report:
+            raise ValueError('Submission not found or inaccessible')
+        return report
+
+    def moderate(self, user_id, user_role, submission_id, action, contest_id=None, review_notes=None):
+        result = self.repository.moderate_submission(
+            self._scope(user_id, user_role, contest_id),
+            submission_id,
+            action,
+            reviewer_id=user_id,
+            review_notes=review_notes,
+        )
+        if not result:
+            raise ValueError('Submission not found or inaccessible')
+        return result

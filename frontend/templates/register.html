@@ -1,44 +1,282 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Register</title>
+  <title>Đăng ký tài khoản</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+  <style>
+    /* ===== DARK MODE OVERRIDES ===== */
+    body {
+      background: #080c14 !important;
+      color: #e8edf2 !important;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    .auth-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 80px);
+      padding: 20px;
+    }
+
+    .auth-card {
+      background: #111a26;
+      border: 1px solid #1e2a3a;
+      border-radius: 20px;
+      padding: 40px 36px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+    }
+    .auth-card:hover {
+      border-color: #f5a623;
+      box-shadow: 0 20px 60px rgba(245, 166, 35, 0.06);
+    }
+
+    .auth-card .eyebrow {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #f5a623;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+
+    .auth-card h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f0f4f8;
+      margin: 0 0 24px;
+    }
+
+    .auth-card form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .auth-card label {
+      font-weight: 600;
+      color: #99abb8;
+      font-size: 0.9rem;
+      margin-bottom: 2px;
+    }
+
+    .auth-card input[type="text"],
+    .auth-card input[type="email"],
+    .auth-card input[type="password"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #1e2a3a;
+      border-radius: 12px;
+      font-size: 1rem;
+      background: #0d1622;
+      color: #e8edf2;
+      transition: all 0.3s ease;
+    }
+
+    .auth-card input[type="text"]:focus,
+    .auth-card input[type="email"]:focus,
+    .auth-card input[type="password"]:focus {
+      border-color: #f5a623;
+      box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
+      outline: none;
+      background: #0d1622;
+      color: #e8edf2;
+    }
+
+    .auth-card input[type="text"]::placeholder,
+    .auth-card input[type="email"]::placeholder,
+    .auth-card input[type="password"]::placeholder {
+      color: #6b7f94;
+    }
+
+    /* ===== RADIO BUTTONS ===== */
+    .auth-card input[type="radio"] {
+      accent-color: #f5a623;
+      width: 16px;
+      height: 16px;
+      margin-right: 6px;
+      cursor: pointer;
+    }
+
+    .auth-card input[type="radio"] + label {
+      color: #e8edf2;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .auth-card div[style*="margin-bottom:12px"] {
+      display: flex;
+      gap: 20px;
+      padding: 6px 0;
+      flex-wrap: wrap;
+    }
+
+    .auth-card div[style*="margin-bottom:12px"] label {
+      color: #e8edf2;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ===== BUTTON ===== */
+    .auth-card button {
+      width: 100%;
+      padding: 12px;
+      background: #f5a623;
+      color: #080c14;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 4px;
+    }
+
+    .auth-card button:hover {
+      background: #e0960a;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
+    }
+
+    .auth-card button:active {
+      transform: translateY(0);
+    }
+
+    /* ===== MESSAGE ===== */
+    .auth-card .message {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .auth-card .message.error {
+      display: block;
+      background: rgba(220, 38, 38, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(220, 38, 38, 0.25);
+    }
+
+    .auth-card .message.success {
+      display: block;
+      background: rgba(245, 166, 35, 0.12);
+      color: #f5a623;
+      border: 1px solid rgba(245, 166, 35, 0.25);
+    }
+
+    .auth-card .message.info {
+      display: block;
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    /* ===== SECONDARY TEXT ===== */
+    .auth-card .secondary-text {
+      margin-top: 20px;
+      text-align: center;
+      color: #8899aa;
+      font-size: 0.9rem;
+    }
+
+    .auth-card .secondary-text a {
+      color: #f5a623;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .auth-card .secondary-text a:hover {
+      color: #e0960a;
+      text-decoration: underline;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d1622;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #f5a623;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #e0960a;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 28px 20px;
+      }
+      .auth-card h1 {
+        font-size: 1.3rem;
+      }
+      .auth-card input[type="text"],
+      .auth-card input[type="email"],
+      .auth-card input[type="password"] {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+      }
+      .auth-card button {
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+      .auth-card div[style*="margin-bottom:12px"] {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+  </style>
 </head>
 <body>
   {% include '_nav.html' %}
   <div class="auth-container">
     <div class="auth-card">
-      <p class="eyebrow">Create your account</p>
-      <h1>Join the platform</h1>
+      <p class="eyebrow">ANALOG CONTEST</p>
+      <h1>Tạo tài khoản mới</h1>
       <form id="registerForm" novalidate>
-        <label for="username">Username</label>
-        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Choose a username">
+        <label for="username">Tên đăng nhập</label>
+        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Chọn tên đăng nhập">
 
         <label for="email">Email</label>
         <input id="email" name="email" type="email" required autocomplete="email" placeholder="name@example.com">
 
-        <label for="full_name">Full Name</label>
-        <input id="full_name" name="full_name" type="text" autocomplete="name" placeholder="Your full name">
+        <label for="full_name">Họ và tên</label>
+        <input id="full_name" name="full_name" type="text" autocomplete="name" placeholder="Nhập họ và tên của bạn">
 
-        <label>Role</label>
-        <div style="margin-bottom:12px;">
-          <label style="margin-right:12px;"><input type="radio" name="role" value="participant" checked> Participant</label>
-          <label><input type="radio" name="role" value="organizer"> Organizer</label>
-        </div>
+        <label for="role">Vai trò</label>
+        <select id="role" name="role">
+          <option value="participant">Người tham gia cuộc thi (Participant)</option>
+          <option value="organizer">Ban Tổ Chức (Organizer)</option>
+        </select>
+        <p class="auth-radio-hint">Chọn vai trò đăng ký. Lựa chọn Organizer sẽ tạo tài khoản ban tổ chức.</p>
 
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Create a password">
+        <label for="password">Mật khẩu</label>
+        <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Tạo mật khẩu">
 
-        <label for="passwordconfirm">Confirm Password</label>
-        <input id="passwordconfirm" name="passwordconfirm" type="password" required autocomplete="new-password" placeholder="Repeat your password">
+        <label for="passwordconfirm">Xác nhận mật khẩu</label>
+        <input id="passwordconfirm" name="passwordconfirm" type="password" required autocomplete="new-password" placeholder="Nhập lại mật khẩu">
 
-        <button type="submit">Register</button>
+        <button type="submit">Đăng ký</button>
       </form>
 
       <div id="message" class="message"></div>
-      <p class="secondary-text">Already have an account? <a href="{{ url_for('auth.login_page') }}">Login here</a></p>
+      <p class="secondary-text">Đã có tài khoản? <a href="{{ url_for('auth.login_page') }}">Đăng nhập tại đây</a></p>
     </div>
   </div>
   <script src="{{ url_for('static', filename='api_client.js') }}"></script>

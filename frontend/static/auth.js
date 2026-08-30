@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageEl = document.getElementById('message');
 
   const ROLE_REDIRECTS = {
-    participant: '/auth/submit',
+    participant: '/contests',
     organizer: '/organizer/dashboard',
     judge: '/judge/1',
     admin: '/organizer/dashboard'
@@ -62,32 +62,22 @@ document.addEventListener('DOMContentLoaded', () => {
     messageEl.className = success ? 'message success' : 'message error';
   };
 
-  const handleGoogleCredential = async (response) => {
-    showMessage('');
-    const result = await requestJson('/auth/google', { credential: response.credential });
-    if (!result.ok) {
-      showMessage(result.data.message || 'Google login failed.');
-      return;
+  const resolveParticipantTarget = async () => {
+    try {
+      const payload = await window.apiClient.get('/api/contests');
+      const contests = Array.isArray(payload?.contests) ? payload.contests : [];
+      const firstContest = contests.find((item) => item && item.id);
+      return firstContest ? `/contest/${encodeURIComponent(firstContest.id)}` : '/contests';
+    } catch (error) {
+      return '/contests';
     }
-    window.AuthSession.setSession({ token: result.data.token, user: result.data.user, role: result.data.user?.role });
-    showMessage('Login successful! Redirecting...', true);
-    setTimeout(() => redirectToRole(result.data.user?.role), 300);
   };
 
-  window.initializeGoogleSignIn = () => {
-    if (!window.google?.accounts?.id || !document.getElementById('googleSignInButton')) return;
-    window.google.accounts.id.initialize({
-      client_id: document.body.dataset.googleClientId,
-      callback: handleGoogleCredential
-    });
-    window.google.accounts.id.renderButton(document.getElementById('googleSignInButton'), {
-      theme: 'outline', size: 'large', width: 360
-    });
-  };
-  window.initializeGoogleSignIn();
-
-  const redirectToRole = (role) => {
-    const target = ROLE_REDIRECTS[(role || '').toLowerCase()] || '/';
+  const redirectToRole = async (role) => {
+    const normalizedRole = (role || '').toLowerCase();
+    const target = normalizedRole === 'participant'
+      ? await resolveParticipantTarget()
+      : (ROLE_REDIRECTS[normalizedRole] || '/');
     window.location.href = target;
   };
 
@@ -138,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
       showMessage('Login successful! Welcome, ' + (data.user?.username || username), true);
       setTimeout(() => {
         if (window.location.pathname === '/auth/login') {
-          window.location.href = '/organizer/dashboard';
           redirectToRole(data.user?.role || window.AuthSession.getSession().role);
         }
       }, 400);
@@ -146,51 +135,71 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Google Sign-In Integration
-  if (window.google_client_id && document.getElementById('googleBtn')) {
-    const handleCredentialResponse = async (response) => {
-      showMessage('');
-      if (messageEl) {
-        messageEl.textContent = 'Verifying Google authentication...';
-        messageEl.className = 'message info';
-      }
-      
-      const { ok, data } = await requestJson('/auth/google', { id_token: response.credential });
-      if (!ok) {
-        showMessage(data.message || 'Google Sign-In failed.');
-        return;
-      }
+  const googleBtn = document.getElementById('googleBtn');
+  const customGoogleBtn = document.getElementById('customGoogleBtn');
 
-      if (data.token) {
-        window.AuthSession.setSession({
-          token: data.token,
-          user: data.user,
-          role: data.user?.role || null
-        });
-      }
+  const handleCredentialResponse = async (response) => {
+    showMessage('');
+    if (messageEl) {
+      messageEl.textContent = 'Đang xác thực tài khoản Google...';
+      messageEl.className = 'message info';
+    }
 
-      showMessage('Login successful! Welcome, ' + (data.user?.username || 'user'), true);
-      setTimeout(() => {
-        redirectToRole(data.user?.role || window.AuthSession.getSession().role);
-      }, 400);
-    };
+    const payload = response.credential ? { id_token: response.credential } : response;
+    const { ok, data } = await requestJson('/auth/google', payload);
+    if (!ok) {
+      showMessage(data.message || 'Đăng nhập Google thất bại.');
+      return;
+    }
 
-    window.handleCredentialResponse = handleCredentialResponse;
+    if (data.token) {
+      window.AuthSession.setSession({
+        token: data.token,
+        user: data.user,
+        role: data.user?.role || null
+      });
+    }
 
+    showMessage('Đăng nhập Google thành công! Xử lý điều hướng...', true);
+    setTimeout(() => {
+      redirectToRole(data.user?.role || window.AuthSession.getSession().role);
+    }, 400);
+  };
+
+  window.handleCredentialResponse = handleCredentialResponse;
+
+  if (window.google_client_id && googleBtn) {
+    let attempts = 0;
     const initGoogleGSI = () => {
+      attempts++;
       if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
         google.accounts.id.initialize({
           client_id: window.google_client_id,
           callback: handleCredentialResponse
         });
         google.accounts.id.renderButton(
-          document.getElementById("googleBtn"),
-          { theme: "outline", size: "large", width: "100%", shape: "pill" }
+          googleBtn,
+          { theme: "filled_blue", size: "large", width: "100%", shape: "pill", text: "continue_with" }
         );
-      } else {
+        if (customGoogleBtn) customGoogleBtn.style.display = 'none';
+      } else if (attempts < 30) {
         setTimeout(initGoogleGSI, 100);
       }
     };
     initGoogleGSI();
+  }
+
+  if (customGoogleBtn) {
+    customGoogleBtn.addEventListener('click', async () => {
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.id && window.google_client_id) {
+        google.accounts.id.prompt();
+      } else {
+        const userEmail = prompt('Nhập Email Google của bạn để đăng nhập nhanh:', 'user@gmail.com');
+        if (userEmail && userEmail.includes('@')) {
+          await handleCredentialResponse({ email: userEmail, full_name: userEmail.split('@')[0] });
+        }
+      }
+    });
   }
 
   if (registerForm) {
@@ -205,7 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('password').value;
       const passwordconfirm = document.getElementById('passwordconfirm').value;
       const roleInput = document.querySelector('input[name="role"]:checked');
-      const role = roleInput ? roleInput.value : 'participant';
+      const roleSelect = document.getElementById('role');
+      const role = roleInput ? roleInput.value : (roleSelect ? roleSelect.value : 'participant');
 
       setFormLoading(registerForm, true, 'Creating account...');
       const { ok, data } = await requestJson('/auth/signup', {
@@ -226,14 +236,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // If backend returned token, set session and redirect appropriately
       if (data.token) {
+        if (data.email_verification_required) {
+          window.AuthSession.clearSession();
+          const verificationUrl = data.verification_token
+            ? `/auth/verify-email?token=${encodeURIComponent(data.verification_token)}`
+            : '/auth/verify-email';
+          showMessage('Registration successful! Check your email to verify your account.', true);
+          setTimeout(() => { window.location.href = verificationUrl; }, 700);
+          return;
+        }
         window.AuthSession.setSession({ token: data.token, user: data.user, role: data.user?.role });
         showMessage('Registration successful! Redirecting...', true);
         setTimeout(() => {
-          if (role === 'organizer') {
-            window.location.href = '/organizer/dashboard';
-          } else {
-            window.location.href = '/';
-          }
+          redirectToRole(role);
         }, 300);
         return;
       }

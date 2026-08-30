@@ -16,6 +16,10 @@ def test_submission_creates_pending_ai_flags_and_starts_thread():
     mock_submission.id = 123
     mock_repo.create_submission.return_value = mock_submission
     
+    mock_round = MagicMock()
+    mock_round.status = "ongoing"
+    mock_repo.session.query.return_value.filter_by.return_value.first.return_value = mock_round
+    
     mock_storage = MagicMock()
     mock_storage.upload_image.return_value = {
         "hd_url": "http://example.com/hd.jpg",

@@ -36,6 +36,8 @@ def test_auth_recovery_and_verification_flow():
     user_obj = repo.session.query(UserModel).filter_by(email=user_data['email']).first()
     assert user_obj is not None
     assert user_obj.status == 'active'
+    assert user_obj.email_verified is False
+    assert 'verification_token' in res.get_json()
 
     # 2. Test GET pages (render templates)
     res = client.get('/auth/forgot-password')
@@ -145,6 +147,7 @@ def test_auth_recovery_and_verification_flow():
     # - User status should now be active
     repo.session.refresh(user_obj)
     assert user_obj.status == 'active'
+    assert user_obj.email_verified is True
 
     # - Login should succeed now
     res = client.post('/auth/login', json={

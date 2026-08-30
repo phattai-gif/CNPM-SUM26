@@ -22,6 +22,9 @@ def create_app():
     )
 
     app.config.from_object(Config)
+    app.config['JSON_AS_ASCII'] = False
+    if hasattr(app, 'json'):
+        app.json.ensure_ascii = False
 
     # ---------------------------------------------------------
     # Application initialization

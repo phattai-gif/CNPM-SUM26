@@ -1,46 +1,238 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login</title>
+  <title>Đăng nhập tài khoản</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+  <style>
+    /* ===== DARK MODE OVERRIDES ===== */
+    body {
+      background: #080c14 !important;
+      color: #e8edf2 !important;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    .auth-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 80px);
+      padding: 20px;
+    }
+
+    .auth-card {
+      background: #111a26;
+      border: 1px solid #1e2a3a;
+      border-radius: 20px;
+      padding: 40px 36px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+    }
+    .auth-card:hover {
+      border-color: #f5a623;
+      box-shadow: 0 20px 60px rgba(245, 166, 35, 0.06);
+    }
+
+    .auth-card .eyebrow {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #f5a623;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+
+    .auth-card h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f0f4f8;
+      margin: 0 0 24px;
+    }
+
+    .auth-card form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .auth-card label {
+      font-weight: 600;
+      color: #99abb8;
+      font-size: 0.9rem;
+      margin-bottom: 2px;
+    }
+
+    .auth-card input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #1e2a3a;
+      border-radius: 12px;
+      font-size: 1rem;
+      background: #0d1622;
+      color: #e8edf2;
+      transition: all 0.3s ease;
+    }
+
+    .auth-card input:focus {
+      border-color: #f5a623;
+      box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
+      outline: none;
+      background: #0d1622;
+      color: #e8edf2;
+    }
+
+    .auth-card input::placeholder {
+      color: #6b7f94;
+    }
+
+    .auth-card button {
+      width: 100%;
+      padding: 12px;
+      background: #f5a623;
+      color: #080c14;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 4px;
+    }
+
+    .auth-card button:hover {
+      background: #e0960a;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
+    }
+
+    .auth-card button:active {
+      transform: translateY(0);
+    }
+
+    .auth-card .message {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .auth-card .message.error {
+      display: block;
+      background: rgba(220, 38, 38, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(220, 38, 38, 0.25);
+    }
+
+    .auth-card .message.success {
+      display: block;
+      background: rgba(245, 166, 35, 0.12);
+      color: #f5a623;
+      border: 1px solid rgba(245, 166, 35, 0.25);
+    }
+
+    .auth-card .secondary-text {
+      margin-top: 20px;
+      text-align: center;
+      color: #8899aa;
+      font-size: 0.9rem;
+    }
+
+    .auth-card .secondary-text a {
+      color: #f5a623;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .auth-card .secondary-text a:hover {
+      color: #e0960a;
+      text-decoration: underline;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d1622;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #f5a623;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #e0960a;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 28px 20px;
+      }
+      .auth-card h1 {
+        font-size: 1.3rem;
+      }
+      .auth-card input {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+      }
+      .auth-card button {
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
 </head>
 <body data-google-client-id="{{ config.GOOGLE_CLIENT_ID or google_client_id or '' }}">
   {% include '_nav.html' %}
   <div class="auth-container">
     <div class="auth-card">
-      <p class="eyebrow">Welcome back</p>
-      <h1>Login to your portal</h1>
+      <p class="eyebrow">ANALOG CONTEST</p>
+      <h1>Đăng nhập tài khoản</h1>
       <form id="loginForm" novalidate>
-        <label for="username">Username</label>
-        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Enter your username">
+        <label for="username">Tên đăng nhập</label>
+        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Nhập tên đăng nhập">
 
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Enter your password">
-        <p style="margin-top: 6px; text-align: right; font-size: 0.9rem;"><a href="{{ url_for('auth.forgot_password_page') }}" style="color: var(--primary-2); text-decoration: none;">Forgot Password?</a></p>
+        <label for="password">Mật khẩu</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Nhập mật khẩu">
+        <p style="margin-top: 6px; text-align: right; font-size: 0.9rem;"><a href="{{ url_for('auth.forgot_password_page') }}" style="color: var(--primary); text-decoration: none;">Quên mật khẩu?</a></p>
 
-        <button type="submit">Login</button>
+        <button type="submit">Đăng nhập</button>
       </form>
 
-  {% if config.GOOGLE_CLIENT_ID or google_client_id %}
       <div class="auth-separator">
-        <span>Or continue with</span>
+        <span>Hoặc tiếp tục với</span>
       </div>
-      <div id="googleBtn" class="google-btn-container"></div>
-  {% endif %}
+      <div id="googleBtnContainer" class="google-btn-wrapper">
+        <div id="googleBtn" class="google-btn-container"></div>
+        <button id="customGoogleBtn" type="button" class="btn-google-custom">
+          <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Đăng nhập bằng Google</span>
+        </button>
+      </div>
 
       <div id="message" class="message"></div>
-      <p class="secondary-text">Need an account? <a href="{{ url_for('auth.register_page') }}">Create one</a></p>
-      <p class="secondary-text" style="margin-top: 8px;">Already registered? <a href="{{ url_for('auth.verify_email_page') }}">Verify your email</a></p>
+      <p class="secondary-text">Chưa có tài khoản? <a href="{{ url_for('auth.register_page') }}">Tạo tài khoản mới</a></p>
+      <p class="secondary-text" style="margin-top: 8px;">Đã đăng ký? <a href="{{ url_for('auth.verify_email_page') }}">Xác minh email</a></p>
     </div>
   </div>
   <script>
-    window.google_client_id = "{{ google_client_id }}";
+    window.google_client_id = "{{ config.GOOGLE_CLIENT_ID or google_client_id or '' }}";
   </script>
-  {% if config.GOOGLE_CLIENT_ID or google_client_id %}
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  {% endif %}
   <script src="{{ url_for('static', filename='api_client.js') }}"></script>
   <script src="{{ url_for('static', filename='auth.js') }}"></script>
 </body>

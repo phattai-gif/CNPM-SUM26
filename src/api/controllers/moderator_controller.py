@@ -51,3 +51,66 @@ def submissions():
         return jsonify({'message': str(exc)}), 403
     except Exception as exc:
         return jsonify({'message': 'Unable to load moderator submissions', 'error': str(exc)}), 500
+
+
+@moderator_bp.route('/submissions/<int:submission_id>/ai-report', methods=['GET'])
+@role_required('organizer', 'admin')
+def submission_ai_report(submission_id):
+    try:
+        contest_id = request.args.get('contest_id', type=int)
+        data = moderator_service.ai_report(
+            request.user['user_id'],
+            request.user['role'],
+            submission_id,
+            contest_id,
+        )
+        return jsonify(data), 200
+    except ValueError as exc:
+        return jsonify({'message': str(exc)}), 404
+    except PermissionError as exc:
+        return jsonify({'message': str(exc)}), 403
+    except Exception as exc:
+        return jsonify({'message': 'Unable to load AI report', 'error': str(exc)}), 500
+
+
+@moderator_bp.route('/submissions/<int:submission_id>/approve', methods=['POST'])
+@role_required('organizer', 'admin')
+def approve_submission(submission_id):
+    return _moderate(submission_id, 'approve')
+
+
+@moderator_bp.route('/submissions/<int:submission_id>/reject', methods=['POST'])
+@role_required('organizer', 'admin')
+def reject_submission(submission_id):
+    return _moderate(submission_id, 'reject')
+
+
+@moderator_bp.route('/submissions/<int:submission_id>/dismiss-flag', methods=['POST'])
+@role_required('organizer', 'admin')
+def dismiss_flag(submission_id):
+    return _moderate(submission_id, 'dismiss-flag')
+
+
+def _moderate(submission_id, action):
+    try:
+        payload = request.get_json(silent=True) or {}
+        review_notes = payload.get('review_notes')
+        contest_id = payload.get('contest_id') or request.args.get('contest_id', type=int)
+        if contest_id is not None:
+            contest_id = int(contest_id)
+
+        data = moderator_service.moderate(
+            request.user['user_id'],
+            request.user['role'],
+            submission_id,
+            action,
+            contest_id=contest_id,
+            review_notes=review_notes,
+        )
+        return jsonify({'message': 'Moderation action completed', 'result': data}), 200
+    except ValueError as exc:
+        return jsonify({'message': str(exc)}), 404
+    except PermissionError as exc:
+        return jsonify({'message': str(exc)}), 403
+    except Exception as exc:
+        return jsonify({'message': 'Unable to moderate submission', 'error': str(exc)}), 500

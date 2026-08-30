@@ -406,6 +406,17 @@ class SubmissionRepository(ISubmissionRepository):
             )
             self.session.add(log)
 
+            # Mark related notifications as read if status implies resolution
+            if status not in ["pending", "completed", "failed"]:
+                from infrastructure.models.app.app_notification_model import NotificationModel
+                search_text = f"bài dự thi #{flag.submission_id}"
+                notifications = self.session.query(NotificationModel).filter(
+                    NotificationModel.body.like(f"%{search_text}%"),
+                    NotificationModel.is_read == False
+                ).all()
+                for notif in notifications:
+                    notif.is_read = True
+
             self.session.commit()
             self.session.refresh(flag)
 

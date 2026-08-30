@@ -1,6 +1,6 @@
 ﻿"""User ORM model."""
 
-from sqlalchemy import BigInteger, Column, DateTime, String, Text
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -21,6 +21,7 @@ class UserModel(Base):
     avatar_url = Column(String(512), nullable=True)
     bio = Column(Text, nullable=True)
     status = Column(String(20), nullable=False, default="active")
+    email_verified = Column(Boolean, nullable=False, default=False, server_default="false")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

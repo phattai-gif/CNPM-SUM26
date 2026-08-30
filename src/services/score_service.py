@@ -234,6 +234,176 @@ class ScoreService:
 
         return weighted_total / total_weight
 
+    def get_winner_candidates(self, contest_id: int, round_id: int):
+        """Return leaderboard rows from the finalized score data for organizer approval."""
+        contest = self.contest_repo.get_contest_by_id(contest_id)
+        round_obj = self.contest_repo.get_round_by_id(round_id)
+
+        if contest is None:
+            return None, "contest_not_found"
+
+        if round_obj is None:
+            return None, "round_not_found"
+
+        if getattr(round_obj, "contest_id", None) != contest_id:
+            return None, "round_not_in_contest"
+
+        session = getattr(self.submission_repo, "session", None) or getattr(self.contest_repo, "session", None)
+        if session is None:
+            return None, "database_unavailable"
+
+        from infrastructure.models.app import SubmissionModel, UserModel, SubmissionFileModel
+
+        rows = (
+            session.query(SubmissionModel, UserModel, SubmissionFileModel)
+            .join(UserModel, SubmissionModel.user_id == UserModel.id)
+            .outerjoin(SubmissionFileModel, SubmissionFileModel.submission_id == SubmissionModel.id)
+            .filter(SubmissionModel.round_id == round_id)
+            .filter(SubmissionModel.status != "draft")
+            .all()
+        )
+
+        candidates = []
+        for submission, user, submission_file in rows:
+            final_score = float(submission.final_score) if submission.final_score is not None else 0.0
+            image_url = None
+            if submission_file is not None:
+                image_url = getattr(submission_file, "thumbnail_url", None) or getattr(submission_file, "image_hd_url", None)
+
+            candidates.append({
+                "submission_id": submission.id,
+                "user_id": submission.user_id,
+                "title": submission.title,
+                "author_name": getattr(user, "full_name", None) or getattr(user, "username", None) or "Anonymous",
+                "final_score": round(final_score, 2),
+                "status": submission.status,
+                "image_url": image_url,
+                "submitted_at": submission.submitted_at,
+            })
+
+        candidates.sort(key=lambda item: (-float(item["final_score"]), int(item["submission_id"])))
+
+        previous_score = None
+        current_rank = 0
+        for index, candidate in enumerate(candidates, start=1):
+            current_score = float(candidate["final_score"])
+            if previous_score is None or current_score != previous_score:
+                current_rank = index
+            candidate["rank"] = current_rank
+            previous_score = current_score
+
+        return {
+            "success": True,
+            "contest_id": contest_id,
+            "round_id": round_id,
+            "winner_candidates": candidates,
+            "leaderboard": candidates,
+        }, None
+
+    def handle_winner_decision(
+        self,
+        contest_id: int,
+        round_id: int,
+        submission_id: int,
+        decision: str,
+        award_title: Optional[str] = None,
+        reason: Optional[str] = None,
+    ):
+        """Approve or reject a selected winner candidate and publish to archive when approved."""
+        if decision not in {"approve", "reject"}:
+            return None, "invalid_decision"
+
+        contest = self.contest_repo.get_contest_by_id(contest_id)
+        round_obj = self.contest_repo.get_round_by_id(round_id)
+        if contest is None:
+            return None, "contest_not_found"
+        if round_obj is None:
+            return None, "round_not_found"
+        if getattr(round_obj, "contest_id", None) != contest_id:
+            return None, "round_not_in_contest"
+
+        submission = self.submission_repo.get_by_id(submission_id)
+        if submission is None:
+            return None, "submission_not_found"
+        if getattr(submission, "round_id", None) != round_id:
+            return None, "submission_not_in_round"
+
+        session = getattr(self.submission_repo, "session", None) or getattr(self.contest_repo, "session", None)
+        if session is None:
+            return None, "database_unavailable"
+
+        from infrastructure.models.app import DigitalArchiveExhibitModel
+
+        if decision == "approve":
+            submission.status = "winner"
+            self.submission_repo.update(submission)
+
+            archive = (
+                session.query(DigitalArchiveExhibitModel)
+                .filter_by(contest_id=contest_id, submission_id=submission_id)
+                .first()
+            )
+
+            final_award_title = (award_title or reason or "Winner").strip() or "Winner"
+            if archive is None:
+                archive = DigitalArchiveExhibitModel(
+                    contest_id=contest_id,
+                    submission_id=submission_id,
+                    award_title=final_award_title,
+                    display_order=0,
+                )
+                session.add(archive)
+            else:
+                archive.award_title = final_award_title
+                archive.display_order = getattr(archive, "display_order", 0) or 0
+
+            session.commit()
+            session.refresh(archive)
+
+            payload = {
+                "success": True,
+                "decision": "approve",
+                "submission": {
+                    "id": submission.id,
+                    "status": submission.status,
+                    "final_score": float(submission.final_score) if submission.final_score is not None else None,
+                    "title": submission.title,
+                },
+                "archive": {
+                    "id": archive.id,
+                    "contest_id": archive.contest_id,
+                    "submission_id": archive.submission_id,
+                    "award_title": archive.award_title,
+                    "display_order": archive.display_order,
+                    "published_at": archive.published_at.isoformat() if archive.published_at else None,
+                },
+            }
+            return payload, None
+
+        submission.status = "rejected"
+        self.submission_repo.update(submission)
+
+        archive = (
+            session.query(DigitalArchiveExhibitModel)
+            .filter_by(contest_id=contest_id, submission_id=submission_id)
+            .first()
+        )
+        if archive is not None:
+            session.delete(archive)
+            session.commit()
+
+        return {
+            "success": True,
+            "decision": "reject",
+            "submission": {
+                "id": submission.id,
+                "status": submission.status,
+                "final_score": float(submission.final_score) if submission.final_score is not None else None,
+                "title": submission.title,
+            },
+            "archive": None,
+        }, None
+
     def finalize_round(self, round_id: int):
         """
         Chá»‘t Ä‘iá»ƒm vÃ²ng thi.
@@ -397,6 +567,33 @@ class ScoreService:
                 "total_score": item["total_score"],
             })
 
+        # Enrich leaderboard entries with a representative image URL (thumbnail if available)
+        try:
+            from infrastructure.models.app import SubmissionFileModel as _SFile
+            session = getattr(self.submission_repo, "session", None)
+
+            for entry in leaderboard:
+                entry_image = None
+                try:
+                    if session is not None:
+                        file_row = (
+                            session
+                            .query(_SFile)
+                            .filter_by(submission_id=entry.get("submission_id"))
+                            .order_by(_SFile.id.asc())
+                            .first()
+                        )
+                        if file_row is not None:
+                            # prefer thumbnail when available
+                            entry_image = getattr(file_row, "thumbnail_url", None) or getattr(file_row, "image_hd_url", None)
+                except Exception:
+                    entry_image = None
+
+                entry["image_url"] = entry_image
+        except Exception:
+            # best-effort only; do not fail leaderboard if enrichment fails
+            pass
+
         return {
             "message": "Round finalized successfully",
             "round_id": round_id,
@@ -525,19 +722,51 @@ class ScoreService:
         )
 
         image_url = None
+        media_assets = {
+            "main_image_url": None,
+            "negative_film_url": None,
+            "contact_sheet_url": None,
+        }
+        proof_attachments = []
 
         try:
-            file_row = (
+            file_rows = (
                 self.submission_repo.session
                 .query(SubmissionFileModel)
                 .filter_by(submission_id=submission_id)
                 .order_by(SubmissionFileModel.id.asc())
-                .first()
+                .all()
             )
-            if file_row is not None:
-                image_url = getattr(file_row, "image_hd_url", None)
+
+            file_urls = []
+            for file_row in file_rows or []:
+                candidate_url = getattr(file_row, "image_hd_url", None)
+                if candidate_url and candidate_url not in file_urls:
+                    file_urls.append(candidate_url)
+
+            if file_urls:
+                image_url = file_urls[0]
+                media_assets["main_image_url"] = file_urls[0]
+            if len(file_urls) > 1:
+                media_assets["negative_film_url"] = file_urls[1]
+            if len(file_urls) > 2:
+                media_assets["contact_sheet_url"] = file_urls[2]
+            if len(file_urls) > 3:
+                proof_attachments = [
+                    {
+                        "label": f"Proof Attachment {index + 1}",
+                        "url": file_urls[index],
+                    }
+                    for index in range(3, len(file_urls))
+                ]
         except Exception:
             image_url = None
+            media_assets = {
+                "main_image_url": None,
+                "negative_film_url": None,
+                "contact_sheet_url": None,
+            }
+            proof_attachments = []
 
         criteria_list = (
             self.contest_repo.get_criteria_by_round_id(
@@ -627,6 +856,8 @@ class ScoreService:
         return {
             "submission": self._serialize_submission(submission),
             "image_url": image_url,
+            "media_assets": media_assets,
+            "proof_attachments": proof_attachments,
             "round": None if round_obj is None else {
                 "id": round_obj.id,
                 "contest_id": round_obj.contest_id,

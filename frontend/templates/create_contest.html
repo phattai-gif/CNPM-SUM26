@@ -1,16 +1,17 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Contest Configuration Manager</title>
     <link rel="stylesheet" href="/static/auth.css">
     <style>
+      /* ===== DARK MODE THEME ===== */
       body {
         margin: 0;
         min-height: 100vh;
-        background: #f3f6fb;
-        color: #1f2937;
+        background: #080c14;
+        color: #e8edf2;
         font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       }
 
@@ -20,26 +21,45 @@
         padding: 36px 20px;
       }
 
+      /* ===== PANEL / CARD ===== */
       .panel {
-        background: #fff;
-        border: 1px solid #e5e7eb;
+        background: #111a26;
+        border: 1px solid #1e2a3a;
         border-radius: 20px;
-        box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
         padding: 28px;
+        transition: all 0.3s ease;
+      }
+      .panel:hover {
+        border-color: #f5a623;
+        box-shadow: 0 12px 40px rgba(245, 166, 35, 0.06);
       }
 
+      /* ===== HEADINGS ===== */
       h1 {
         margin: 0;
         font-size: clamp(1.7rem, 2.2vw, 2.2rem);
-        color: #111827;
+        color: #f0f4f8;
+        font-weight: 700;
+      }
+
+      h3 {
+        color: #f0f4f8;
+        font-weight: 600;
       }
 
       .subtitle {
         margin: 8px 0 0;
-        color: #6b7280;
+        color: #8899aa;
         font-size: 0.95rem;
       }
 
+      .muted {
+        color: #6b7f94;
+        font-size: 0.9rem;
+      }
+
+      /* ===== FORM ELEMENTS ===== */
       form {
         display: grid;
         gap: 18px;
@@ -49,17 +69,31 @@
       label {
         display: block;
         margin-bottom: 8px;
-        color: #374151;
+        color: #99abb8;
         font-weight: 600;
       }
 
       input, textarea, select {
         width: 100%;
-        border: 1px solid #d1d5db;
+        border: 2px solid #1e2a3a;
         border-radius: 12px;
         padding: 12px 14px;
         font-size: 1rem;
-        background: #fff;
+        background: #0d1622;
+        color: #e8edf2;
+        transition: all 0.3s ease;
+      }
+
+      input:focus, textarea:focus, select:focus {
+        border-color: #f5a623;
+        box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
+        outline: none;
+        background: #0d1622;
+        color: #e8edf2;
+      }
+
+      input::placeholder, textarea::placeholder {
+        color: #6b7f94;
       }
 
       textarea {
@@ -67,6 +101,12 @@
         resize: vertical;
       }
 
+      select option {
+        background: #111a26;
+        color: #e8edf2;
+      }
+
+      /* ===== GRID ===== */
       .section-grid {
         display: grid;
         gap: 12px;
@@ -79,56 +119,103 @@
         flex-wrap: wrap;
       }
 
+      /* ===== BUTTONS ===== */
       button {
         border: none;
         border-radius: 10px;
         padding: 10px 14px;
-        background: linear-gradient(135deg, #4f46e5, #2563eb);
-        color: #fff;
         font-weight: 700;
         cursor: pointer;
+        transition: all 0.3s ease;
       }
 
+      button:hover {
+        transform: translateY(-2px);
+      }
+
+      /* Primary button (Submit) */
+      .btn-primary, button[type="submit"] {
+        background: #f5a623;
+        color: #080c14;
+      }
+      .btn-primary:hover, button[type="submit"]:hover {
+        background: #e0960a;
+        box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
+      }
+
+      /* Secondary button */
       .btn-secondary {
-        background: #fff;
-        color: #111827;
-        border: 1px solid #d1d5db;
+        background: transparent;
+        color: #99abb8;
+        border: 1px solid #1e2a3a;
+      }
+      .btn-secondary:hover {
+        background: rgba(245, 166, 35, 0.08);
+        color: #f5a623;
+        border-color: #f5a623;
       }
 
-      .btn-danger {
-        background: #ef4444;
-      }
-
+      /* Success button */
       .btn-success {
-        background: #10b981;
+        background: #f5a623;
+        color: #080c14;
+      }
+      .btn-success:hover {
+        background: #e0960a;
+        box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
       }
 
+      /* Danger button */
+      .btn-danger {
+        background: #dc2626;
+        color: #fff;
+      }
+      .btn-danger:hover {
+        background: #b91c1c;
+        box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
+      }
+
+      /* ===== ROUND ITEMS ===== */
       .round-item {
-        border: 1px solid #e6eefc;
+        border: 1px solid #1e2a3a;
         padding: 12px;
         margin: 12px 0;
         border-radius: 12px;
-        background: #fbfdff;
+        background: #0d1622;
+        transition: all 0.3s ease;
+      }
+      .round-item:hover {
+        border-color: #f5a623;
       }
 
+      .round-id-label {
+        color: #f5a623;
+        font-weight: 600;
+      }
+
+      /* ===== CRITERIA ITEMS ===== */
       .criteria-item {
-        border: 1px dashed #d9dfe9;
+        border: 1px dashed #1e2a3a;
         padding: 10px;
         border-radius: 10px;
         margin-top: 10px;
-        background: #fff;
+        background: #0a111c;
+        transition: all 0.3s ease;
+      }
+      .criteria-item:hover {
+        border-color: #f5a623;
       }
 
-      .muted {
-        color: #6b7280;
-        font-size: 0.9rem;
-      }
-
+      /* ===== CONFIG CARDS ===== */
       .config-card {
-        border: 1px solid #e5e7eb;
+        border: 1px solid #1e2a3a;
         border-radius: 12px;
         padding: 14px;
-        background: #f8fbff;
+        background: #0d1622;
+        transition: all 0.3s ease;
+      }
+      .config-card:hover {
+        border-color: #f5a623;
       }
 
       .config-list {
@@ -138,23 +225,60 @@
       }
 
       .config-item {
-        border: 1px solid #dbe7ff;
+        border: 1px solid #1e2a3a;
         border-radius: 10px;
         padding: 10px;
-        background: #fff;
+        background: #0a111c;
+        transition: all 0.3s ease;
+      }
+      .config-item:hover {
+        border-color: #f5a623;
       }
 
       .config-item-title {
         font-weight: 700;
-        color: #111827;
+        color: #f0f4f8;
       }
 
       .config-item-meta {
         font-size: 0.88rem;
-        color: #6b7280;
+        color: #6b7f94;
         margin-top: 4px;
       }
 
+      /* ===== MODAL ===== */
+      #confirmModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        align-items: center;
+        justify-content: center;
+        background: rgba(2, 6, 23, 0.7);
+        backdrop-filter: blur(6px);
+        z-index: 1200;
+      }
+
+      #confirmModal > div {
+        background: #111a26;
+        border: 1px solid #1e2a3a;
+        border-radius: 12px;
+        padding: 20px;
+        max-width: 480px;
+        width: 90%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+
+      #confirmModal h3 {
+        margin: 0 0 8px;
+        color: #f0f4f8;
+      }
+
+      #confirmModal p {
+        margin: 0 0 16px;
+        color: #99abb8;
+      }
+
+      /* ===== TOAST ===== */
       #toast {
         display: none;
         position: fixed;
@@ -163,14 +287,54 @@
         color: #fff;
         padding: 12px 16px;
         border-radius: 10px;
-        box-shadow: 0 8px 24px rgba(2, 6, 23, 0.2);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
         z-index: 1300;
-        background: #111827;
+        background: #0d1622;
+        border: 1px solid #1e2a3a;
+        font-weight: 500;
       }
 
+      /* ===== HR ===== */
+      hr {
+        border-color: #1e2a3a;
+        opacity: 0.5;
+        margin: 20px 0;
+      }
+
+      /* ===== SCROLLBAR ===== */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0d1622;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #f5a623;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #e0960a;
+      }
+
+      /* ===== RESPONSIVE ===== */
       @media (max-width: 768px) {
         .section-grid {
           grid-template-columns: 1fr;
+        }
+        .panel {
+          padding: 16px;
+        }
+        .page-shell {
+          padding: 20px 12px;
+        }
+        button {
+          padding: 8px 12px;
+          font-size: 0.9rem;
+        }
+        input, textarea, select {
+          padding: 10px 12px;
+          font-size: 0.9rem;
         }
       }
     </style>
@@ -261,7 +425,7 @@
           <h3 style="margin:0;">Awards / Prizes (Giải thưởng)</h3>
           <p class="muted" style="margin:0;">Quản lý giải thưởng theo contest_id bằng API thêm/sửa/xóa.</p>
           <div class="config-card">
-            <div class="section-grid" style="grid-template-columns:1fr 1fr 0.7fr;">
+            <div class="section-grid" style="grid-template-columns:1fr 1fr 0.7fr 0.7fr;">
               <div>
                 <label>Tên giải thưởng</label>
                 <input type="text" id="awardTitleInput" placeholder="Ví dụ: Best Portrait" />
@@ -273,6 +437,10 @@
               <div>
                 <label>Thứ hạng</label>
                 <input type="number" id="awardRankInput" min="1" placeholder="1" />
+              </div>
+              <div>
+                <label>Số lượng</label>
+                <input type="number" id="awardQuantityInput" min="1" value="1" placeholder="1" />
               </div>
             </div>
             <div style="margin-top:8px;">
@@ -286,20 +454,20 @@
           </div>
 
           <div class="inline-actions">
-            <button type="submit" id="submitBtn">Save All Changes</button>
+            <button type="submit" id="submitBtn" class="btn-primary">Save All Changes</button>
             <button type="button" id="publishBtn" class="btn-success" style="display:none;">Publish Contest</button>
           </div>
         </form>
       </div>
     </div>
 
-    <div id="confirmModal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(2,6,23,0.5);z-index:1200;">
-      <div style="background:#fff;border-radius:12px;padding:20px;max-width:480px;width:90%;box-shadow:0 10px 30px rgba(2,6,23,0.25);">
-        <h3 style="margin:0 0 8px">Xác nhận xuất bản</h3>
-        <p style="margin:0 0 16px;color:#374151">Bạn có chắc muốn xuất bản cuộc thi này?</p>
+    <div id="confirmModal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(2,6,23,0.7);backdrop-filter:blur(6px);z-index:1200;">
+      <div style="background:#111a26;border:1px solid #1e2a3a;border-radius:12px;padding:20px;max-width:480px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+        <h3 style="margin:0 0 8px;color:#f0f4f8;">Xác nhận xuất bản</h3>
+        <p style="margin:0 0 16px;color:#99abb8;">Bạn có chắc muốn xuất bản cuộc thi này?</p>
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
-          <button id="confirmCancel" class="btn-secondary">Hủy</button>
-          <button id="confirmPublish" class="btn-success">Xác nhận</button>
+          <button id="confirmCancel" class="btn-secondary" style="background:transparent;color:#99abb8;border:1px solid #1e2a3a;padding:8px 16px;border-radius:8px;cursor:pointer;">Hủy</button>
+          <button id="confirmPublish" class="btn-success" style="background:#f5a623;color:#080c14;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;">Xác nhận</button>
         </div>
       </div>
     </div>
@@ -323,6 +491,7 @@
         const awardTitleInput = document.getElementById('awardTitleInput');
         const awardPrizeInput = document.getElementById('awardPrizeInput');
         const awardRankInput = document.getElementById('awardRankInput');
+        const awardQuantityInput = document.getElementById('awardQuantityInput');
         const awardDescInput = document.getElementById('awardDescInput');
         const addAwardBtn = document.getElementById('addAwardBtn');
         const awardList = document.getElementById('awardList');
@@ -341,7 +510,8 @@
 
         function showToast(msg, ms = 2600, isError = false) {
           toast.textContent = msg;
-          toast.style.background = isError ? '#b91c1c' : '#111827';
+          toast.style.background = isError ? '#b91c1c' : '#0d1622';
+          toast.style.border = isError ? '1px solid #dc2626' : '1px solid #1e2a3a';
           toast.style.display = 'block';
           setTimeout(() => {
             toast.style.display = 'none';
@@ -440,7 +610,7 @@
             return `
               <div class="config-item">
                 <div class="config-item-title">#${escapeHtml(item.rank)} · ${escapeHtml(item.title || 'Untitled')}</div>
-                <div class="config-item-meta">Prize: ${escapeHtml(item.prize || 'N/A')}</div>
+                <div class="config-item-meta">Prize: ${escapeHtml(item.prize || 'N/A')} · Quantity: ${escapeHtml(item.quantity || 1)}</div>
                 <div class="config-item-meta">${escapeHtml(item.description || 'Không có mô tả')}</div>
                 <div class="inline-actions" style="margin-top:8px;">
                   <button type="button" class="btn-secondary edit-award" data-id="${escapeHtml(item.id)}">Sửa</button>
@@ -462,6 +632,8 @@
               if (prize === null) return;
               const rankRaw = prompt('Thứ hạng', current.rank != null ? String(current.rank) : '1');
               if (rankRaw === null) return;
+              const quantityRaw = prompt('Số lượng giải', current.quantity != null ? String(current.quantity) : '1');
+              if (quantityRaw === null) return;
               const description = prompt('Mô tả award', current.description || '');
               if (description === null) return;
 
@@ -469,6 +641,7 @@
                 title,
                 prize,
                 rank: Number(rankRaw),
+                quantity: Number(quantityRaw),
                 description
               });
             });
@@ -538,6 +711,7 @@
           const title = (awardTitleInput.value || '').trim();
           const prize = (awardPrizeInput.value || '').trim();
           const rank = Number(awardRankInput.value || '0');
+          const quantity = Number(awardQuantityInput.value || '1');
           const description = (awardDescInput.value || '').trim();
 
           if (!title) throw new Error('Tên award không được để trống');
@@ -546,6 +720,7 @@
             title,
             prize,
             rank: Number.isFinite(rank) && rank > 0 ? rank : null,
+            quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
             description
           };
 
@@ -554,6 +729,7 @@
           awardTitleInput.value = '';
           awardPrizeInput.value = '';
           awardRankInput.value = '';
+          awardQuantityInput.value = '1';
           awardDescInput.value = '';
           renderAwards();
           showToast('Thêm award thành công');
@@ -720,256 +896,4 @@
           const banner_url = form.querySelector('input[name="banner_url"]').value.trim();
           const start_date = form.querySelector('input[name="start_date"]').value.trim();
           const end_date = form.querySelector('input[name="end_date"]').value.trim();
-          const status = uiToApiStatus(form.querySelector('select[name="status_select"]').value);
-
-          if (!title) throw new Error('Title is required');
-          if (start_date && isNaN(Date.parse(start_date))) throw new Error('Start date is not valid');
-          if (end_date && isNaN(Date.parse(end_date))) throw new Error('End date is not valid');
-
-          return { title, description, rules, banner_url, start_date, end_date, status };
-        }
-
-        async function ensureContest() {
-          if (!hasSession()) throw new Error('No auth session');
-
-          const payload = getContestPayload();
-          let response;
-          if (activeContestId) {
-            response = await window.apiClient.put(`/organizer/contests/${activeContestId}`, payload);
-          } else {
-            response = await window.apiClient.post('/organizer/contests', payload);
-          }
-
-          const resolvedId = response && response.contest && response.contest.id ? String(response.contest.id) : activeContestId;
-          if (!resolvedId) throw new Error('Missing contest id from server response');
-
-          activeContestId = resolvedId;
-          const url = new URL(window.location.href);
-          url.searchParams.set('contest_id', activeContestId);
-          window.history.replaceState({}, '', url.toString());
-
-          publishBtn.style.display = 'inline-block';
-          setEditModeText();
-          return response.contest;
-        }
-
-        async function saveRound(roundEl) {
-          await ensureContest();
-
-          const title = roundEl.querySelector('input[name$="_title"]').value.trim();
-          if (!title) throw new Error('Round title is required');
-
-          const payload = {
-            title,
-            round_number: parseInt(roundEl.querySelector('input[name$="_number"]').value || '1', 10),
-            weight: parseFloat(roundEl.querySelector('input[name$="_weight"]').value || '1'),
-            status: roundEl.querySelector('select[name$="_status"]').value,
-            start_date: roundEl.querySelector('input[name$="_start"]').value.trim() || null,
-            end_date: roundEl.querySelector('input[name$="_end"]').value.trim() || null,
-            description: roundEl.querySelector('textarea[name$="_desc"]').value.trim() || ''
-          };
-
-          let response;
-          const roundId = roundEl.dataset.roundId;
-          if (roundId) {
-            response = await window.apiClient.put(`/organizer/contests/${activeContestId}/rounds/${roundId}`, payload);
-          } else {
-            response = await window.apiClient.post(`/organizer/contests/${activeContestId}/rounds`, payload);
-          }
-
-          if (response && response.round && response.round.id) {
-            roundEl.dataset.roundId = String(response.round.id);
-            roundEl.querySelector('.round-id-label').textContent = `#${response.round.id}`;
-          }
-          showToast('Round saved');
-          return response.round;
-        }
-
-        async function deleteRound(roundEl) {
-          const roundId = roundEl.dataset.roundId;
-          if (roundId && activeContestId) {
-            await window.apiClient.delete(`/organizer/contests/${activeContestId}/rounds/${roundId}`);
-            showToast('Round deleted');
-          }
-          roundEl.remove();
-        }
-
-        async function saveCriteria(criteriaEl) {
-          const roundEl = criteriaEl.closest('.round-item');
-          if (!roundEl) throw new Error('Cannot resolve parent round');
-
-          let roundId = roundEl.dataset.roundId;
-          if (!roundId) {
-            const savedRound = await saveRound(roundEl);
-            roundId = savedRound && savedRound.id ? String(savedRound.id) : '';
-          }
-          if (!roundId) throw new Error('Missing round id');
-
-          const name = criteriaEl.querySelector('input[name*="_name"]').value.trim();
-          if (!name) throw new Error('Criteria name is required');
-
-          const payload = {
-            name,
-            description: criteriaEl.querySelector('input[name*="_desc"]').value.trim() || '',
-            max_score: parseFloat(criteriaEl.querySelector('input[name*="_max"]').value || '10'),
-            weight: parseFloat(criteriaEl.querySelector('input[name*="_weight"]').value || '1')
-          };
-
-          const criteriaId = criteriaEl.dataset.criteriaId;
-          let response;
-          if (criteriaId) {
-            response = await window.apiClient.put(`/organizer/contests/${activeContestId}/rounds/${roundId}/criteria/${criteriaId}`, payload);
-          } else {
-            response = await window.apiClient.post(`/organizer/contests/${activeContestId}/rounds/${roundId}/criteria`, payload);
-          }
-
-          if (response && response.criteria && response.criteria.id) {
-            criteriaEl.dataset.criteriaId = String(response.criteria.id);
-          }
-          showToast('Criteria saved');
-          return response.criteria;
-        }
-
-        async function deleteCriteria(criteriaEl) {
-          const roundEl = criteriaEl.closest('.round-item');
-          if (!roundEl) {
-            criteriaEl.remove();
-            return;
-          }
-
-          const roundId = roundEl.dataset.roundId;
-          const criteriaId = criteriaEl.dataset.criteriaId;
-          if (roundId && criteriaId && activeContestId) {
-            await window.apiClient.delete(`/organizer/contests/${activeContestId}/rounds/${roundId}/criteria/${criteriaId}`);
-            showToast('Criteria deleted');
-          }
-          criteriaEl.remove();
-        }
-
-        async function loadContest(contestId) {
-          const resp = await window.apiClient.get(`/organizer/contests/${contestId}`);
-          if (!resp || !resp.contest) return;
-
-          const contest = resp.contest;
-          form.querySelector('input[name="title"]').value = contest.title || '';
-          form.querySelector('textarea[name="description"]').value = contest.description || '';
-          form.querySelector('textarea[name="rules"]').value = contest.rules || '';
-          form.querySelector('input[name="banner_url"]').value = contest.banner_url || '';
-          form.querySelector('input[name="start_date"]').value = contest.start_date || '';
-          form.querySelector('input[name="end_date"]').value = contest.end_date || '';
-          form.querySelector('select[name="status_select"]').value = apiToUiStatus(contest.status);
-
-          roundsContainer.innerHTML = '';
-          nextRoundIdx = 1;
-          (contest.rounds || []).forEach((r) => addRound(r));
-
-          categoriesState = Array.isArray(contest.categories) ? contest.categories : [];
-          awardsState = Array.isArray(contest.awards) ? contest.awards : [];
-          renderCategories();
-          renderAwards();
-        }
-
-        addRoundBtn.addEventListener('click', () => addRound());
-
-        resetRoundsBtn.addEventListener('click', () => {
-          roundsContainer.innerHTML = '';
-          nextRoundIdx = 1;
-          showToast('Đã reset round trên UI, dữ liệu DB chưa bị xóa');
-        });
-
-        saveContestBtn.addEventListener('click', async function () {
-          setButtonLoading(saveContestBtn, true, 'Saving...');
-          try {
-            await ensureContest();
-            showToast('Contest info saved');
-          } catch (error) {
-            showToast(error.message || 'Không thể lưu contest', 2800, true);
-          } finally {
-            setButtonLoading(saveContestBtn, false);
-          }
-        });
-
-        form.addEventListener('submit', async function (event) {
-          event.preventDefault();
-          setButtonLoading(submitBtn, true, 'Saving all...');
-          try {
-            await ensureContest();
-
-            const rounds = Array.from(roundsContainer.querySelectorAll('.round-item'));
-            for (const roundEl of rounds) {
-              await saveRound(roundEl);
-              const criteriaEls = Array.from(roundEl.querySelectorAll('.criteria-item'));
-              for (const criteriaEl of criteriaEls) {
-                await saveCriteria(criteriaEl);
-              }
-            }
-
-            showToast('Đã lưu toàn bộ cấu hình cuộc thi');
-            setTimeout(() => {
-              window.location.href = '/organizer/dashboard';
-            }, 900);
-          } catch (error) {
-            showToast(error.message || 'Không thể lưu toàn bộ cấu hình', 3000, true);
-          } finally {
-            setButtonLoading(submitBtn, false);
-          }
-        });
-
-        addCategoryBtn.addEventListener('click', async () => {
-          setButtonLoading(addCategoryBtn, true, 'Đang thêm...');
-          try {
-            await addCategory();
-          } catch (error) {
-            showToast(error.message || 'Không thể thêm category', 3000, true);
-          } finally {
-            setButtonLoading(addCategoryBtn, false);
-          }
-        });
-
-        addAwardBtn.addEventListener('click', async () => {
-          setButtonLoading(addAwardBtn, true, 'Đang thêm...');
-          try {
-            await addAward();
-          } catch (error) {
-            showToast(error.message || 'Không thể thêm award', 3000, true);
-          } finally {
-            setButtonLoading(addAwardBtn, false);
-          }
-        });
-
-        function showModal() { modal.style.display = 'flex'; }
-        function hideModal() { modal.style.display = 'none'; }
-
-        publishBtn.addEventListener('click', () => showModal());
-        modalCancel.addEventListener('click', () => hideModal());
-
-        modalConfirm.addEventListener('click', async function () {
-          setButtonLoading(modalConfirm, true, 'Đang xử lý...');
-          try {
-            await ensureContest();
-            await window.apiClient.put(`/organizer/contests/${activeContestId}`, { status: 'published' });
-            form.querySelector('select[name="status_select"]').value = 'published';
-            hideModal();
-            showToast('Xuất bản cuộc thi thành công');
-          } catch (error) {
-            showToast(error.message || 'Không thể xuất bản cuộc thi', 3000, true);
-          } finally {
-            setButtonLoading(modalConfirm, false);
-          }
-        });
-
-        if (activeContestId) {
-          publishBtn.style.display = 'inline-block';
-          setEditModeText();
-          loadContest(activeContestId).catch((error) => {
-            showToast(error.message || 'Không tải được contest', 3000, true);
-          });
-        } else {
-          setEditModeText();
-          renderCategories();
-          renderAwards();
-        }
-      });
-    </script>
-  </body>
-</html>
+          const status = uiToApi

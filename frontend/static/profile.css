@@ -342,6 +342,30 @@ body {
     border-radius: var(--radius-full);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.role-pill.role-organizer {
+    background: linear-gradient(135deg, rgba(245, 166, 35, 0.25), rgba(217, 119, 6, 0.3));
+    color: #f5a623;
+    border: 1px solid rgba(245, 166, 35, 0.6);
+    box-shadow: 0 0 12px rgba(245, 166, 35, 0.2);
+    font-weight: 800;
+}
+
+.btn-organizer-dash {
+    background: linear-gradient(135deg, #f5a623, #d97706) !important;
+    color: #080c14 !important;
+    font-weight: 700 !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(245, 166, 35, 0.3);
+}
+
+.btn-organizer-dash:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 166, 35, 0.45);
 }
 
 .user-handle-row {

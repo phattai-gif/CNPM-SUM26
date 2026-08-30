@@ -2,6 +2,8 @@ const dashboardState = {
   contests: [],
   judges: [],
   assignments: [],
+  flaggedSubmissions: [],
+  currentAiReportSubmissionId: null,
   selectedContestId: '',
   selectedRoundId: ''
 };
@@ -57,6 +59,32 @@ async function fetchRoundAssignments(contestId, roundId) {
     return { assignments: [] };
   }
   return await window.apiClient.get(`/organizer/contests/${encodeURIComponent(contestId)}/rounds/${encodeURIComponent(roundId)}/judges`);
+}
+
+async function fetchFlaggedSubmissions(contestId) {
+  if (!requireDashboardSession()) return { submissions: [] };
+  const query = new URLSearchParams({ status: 'flagged', per_page: '100' });
+  if (contestId) {
+    query.set('contest_id', String(contestId));
+  }
+  return await window.apiClient.get(`/moderator/submissions?${query.toString()}`);
+}
+
+async function fetchAiReport(submissionId, contestId) {
+  if (!requireDashboardSession()) return null;
+  const query = contestId ? `?contest_id=${encodeURIComponent(contestId)}` : '';
+  return await window.apiClient.get(`/moderator/submissions/${encodeURIComponent(submissionId)}/ai-report${query}`);
+}
+
+async function moderateSubmissionAction(submissionId, action, contestId) {
+  if (!requireDashboardSession()) return null;
+  return await window.apiClient.post(
+    `/moderator/submissions/${encodeURIComponent(submissionId)}/${action}`,
+    {
+      contest_id: contestId ? Number(contestId) : undefined,
+      review_notes: `Action ${action} from organizer dashboard`
+    }
+  );
 }
 
 function getSelectedContest() {
@@ -118,8 +146,10 @@ function renderContests(contests) {
 
 function renderMetrics(metrics) {
   if (!metrics) return;
+  const contests = document.getElementById('overview-contests');
   const subs = document.getElementById('overview-submissions');
   const judges = document.getElementById('overview-judges');
+  if (contests) contests.textContent = (metrics.contests ?? metrics.total_contests ?? dashboardState.contests.length ?? '-');
   if (subs) subs.textContent = (metrics.submissions ?? metrics.submissions_count ?? '-');
   if (judges) judges.textContent = (metrics.judges ?? metrics.judges_count ?? '-');
 }
@@ -245,6 +275,153 @@ function renderAssignments(assignments) {
   renderAvailableJudges();
 }
 
+function confidenceText(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return '-';
+  }
+  return `${Number(value).toFixed(2)}%`;
+}
+
+function riskPillClass(riskLevel) {
+  const normalized = String(riskLevel || '').toLowerCase();
+  if (normalized === 'high') return 'high';
+  if (normalized === 'medium') return 'medium';
+  if (normalized === 'safe') return 'safe';
+  return 'low';
+}
+
+function renderFlaggedSubmissions(items) {
+  const tbody = document.getElementById('flagged-submissions-body');
+  if (!tbody) return;
+
+  dashboardState.flaggedSubmissions = Array.isArray(items) ? items : [];
+
+  if (!dashboardState.flaggedSubmissions.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Không có submission bị flag trong contest hiện tại.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dashboardState.flaggedSubmissions.map((submission) => {
+    const ai = submission.ai || {};
+    const warningType = ai.warning_type || '-';
+    const confidence = confidenceText(ai.confidence_score);
+    const risk = String(ai.risk_level || 'safe');
+    const reason = ai.reason || ai.review_notes || 'No reason provided';
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:700;color:#111827;">#${escapeHtml(submission.id)} - ${escapeHtml(submission.title || 'Untitled')}</div>
+          <div class="muted">Contest: ${escapeHtml(submission.contest_title || '-')} | User: ${escapeHtml(submission.username || '-')}</div>
+        </td>
+        <td>${escapeHtml(warningType)}</td>
+        <td>${escapeHtml(confidence)}</td>
+        <td><span class="risk-pill ${riskPillClass(risk)}">${escapeHtml(risk.toUpperCase())}</span></td>
+        <td><div class="warning-text" title="${escapeHtml(reason)}">${escapeHtml(reason)}</div></td>
+        <td>
+          <div class="action-row" style="margin-top:0;">
+            <button class="btn btn-outline btn-sm view-ai-report-btn" data-submission-id="${escapeHtml(submission.id)}">AI Report</button>
+            <button class="btn btn-success-alt btn-sm approve-flag-btn" data-submission-id="${escapeHtml(submission.id)}">Approve</button>
+            <button class="btn btn-danger btn-sm reject-flag-btn" data-submission-id="${escapeHtml(submission.id)}">Reject</button>
+            <button class="btn btn-warning-alt btn-sm dismiss-flag-btn" data-submission-id="${escapeHtml(submission.id)}">Dismiss flag</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.view-ai-report-btn').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const submissionId = Number(button.dataset.submissionId);
+      await openAiReport(submissionId);
+    });
+  });
+
+  tbody.querySelectorAll('.approve-flag-btn').forEach((button) => {
+    button.addEventListener('click', async () => {
+      await handleModeration(button.dataset.submissionId, 'approve', 'Đã approve submission');
+    });
+  });
+
+  tbody.querySelectorAll('.reject-flag-btn').forEach((button) => {
+    button.addEventListener('click', async () => {
+      await handleModeration(button.dataset.submissionId, 'reject', 'Đã reject submission');
+    });
+  });
+
+  tbody.querySelectorAll('.dismiss-flag-btn').forEach((button) => {
+    button.addEventListener('click', async () => {
+      await handleModeration(button.dataset.submissionId, 'dismiss-flag', 'Đã dismiss AI flag');
+    });
+  });
+}
+
+async function loadFlaggedSubmissions() {
+  const contestId = dashboardState.selectedContestId || null;
+  const response = await fetchFlaggedSubmissions(contestId);
+  renderFlaggedSubmissions((response && response.submissions) ? response.submissions : []);
+}
+
+function closeAiReportDrawer() {
+  const drawer = document.getElementById('ai-report-drawer');
+  if (!drawer) return;
+  drawer.classList.remove('active');
+  dashboardState.currentAiReportSubmissionId = null;
+}
+
+async function openAiReport(submissionId) {
+  const drawer = document.getElementById('ai-report-drawer');
+  const summaryNode = document.getElementById('ai-report-summary');
+  const rawNode = document.getElementById('ai-report-raw');
+  if (!drawer || !summaryNode || !rawNode) return;
+
+  try {
+    summaryNode.textContent = 'Đang tải AI report...';
+    rawNode.textContent = '{}';
+    drawer.classList.add('active');
+
+    const contestId = dashboardState.selectedContestId || null;
+    const payload = await fetchAiReport(submissionId, contestId);
+    const aiFlag = payload && payload.ai_flag ? payload.ai_flag : {};
+    const report = payload && payload.ai_report ? payload.ai_report : {};
+    const submission = payload && payload.submission ? payload.submission : {};
+
+    const summaryLines = [
+      `Submission: #${submission.id || '-'} - ${submission.title || '-'}`,
+      `Warning Type: ${aiFlag.warning_type || '-'}`,
+      `Confidence Score: ${confidenceText(aiFlag.confidence_score)}`,
+      `Risk Level: ${(aiFlag.risk_level || '-').toString().toUpperCase()}`,
+      `Reason: ${aiFlag.reason || 'No reason provided'}`,
+      `AI Model: ${report.model || '-'}`,
+      `Matched Submission: ${report.similarity_matched_submission_id || '-'}`,
+      `Created At: ${report.created_at || '-'}`
+    ];
+
+    summaryNode.textContent = summaryLines.join('\n');
+    rawNode.textContent = JSON.stringify(report.raw_details || {}, null, 2);
+    dashboardState.currentAiReportSubmissionId = submissionId;
+  } catch (error) {
+    summaryNode.textContent = error.message || 'Không thể tải AI report';
+    rawNode.textContent = '{}';
+  }
+}
+
+async function handleModeration(submissionId, action, successMessage) {
+  try {
+    const contestId = dashboardState.selectedContestId || null;
+    await moderateSubmissionAction(Number(submissionId), action, contestId);
+    showToast(successMessage);
+    await loadFlaggedSubmissions();
+    const metrics = await fetchMetrics();
+    if (metrics) renderMetrics(metrics);
+    if (dashboardState.currentAiReportSubmissionId === Number(submissionId)) {
+      closeAiReportDrawer();
+    }
+  } catch (error) {
+    showToast(error.message || 'Moderation action failed', true);
+  }
+}
+
 async function loadAssignmentsForCurrentRound() {
   const contest = getSelectedContest();
   const round = getSelectedRound();
@@ -311,12 +488,15 @@ function bindManagerEvents() {
   const roundSelect = document.getElementById('round-select');
   const assignButton = document.getElementById('assign-selected-btn');
   const refreshButton = document.getElementById('refresh-judge-manager-btn');
+  const refreshFlaggedButton = document.getElementById('refresh-flagged-btn');
+  const closeAiReportButton = document.getElementById('close-ai-report-btn');
 
   if (contestSelect) {
     contestSelect.addEventListener('change', async (event) => {
       dashboardState.selectedContestId = event.target.value;
       renderRoundOptions();
       await refreshJudgeManager();
+      await loadFlaggedSubmissions();
     });
   }
 
@@ -351,6 +531,7 @@ function bindManagerEvents() {
         renderContestOptions();
         renderRoundOptions();
         await refreshJudgeManager();
+        await loadFlaggedSubmissions();
         showToast('Đã làm mới dữ liệu judge assignment');
       } catch (error) {
         console.error(error);
@@ -359,6 +540,24 @@ function bindManagerEvents() {
         refreshButton.disabled = false;
       }
     });
+  }
+
+  if (refreshFlaggedButton) {
+    refreshFlaggedButton.addEventListener('click', async () => {
+      try {
+        refreshFlaggedButton.disabled = true;
+        await loadFlaggedSubmissions();
+        showToast('Đã làm mới AI flag queue');
+      } catch (error) {
+        showToast(error.message || 'Không thể tải AI flag queue', true);
+      } finally {
+        refreshFlaggedButton.disabled = false;
+      }
+    });
+  }
+
+  if (closeAiReportButton) {
+    closeAiReportButton.addEventListener('click', closeAiReportDrawer);
   }
 }
 
@@ -376,6 +575,7 @@ async function initDashboard() {
     if (metrics) renderMetrics(metrics);
 
     await refreshJudgeManager();
+    await loadFlaggedSubmissions();
   } catch (error) {
     console.error(error);
     if (errEl) {

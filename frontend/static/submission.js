@@ -22,12 +22,17 @@ class SubmissionForm {
 
         this.selectedImage = null;
         this.selectedImageFile = null;
+        this.negativeFilmFile = null;
+        this.contactSheetFile = null;
         this.roundsList = [];
         this.session = window.AuthSession.getSession();
         this.authToken = this.session.token;
         this.isSubmitting = false;
         this.draftId = new URLSearchParams(window.location.search).get('draft_id') || new URLSearchParams(window.location.search).get('id') || null;
+        this.preferredContestId = new URLSearchParams(window.location.search).get('contest_id') || null;
         this.hasExistingImage = false;
+        this.hasExistingNegativeFilm = false;
+        this.hasExistingContactSheet = false;
 
         this.init();
     }
@@ -59,6 +64,39 @@ class SubmissionForm {
 
         // Remove image button
         document.getElementById('removeImageBtn').addEventListener('click', () => this.removeImage());
+
+        // Proof attachment event listeners
+        const negativeFilmInput = document.getElementById('negativeFilmInput');
+        const contactSheetInput = document.getElementById('contactSheetInput');
+        const negativeFilmZone = document.getElementById('negativeFilmZone');
+        const contactSheetZone = document.getElementById('contactSheetZone');
+
+        if (negativeFilmInput) {
+            negativeFilmInput.addEventListener('change', (e) => this.handleProofFileSelect('negative', e));
+        }
+        if (contactSheetInput) {
+            contactSheetInput.addEventListener('change', (e) => this.handleProofFileSelect('contact_sheet', e));
+        }
+        if (negativeFilmZone) {
+            negativeFilmZone.addEventListener('dragover', (e) => { e.preventDefault(); negativeFilmZone.classList.add('drag-over'); });
+            negativeFilmZone.addEventListener('dragleave', () => negativeFilmZone.classList.remove('drag-over'));
+            negativeFilmZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                negativeFilmZone.classList.remove('drag-over');
+                if (e.dataTransfer.files.length > 0) this.processProofFile('negative', e.dataTransfer.files[0]);
+            });
+        }
+        if (contactSheetZone) {
+            contactSheetZone.addEventListener('dragover', (e) => { e.preventDefault(); contactSheetZone.classList.add('drag-over'); });
+            contactSheetZone.addEventListener('dragleave', () => contactSheetZone.classList.remove('drag-over'));
+            contactSheetZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                contactSheetZone.classList.remove('drag-over');
+                if (e.dataTransfer.files.length > 0) this.processProofFile('contact_sheet', e.dataTransfer.files[0]);
+            });
+        }
+        document.getElementById('removeNegativeFilmBtn')?.addEventListener('click', () => this.removeProofFile('negative'));
+        document.getElementById('removeContactSheetBtn')?.addEventListener('click', () => this.removeProofFile('contact_sheet'));
 
         // Character count
         document.getElementById('titleInput').addEventListener('input', (e) => this.updateCharCount(e, 'titleCount'));
@@ -113,8 +151,11 @@ class SubmissionForm {
                     contest.rounds.forEach(round => {
                         this.roundsList.push({
                             id: round.id,
-                            name: round.name,
+                            name: round.name || round.title || `Round ${round.round_number || round.id || ''}`,
+                            title: round.title || round.name || `Round ${round.round_number || round.id || ''}`,
                             deadline: round.deadline,
+                            status: round.status || '',
+                            contest_id: contest.id,
                             contest_name: contest.name || contest.title,
                             description: round.description
                         });
@@ -123,11 +164,15 @@ class SubmissionForm {
             });
             
             this.populateRoundSelect();
+            this.showRoundLoadState();
             if (this.draftId) {
                 await this.loadDraftData();
+            } else {
+                this.preselectRoundFromContext();
             }
         } catch (error) {
             console.warn('Could not load rounds:', error);
+            this.showRoundLoadState('Không tải được danh sách vòng thi. Vui lòng thử lại sau.');
             if (this.draftId) {
                 await this.loadDraftData();
             }
@@ -204,6 +249,28 @@ class SubmissionForm {
                 this.imagePreview.style.display = 'block';
                 if (this.imageInput) this.imageInput.removeAttribute('required');
             }
+
+            // Restore proof attachment previews from draft
+            const files = data.files || {};
+            const negativeFiles = files.negative || [];
+            const contactSheetFiles = files.contact_sheet || [];
+
+            if (negativeFiles.length > 0) {
+                const negFile = negativeFiles[0];
+                const src = negFile.image_hd_url || negFile.thumbnail_url;
+                if (src) {
+                    this.hasExistingNegativeFilm = true;
+                    this._showExistingProofPreview('negative', src, 'Negative film đã tải lên');
+                }
+            }
+            if (contactSheetFiles.length > 0) {
+                const csFile = contactSheetFiles[0];
+                const src = csFile.image_hd_url || csFile.thumbnail_url;
+                if (src) {
+                    this.hasExistingContactSheet = true;
+                    this._showExistingProofPreview('contact_sheet', src, 'Contact sheet đã tải lên');
+                }
+            }
         } catch (error) {
             console.warn('Could not load draft submission details:', error);
         }
@@ -214,18 +281,52 @@ class SubmissionForm {
      */
     populateRoundSelect() {
         const roundSelect = document.getElementById('roundSelect');
+        if (!roundSelect) return;
+
+        roundSelect.innerHTML = '<option value="">-- Select a round --</option>';
         
         this.roundsList.forEach(round => {
             const option = document.createElement('option');
             option.value = round.id;
             const contestName = round.contest_name ? `[${round.contest_name}] ` : '';
             const deadline = round.deadline ? ` - Deadline: ${new Date(round.deadline).toLocaleDateString()}` : '';
-            option.textContent = `${contestName}${round.name}${deadline}`;
+            option.textContent = `${contestName}${round.name || round.title || 'Round'}${deadline}`;
             roundSelect.appendChild(option);
         });
 
         // Update round info when selection changes
         roundSelect.addEventListener('change', (e) => this.updateRoundInfo(e.target.value));
+    }
+
+    showRoundLoadState(message = '') {
+        const roundInfo = document.getElementById('roundInfo');
+        const roundSelect = document.getElementById('roundSelect');
+        if (!roundSelect) return;
+
+        if (this.roundsList.length > 0) {
+            if (roundInfo && !this.preferredContestId) {
+                roundInfo.innerHTML = '<div class="round-detail">Vui lòng chọn một vòng thi hợp lệ để tiếp tục.</div>';
+            }
+            return;
+        }
+
+        roundSelect.innerHTML = '<option value="">-- Chưa có vòng thi khả dụng --</option>';
+        if (roundInfo) {
+            roundInfo.innerHTML = `<div class="round-detail">${message || 'Hiện chưa có vòng thi đang mở để nhận bài nộp.'}</div>`;
+        }
+    }
+
+    preselectRoundFromContext() {
+        if (!this.preferredContestId) return;
+
+        const roundSelect = document.getElementById('roundSelect');
+        if (!roundSelect) return;
+
+        const preferredRound = this.roundsList.find((round) => String(round.contest_id) === String(this.preferredContestId));
+        if (!preferredRound) return;
+
+        roundSelect.value = String(preferredRound.id);
+        this.updateRoundInfo(preferredRound.id);
     }
 
     /**
@@ -413,6 +514,7 @@ class SubmissionForm {
     resetForm() {
         this.form.reset();
         this.removeImage();
+        this.resetProofFiles();
         document.getElementById('titleCount').textContent = '0/200 characters';
         document.getElementById('descriptionCount').textContent = '0/1000 characters';
         this.draftStatus.style.display = 'none';
@@ -560,6 +662,14 @@ class SubmissionForm {
             formData.append('file', this.selectedImageFile, this.selectedImageFile.name);
         }
 
+        // Append proof attachment files
+        if (this.negativeFilmFile) {
+            formData.append('negative_film', this.negativeFilmFile, this.negativeFilmFile.name);
+        }
+        if (this.contactSheetFile) {
+            formData.append('contact_sheet', this.contactSheetFile, this.contactSheetFile.name);
+        }
+
         formData.append('status', mode === 'draft' ? 'draft' : 'submitted');
         return formData;
     }
@@ -672,6 +782,146 @@ class SubmissionForm {
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // ============================================================
+    // PROOF ATTACHMENT HANDLERS
+    // ============================================================
+
+    /**
+     * Handle proof file input change event
+     */
+    handleProofFileSelect(type, event) {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            this.processProofFile(type, files[0]);
+        }
+    }
+
+    /**
+     * Validate and read a proof file, then display its preview
+     */
+    processProofFile(type, file) {
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const maxSize = 20 * 1024 * 1024; // 20MB
+
+        if (!validTypes.includes(file.type)) {
+            this.showError('Invalid File Type', `Proof file type "${file.type}" is not supported. Please use JPG, PNG, or WEBP.`);
+            return;
+        }
+        if (file.size > maxSize) {
+            this.showError('File Too Large', `Proof file size (${this.formatFileSize(file.size)}) exceeds 20MB limit.`);
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (type === 'negative') {
+                this.negativeFilmFile = file;
+            } else if (type === 'contact_sheet') {
+                this.contactSheetFile = file;
+            }
+            this.displayProofPreview(type, file, e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /**
+     * Display proof file thumbnail preview and file info
+     */
+    displayProofPreview(type, file, dataUrl) {
+        if (type === 'negative') {
+            const thumb = document.getElementById('negativeFilmThumb');
+            const name = document.getElementById('negativeFilmName');
+            const size = document.getElementById('negativeFilmSize');
+            const preview = document.getElementById('negativeFilmPreview');
+            const zone = document.getElementById('negativeFilmZone');
+
+            if (thumb) thumb.src = dataUrl;
+            if (name) name.textContent = file.name;
+            if (size) size.textContent = this.formatFileSize(file.size);
+            if (zone) zone.style.display = 'none';
+            if (preview) preview.style.display = 'flex';
+
+        } else if (type === 'contact_sheet') {
+            const thumb = document.getElementById('contactSheetThumb');
+            const name = document.getElementById('contactSheetName');
+            const size = document.getElementById('contactSheetSize');
+            const preview = document.getElementById('contactSheetPreview');
+            const zone = document.getElementById('contactSheetZone');
+
+            if (thumb) thumb.src = dataUrl;
+            if (name) name.textContent = file.name;
+            if (size) size.textContent = this.formatFileSize(file.size);
+            if (zone) zone.style.display = 'none';
+            if (preview) preview.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Show a read-only proof preview for an existing file URL (from draft)
+     */
+    _showExistingProofPreview(type, src, label) {
+        if (type === 'negative') {
+            const thumb = document.getElementById('negativeFilmThumb');
+            const name = document.getElementById('negativeFilmName');
+            const size = document.getElementById('negativeFilmSize');
+            const preview = document.getElementById('negativeFilmPreview');
+            const zone = document.getElementById('negativeFilmZone');
+
+            if (thumb) thumb.src = src;
+            if (name) name.textContent = label;
+            if (size) size.textContent = '';
+            if (zone) zone.style.display = 'none';
+            if (preview) preview.style.display = 'flex';
+
+        } else if (type === 'contact_sheet') {
+            const thumb = document.getElementById('contactSheetThumb');
+            const name = document.getElementById('contactSheetName');
+            const size = document.getElementById('contactSheetSize');
+            const preview = document.getElementById('contactSheetPreview');
+            const zone = document.getElementById('contactSheetZone');
+
+            if (thumb) thumb.src = src;
+            if (name) name.textContent = label;
+            if (size) size.textContent = '';
+            if (zone) zone.style.display = 'none';
+            if (preview) preview.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Remove a selected proof file and reset its input + preview
+     */
+    removeProofFile(type) {
+        if (type === 'negative') {
+            this.negativeFilmFile = null;
+            this.hasExistingNegativeFilm = false;
+            const input = document.getElementById('negativeFilmInput');
+            if (input) input.value = '';
+            const preview = document.getElementById('negativeFilmPreview');
+            const zone = document.getElementById('negativeFilmZone');
+            if (preview) preview.style.display = 'none';
+            if (zone) zone.style.display = 'block';
+
+        } else if (type === 'contact_sheet') {
+            this.contactSheetFile = null;
+            this.hasExistingContactSheet = false;
+            const input = document.getElementById('contactSheetInput');
+            if (input) input.value = '';
+            const preview = document.getElementById('contactSheetPreview');
+            const zone = document.getElementById('contactSheetZone');
+            if (preview) preview.style.display = 'none';
+            if (zone) zone.style.display = 'block';
+        }
+    }
+
+    /**
+     * Reset all proof attachment fields
+     */
+    resetProofFiles() {
+        this.removeProofFile('negative');
+        this.removeProofFile('contact_sheet');
     }
 }
 

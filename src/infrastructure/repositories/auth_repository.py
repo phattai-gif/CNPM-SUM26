@@ -1,9 +1,7 @@
 from typing import Optional
-
-from sqlalchemy import func, insert, select
+from sqlalchemy import func, insert, select, delete
 from secrets import token_urlsafe
 from werkzeug.security import check_password_hash
-
 from domain.models.iauth_repository import IAuthRepository
 from domain.models.auth import Auth
 from infrastructure.databases.factory_database import FactoryDatabase as db_factory
@@ -33,7 +31,8 @@ class AuthRepository(IAuthRepository):
                 email=auth.email,
                 password_hash=auth.password,
                 full_name=auth.full_name,
-                status='active'
+                     status='active',
+                     email_verified=False
             )
             self.session.add(new_user)
             self.session.flush()  # Lấy ID của user mới
@@ -88,19 +87,41 @@ class AuthRepository(IAuthRepository):
             print(f"Error logging in: {e}")
             return None
 
-    def login_google(self, email: str, full_name: str = None, avatar_url: str = None) -> Optional[Auth]:
-        """Find an active account by verified Google email or create a participant."""
+    def set_role(self, user_id: int, role_code: str) -> bool:
         try:
+            role_code = (role_code or 'participant').lower()
+            role_obj = self.session.query(RoleModel).filter_by(code=role_code).first()
+            if not role_obj:
+                role_obj = RoleModel(code=role_code, name=role_code.capitalize(), description=f'{role_code} role')
+                self.session.add(role_obj)
+                self.session.flush()
+
+            self.session.execute(delete(user_roles).where(user_roles.c.user_id == user_id))
+            self.session.execute(insert(user_roles).values(user_id=user_id, role_id=role_obj.id))
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error setting user role: {e}")
+            return False
+
+    def login_google(self, email: str, full_name: str = None, avatar_url: str = None, role: str = None) -> Optional[Auth]:
+        """Find an active account by verified Google email or create user with requested role."""
+        try:
+            role_code = (role or 'participant').lower()
             user_obj = self.session.query(UserModel).filter(
                 func.lower(UserModel.email) == email.lower()
             ).first()
             if user_obj:
                 if user_obj.status != 'active':
                     return None
+                user_obj.email_verified = True
                 if full_name and not user_obj.full_name:
                     user_obj.full_name = full_name
                 if avatar_url and not user_obj.avatar_url:
                     user_obj.avatar_url = avatar_url
+                if role:
+                    self.set_role(user_obj.id, role_code)
             else:
                 username_base = email.split('@', 1)[0][:40] or 'google_user'
                 username = username_base
@@ -113,17 +134,18 @@ class AuthRepository(IAuthRepository):
                     password_hash=token_urlsafe(32),
                     full_name=full_name,
                     avatar_url=avatar_url,
-                    status='active'
+                    status='active',
+                    email_verified=True
                 )
                 self.session.add(user_obj)
                 self.session.flush()
 
-                role_obj = self.session.query(RoleModel).filter_by(code='participant').first()
+                role_obj = self.session.query(RoleModel).filter_by(code=role_code).first()
                 if role_obj is None:
                     role_obj = RoleModel(
-                        code='participant',
-                        name='Participant',
-                        description='Default participant role',
+                        code=role_code,
+                        name=role_code.capitalize(),
+                        description=f'{role_code} role',
                     )
                     self.session.add(role_obj)
                     self.session.flush()
@@ -136,8 +158,12 @@ class AuthRepository(IAuthRepository):
                 password='',
                 passwordcomfirm='',
                 email=user_obj.email,
-                role=self.get_user_role(user_obj.id) or 'participant',
-                full_name=user_obj.full_name
+                role=self.get_user_role(user_obj.id) or role_code,
+                full_name=user_obj.full_name,
+                avatar_url=user_obj.avatar_url,
+                bio=getattr(user_obj, 'bio', None),
+                created_at=user_obj.created_at.isoformat() if getattr(user_obj, 'created_at', None) else None,
+                email_verified=user_obj.email_verified
             )
         except Exception as e:
             self.session.rollback()
@@ -175,7 +201,8 @@ class AuthRepository(IAuthRepository):
                 full_name=user_obj.full_name,
                 avatar_url=getattr(user_obj, 'avatar_url', None),
                 bio=getattr(user_obj, 'bio', None),
-                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None
+                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None,
+                email_verified=user_obj.email_verified
             )
         except Exception as e:
             print(f"Error fetching user by id: {e}")
@@ -198,7 +225,8 @@ class AuthRepository(IAuthRepository):
                 full_name=user_obj.full_name,
                 avatar_url=getattr(user_obj, 'avatar_url', None),
                 bio=getattr(user_obj, 'bio', None),
-                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None
+                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None,
+                email_verified=user_obj.email_verified
             )
         except Exception as e:
             print(f"Error fetching user by email: {e}")
@@ -231,12 +259,26 @@ class AuthRepository(IAuthRepository):
                 full_name=user_obj.full_name,
                 avatar_url=user_obj.avatar_url,
                 bio=user_obj.bio,
-                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None
+                created_at=user_obj.created_at.isoformat() if user_obj.created_at else None,
+                email_verified=user_obj.email_verified
             )
         except Exception as e:
             self.session.rollback()
             print(f"Error updating user profile: {e}")
             return None
+
+    def update_email_verified(self, user_id: int, verified: bool = True) -> bool:
+        try:
+            user_obj = self.session.query(UserModel).filter_by(id=user_id).first()
+            if not user_obj:
+                return False
+            user_obj.email_verified = verified
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error updating email verification: {e}")
+            return False
 
     def update_password(self, user_id: int, password_hash: str) -> bool:
         try:
@@ -261,6 +303,9 @@ class AuthRepository(IAuthRepository):
             return True
         except Exception as e:
             self.session.rollback()
+
+            print(f"Error updating status: {e}")
+
             print(f"Error updating user status: {e}")
             return False
 

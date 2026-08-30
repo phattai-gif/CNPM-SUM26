@@ -3,11 +3,15 @@
 {% block title %}CNPM-75 · Submission Review{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="/static/hd_viewer.css">
 <style>
+  /* ===== DARK MODE THEME ===== */
   .review-shell {
     max-width: 1500px;
     margin: 0 auto;
     padding: 20px 14px 28px;
+    background: #080c14;
+    color: #e8edf2;
   }
 
   .sticky-col {
@@ -16,36 +20,389 @@
     z-index: 10;
   }
 
+  /* ===== CARDS ===== */
+  .card {
+    background: #111a26 !important;
+    border: 1px solid #1e2a3a !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    transition: all 0.3s ease;
+  }
+  .card:hover {
+    border-color: #f5a623 !important;
+  }
+
+  .card-header {
+    background: #0d1622 !important;
+    border-bottom: 1px solid #1e2a3a !important;
+    color: #f0f4f8 !important;
+  }
+
+  .card-body {
+    background: #111a26 !important;
+    color: #e8edf2 !important;
+  }
+
+  .card-header strong,
+  .card-header .fw-bold,
+  .card-header .fw-semibold {
+    color: #f0f4f8 !important;
+  }
+
+  /* ===== TEXT ===== */
+  .text-muted {
+    color: #8899aa !important;
+  }
+  .text-dark {
+    color: #e8edf2 !important;
+  }
+  .small {
+    color: #8899aa !important;
+  }
+
+  h4, h5, h6, .h4, .h5, .h6 {
+    color: #f0f4f8 !important;
+  }
+
+  /* ===== BADGES ===== */
+  .badge {
+    font-weight: 600;
+  }
+  .text-bg-primary {
+    background: #f5a623 !important;
+    color: #080c14 !important;
+  }
+  .text-bg-secondary {
+    background: #0d1622 !important;
+    color: #8899aa !important;
+    border: 1px solid #1e2a3a;
+  }
+  .text-bg-info {
+    background: rgba(245, 166, 35, 0.15) !important;
+    color: #f5a623 !important;
+    border: 1px solid rgba(245, 166, 35, 0.2);
+  }
+  .text-bg-warning {
+    background: rgba(245, 166, 35, 0.12) !important;
+    color: #f5a623 !important;
+    border: 1px solid rgba(245, 166, 35, 0.2);
+  }
+  .text-bg-success {
+    background: rgba(52, 211, 153, 0.12) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(52, 211, 153, 0.2);
+  }
+  .text-bg-danger {
+    background: rgba(248, 113, 113, 0.12) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(248, 113, 113, 0.2);
+  }
+  .text-bg-light {
+    background: #0d1622 !important;
+    color: #8899aa !important;
+    border: 1px solid #1e2a3a;
+  }
+  .text-bg-dark {
+    background: #0a111c !important;
+    color: #6b7f94 !important;
+    border: 1px solid #1e2a3a;
+  }
+  .badge.border {
+    border-color: #1e2a3a !important;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+  }
+  .btn:hover {
+    transform: translateY(-2px) !important;
+  }
+
+  .btn-outline-secondary {
+    color: #99abb8 !important;
+    border-color: #1e2a3a !important;
+    background: transparent !important;
+  }
+  .btn-outline-secondary:hover {
+    color: #f5a623 !important;
+    border-color: #f5a623 !important;
+    background: rgba(245, 166, 35, 0.05) !important;
+    box-shadow: 0 8px 24px rgba(245, 166, 35, 0.15) !important;
+  }
+  .btn-outline-secondary:disabled {
+    opacity: 0.4 !important;
+    transform: none !important;
+  }
+
+  .btn-outline-primary {
+    color: #f5a623 !important;
+    border-color: #f5a623 !important;
+    background: transparent !important;
+  }
+  .btn-outline-primary:hover {
+    background: #f5a623 !important;
+    color: #080c14 !important;
+    box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3) !important;
+  }
+
+  .btn-primary {
+    background: #f5a623 !important;
+    color: #080c14 !important;
+    border: none !important;
+  }
+  .btn-primary:hover {
+    background: #e0960a !important;
+    box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3) !important;
+  }
+
+  .btn-outline-dark {
+    color: #f5a623 !important;
+    border-color: #f5a623 !important;
+    background: transparent !important;
+  }
+  .btn-outline-dark:hover {
+    background: #f5a623 !important;
+    color: #080c14 !important;
+  }
+
+  /* ===== LIST GROUP ===== */
+  .list-group-item {
+    background: #0d1622 !important;
+    color: #e8edf2 !important;
+    border-color: #1e2a3a !important;
+    transition: all 0.2s ease !important;
+  }
+  .list-group-item:hover {
+    background: rgba(245, 166, 35, 0.04) !important;
+    color: #f5a623 !important;
+  }
+  .list-group-item.active {
+    background: #f5a623 !important;
+    color: #080c14 !important;
+    border-color: #f5a623 !important;
+  }
+  .list-group-item.active .text-muted {
+    color: #080c14 !important;
+    opacity: 0.8;
+  }
+  .list-group-item .opacity-75 {
+    opacity: 0.6 !important;
+  }
+
+  /* ===== SUBMISSION IMAGE ===== */
   .submission-image {
     width: 100%;
     max-height: 560px;
     object-fit: contain;
     border-radius: 0.5rem;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background: #0a111c;
+    border: 1px solid #1e2a3a;
   }
 
   .submission-image-empty {
-    border: 1px dashed #ced4da;
+    border: 1px dashed #1e2a3a;
     border-radius: 0.5rem;
     min-height: 260px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6c757d;
-    background: #f8f9fa;
+    color: #6b7f94;
+    background: #0a111c;
   }
 
+  /* ===== CRITERION CARD ===== */
   .criterion-card {
-    border: 1px solid #e9ecef;
+    border: 1px solid #1e2a3a !important;
+    background: #0a111c !important;
+    border-radius: 10px !important;
+    padding: 12px !important;
   }
 
   .criterion-score-value {
     min-width: 56px;
     text-align: right;
     font-weight: 700;
+    color: #f5a623;
   }
 
+  /* ===== FORM ELEMENTS ===== */
+  .form-control {
+    background: #0d1622 !important;
+    border: 2px solid #1e2a3a !important;
+    color: #e8edf2 !important;
+    border-radius: 10px !important;
+    transition: all 0.3s ease !important;
+  }
+  .form-control:focus {
+    border-color: #f5a623 !important;
+    box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12) !important;
+    background: #0d1622 !important;
+    color: #e8edf2 !important;
+  }
+  .form-control::placeholder {
+    color: #6b7f94 !important;
+  }
+  .form-control:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+  }
+
+  .form-select {
+    background: #0d1622 !important;
+    border: 2px solid #1e2a3a !important;
+    color: #e8edf2 !important;
+    border-radius: 10px !important;
+  }
+  .form-select:focus {
+    border-color: #f5a623 !important;
+    box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12) !important;
+  }
+  .form-select option {
+    background: #111a26 !important;
+    color: #e8edf2 !important;
+  }
+
+  /* ===== RANGE INPUT ===== */
+  .form-range {
+    background: transparent !important;
+  }
+  .form-range::-webkit-slider-runnable-track {
+    background: #1e2a3a !important;
+    border-radius: 10px !important;
+    height: 6px !important;
+  }
+  .form-range::-webkit-slider-thumb {
+    background: #f5a623 !important;
+    border: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50% !important;
+    margin-top: -6px !important;
+    box-shadow: 0 2px 8px rgba(245, 166, 35, 0.3) !important;
+  }
+  .form-range::-moz-range-track {
+    background: #1e2a3a !important;
+    border-radius: 10px !important;
+    height: 6px !important;
+  }
+  .form-range::-moz-range-thumb {
+    background: #f5a623 !important;
+    border: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 8px rgba(245, 166, 35, 0.3) !important;
+  }
+  .form-range:disabled::-webkit-slider-thumb {
+    background: #6b7f94 !important;
+  }
+  .form-range:disabled::-moz-range-thumb {
+    background: #6b7f94 !important;
+  }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress {
+    background: #1e2a3a !important;
+    border-radius: 10px !important;
+    height: 8px !important;
+  }
+  .progress-bar {
+    background: #f5a623 !important;
+    border-radius: 10px !important;
+    transition: width 0.4s ease !important;
+  }
+
+  /* ===== ALERT ===== */
+  .alert {
+    border-radius: 12px !important;
+    border: 1px solid transparent !important;
+  }
+  .alert-success {
+    background: rgba(52, 211, 153, 0.08) !important;
+    border-color: rgba(52, 211, 153, 0.2) !important;
+    color: #34d399 !important;
+  }
+  .alert-danger {
+    background: rgba(248, 113, 113, 0.08) !important;
+    border-color: rgba(248, 113, 113, 0.2) !important;
+    color: #f87171 !important;
+  }
+  .alert-warning {
+    background: rgba(245, 166, 35, 0.08) !important;
+    border-color: rgba(245, 166, 35, 0.2) !important;
+    color: #f5a623 !important;
+  }
+  .alert-info {
+    background: rgba(56, 189, 248, 0.08) !important;
+    border-color: rgba(56, 189, 248, 0.2) !important;
+    color: #7dd3fc !important;
+  }
+  .alert .btn-close {
+    filter: invert(0.8);
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0d1622;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #f5a623;
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #e0960a;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 991.98px) {
+    .sticky-col {
+      position: static;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .review-shell {
+      padding: 12px 8px;
+    }
+    .card-body {
+      padding: 12px !important;
+    }
+    .card-header {
+      padding: 10px 12px !important;
+    }
+    .btn {
+      font-size: 0.85rem !important;
+      padding: 6px 12px !important;
+    }
+    .row.g-3 {
+      gap: 12px !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .review-shell {
+      padding: 8px 4px;
+    }
+    .card {
+      border-radius: 12px !important;
+    }
+    .btn {
+      font-size: 0.75rem !important;
+      padding: 4px 8px !important;
+    }
+    .d-flex.flex-wrap {
+      gap: 6px !important;
+    }
+  }
+
+  /* ===== SMALL MONO ===== */
   .small-mono {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
     font-size: 0.82rem;
@@ -53,12 +410,6 @@
 
   .pointer {
     cursor: pointer;
-  }
-
-  @media (max-width: 991.98px) {
-    .sticky-col {
-      position: static;
-    }
   }
 </style>
 {% endblock %}
@@ -117,7 +468,10 @@
             <strong id="submissionTitle">Chi tiết submission</strong>
             <div class="small text-muted" id="submissionMeta">Chưa chọn submission.</div>
           </div>
-          <span class="badge text-bg-light border" id="submissionStatus">N/A</span>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-dark" id="openHdViewerButton" disabled>Mở HD Viewer</button>
+            <span class="badge text-bg-light border" id="submissionStatus">N/A</span>
+          </div>
         </div>
         <div class="card-body">
           <div id="imageContainer">
@@ -232,6 +586,7 @@
     submissionTitle: document.getElementById('submissionTitle'),
     submissionMeta: document.getElementById('submissionMeta'),
     submissionStatus: document.getElementById('submissionStatus'),
+    openHdViewerButton: document.getElementById('openHdViewerButton'),
     imageContainer: document.getElementById('imageContainer'),
     detailGrid: document.getElementById('detailGrid'),
 
@@ -298,7 +653,7 @@
   function ensureSession() {
     const session = getSession();
     if (!session || !session.token) {
-      window.location.href = '/login';
+      window.location.href = '/auth/login';
       return null;
     }
     return session;
@@ -413,6 +768,94 @@
     return parsed.toFixed(2).replace(/\.00$/, '');
   }
 
+  function normalizeAttachmentList(rawValue) {
+    if (!rawValue) return [];
+    const source = Array.isArray(rawValue) ? rawValue : [rawValue];
+    return source
+      .map(function (item, index) {
+        if (!item) return null;
+        if (typeof item === 'string') {
+          return {
+            label: 'Proof Attachment ' + String(index + 1),
+            url: item,
+          };
+        }
+
+        if (typeof item === 'object') {
+          const url = item.url || item.href || item.link || item.path || null;
+          if (!url) return null;
+          return {
+            label: item.label || item.name || ('Proof Attachment ' + String(index + 1)),
+            url: url,
+          };
+        }
+
+        return null;
+      })
+      .filter(function (item) {
+        return item && item.url;
+      });
+  }
+
+  function buildViewerPayload(data) {
+    if (!data) {
+      return {
+        items: [
+          { key: 'main', label: 'Main Image', url: null },
+          { key: 'negative', label: 'Negative Film', url: null },
+          { key: 'contact', label: 'Contact Sheet', url: null },
+        ],
+        attachments: [],
+      };
+    }
+
+    const submission = data.submission || {};
+    const mediaAssets = data.media_assets || {};
+
+    const mainImageUrl =
+      mediaAssets.main_image_url ||
+      data.image_url ||
+      submission.image_url ||
+      submission.image_hd_url ||
+      null;
+
+    const negativeFilmUrl =
+      mediaAssets.negative_film_url ||
+      data.negative_film_url ||
+      submission.negative_film_url ||
+      submission.negative_image_url ||
+      null;
+
+    const contactSheetUrl =
+      mediaAssets.contact_sheet_url ||
+      data.contact_sheet_url ||
+      submission.contact_sheet_url ||
+      null;
+
+    const attachments = normalizeAttachmentList(
+      data.proof_attachments || submission.proof_attachments || submission.attachments || []
+    );
+
+    return {
+      items: [
+        { key: 'main', label: 'Main Image', url: mainImageUrl },
+        { key: 'negative', label: 'Negative Film', url: negativeFilmUrl },
+        { key: 'contact', label: 'Contact Sheet', url: contactSheetUrl },
+      ],
+      attachments: attachments,
+    };
+  }
+
+  function openHdViewer() {
+    if (!state.reviewData || !window.HDImageViewer) return;
+    const payload = buildViewerPayload(state.reviewData);
+    window.HDImageViewer.open({
+      title: 'Submission #' + String(state.reviewData.submission ? state.reviewData.submission.id : '--') + ' · HD Viewer',
+      items: payload.items,
+      attachments: payload.attachments,
+    });
+  }
+
   function draftKey(submissionId) {
     return 'judge-score-draft:' + String(submissionId);
   }
@@ -492,7 +935,7 @@
     }
 
     if (response.status === 401) {
-      window.location.href = '/login';
+      window.location.href = '/auth/login';
       throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
     }
 
@@ -538,626 +981,4 @@
       const statusPart = item.status || 'assigned';
 
       button.innerHTML =
-        '<div class="fw-semibold">Assignment #' + escapeHtml(item.id) + '</div>' +
-        '<div class="small opacity-75">Round: ' + escapeHtml(roundPart) + '</div>' +
-        '<div class="small opacity-75">Status: ' + escapeHtml(statusPart) + '</div>';
-
-      button.addEventListener('click', function () {
-        selectAssignment(item.id);
-      });
-
-      els.assignmentList.appendChild(button);
-    });
-  }
-
-  function statusBadgeClass(status, finalized) {
-    if (finalized) return 'text-bg-success';
-    const lower = String(status || '').toLowerCase();
-    if (lower.includes('flag')) return 'text-bg-warning';
-    if (lower.includes('reject')) return 'text-bg-danger';
-    if (lower.includes('final')) return 'text-bg-success';
-    return 'text-bg-secondary';
-  }
-
-  function renderSubmissions() {
-    const items = state.submissions || [];
-    els.submissionCount.textContent = String(items.length);
-    els.submissionList.innerHTML = '';
-    els.submissionEmpty.classList.toggle('d-none', items.length > 0);
-
-    items.forEach((item) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'list-group-item list-group-item-action text-start';
-      if (String(item.id) === String(state.activeSubmissionId)) {
-        button.classList.add('active');
-      }
-
-      const title = item.title || 'Untitled';
-      const story = item.story_description || '';
-      const status = item.status || 'submitted';
-      const score = formatScore(item.final_score);
-
-      button.innerHTML =
-        '<div class="fw-semibold">#' + escapeHtml(item.id) + ' · ' + escapeHtml(title) + '</div>' +
-        '<div class="small text-truncate" style="max-width:100%;">' + escapeHtml(story) + '</div>' +
-        '<div class="small mt-1 d-flex justify-content-between"><span>' + escapeHtml(status) + '</span><span>Score: ' + escapeHtml(score) + '</span></div>';
-
-      button.addEventListener('click', function () {
-        selectSubmission(item.id);
-      });
-
-      els.submissionList.appendChild(button);
-    });
-  }
-
-  function renderEmptyReviewState() {
-    els.headerSubtitle.textContent = 'Chọn assignment và submission để bắt đầu.';
-    els.submissionTitle.textContent = 'Chi tiết submission';
-    els.submissionMeta.textContent = 'Chưa chọn submission.';
-    els.submissionStatus.className = 'badge text-bg-light border';
-    els.submissionStatus.textContent = 'N/A';
-
-    els.imageContainer.innerHTML = '<div class="submission-image-empty">Chưa có ảnh để hiển thị</div>';
-    els.detailGrid.innerHTML = '';
-
-    els.criteriaList.innerHTML = '';
-    els.criteriaEmpty.classList.remove('d-none');
-    els.criteriaCount.textContent = '0 criteria';
-
-    els.filledCount.textContent = '0/0';
-    els.provisionalScore.textContent = '--';
-    els.maxWeightedScore.textContent = '--';
-    els.scoreProgress.style.width = '0%';
-
-    els.summaryFeedback.value = '';
-    els.finalRecommendation.value = '';
-    els.feedbackState.className = 'badge text-bg-secondary';
-    els.feedbackState.textContent = 'Nháp';
-    els.draftState.className = 'badge text-bg-warning';
-    els.draftState.textContent = 'Draft';
-    els.saveStateText.textContent = 'Dữ liệu điểm đang lưu cục bộ theo draft khi bạn nhập.';
-    applyReadonlyState();
-  }
-
-  function renderSubmissionDetail() {
-    const data = state.reviewData;
-    if (!data || !data.submission) {
-      renderEmptyReviewState();
-      return;
-    }
-
-    const submission = data.submission || {};
-    const round = data.round || {};
-    const feedback = data.feedback || {};
-
-    els.headerSubtitle.textContent = 'Assignment #' + (state.activeAssignmentId || '--') + ' · Submission #' + submission.id;
-    els.submissionTitle.textContent = (submission.title || 'Untitled') + ' (#' + submission.id + ')';
-    els.submissionMeta.textContent =
-      'Round: ' + (round.round_number != null ? round.round_number : (submission.round_id != null ? submission.round_id : '--')) +
-      (round.title ? ' · ' + round.title : '');
-
-    const isFinalized = Boolean(feedback.is_finalized);
-    const badgeClass = statusBadgeClass(submission.status, isFinalized);
-    els.submissionStatus.className = 'badge ' + badgeClass;
-    els.submissionStatus.textContent = isFinalized ? 'Finalized' : (submission.status || 'submitted');
-
-    const imageUrl = data.image_url || submission.image_url || null;
-    if (imageUrl) {
-      els.imageContainer.innerHTML =
-        '<img class="submission-image" src="' + escapeHtml(imageUrl) + '" alt="Submission image">';
-    } else {
-      els.imageContainer.innerHTML = '<div class="submission-image-empty">Submission chưa có ảnh hiển thị</div>';
-    }
-
-    const detailRows = [
-      ['Submission ID', '#' + (submission.id || '--')],
-      ['Status', submission.status || 'submitted'],
-      ['Final score', formatScore(submission.final_score)],
-      ['Round ID', submission.round_id != null ? submission.round_id : '--'],
-    ];
-
-    els.detailGrid.innerHTML = detailRows.map(function (row) {
-      return (
-        '<div class="col-6">' +
-          '<div class="border rounded p-2 h-100">' +
-            '<div class="small text-muted">' + escapeHtml(row[0]) + '</div>' +
-            '<div class="fw-semibold">' + escapeHtml(row[1]) + '</div>' +
-          '</div>' +
-        '</div>'
-      );
-    }).join('');
-
-    renderCriteria();
-    renderFeedback();
-    applyReadonlyState();
-
-    const nav = data.next_previous || {
-      previous: data.navigation ? data.navigation.previous_submission_id : null,
-      next: data.navigation ? data.navigation.next_submission_id : null,
-    };
-    els.prevButton.disabled = state.busy || !nav.previous;
-    els.nextButton.disabled = state.busy || !nav.next;
-  }
-
-  function renderCriteria() {
-    const data = state.reviewData;
-    const criteria = (data && Array.isArray(data.criteria)) ? data.criteria : [];
-
-    els.criteriaCount.textContent = String(criteria.length) + ' criteria';
-    els.criteriaList.innerHTML = '';
-    els.criteriaEmpty.classList.toggle('d-none', criteria.length > 0);
-
-    if (!criteria.length || !data || !data.submission) {
-      updateScoreSummary();
-      return;
-    }
-
-    const submissionId = data.submission.id;
-    const draft = getDraftState(submissionId);
-
-    criteria.forEach(function (criterion, index) {
-      const cId = criterion.id;
-      const maxScore = Number(criterion.max_score || 0);
-      const weight = Number(criterion.weight || 0);
-      const serverValue = criterion.score_value;
-      const draftValue = draft.scores && draft.scores[cId] !== undefined ? draft.scores[cId] : undefined;
-      const initialValue = draftValue !== undefined ? draftValue : (serverValue != null ? serverValue : '');
-      const displayValue = initialValue === '' ? '--' : formatScore(initialValue);
-
-      const card = document.createElement('div');
-      card.className = 'criterion-card rounded p-2';
-      card.setAttribute('data-criterion-id', String(cId));
-
-      card.innerHTML =
-        '<div class="d-flex justify-content-between align-items-start gap-2 mb-2">' +
-          '<div>' +
-            '<div class="fw-semibold">' + (index + 1) + '. ' + escapeHtml(criterion.name || 'Unnamed criteria') + '</div>' +
-            '<div class="small text-muted">' + escapeHtml(criterion.description || 'Không có mô tả') + '</div>' +
-          '</div>' +
-          '<div class="text-end small">' +
-            '<div>Max: <strong>' + escapeHtml(formatScore(maxScore)) + '</strong></div>' +
-            '<div>Weight: <strong>' + escapeHtml(formatScore(weight)) + '</strong></div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="row g-2 align-items-center">' +
-          '<div class="col-8">' +
-            '<input type="range" class="form-range criterion-range" min="0" max="' + escapeHtml(maxScore) + '" step="0.1" value="' + escapeHtml(initialValue === '' ? 0 : initialValue) + '" data-criterion-id="' + escapeHtml(cId) + '">' +
-          '</div>' +
-          '<div class="col-4">' +
-            '<input type="number" class="form-control form-control-sm criterion-number" min="0" max="' + escapeHtml(maxScore) + '" step="0.1" value="' + escapeHtml(initialValue) + '" data-criterion-id="' + escapeHtml(cId) + '" placeholder="0">' +
-          '</div>' +
-        '</div>' +
-        '<div class="small text-muted d-flex justify-content-between">' +
-          '<span>Điểm hiện tại</span>' +
-          '<span class="criterion-score-value" data-role="score-display" data-criterion-id="' + escapeHtml(cId) + '">' + escapeHtml(displayValue) + '</span>' +
-        '</div>';
-
-      els.criteriaList.appendChild(card);
-    });
-
-    els.criteriaList.querySelectorAll('.criterion-range').forEach(function (el) {
-      el.addEventListener('input', onCriterionInput);
-    });
-
-    els.criteriaList.querySelectorAll('.criterion-number').forEach(function (el) {
-      el.addEventListener('input', onCriterionInput);
-    });
-
-    updateScoreSummary();
-    applyReadonlyState();
-  }
-
-  function onCriterionInput(event) {
-    if (!state.reviewData || !state.reviewData.submission) return;
-    if (isReviewLocked()) return;
-
-    const input = event.target;
-    const criterionId = Number(input.getAttribute('data-criterion-id'));
-    const card = input.closest('[data-criterion-id]');
-    if (!card) return;
-
-    const range = card.querySelector('.criterion-range');
-    const number = card.querySelector('.criterion-number');
-    const display = card.querySelector('[data-role="score-display"]');
-    const max = Number(number.getAttribute('max') || 0);
-
-    if (input.classList.contains('criterion-range')) {
-      number.value = input.value;
-    } else {
-      const parsed = numberOrNull(input.value);
-      if (parsed === null) {
-        range.value = '0';
-      } else {
-        const clamped = Math.min(Math.max(parsed, 0), max);
-        if (clamped !== parsed) {
-          number.value = String(clamped);
-        }
-        range.value = String(clamped);
-      }
-    }
-
-    const finalValue = number.value;
-    display.textContent = finalValue === '' ? '--' : formatScore(finalValue);
-
-    const submissionId = state.reviewData.submission.id;
-    const draft = getDraftState(submissionId);
-    draft.scores = draft.scores || {};
-    draft.scores[criterionId] = finalValue;
-    draft.summary_feedback = els.summaryFeedback.value;
-    draft.final_recommendation = els.finalRecommendation.value;
-    writeDraft(submissionId, draft);
-
-    els.draftState.className = 'badge text-bg-warning';
-    els.draftState.textContent = 'Draft';
-    els.saveStateText.textContent = 'Draft cục bộ đã được cập nhật. Nhấn Lưu tạm để đồng bộ server.';
-
-    updateScoreSummary();
-  }
-
-  function updateScoreSummary() {
-    const data = state.reviewData;
-    const criteria = (data && Array.isArray(data.criteria)) ? data.criteria : [];
-
-    if (!criteria.length || !data || !data.submission) {
-      els.filledCount.textContent = '0/0';
-      els.provisionalScore.textContent = '--';
-      els.maxWeightedScore.textContent = '--';
-      els.scoreProgress.style.width = '0%';
-      return;
-    }
-
-    const submissionId = data.submission.id;
-    const draft = getDraftState(submissionId);
-    let filled = 0;
-    let totalWeight = 0;
-    let weightedTotal = 0;
-    let weightedMax = 0;
-
-    criteria.forEach(function (criterion) {
-      const weight = Number(criterion.weight || 0);
-      const max = Number(criterion.max_score || 0);
-
-      if (weight > 0) {
-        totalWeight += weight;
-        weightedMax += max * weight;
-      }
-
-      const draftValue = draft.scores && draft.scores[criterion.id] !== undefined ? draft.scores[criterion.id] : undefined;
-      const baseValue = draftValue !== undefined ? draftValue : criterion.score_value;
-      const parsed = numberOrNull(baseValue);
-
-      if (parsed !== null) {
-        filled += 1;
-        if (weight > 0) {
-          weightedTotal += parsed * weight;
-        }
-      }
-    });
-
-    const provisional = totalWeight > 0 && filled > 0 ? (weightedTotal / totalWeight) : null;
-    const maxConverted = totalWeight > 0 ? (weightedMax / totalWeight) : null;
-    const percent = criteria.length > 0 ? Math.round((filled / criteria.length) * 100) : 0;
-
-    els.filledCount.textContent = String(filled) + '/' + String(criteria.length);
-    els.provisionalScore.textContent = provisional == null ? '--' : formatScore(provisional);
-    els.maxWeightedScore.textContent = maxConverted == null ? '--' : formatScore(maxConverted);
-    els.scoreProgress.style.width = String(percent) + '%';
-
-    if (filled === 0) {
-      els.scoreHint.textContent = 'Chưa có điểm nào được nhập.';
-    } else {
-      els.scoreHint.textContent = 'Đã nhập ' + filled + '/' + criteria.length + ' criteria. Tổng điểm tạm tính cập nhật tự động.';
-    }
-  }
-
-  function renderFeedback() {
-    const data = state.reviewData;
-    if (!data || !data.submission) return;
-
-    const submissionId = data.submission.id;
-    const feedback = data.feedback || {};
-    const draft = getDraftState(submissionId);
-
-    const mergedFeedback = draft.summary_feedback !== undefined && draft.summary_feedback !== ''
-      ? draft.summary_feedback
-      : (feedback.summary_feedback || '');
-
-    const mergedRecommendation = draft.final_recommendation !== undefined && draft.final_recommendation !== ''
-      ? draft.final_recommendation
-      : (feedback.final_recommendation || '');
-
-    els.summaryFeedback.value = mergedFeedback;
-    els.finalRecommendation.value = mergedRecommendation;
-
-    if (feedback.is_finalized) {
-      els.feedbackState.className = 'badge text-bg-success';
-      els.feedbackState.textContent = 'Finalized';
-      els.draftState.className = 'badge text-bg-success';
-      els.draftState.textContent = 'Server Finalized';
-      els.saveStateText.textContent = getLockMessage();
-    } else {
-      els.feedbackState.className = 'badge text-bg-secondary';
-      els.feedbackState.textContent = 'Nháp';
-      els.draftState.className = 'badge text-bg-warning';
-      els.draftState.textContent = 'Draft';
-      els.saveStateText.textContent = getLockMessage();
-    }
-
-    if (getReviewState().round_finalized) {
-      els.feedbackState.className = 'badge text-bg-dark';
-      els.feedbackState.textContent = 'Round Locked';
-      els.draftState.className = 'badge text-bg-dark';
-      els.draftState.textContent = 'Locked';
-    }
-  }
-
-  function collectScorePayloads(isFinalize) {
-    if (!state.reviewData || !state.reviewData.submission) {
-      throw new Error('Chưa chọn submission để chấm.');
-    }
-
-    const criteria = state.reviewData.criteria || [];
-    const payloads = [];
-
-    for (let i = 0; i < criteria.length; i += 1) {
-      const criterion = criteria[i];
-      const numberInput = els.criteriaList.querySelector('.criterion-number[data-criterion-id="' + criterion.id + '"]');
-      const raw = numberInput ? numberInput.value.trim() : '';
-      const value = numberOrNull(raw);
-      const max = Number(criterion.max_score || 0);
-
-      if (value === null) {
-        if (isFinalize) {
-          throw new Error('Criteria "' + (criterion.name || criterion.id) + '" chưa có điểm.');
-        }
-        continue;
-      }
-
-      if (value < 0 || value > max) {
-        throw new Error('Criteria "' + (criterion.name || criterion.id) + '" phải nằm trong khoảng 0 - ' + max + '.');
-      }
-
-      payloads.push({
-        criteria_id: criterion.id,
-        score_value: value,
-        comment: null,
-      });
-    }
-
-    return payloads;
-  }
-
-  async function saveReview(isFinalize) {
-    try {
-      clearAlert();
-
-      if (!state.reviewData || !state.reviewData.submission) {
-        showAlert('warning', 'Thiếu dữ liệu', 'Hãy chọn submission trước khi lưu.');
-        return;
-      }
-
-      if (isReviewLocked()) {
-        showAlert('warning', 'Bản chấm đã khóa', getLockMessage());
-        return;
-      }
-
-      const submissionId = state.reviewData.submission.id;
-      const feedbackText = els.summaryFeedback.value.trim();
-      const recommendation = els.finalRecommendation.value.trim();
-
-      if (isFinalize && !feedbackText) {
-        showAlert('warning', 'Thiếu feedback', 'Vui lòng nhập nhận xét chung trước khi hoàn tất chấm.');
-        return;
-      }
-
-      const scorePayloads = collectScorePayloads(isFinalize);
-      setBusy(true);
-
-      for (let i = 0; i < scorePayloads.length; i += 1) {
-        await apiPost('/scores/submissions/' + submissionId, scorePayloads[i]);
-      }
-
-      await apiPost('/scores/submissions/' + submissionId + '/feedback', {
-        summary_feedback: feedbackText,
-        final_recommendation: recommendation || null,
-        is_finalized: isFinalize,
-      });
-
-      clearDraft(submissionId);
-
-      showAlert(
-        'success',
-        isFinalize ? 'Hoàn tất chấm' : 'Lưu tạm thành công',
-        isFinalize
-          ? 'Bản chấm đã được finalize và lưu trên server.'
-          : 'Điểm và feedback đã lưu ở trạng thái draft trên server.'
-      );
-
-      await selectSubmission(submissionId);
-      await loadAssignments(submissionId);
-    } catch (error) {
-      console.error(error);
-      showAlert('danger', 'Lưu thất bại', error && error.message ? error.message : 'Server trả về lỗi khi lưu bản chấm.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function loadAssignments(preferredSubmissionId) {
-    setBusy(true);
-    try {
-      const response = await apiGet('/judge/assignments');
-      const assignments = Array.isArray(response && response.assignments)
-        ? response.assignments
-        : (Array.isArray(response) ? response : []);
-
-      state.assignments = assignments;
-      renderAssignments();
-
-      if (!assignments.length) {
-        state.activeAssignmentId = null;
-        state.submissions = [];
-        state.activeSubmissionId = null;
-        state.reviewData = null;
-        renderSubmissions();
-        renderEmptyReviewState();
-        return;
-      }
-
-      const queryAssignmentId = getUrlParamNumber('assignment_id');
-      const targetAssignment =
-        assignments.find(function (a) { return String(a.id) === String(state.activeAssignmentId); }) ||
-        assignments.find(function (a) { return String(a.id) === String(queryAssignmentId); }) ||
-        assignments[0];
-
-      await selectAssignment(targetAssignment.id, preferredSubmissionId);
-    } catch (error) {
-      console.error(error);
-      showAlert('danger', 'Không tải được assignments', error && error.message ? error.message : 'Vui lòng thử lại sau.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function selectAssignment(assignmentId, preferredSubmissionId) {
-    setBusy(true);
-    try {
-      state.activeAssignmentId = assignmentId;
-      renderAssignments();
-
-      const response = await apiGet('/judge/assignments/' + assignmentId + '/submissions');
-      const submissions = Array.isArray(response && response.submissions) ? response.submissions : [];
-      state.submissions = submissions;
-      renderSubmissions();
-
-      if (!submissions.length) {
-        state.activeSubmissionId = null;
-        state.reviewData = null;
-        renderEmptyReviewState();
-        updateUrlParams(assignmentId, null);
-        return;
-      }
-
-      const querySubmissionId = getUrlParamNumber('submission_id');
-      const candidateIds = submissions.map(function (item) { return item.id; });
-
-      let submissionToOpen = null;
-      if (preferredSubmissionId && candidateIds.includes(preferredSubmissionId)) {
-        submissionToOpen = preferredSubmissionId;
-      } else if (state.activeSubmissionId && candidateIds.includes(state.activeSubmissionId)) {
-        submissionToOpen = state.activeSubmissionId;
-      } else if (querySubmissionId && candidateIds.includes(querySubmissionId)) {
-        submissionToOpen = querySubmissionId;
-      } else {
-        submissionToOpen = submissions[0].id;
-      }
-
-      updateUrlParams(assignmentId, submissionToOpen);
-      await selectSubmission(submissionToOpen);
-    } catch (error) {
-      console.error(error);
-      showAlert('danger', 'Không tải được submissions', error && error.message ? error.message : 'Vui lòng thử lại sau.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function selectSubmission(submissionId) {
-    setBusy(true);
-    try {
-      state.activeSubmissionId = submissionId;
-      renderSubmissions();
-
-      const response = await apiGet('/api/judge/submissions/' + submissionId + '/review-detail');
-      state.reviewData = response || null;
-      renderSubmissionDetail();
-      updateUrlParams(state.activeAssignmentId, submissionId);
-    } catch (error) {
-      console.error(error);
-      showAlert('danger', 'Không tải được review detail', error && error.message ? error.message : 'Vui lòng thử lại sau.');
-      state.reviewData = null;
-      renderEmptyReviewState();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function reloadCurrent() {
-    if (!state.activeSubmissionId) {
-      showAlert('info', 'Chưa có submission', 'Hãy chọn submission để tải lại dữ liệu.');
-      return;
-    }
-    await selectSubmission(state.activeSubmissionId);
-  }
-
-  function bindEvents() {
-    els.prevButton.addEventListener('click', async function () {
-      const previous = state.reviewData
-        ? (state.reviewData.next_previous
-          ? state.reviewData.next_previous.previous
-          : (state.reviewData.navigation ? state.reviewData.navigation.previous_submission_id : null))
-        : null;
-      if (!previous) return;
-      await selectSubmission(previous);
-    });
-
-    els.nextButton.addEventListener('click', async function () {
-      const next = state.reviewData
-        ? (state.reviewData.next_previous
-          ? state.reviewData.next_previous.next
-          : (state.reviewData.navigation ? state.reviewData.navigation.next_submission_id : null))
-        : null;
-      if (!next) return;
-      await selectSubmission(next);
-    });
-
-    els.reloadButton.addEventListener('click', reloadCurrent);
-
-    els.saveDraftButton.addEventListener('click', function () {
-      saveReview(false);
-    });
-
-    els.finalizeButton.addEventListener('click', function () {
-      saveReview(true);
-    });
-
-    els.summaryFeedback.addEventListener('input', function () {
-      if (!state.reviewData || !state.reviewData.submission) return;
-      if (isReviewLocked()) return;
-      setDraftState(state.reviewData.submission.id, {
-        summary_feedback: els.summaryFeedback.value,
-        final_recommendation: els.finalRecommendation.value,
-      });
-      els.saveStateText.textContent = 'Draft feedback cục bộ đã cập nhật.';
-    });
-
-    els.finalRecommendation.addEventListener('change', function () {
-      if (!state.reviewData || !state.reviewData.submission) return;
-      if (isReviewLocked()) return;
-      setDraftState(state.reviewData.submission.id, {
-        summary_feedback: els.summaryFeedback.value,
-        final_recommendation: els.finalRecommendation.value,
-      });
-      els.saveStateText.textContent = 'Draft khuyến nghị cục bộ đã cập nhật.';
-    });
-  }
-
-  async function init() {
-    try {
-      ensureSession();
-      bindEvents();
-      renderEmptyReviewState();
-
-      const preferredSubmissionId = getUrlParamNumber('submission_id');
-      await loadAssignments(preferredSubmissionId);
-    } catch (error) {
-      console.error(error);
-      showAlert('danger', 'Không thể khởi tạo màn hình', error && error.message ? error.message : 'Vui lòng thử lại sau.');
-    }
-  }
-
-  init();
-})();
-</script>
-{% endblock %}
+        '<div class

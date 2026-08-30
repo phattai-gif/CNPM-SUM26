@@ -1,9 +1,7 @@
-from sqlalchemy import BigInteger, Integer, inspect, text
-
+from sqlalchemy import BigInteger, Boolean, Integer, inspect, text
+from sqlalchemy.exc import SQLAlchemyError
 from infrastructure.databases.abstract_database import AbstractDatabase
 from infrastructure.databases.base import Base
-
-
 class DatabasePostgres(AbstractDatabase):
     def __init__(self):
         super().__init__()
@@ -49,7 +47,6 @@ class DatabasePostgres(AbstractDatabase):
                     "VARCHAR(50) DEFAULT 'main_image' NOT NULL;"
                 )
             )
-
             connection.execute(
                 text(
                     "ALTER TABLE app.submission_files "
@@ -58,33 +55,46 @@ class DatabasePostgres(AbstractDatabase):
                     "DEFAULT CURRENT_TIMESTAMP;"
                 )
             )
+        try:
+            with self.engine.begin() as connection:
+                self._add_postgres_column_if_missing(
+                    connection, "users", "email_verified",
+                    "BOOLEAN NOT NULL DEFAULT FALSE"
 
-            connection.execute(
-                text(
-                    "ALTER TABLE app.submission_film_metadata "
-                    "ADD COLUMN IF NOT EXISTS updated_at "
-                    "TIMESTAMP WITH TIME ZONE "
-                    "DEFAULT CURRENT_TIMESTAMP;"
                 )
-            )
+                self._add_postgres_column_if_missing(
+                    connection, "submission_files", "file_type",
+                    "VARCHAR(50) DEFAULT 'main_image' NOT NULL"
+                )
+                self._add_postgres_column_if_missing(
+                    connection, "submission_files", "updated_at",
+                    "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+                )
+                self._add_postgres_column_if_missing(
+                    connection, "submission_film_metadata", "updated_at",
+                    "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+                )
+                self._add_postgres_column_if_missing(
+                    connection, "submissions", "updated_at",
+                    "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+                )
+                self._add_postgres_column_if_missing(
+                    connection, "submission_reviews", "updated_at",
+                    "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+                )
+        except SQLAlchemyError as error:
+            app.logger.warning("PostgreSQL compatibility migration skipped: %s", error)
 
-            connection.execute(
-                text(
-                    "ALTER TABLE app.submissions "
-                    "ADD COLUMN IF NOT EXISTS updated_at "
-                    "TIMESTAMP WITH TIME ZONE "
-                    "DEFAULT CURRENT_TIMESTAMP;"
-                )
-            )
-
-            connection.execute(
-                text(
-                    "ALTER TABLE app.submission_reviews "
-                    "ADD COLUMN IF NOT EXISTS updated_at "
-                    "TIMESTAMP WITH TIME ZONE "
-                    "DEFAULT CURRENT_TIMESTAMP;"
-                )
-            )
+    @staticmethod
+    def _add_postgres_column_if_missing(connection, table_name, column_name, definition):
+        existing = {
+            column["name"]
+            for column in inspect(connection).get_columns(table_name, schema="app")
+        }
+        if column_name not in existing:
+            connection.execute(text(
+                f"ALTER TABLE app.{table_name} ADD COLUMN {column_name} {definition}"
+            ))
 
     def _add_missing_sqlite_columns(self):
         """Bring an existing SQLite database up to the current ORM shape."""
@@ -111,11 +121,8 @@ class DatabasePostgres(AbstractDatabase):
                         dialect=self.engine.dialect
                     )
 
-                    nullable = (
-                        ""
-                        if column.nullable
-                        else " NOT NULL DEFAULT ''"
-                    )
+                    default_value = "0" if isinstance(column.type, Boolean) else "''"
+                    nullable = "" if column.nullable else f" NOT NULL DEFAULT {default_value}"
 
                     connection.execute(
                         text(
@@ -124,3 +131,4 @@ class DatabasePostgres(AbstractDatabase):
                             f"{column_type}{nullable}"
                         )
                     )
+                    

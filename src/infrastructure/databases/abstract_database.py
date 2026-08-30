@@ -1,9 +1,10 @@
 ﻿from abc import ABC, abstractmethod
 import os
+import weakref
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import NullPool, StaticPool
 
 
 class AbstractDatabase(ABC):
@@ -28,6 +29,17 @@ class AbstractDatabase(ABC):
                     "poolclass": StaticPool,
                 }
             )
+        elif "pooler.supabase.com" in self.database_uri:
+            # Supabase session poolers have a small connection limit.
+            engine_options.update({"poolclass": NullPool})
+        else:
+            engine_options.update(
+                {
+                    "pool_size": int(os.environ.get("DB_POOL_SIZE", "5")),
+                    "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", "0")),
+                    "pool_timeout": int(os.environ.get("DB_POOL_TIMEOUT", "10")),
+                }
+            )
 
         self.engine = create_engine(
             self.database_uri,
@@ -39,10 +51,18 @@ class AbstractDatabase(ABC):
             autoflush=False,
             bind=self.engine,
         )
+        self._sessions = weakref.WeakSet()
 
     @property
     def session(self):
-        return self.SessionLocal()
+        session = self.SessionLocal()
+        self._sessions.add(session)
+        return session
+
+    def close_sessions(self):
+        """Close sessions created through this database instance."""
+        for session in list(self._sessions):
+            session.close()
 
     @abstractmethod
     def init_database(self, app):
