@@ -4,7 +4,7 @@ from flask import (
     redirect,
     render_template,
 )
-
+from api.controllers.gallery_controller import gallery_bp
 from api.controllers.auth_controller import auth_bp
 from api.controllers.ai_detection_controller import bp as ai_detection_bp
 from api.controllers.duplicate_detection_controller import (
@@ -47,6 +47,7 @@ def register_routes(app):
     # ============================================================
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(gallery_bp)
     app.register_blueprint(ai_detection_bp)
     app.register_blueprint(duplicate_detection_bp)
     app.register_blueprint(submission_bp)

@@ -1,4 +1,4 @@
-﻿from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
 from .submission import Submission
@@ -28,3 +28,16 @@ class ISubmissionRepository(ABC):
     @abstractmethod
     def delete(self, submission_id: int) -> None:
         pass
+
+    @abstractmethod
+    def get_public_gallery(
+        self,
+        film_stock: Optional[str] = None,
+        camera_model: Optional[str] = None,
+        contest_id: Optional[int] = None,
+        year: Optional[int] = None,
+        page: int = 1,
+        limit: int = 20,
+    ) -> Tuple[List[dict], int]:
+        pass
+
