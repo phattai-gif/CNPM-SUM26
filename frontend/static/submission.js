@@ -12,6 +12,11 @@ class SubmissionForm {
         this.imagePreview = document.getElementById('imagePreview');
         this.submitBtn = document.getElementById('submitBtn');
         this.draftBtn = document.getElementById('draftBtn');
+        if (this.draftBtn) {
+            this.draftBtn.style.position = 'relative';
+            this.draftBtn.style.zIndex = '99999';
+            this.draftBtn.style.pointerEvents = 'auto';
+        }
         this.loadingSpinner = document.getElementById('loadingSpinner');
         this.successMessage = document.getElementById('successMessage');
         this.errorMessage = document.getElementById('errorMessage');
@@ -60,8 +65,11 @@ class SubmissionForm {
 
         // Form submission
         this.form.addEventListener('submit', (e) => this.handleFormSubmit(e, 'submitted'));
-        this.draftBtn.addEventListener('click', (e) => this.handleFormSubmit(e, 'draft'));
-
+        this.draftBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.handleFormSubmit(e, 'draft');
+        });
         // Remove image button
         document.getElementById('removeImageBtn').addEventListener('click', () => this.removeImage());
 
@@ -136,206 +144,192 @@ class SubmissionForm {
     }
 
     /**
-     * Load contest rounds from API
-     */
+  * Load contest rounds from API
+  */
     async loadRounds() {
-        try {
-            const data = await window.apiClient.get('/auth/contests');
-            
-            // Extract contests and their rounds
-            const contests = data.contests || [];
-            this.roundsList = [];
-            
-            contests.forEach(contest => {
-                if (contest.rounds && Array.isArray(contest.rounds)) {
-                    contest.rounds.forEach(round => {
-                        this.roundsList.push({
-                            id: round.id,
-                            name: round.name || round.title || `Round ${round.round_number || round.id || ''}`,
-                            title: round.title || round.name || `Round ${round.round_number || round.id || ''}`,
-                            deadline: round.deadline,
-                            status: round.status || '',
-                            contest_id: contest.id,
-                            contest_name: contest.name || contest.title,
-                            description: round.description
-                        });
-                    });
-                }
-            });
-            
-            this.populateRoundSelect();
-            this.showRoundLoadState();
-            if (this.draftId) {
-                await this.loadDraftData();
-            } else {
-                this.preselectRoundFromContext();
-            }
-        } catch (error) {
-            console.warn('Could not load rounds:', error);
-            this.showRoundLoadState('Không tải được danh sách vòng thi. Vui lòng thử lại sau.');
-            if (this.draftId) {
-                await this.loadDraftData();
-            }
+    const roundSelect = document.getElementById('roundSelect');
+
+    try {
+        console.log('[Submission] Loading contests...');
+
+        const tokenKey = 'authToken';
+        const token = localStorage.getItem(tokenKey);
+
+        const headers = {
+            'Accept': 'application/json'
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
         }
-    }
 
-    /**
-     * Load draft data from API and populate form
-     */
-    async loadDraftData() {
-        if (!this.draftId) return;
-        try {
-            const data = await window.apiClient.get(`/submissions/${this.draftId}`);
-            if (!data) return;
-
-            // Populate round selection
-            if (data.round_id) {
-                const roundSelect = document.getElementById('roundSelect');
-                if (roundSelect) {
-                    roundSelect.value = data.round_id;
-                    this.updateRoundInfo(data.round_id);
-                }
-            }
-
-            // Populate Title
-            if (data.title) {
-                const titleInput = document.getElementById('titleInput');
-                if (titleInput) {
-                    titleInput.value = data.title;
-                    const count = document.getElementById('titleCount');
-                    if (count) count.textContent = `${data.title.length}/200 characters`;
-                }
-            }
-
-            // Populate Story
-            if (data.story_description) {
-                const descInput = document.getElementById('descriptionInput');
-                if (descInput) {
-                    descInput.value = data.story_description;
-                    const count = document.getElementById('descriptionCount');
-                    if (count) count.textContent = `${data.story_description.length}/1000 characters`;
-                }
-            }
-
-            // Populate Film Metadata
-            const meta = data.film_metadata || {};
-            if (meta.camera_body) document.getElementById('cameraBodies').value = meta.camera_body;
-            if (meta.lens) document.getElementById('lensInput').value = meta.lens;
-            if (meta.film_stock) document.getElementById('filmStockInput').value = meta.film_stock;
-            if (meta.film_iso) document.getElementById('filmIsoInput').value = meta.film_iso;
-            if (meta.lab_name) document.getElementById('labNameInput').value = meta.lab_name;
-            if (meta.scanner_info) document.getElementById('scannerInfoInput').value = meta.scanner_info;
-            if (meta.development_process) document.getElementById('developmentProcessSelect').value = meta.development_process;
-            if (meta.taken_at_location) document.getElementById('locationInput').value = meta.taken_at_location;
-
-            // Populate Image Preview if exists
-            const file = data.file || {};
-            const imageSrc = file.image_hd_url || file.thumbnail_url;
-            if (imageSrc) {
-                this.selectedImage = imageSrc;
-                this.hasExistingImage = true;
-
-                const previewImage = document.getElementById('previewImage');
-                const infoFileName = document.getElementById('infoFileName');
-                const infoFileSize = document.getElementById('infoFileSize');
-                const infoDimensions = document.getElementById('infoDimensions');
-
-                previewImage.src = imageSrc;
-                infoFileName.textContent = 'Ảnh đã tải lên trước đó';
-                infoFileSize.textContent = file.file_size_bytes ? this.formatFileSize(file.file_size_bytes) : '-';
-                infoDimensions.textContent = (file.width_px && file.height_px) ? `${file.width_px} × ${file.height_px} px` : '-';
-
-                this.imageUploadArea.style.display = 'none';
-                this.imagePreview.style.display = 'block';
-                if (this.imageInput) this.imageInput.removeAttribute('required');
-            }
-
-            // Restore proof attachment previews from draft
-            const files = data.files || {};
-            const negativeFiles = files.negative || [];
-            const contactSheetFiles = files.contact_sheet || [];
-
-            if (negativeFiles.length > 0) {
-                const negFile = negativeFiles[0];
-                const src = negFile.image_hd_url || negFile.thumbnail_url;
-                if (src) {
-                    this.hasExistingNegativeFilm = true;
-                    this._showExistingProofPreview('negative', src, 'Negative film đã tải lên');
-                }
-            }
-            if (contactSheetFiles.length > 0) {
-                const csFile = contactSheetFiles[0];
-                const src = csFile.image_hd_url || csFile.thumbnail_url;
-                if (src) {
-                    this.hasExistingContactSheet = true;
-                    this._showExistingProofPreview('contact_sheet', src, 'Contact sheet đã tải lên');
-                }
-            }
-        } catch (error) {
-            console.warn('Could not load draft submission details:', error);
-        }
-    }
-
-    /**
-     * Populate round select dropdown
-     */
-    populateRoundSelect() {
-        const roundSelect = document.getElementById('roundSelect');
-        if (!roundSelect) return;
-
-        roundSelect.innerHTML = '<option value="">-- Select a round --</option>';
-        
-        this.roundsList.forEach(round => {
-            const option = document.createElement('option');
-            option.value = round.id;
-            const contestName = round.contest_name ? `[${round.contest_name}] ` : '';
-            const deadline = round.deadline ? ` - Deadline: ${new Date(round.deadline).toLocaleDateString()}` : '';
-            option.textContent = `${contestName}${round.name || round.title || 'Round'}${deadline}`;
-            roundSelect.appendChild(option);
+        const response = await fetch('/auth/contests', {
+            method: 'GET',
+            headers: headers,
+            credentials: 'same-origin'
         });
 
-        // Update round info when selection changes
-        roundSelect.addEventListener('change', (e) => this.updateRoundInfo(e.target.value));
-    }
+        console.log(
+            '[Submission] /auth/contests status:',
+            response.status
+        );
 
-    showRoundLoadState(message = '') {
-        const roundInfo = document.getElementById('roundInfo');
-        const roundSelect = document.getElementById('roundSelect');
-        if (!roundSelect) return;
+        if (!response.ok) {
+            throw new Error(
+                `Failed to load contests: HTTP ${response.status}`
+            );
+        }
 
-        if (this.roundsList.length > 0) {
-            if (roundInfo && !this.preferredContestId) {
-                roundInfo.innerHTML = '<div class="round-detail">Vui lòng chọn một vòng thi hợp lệ để tiếp tục.</div>';
+        const data = await response.json();
+
+        console.log(
+            '[Submission] /auth/contests response:',
+            data
+        );
+
+        const contests = Array.isArray(data.contests)
+            ? data.contests
+            : [];
+
+        this.roundsList = [];
+
+        contests.forEach((contest) => {
+            if (!Array.isArray(contest.rounds)) {
+                return;
             }
+
+            contest.rounds.forEach((round) => {
+                if (!round || !round.id) {
+                    return;
+                }
+
+                this.roundsList.push({
+                    id: round.id,
+
+                    name:
+                        round.name ||
+                        round.title ||
+                        `Round ${round.round_number || round.id}`,
+
+                    title:
+                        round.title ||
+                        round.name ||
+                        `Round ${round.round_number || round.id}`,
+
+                    deadline: round.deadline || null,
+
+                    status: round.status || '',
+
+                    contest_id: contest.id,
+
+                    contest_name:
+                        contest.name ||
+                        contest.title ||
+                        '',
+
+                    description:
+                        round.description || ''
+                });
+            });
+        });
+
+        console.log(
+            '[Submission] Loaded rounds:',
+            this.roundsList
+        );
+
+        this.populateRoundSelect();
+
+        this.showRoundLoadState();
+
+        if (this.draftId) {
+            await this.loadDraftData();
+        } else {
+            this.preselectRoundFromContext();
+        }
+
+        if (roundSelect) {
+            console.log(
+                '[Submission] Round options:',
+                roundSelect.options.length
+            );
+        }
+
+    } catch (error) {
+        console.error(
+            '[Submission] Could not load rounds:',
+            error
+        );
+
+        this.roundsList = [];
+
+        this.showRoundLoadState(
+            'Không tải được danh sách vòng thi. Vui lòng thử lại sau.'
+        );
+    }
+}
+
+    /**
+ * Populate round select dropdown
+ */
+    populateRoundSelect() {
+        const roundSelect = document.getElementById('roundSelect');
+
+        if (!roundSelect) {
+            console.warn(
+                '[Submission] #roundSelect not found'
+            );
             return;
         }
 
-        roundSelect.innerHTML = '<option value="">-- Chưa có vòng thi khả dụng --</option>';
-        if (roundInfo) {
-            roundInfo.innerHTML = `<div class="round-detail">${message || 'Hiện chưa có vòng thi đang mở để nhận bài nộp.'}</div>`;
+        roundSelect.innerHTML =
+            '<option value="">-- Select a round --</option>';
+
+        if (!Array.isArray(this.roundsList)) {
+            this.roundsList = [];
         }
+
+        this.roundsList.forEach((round) => {
+            const option = document.createElement('option');
+
+            option.value = String(round.id);
+
+            const contestName = round.contest_name
+                ? `[${round.contest_name}] `
+                : '';
+
+            const deadline = round.deadline
+                ? ` - Deadline: ${new Date(
+                    round.deadline
+                ).toLocaleDateString()}`
+                : '';
+
+            option.textContent =
+                `${contestName}` +
+                `${round.name || round.title || 'Round'}` +
+                `${deadline}`;
+
+            roundSelect.appendChild(option);
+        });
+
+        console.log(
+            `[Submission] Round select populated: ${roundSelect.options.length} options`
+        );
+
+        roundSelect.addEventListener(
+            'change',
+            (event) => {
+                this.updateRoundInfo(event.target.value);
+            }
+        );
     }
-
-    preselectRoundFromContext() {
-        if (!this.preferredContestId) return;
-
-        const roundSelect = document.getElementById('roundSelect');
-        if (!roundSelect) return;
-
-        const preferredRound = this.roundsList.find((round) => String(round.contest_id) === String(this.preferredContestId));
-        if (!preferredRound) return;
-
-        roundSelect.value = String(preferredRound.id);
-        this.updateRoundInfo(preferredRound.id);
-    }
-
     /**
      * Update round info display
      */
     updateRoundInfo(roundId) {
         const roundInfo = document.getElementById('roundInfo');
         const round = this.roundsList.find(r => r.id == roundId);
-        
+
         if (round) {
             let infoHtml = `<div class="round-detail">`;
             if (round.contest_name) {
@@ -440,7 +434,7 @@ class SubmissionForm {
         const img = new Image();
         img.onload = () => {
             infoDimensions.textContent = `${img.width} × ${img.height} px`;
-            
+
             // Try to extract EXIF data
             this.extractAndDisplayExif(file);
         };
@@ -464,7 +458,7 @@ class SubmissionForm {
                 // Simple EXIF detection - check for EXIF marker (FFE1)
                 const arr = new Uint8Array(e.target.result).subarray(0, 4);
                 let isExif = false;
-                
+
                 if (arr[0] === 0xFF && arr[1] === 0xD8) {
                     isExif = true;
                 }
@@ -930,4 +924,13 @@ class SubmissionForm {
  */
 document.addEventListener('DOMContentLoaded', () => {
     new SubmissionForm();
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const draftBtn = document.getElementById('draftBtn');
+
+    if (draftBtn) {
+        draftBtn.style.position = 'relative';
+        draftBtn.style.zIndex = '99999';
+        draftBtn.style.pointerEvents = 'auto';
+    }
 });

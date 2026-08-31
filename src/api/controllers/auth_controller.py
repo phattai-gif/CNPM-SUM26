@@ -504,7 +504,6 @@ def profile_page():
 
 
 @auth_bp.route('/contests', methods=['GET'])
-@token_required
 def get_active_contests():
     """
     Get list of active contests for participants to submit to

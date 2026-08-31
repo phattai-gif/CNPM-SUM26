@@ -227,24 +227,6 @@ def create_app():
         )
 
     # --------------------------------------------------------
-    # PUBLIC GALLERY BLUEPRINT
-    # --------------------------------------------------------
-
-    try:
-        from api.controllers.gallery_controller import (
-            gallery_bp,
-        )
-
-        if gallery_bp.name not in app.blueprints:
-            app.register_blueprint(gallery_bp)
-
-    except Exception as error:
-        print(
-            "Warning: public gallery blueprint registration "
-            f"failed: {error}"
-        )
-
-    # --------------------------------------------------------
     # SHORT REDIRECT ROUTES
     # --------------------------------------------------------
 

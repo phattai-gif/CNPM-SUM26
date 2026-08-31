@@ -26,8 +26,6 @@ from api.controllers.contest_controller import (
     public_bp as contest_public_bp,
     finalize_round,
 )
-
-from api.controllers.gallery_controller import gallery_bp
 from api.controllers.vote_controller import vote_bp
 from api.controllers.judge_controller import judge_bp
 from api.controllers.notification_controller import notification_bp
@@ -63,7 +61,6 @@ def register_routes(app):
     )
 
     app.register_blueprint(contest_public_bp)
-    app.register_blueprint(gallery_bp)
     app.register_blueprint(vote_bp)
     app.register_blueprint(judge_bp)
 
