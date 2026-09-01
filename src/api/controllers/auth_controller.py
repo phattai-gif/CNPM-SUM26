@@ -386,45 +386,6 @@ def login():
     return response, 200
 
 
-@auth_bp.route('/google', methods=['POST'])
-def google_login():
-    """Login or register a user with a Google ID token (credential/id_token).
-    Accepts JSON with `credential` or `id_token`.
-    """
-    data = request.get_json(silent=True) or {}
-    token = data.get('credential') or data.get('id_token')
-    if not token:
-        return jsonify({'message': 'Google ID token is required.'}), 400
-
-    # Try the native verification helper first (tests may monkeypatch it).
-    claims = None
-    try:
-        claims = verify_google_token(token)
-    except Exception:
-        # Fallback to tokeninfo endpoint (tests may patch urllib.request.urlopen)
-        try:
-            import urllib.request as _urllib_request
-            import json as _json
-            url = f'https://oauth2.googleapis.com/tokeninfo?id_token={token}'
-            with _urllib_request.urlopen(url) as resp:
-              if getattr(resp, 'status', None) not in (None, 200):
-                raise ValueError('Invalid token response')
-              body = resp.read()
-              claims = _json.loads(body.decode('utf-8'))
-        except Exception:
-            return jsonify({'message': 'Invalid Google token.'}), 400
-
-    email = claims.get('email') if isinstance(claims, dict) else None
-    if not email:
-      return jsonify({'message': 'Google email not verified.'}), 400
-
-    user = auth_service.login_google(email=email, full_name=claims.get('name'), avatar_url=claims.get('picture'))
-    if not user:
-        return jsonify({'message': 'Failed to login with Google'}), 500
-
-    return _jwt_response(user)
-
-
 @auth_bp.route('/login', methods=['GET'])
 def login_page():
     import os

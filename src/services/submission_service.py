@@ -368,46 +368,53 @@ class SubmissionService:
                 try:
                     from services.duplicate_detection_service import DuplicateDetectionService
                     dup_service = DuplicateDetectionService()
+                    first_bytes = None
+                    similarity = 0.0
+                    is_dup = False
+                    dup_result = None
 
                     for f in files:
                         fb = f.get("file_bytes")
                         if not fb:
                             continue
 
-                        dup_result = dup_service.check_duplicate_against_database(new_image_bytes=fb, exclude_submission_id=getattr(submission, "id", None), session=getattr(self.submission_repo, "session", None))
+                        if first_bytes is None:
+                            first_bytes = fb
 
-                if (
-                    first_bytes is None
-                    and files
-                ):
-                    first_bytes = (
-                        files[0].get(
-                            "file_bytes"
+                        dup_result = dup_service.check_duplicate_against_database(
+                            new_image_bytes=fb,
+                            exclude_submission_id=getattr(submission, "id", None),
+                            session=getattr(self.submission_repo, "session", None),
                         )
-                    )
+                        if isinstance(dup_result, dict):
+                            similarity = float(dup_result.get("similarity_score", 0.0) or 0.0)
+                            is_dup = bool(dup_result.get("is_duplicate", False))
 
-                        if is_dup:
-                            try:
-                                flag = self.submission_repo.save_ai_flag(
-                                    submission_id=getattr(submission, "id", None),
-                                    confidence_score=similarity,
-                                    risk_level=("high" if similarity >= 90 else "medium"),
-                                    flag_type="duplicate_similarity",
-                                    status="completed",
-                                )
+                            if is_dup:
+                                try:
+                                    flag = self.submission_repo.save_ai_flag(
+                                        submission_id=getattr(submission, "id", None),
+                                        confidence_score=similarity,
+                                        risk_level=("high" if similarity >= 90 else "medium"),
+                                        flag_type="duplicate_similarity",
+                                        status="completed",
+                                    )
 
-                                self.submission_repo.save_ai_analysis_report(
-                                    submission_id=getattr(submission, "id", None),
-                                    ai_flag_id=getattr(flag, "id", None) if flag is not None else None,
-                                    ai_model_name="Duplicate Detection Engine",
-                                    ai_confidence_score=similarity,
-                                    raw_details=dup_result or {},
-                                    similarity_matched_submission_id=dup_result.get("matched_submission_id") if isinstance(dup_result, dict) else None,
-                                )
-                            except Exception:
-                                pass
-                        else:
-                            break
+                                    self.submission_repo.save_ai_analysis_report(
+                                        submission_id=getattr(submission, "id", None),
+                                        ai_flag_id=getattr(flag, "id", None) if flag is not None else None,
+                                        ai_model_name="Duplicate Detection Engine",
+                                        ai_confidence_score=similarity,
+                                        raw_details=dup_result or {},
+                                        similarity_matched_submission_id=(
+                                            dup_result.get("matched_submission_id")
+                                            if isinstance(dup_result, dict)
+                                            else None
+                                        ),
+                                    )
+                                except Exception:
+                                    pass
+                                break
                 except Exception:
                     pass
         except Exception:

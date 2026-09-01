@@ -13,6 +13,7 @@ apispec
 apispec_webframeworks
 flask-swagger-ui
 Pillow>=9.0.0
+ImageHash>=4.3.1
 cloudinary>=1.30.0
 PyJWT>=2.0.0
 google-auth>=2.0.0
