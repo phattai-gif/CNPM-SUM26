@@ -1,4 +1,5 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request
+from api.controllers.response_utils import safe_jsonify
 
 from api.role_required import role_required
 from api.schemas.admin_user import AdminRoleUpdateSchema, AdminStatusUpdateSchema
@@ -24,7 +25,7 @@ def list_users():
             role=request.args.get('role'),
             status=request.args.get('status'),
         )
-        return jsonify({
+        return safe_jsonify({
             'users': users,
             'pagination': {
                 'page': page,
@@ -32,7 +33,7 @@ def list_users():
                 'total': total,
                 'pages': (total + per_page - 1) // per_page,
             },
-        }), 200
+        }, status=200)
     except ValueError as exc:
         return jsonify({'message': str(exc)}), 400
     except Exception as exc:
@@ -44,8 +45,8 @@ def list_users():
 def get_user(user_id):
     user = admin_user_service.get_user(user_id)
     if not user:
-        return jsonify({'message': 'User not found'}), 404
-    return jsonify({'user': user}), 200
+        return safe_jsonify({'message': 'User not found'}, status=404)
+    return safe_jsonify({'user': user}, status=200)
 
 
 @admin_bp.route('/users/<int:user_id>/role', methods=['PATCH'])
@@ -60,7 +61,7 @@ def change_role(user_id):
         )
         if not user:
             return jsonify({'message': 'User not found'}), 404
-        return jsonify({'message': 'User role updated successfully', 'user': user}), 200
+        return safe_jsonify({'message': 'User role updated successfully', 'user': user}, status=200)
     except ValueError as exc:
         return jsonify({'message': str(exc)}), 400
     except Exception as exc:
@@ -79,7 +80,7 @@ def change_status(user_id):
         )
         if not user:
             return jsonify({'message': 'User not found'}), 404
-        return jsonify({'message': 'User status updated successfully', 'user': user}), 200
+        return safe_jsonify({'message': 'User status updated successfully', 'user': user}, status=200)
     except ValueError as exc:
         return jsonify({'message': str(exc)}), 400
     except Exception as exc:

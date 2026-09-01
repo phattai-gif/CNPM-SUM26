@@ -56,7 +56,7 @@ def test_duplicate_submission_integration():
     session = repo.session
 
     # Seed minimum dependencies
-    session.execute(text("INSERT INTO roles (code, name) VALUES ('participant', 'Participant')"))
+    session.execute(text("INSERT OR IGNORE INTO roles (code, name) VALUES ('participant', 'Participant')"))
     session.execute(text("INSERT INTO users (username, email, password_hash, status) VALUES ('part1', 'p1@ex.com', 'hash', 'active')"))
     user_id = session.execute(text("SELECT id FROM users LIMIT 1")).scalar()
     

@@ -3,8 +3,19 @@ import os
 import weakref
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import NullPool, StaticPool
+from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
+
+
+class ResilientSession(Session):
+    def refresh(self, instance, attribute_names=None, with_for_update=None):
+        try:
+            return super().refresh(instance, attribute_names, with_for_update)
+        except InvalidRequestError:
+            # Re-attach detached ORM instances before refresh.
+            self.add(instance)
+            return super().refresh(instance, attribute_names, with_for_update)
 
 
 class AbstractDatabase(ABC):
@@ -50,6 +61,7 @@ class AbstractDatabase(ABC):
             autocommit=False,
             autoflush=False,
             bind=self.engine,
+            class_=ResilientSession,
         )
         self._sessions = weakref.WeakSet()
 

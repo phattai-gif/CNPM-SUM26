@@ -1,4 +1,5 @@
 ﻿from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
+from api.controllers.response_utils import safe_jsonify
 
 try:
     from infrastructure.repositories.contest_repository import ContestRepository
@@ -33,6 +34,33 @@ judge_service = JudgeAssignmentService(
 
 assign_judge_schema = AssignJudgeRequestSchema()
 assignment_response_schema = JudgeAssignmentResponseSchema()
+
+
+def _request_user():
+    user = getattr(request, 'user', None)
+    return user if isinstance(user, dict) else {}
+
+
+def _serialize_assignment(item):
+    if item is None:
+        return None
+    if isinstance(item, dict):
+        return dict(item)
+    to_dict_fn = getattr(item, 'to_dict', None)
+    if callable(to_dict_fn):
+        try:
+            return to_dict_fn()
+        except Exception:
+            pass
+    return safe_jsonify(item, status=200)[0].get_json()
+
+
+def _serialize_assignments(items):
+    return [
+        _serialize_assignment(item)
+        for item in (items or [])
+        if item is not None
+    ]
 
 
 @judge_bp.route('/organizer/judges', methods=['GET'])
@@ -90,8 +118,9 @@ def list_available_judges():
 def assign_judge_to_round(contest_id, round_id):
     """API PhÃ¢n cÃ´ng giÃ¡m kháº£o vÃ o vÃ²ng thi hoáº·c bÃ i thi cá»¥ thá»ƒ."""
     
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
 
     data = request.get_json(silent=True) or request.form.to_dict() or {}
 
@@ -119,16 +148,13 @@ def assign_judge_to_round(contest_id, round_id):
                 user_role=user_role
             )
 
-            return jsonify({
+            return safe_jsonify({
                 'message': (
                     f'ÄÃ£ phÃ¢n cÃ´ng {len(assignments)} '
                     'giÃ¡m kháº£o vÃ o vÃ²ng thi thÃ nh cÃ´ng'
                 ),
-                'assignments': [
-                    assignment.to_dict()
-                    for assignment in assignments
-                ]
-            }), 201
+                'assignments': _serialize_assignments(assignments)
+            }, status=201)
 
         assignment = judge_service.assign_judge_to_round(
             contest_id=contest_id,
@@ -139,10 +165,10 @@ def assign_judge_to_round(contest_id, round_id):
             user_role=user_role
         )
 
-        return jsonify({
+        return safe_jsonify({
             'message': 'PhÃ¢n cÃ´ng giÃ¡m kháº£o thÃ nh cÃ´ng',
-            'assignment': assignment.to_dict()
-        }), 201
+            'assignment': _serialize_assignment(assignment) or {}
+        }, status=201)
 
     except ValueError as ve:
         return jsonify({
@@ -169,8 +195,9 @@ def assign_judge_to_round(contest_id, round_id):
 def get_round_judges(contest_id, round_id):
     """API Láº¥y danh sÃ¡ch giÃ¡m kháº£o Ä‘Ã£ Ä‘Æ°á»£c phÃ¢n cÃ´ng trong vÃ²ng thi."""
 
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
 
     try:
         assignments = judge_service.get_round_judges(
@@ -180,16 +207,13 @@ def get_round_judges(contest_id, round_id):
             user_role=user_role
         )
 
-        return jsonify({
+        return safe_jsonify({
             'message': (
                 'Láº¥y danh sÃ¡ch giÃ¡m kháº£o Ä‘Æ°á»£c '
                 'phÃ¢n cÃ´ng thÃ nh cÃ´ng'
             ),
-            'assignments': [
-                assignment.to_dict()
-                for assignment in assignments
-            ]
-        }), 200
+            'assignments': _serialize_assignments(assignments)
+        }, status=200)
 
     except ValueError as ve:
         return jsonify({
@@ -216,8 +240,9 @@ def get_round_judges(contest_id, round_id):
 def remove_judge_from_round(contest_id, round_id, judge_id):
     """API Há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o khá»i vÃ²ng thi."""
 
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
     submission_id = request.args.get(
         'submission_id',
         type=int
@@ -269,22 +294,19 @@ def remove_judge_from_round(contest_id, round_id, judge_id):
 def get_my_assignments():
     """API DÃ nh cho giÃ¡m kháº£o xem cÃ¡c nhiá»‡m vá»¥ cháº¥m thi."""
 
-    user_id = request.user.get('user_id')
+    user_id = _request_user().get('user_id')
 
     try:
         assignments = judge_service.get_judge_assignments(
             judge_id=user_id
         )
 
-        return jsonify({
+        return safe_jsonify({
             'message': (
                 'Láº¥y danh sÃ¡ch nhiá»‡m vá»¥ cháº¥m thi thÃ nh cÃ´ng'
             ),
-            'assignments': [
-                assignment.to_dict()
-                for assignment in assignments
-            ]
-        }), 200
+            'assignments': _serialize_assignments(assignments)
+        }, status=200)
 
     except Exception as e:
         return jsonify({

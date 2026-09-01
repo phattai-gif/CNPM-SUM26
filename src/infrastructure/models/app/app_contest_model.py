@@ -1,6 +1,7 @@
 ﻿"""Contest ORM model."""
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, JSON, String, Text
+from sqlalchemy import text as sa_text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -17,8 +18,8 @@ class ContestModel(Base):
     description = Column(Text, nullable=True)
     rules = Column(Text, nullable=True)
     banner_url = Column(String(512), nullable=True)
-    categories_json = Column(JSON, nullable=False, default=list)
-    awards_json = Column(JSON, nullable=False, default=list)
+    categories_json = Column(JSON, nullable=False, default=list, server_default=sa_text("'[]'"))
+    awards_json = Column(JSON, nullable=False, default=list, server_default=sa_text("'[]'"))
     created_by = Column(BigInteger, ForeignKey("app.users.id", ondelete="CASCADE"), nullable=False)
     status = Column(String(20), nullable=False, default="draft")
     start_date = Column(DateTime(timezone=True), nullable=True)

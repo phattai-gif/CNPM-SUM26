@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Contest Configuration Manager</title>
     <link rel="stylesheet" href="/static/auth.css">
+    <link rel="stylesheet" href="/static/admin.css">
     <style>
       /* ===== DARK MODE THEME ===== */
       body {
@@ -355,7 +356,7 @@
           <div class="section-grid">
             <div>
               <label>Status</label>
-              <select name="status_select">
+              <select name="status">
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
                 <option value="ended">Ended</option>
@@ -503,10 +504,44 @@
         const toast = document.getElementById('toast');
 
         const getParam = (name) => new URLSearchParams(window.location.search).get(name);
-        let activeContestId = getParam('contest_id');
+        // accept either ?contest_id= or legacy ?id=
+        let activeContestId = getParam('contest_id') || getParam('id');
         let nextRoundIdx = 1;
         let categoriesState = [];
         let awardsState = [];
+
+        // Ensure an active contest exists. If not, create one from the form payload.
+        async function ensureContest() {
+          if (activeContestId) return;
+          // collect minimal payload to create a contest
+          const payload = getContestPayload();
+          // require a title at minimum
+          if (!payload.title) {
+            throw new Error('Vui lòng nhập tiêu đề contest trước khi thêm category/award.');
+          }
+
+          setButtonLoading(saveContestBtn, true, 'Đang tạo contest...');
+          try {
+            const resp = await window.apiClient.post('/organizer/contests', payload);
+            // expect created contest id in resp.contest.id or resp.id
+            const created = resp && (resp.contest || resp) || null;
+            const id = created && (created.id || created.contest_id || created.contestId);
+            if (id) {
+              activeContestId = String(id);
+              // update URL to include contest_id
+              const url = new URL(window.location.href);
+              url.searchParams.set('contest_id', activeContestId);
+              window.history.replaceState({}, '', url.toString());
+              setEditModeText();
+              // refresh categories/awards now that contest exists
+              await refreshCategoryAwardData();
+            } else {
+              throw new Error('Không nhận được contest_id từ server sau khi tạo.');
+            }
+          } finally {
+            setButtonLoading(saveContestBtn, false, 'Lưu thông tin Contest');
+          }
+        }
 
         function showToast(msg, ms = 2600, isError = false) {
           toast.textContent = msg;
@@ -552,6 +587,63 @@
             modeText.textContent = `Đang chỉnh sửa cuộc thi #${activeContestId}`;
           } else {
             modeText.textContent = 'Tạo hoặc chỉnh sửa contest, round, criteria trực tiếp trên giao diện.';
+          }
+        }
+
+        async function loadContestDetails(contestId) {
+          if (!contestId) return;
+          if (!hasSession()) return;
+          const prevModeText = modeText && modeText.textContent;
+          if (modeText) modeText.textContent = 'Đang tải thông tin cuộc thi...';
+          if (saveContestBtn) setButtonLoading(saveContestBtn, true, 'Đang tải...');
+          try {
+            const resp = await window.apiClient.get(`/organizer/contests/${encodeURIComponent(contestId)}`);
+            const contest = resp && (resp.contest || resp) || null;
+            if (!contest) {
+              throw new Error('Không tìm thấy contest');
+            }
+
+            // fill basic fields
+            const titleInput = form.querySelector('input[name="title"]');
+            const descriptionInput = form.querySelector('textarea[name="description"]');
+            const rulesInput = form.querySelector('textarea[name="rules"]');
+            const bannerInput = form.querySelector('input[name="banner_url"]');
+            const startInput = form.querySelector('input[name="start_date"]');
+            const endInput = form.querySelector('input[name="end_date"]');
+            const statusSelect = form.querySelector('select[name="status"]');
+
+            if (titleInput) titleInput.value = contest.title || '';
+            if (descriptionInput) descriptionInput.value = contest.description || '';
+            if (rulesInput) rulesInput.value = contest.rules || '';
+            if (bannerInput) bannerInput.value = contest.banner_url || '';
+            if (startInput) startInput.value = contest.start_date || '';
+            if (endInput) endInput.value = contest.end_date || '';
+            if (statusSelect) statusSelect.value = apiToUiStatus(contest.status || '') || 'draft';
+
+            // populate rounds
+            if (Array.isArray(contest.rounds)) {
+              roundsContainer.innerHTML = '';
+              nextRoundIdx = 1;
+              contest.rounds.forEach((r) => {
+                addRound(r);
+              });
+            }
+
+            // set active id and refresh related data
+            activeContestId = String(contest.id || contest.contest_id || contest.contestId || contestId);
+            setEditModeText();
+            await refreshCategoryAwardData();
+          } catch (err) {
+            console.error('Failed to load contest details', err);
+            const msg = (err && err.message) ? err.message : 'Không thể tải dữ liệu contest';
+            showToast(msg, 3500, true);
+            // if unauthorized, redirect to login
+            if (/401|403|permission|login/i.test(msg)) {
+              setTimeout(() => { window.location.href = '/auth/login'; }, 800);
+            }
+          } finally {
+            if (modeText && prevModeText !== undefined) modeText.textContent = prevModeText;
+            if (saveContestBtn) setButtonLoading(saveContestBtn, false, 'Lưu thông tin Contest');
           }
         }
 
@@ -683,7 +775,15 @@
           if (!name) throw new Error('Tên category không được để trống');
 
           const resp = await window.apiClient.post(`/organizer/contests/${activeContestId}/categories`, { name, description });
-          categoriesState = (resp && resp.categories) ? resp.categories : categoriesState;
+          // If server returns the updated list, use it; otherwise append the created item if provided
+          if (resp && resp.categories) {
+            categoriesState = resp.categories;
+          } else if (resp && resp.category) {
+            categoriesState = categoriesState.concat([resp.category]);
+          } else if (resp && resp.id) {
+            // fallback: append minimal item
+            categoriesState = categoriesState.concat([{ id: resp.id, name, description }]);
+          }
           categoryNameInput.value = '';
           categoryDescInput.value = '';
           renderCategories();
@@ -896,4 +996,146 @@
           const banner_url = form.querySelector('input[name="banner_url"]').value.trim();
           const start_date = form.querySelector('input[name="start_date"]').value.trim();
           const end_date = form.querySelector('input[name="end_date"]').value.trim();
-          const status = uiToApi
+          const statusSelect = form.querySelector('select[name="status"]');
+          const status = statusSelect ? uiToApiStatus(statusSelect.value) : 'draft';
+          const payload = {
+            title,
+            description,
+            rules,
+            banner_url,
+            start_date: start_date || null,
+            end_date: end_date || null,
+            status: status || 'draft'
+          };
+          return payload;
+
+        async function saveContest() {
+          if (!hasSession()) throw new Error('Bạn cần đăng nhập để lưu contest');
+          const payload = getContestPayload();
+          if (!payload.title) throw new Error('Tiêu đề contest là bắt buộc');
+          setButtonLoading(saveContestBtn, true, 'Đang lưu...');
+          try {
+            if (activeContestId) {
+              const resp = await window.apiClient.put(`/organizer/contests/${activeContestId}`, payload);
+              await refreshCategoryAwardData();
+              showToast('Cập nhật contest thành công');
+              return resp;
+            } else {
+              const resp = await window.apiClient.post('/organizer/contests', payload);
+              const created = resp && (resp.contest || resp) || null;
+              const id = created && (created.id || resp.id || created.contest_id || created.contestId);
+              if (id) {
+                activeContestId = String(id);
+                const url = new URL(window.location.href);
+                url.searchParams.set('contest_id', activeContestId);
+                window.history.replaceState({}, '', url.toString());
+                setEditModeText();
+                await refreshCategoryAwardData();
+                showToast('Tạo contest thành công');
+                return resp;
+              }
+              throw new Error('Không thể tạo contest');
+            }
+          } finally {
+            setButtonLoading(saveContestBtn, false, 'Lưu thông tin Contest');
+          }
+        }
+
+        // Wire up buttons
+        if (addCategoryBtn) {
+          addCategoryBtn.addEventListener('click', async () => {
+            try {
+              await addCategory();
+            } catch (err) {
+              showToast(err.message || 'Thêm category thất bại', 3000, true);
+            }
+          });
+        }
+
+        if (addAwardBtn) {
+          addAwardBtn.addEventListener('click', async () => {
+            try {
+              await addAward();
+            } catch (err) {
+              showToast(err.message || 'Thêm award thất bại', 3000, true);
+            }
+          });
+        }
+
+        if (saveContestBtn) {
+          saveContestBtn.addEventListener('click', async () => {
+            try {
+              await saveContest();
+            } catch (err) {
+              showToast(err.message || 'Lưu contest thất bại', 3000, true);
+            }
+          });
+        }
+
+        // Defensive delegated handlers: ensure clicks trigger even if elements are replaced
+        document.addEventListener('click', function (evt) {
+          try {
+            const target = evt.target;
+            if (!target) return;
+
+            if (target.closest && target.closest('#addCategoryBtn')) {
+              evt.preventDefault();
+              (async () => {
+                try {
+                  setButtonLoading(addCategoryBtn, true, 'Đang thêm...');
+                  await addCategory();
+                } catch (err) {
+                  console.error('addCategory error', err);
+                  showToast(err.message || 'Thêm category thất bại', 3000, true);
+                } finally {
+                  setButtonLoading(addCategoryBtn, false, 'Thêm Category');
+                }
+              })();
+            }
+
+            if (target.closest && target.closest('#addAwardBtn')) {
+              evt.preventDefault();
+              (async () => {
+                try {
+                  setButtonLoading(addAwardBtn, true, 'Đang thêm...');
+                  await addAward();
+                } catch (err) {
+                  console.error('addAward error', err);
+                  showToast(err.message || 'Thêm award thất bại', 3000, true);
+                } finally {
+                  setButtonLoading(addAwardBtn, false, 'Thêm Award');
+                }
+              })();
+            }
+
+            if (target.closest && target.closest('#saveContestBtn')) {
+              evt.preventDefault();
+              (async () => {
+                try {
+                  setButtonLoading(saveContestBtn, true, 'Đang lưu...');
+                  await saveContest();
+                } catch (err) {
+                  console.error('saveContest error', err);
+                  showToast(err.message || 'Lưu contest thất bại', 3000, true);
+                } finally {
+                  setButtonLoading(saveContestBtn, false, 'Lưu thông tin Contest');
+                }
+              })();
+            }
+          } catch (e) {
+            console.error('delegated click handler error', e);
+          }
+        }, false);
+
+        // If page opened with an existing contest id, load its data and switch UI to edit mode
+        if (activeContestId) {
+          if (saveContestBtn) {
+            if (!saveContestBtn.dataset.defaultText) saveContestBtn.dataset.defaultText = saveContestBtn.textContent;
+            saveContestBtn.textContent = 'Cập nhật / Lưu thay đổi';
+          }
+          document.title = `Cập nhật Contest #${activeContestId} - Contest Configuration Manager`;
+          // load details (no await to avoid blocking)
+          loadContestDetails(activeContestId).catch((err) => {
+            console.error('loadContestDetails error', err);
+          });
+        }

@@ -1,5 +1,6 @@
 import os
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
+from api.controllers.response_utils import safe_jsonify
 
 try:
     from services.duplicate_detection_service import DuplicateDetectionService
@@ -30,10 +31,10 @@ def check_duplicate():
             new_file.seek(0)
             result = service.check_duplicate_against_database(new_image_bytes)
     except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+        return safe_jsonify({'error': str(e)}, status=400)
     except Exception as e:
-        return jsonify({'error': f"Internal error during duplicate check: {str(e)}"}), 500
+        return safe_jsonify({'error': f"Internal error during duplicate check: {str(e)}"}, status=500)
 
-    return jsonify(result), 200
+    return safe_jsonify(result, status=200)
 
 

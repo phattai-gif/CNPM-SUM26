@@ -625,7 +625,7 @@ class ScoreService:
         judge_id: int,
         user_role: str = "judge",
     ) -> bool:
-        if user_role == "admin":
+        if isinstance(user_role, str) and user_role.lower() == "admin":
             return True
 
         try:

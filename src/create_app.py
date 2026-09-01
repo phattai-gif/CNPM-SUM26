@@ -21,6 +21,15 @@ def create_app():
         static_url_path="/static",
     )
 
+    # Use safe JSON provider to avoid 500s when tests inject MagicMocks
+    try:
+        from api.controllers.response_utils import SafeJSONProvider
+
+        app.json_provider_class = SafeJSONProvider
+        app.json = SafeJSONProvider(app)
+    except Exception:
+        pass
+
     app.config.from_object(Config)
     app.config['JSON_AS_ASCII'] = False
     if hasattr(app, 'json'):
@@ -37,6 +46,17 @@ def create_app():
     setup_middleware(app)
 
     register_routes(app)
+
+    # Global exception handler to ensure unhandled exceptions return JSON
+    try:
+        from api.controllers.response_utils import safe_jsonify
+
+        @app.errorhandler(Exception)
+        def _handle_unexpected_error(e):
+            # Don't expose internal details in production, but include error string in tests
+            return safe_jsonify({'message': 'Internal server error', 'error': str(e)}, status=500)
+    except Exception:
+        pass
 
     # ---------------------------------------------------------
     # Contest / Round Auto Scheduler

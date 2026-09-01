@@ -16,7 +16,7 @@ class JudgeAssignmentService:
         self.contest_repo = contest_repo
 
     def _check_ownership(self, contest: Contest, user_id: int, user_role: str):
-        if user_role == 'admin':
+        if isinstance(user_role, str) and user_role.lower() == 'admin':
             return
         if contest.created_by != user_id:
             raise PermissionError("Báº¡n khÃ´ng cÃ³ quyá»n thao tÃ¡c trÃªn cuá»™c thi nÃ y.")

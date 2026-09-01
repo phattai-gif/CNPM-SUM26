@@ -8,11 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='my_submissions.css') }}">
+    <link rel="stylesheet" href="/static/admin.css">
     <style>
         /* ===== DARK MODE OVERRIDES ===== */
         body {
-            background: #080c14;
-            color: #e8edf2;
+            background: var(--bg);
+            color: var(--text);
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         }
 
@@ -34,7 +35,7 @@
             align-items: flex-start;
             gap: 20px;
             padding: 32px 0 24px;
-            border-bottom: 1px solid #1e2a3a;
+            border-bottom: 1px solid var(--border);
             flex-wrap: wrap;
         }
 
@@ -48,7 +49,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            color: #f5a623;
+            color: var(--primary);
             background: rgba(245, 166, 35, 0.12);
             padding: 4px 14px;
             border-radius: 20px;
@@ -59,13 +60,13 @@
         .page-title {
             font-size: clamp(1.8rem, 3vw, 2.6rem);
             font-weight: 800;
-            color: #f0f4f8;
+            color: var(--text);
             margin: 0 0 8px;
             letter-spacing: -0.02em;
         }
 
         .page-desc {
-            color: #8899aa;
+            color: var(--muted);
             font-size: 1rem;
             line-height: 1.6;
             max-width: 600px;
@@ -82,8 +83,8 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: #f5a623;
-            color: #080c14;
+            background: var(--primary);
+            color: var(--bg);
             font-weight: 700;
             font-size: 0.95rem;
             padding: 12px 24px;
@@ -95,14 +96,14 @@
         }
 
         .btn-primary-action:hover {
-            background: #e0960a;
+            background: var(--primary-2);
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
-            color: #080c14;
+            color: var(--bg);
         }
 
         .btn-primary-action svg {
-            stroke: #080c14;
+            stroke: var(--bg);
         }
 
         /* ===== STATS ===== */
@@ -114,8 +115,8 @@
         }
 
         .stat-card {
-            background: #111a26;
-            border: 1px solid #1e2a3a;
+            background: var(--panel);
+            border: 1px solid var(--border);
             border-radius: 16px;
             padding: 18px 20px;
             display: flex;
@@ -124,7 +125,7 @@
             transition: all 0.3s ease;
         }
         .stat-card:hover {
-            border-color: #f5a623;
+            border-color: var(--primary);
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(245, 166, 35, 0.06);
         }
@@ -142,7 +143,7 @@
         .stat-number {
             font-size: 1.6rem;
             font-weight: 700;
-            color: #f5a623;
+            color: var(--primary);
             line-height: 1.2;
         }
 
@@ -160,7 +161,7 @@
             gap: 16px;
             padding: 16px 0 20px;
             flex-wrap: wrap;
-            border-bottom: 1px solid #1e2a3a;
+            border-bottom: 1px solid var(--border);
         }
 
         .filter-tabs {
@@ -171,7 +172,7 @@
 
         .filter-tab {
             background: transparent;
-            color: #8899aa;
+            color: var(--muted);
             border: 1px solid #1e2a3a;
             padding: 8px 18px;
             border-radius: 20px;
@@ -202,15 +203,15 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            background: #0d1622;
-            border: 2px solid #1e2a3a;
+            background: var(--panel-alt);
+            border: 2px solid var(--border);
             border-radius: 12px;
             padding: 6px 14px;
             transition: all 0.3s ease;
             min-width: 220px;
         }
         .search-box:focus-within {
-            border-color: #f5a623;
+            border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.08);
         }
 
@@ -223,14 +224,14 @@
             background: transparent;
             border: none;
             padding: 8px 0;
-            color: #e8edf2;
+            color: var(--text);
             font-size: 0.9rem;
             width: 100%;
             outline: none;
         }
 
         .search-box input::placeholder {
-            color: #6b7f94;
+            color: var(--muted);
         }
 
         /* ===== SUBMISSIONS GRID ===== */
@@ -245,14 +246,14 @@
         .loading-state {
             text-align: center;
             padding: 60px 20px;
-            color: #8899aa;
+            color: var(--muted);
         }
 
         .spinner {
             width: 40px;
             height: 40px;
-            border: 3px solid #1e2a3a;
-            border-top-color: #f5a623;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto 16px;
@@ -368,32 +369,7 @@
 </head>
 <body>
     {% include '_nav.html' %}
-    <!-- Top Navigation Bar -->
-    <nav class="navbar" style="display: none;">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <a href="/" class="brand-link">
-                    <span class="brand-icon">🎞️</span>
-                    <span class="brand-text">ANALOG<span>CONTEST</span></span>
-                </a>
-            </div>
-            <div class="nav-menu">
-                <a href="/my-submissions" class="nav-link active">Bài Dự Thi Của Tôi</a>
-                <a href="/submit" class="nav-link">Nộp Bài Mới</a>
-                <a href="/leaderboard" class="nav-link">Bảng Xếp Hạng</a>
-                <a href="/results" class="nav-link">Kết Quả</a>
-            </div>
-            <div class="nav-user" id="navUserSection">
-                <div class="user-chip" id="userChip">
-                    <div class="user-avatar" id="userAvatar">📸</div>
-                    <span class="user-name" id="userName">Participant</span>
-                </div>
-                <button type="button" class="btn-logout" id="logoutBtn" title="Đăng xuất">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                </button>
-            </div>
-        </div>
-    </nav>
+    <!-- top nav provided by _nav.html -->
 
     <!-- Main Content Container -->
     <main class="main-content">

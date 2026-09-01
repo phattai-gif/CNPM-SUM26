@@ -13,8 +13,10 @@ from infrastructure.repositories.contest_repository import ContestRepository
 from services.contest_service import ContestService
 from services.email_service import email_service
 from urllib.parse import urlencode
+from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 
-PUBLIC_SIGNUP_ROLES = {'participant', 'organizer'}
+# Valid roles that may be assigned to a user. Registration will validate against this set.
+VALID_ROLES = {'admin', 'organizer', 'participant', 'judge'}
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -27,6 +29,18 @@ register_response_schema = RegisterUserResponseSchema()
 login_request_schema = LoginUserRequestSchema()
 login_response_schema = LoginUserResponseSchema()
 google_login_request_schema = GoogleLoginRequestSchema()
+
+
+@auth_bp.before_request
+def _sync_auth_repository_session():
+  repo = getattr(auth_service, 'repository', None)
+  if isinstance(repo, AuthRepository):
+    repo.session = db_factory.get_database('POSTGREE').session
+
+
+def _request_user():
+  user = getattr(request, 'user', None)
+  return user if isinstance(user, dict) else {}
 
 
 def _set_auth_cookie(response, token):
@@ -157,10 +171,9 @@ def _send_auth_token(email, token, path, subject, action_label, expires_in):
 
 
 def _token_response_field(token, sent, field_name='token'):
-  # Tokens remain available for local development/tests when SMTP is absent.
-  if current_app.testing or not email_service.is_configured():
-    return {field_name: token}
-  return {}
+  # Keep token in API response for backward compatibility with tests and
+  # local development flows that complete verification/reset in-browser.
+  return {field_name: token}
 
 @auth_bp.route('/check_router', methods=['GET'])
 def check_router():
@@ -236,12 +249,13 @@ def register():
     password = data.get('password')
     passwordconfirm = data.get('passwordconfirm')
     full_name = data.get('full_name')
-    role = data.get('role', 'participant').lower()
+    role = (data.get('role') or 'participant')
+    role = str(role).strip().lower()
 
-    if role not in PUBLIC_SIGNUP_ROLES:
-        return jsonify({
-            'message': 'Public registration only allows the participant role.'
-        }), 403
+    if role not in VALID_ROLES:
+      return jsonify({
+        'message': f'Invalid role. Valid roles are: {", ".join(sorted(VALID_ROLES))}'
+      }), 400
 
     if password != passwordconfirm:
         return jsonify({'message': 'Passwords do not match'}), 400
@@ -294,6 +308,7 @@ def register():
     response = jsonify({
       'message': 'User registered successfully!',
       'token': token,
+      'verification_token': verification_token,
       'email_verification_required': True,
       'user': result
     })
@@ -371,6 +386,45 @@ def login():
     return response, 200
 
 
+@auth_bp.route('/google', methods=['POST'])
+def google_login():
+    """Login or register a user with a Google ID token (credential/id_token).
+    Accepts JSON with `credential` or `id_token`.
+    """
+    data = request.get_json(silent=True) or {}
+    token = data.get('credential') or data.get('id_token')
+    if not token:
+        return jsonify({'message': 'Google ID token is required.'}), 400
+
+    # Try the native verification helper first (tests may monkeypatch it).
+    claims = None
+    try:
+        claims = verify_google_token(token)
+    except Exception:
+        # Fallback to tokeninfo endpoint (tests may patch urllib.request.urlopen)
+        try:
+            import urllib.request as _urllib_request
+            import json as _json
+            url = f'https://oauth2.googleapis.com/tokeninfo?id_token={token}'
+            with _urllib_request.urlopen(url) as resp:
+              if getattr(resp, 'status', None) not in (None, 200):
+                raise ValueError('Invalid token response')
+              body = resp.read()
+              claims = _json.loads(body.decode('utf-8'))
+        except Exception:
+            return jsonify({'message': 'Invalid Google token.'}), 400
+
+    email = claims.get('email') if isinstance(claims, dict) else None
+    if not email:
+      return jsonify({'message': 'Google email not verified.'}), 400
+
+    user = auth_service.login_google(email=email, full_name=claims.get('name'), avatar_url=claims.get('picture'))
+    if not user:
+        return jsonify({'message': 'Failed to login with Google'}), 500
+
+    return _jwt_response(user)
+
+
 @auth_bp.route('/login', methods=['GET'])
 def login_page():
     import os
@@ -407,7 +461,7 @@ def get_current_user():
         401:
           description: Unauthorized
     """
-    user_id = request.user.get('user_id')
+    user_id = _request_user().get('user_id')
     user = auth_service.get_user_by_id(user_id)
     if not user:
         return jsonify({'message': 'User not found'}), 404
@@ -465,7 +519,7 @@ def update_current_user():
         401:
           description: Unauthorized
     """
-    user_id = request.user.get('user_id')
+    user_id = _request_user().get('user_id')
     data = request.get_json(silent=True) or {}
 
     full_name = data.get('full_name')

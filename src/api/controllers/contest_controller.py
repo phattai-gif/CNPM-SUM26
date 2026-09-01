@@ -2,6 +2,12 @@
 from flask import flash, redirect, url_for
 from datetime import datetime
 
+# Ensure module is available under the `src.` package path used by tests
+import sys
+_alias = 'src.' + __name__
+if _alias not in sys.modules:
+    sys.modules[_alias] = sys.modules.get(__name__)
+
 try:
     from infrastructure.repositories.contest_repository import ContestRepository
     from services.contest_service import ContestService
@@ -41,6 +47,8 @@ public_bp = Blueprint('contest_public', __name__, url_prefix='/contest')
 contest_service = ContestService(ContestRepository())
 score_service = ScoreService()
 
+from api.controllers.response_utils import safe_jsonify
+
 contest_create_schema = ContestCreateRequestSchema()
 contest_update_schema = ContestUpdateRequestSchema()
 contest_rules_schema = ContestRulesUpdateRequestSchema()
@@ -48,6 +56,33 @@ contest_config_schema = ContestConfigurationRequestSchema()
 contest_response_schema = ContestResponseSchema()
 round_schema = RoundSchema()
 criteria_schema = CriteriaSchema()
+
+
+def _request_user():
+    user = getattr(request, 'user', None)
+    return user if isinstance(user, dict) else {}
+
+
+def _serialize_model(model):
+    if model is None:
+        return None
+    if isinstance(model, dict):
+        return dict(model)
+    to_dict_fn = getattr(model, 'to_dict', None)
+    if callable(to_dict_fn):
+        try:
+            return to_dict_fn()
+        except Exception:
+            pass
+    return safe_jsonify(model, status=200)[0].get_json() if model is not None else None
+
+
+def _serialize_list(items):
+    return [
+        _serialize_model(item)
+        for item in (items or [])
+        if item is not None
+    ]
 
 
 # -------------------------------------------------------------------------
@@ -244,6 +279,175 @@ def public_results():
 def public_leaderboard():
     """Alias route for leaderboard; reuses same mock data as public_results."""
     return public_results()
+
+
+# -------------------------------------------------------------------------
+# Additional Organizer APIs for CNPM-98: leaderboard, winner actions,
+# publishing to digital archive, and listing published/archive exhibits.
+# -------------------------------------------------------------------------
+
+
+@contest_bp.route('/rounds/<int:round_id>/leaderboard', methods=['GET'])
+@role_required('organizer', 'admin')
+def get_round_leaderboard(round_id):
+    """Return finalized leaderboard for a round. This will call finalize
+    which computes and returns leaderboard data (it is idempotent in the
+    sense it will mark the round FINALIZED)."""
+    try:
+        data, error = score_service.finalize_round(round_id)
+
+    except ValueError as ve:
+        return jsonify({'message': str(ve)}), 400
+
+    except PermissionError as pe:
+        return jsonify({'message': str(pe)}), 403
+
+    except Exception as exc:
+        return jsonify({'message': 'Failed to compute leaderboard', 'error': str(exc)}), 500
+
+    if error == 'round_not_found':
+        return jsonify({'message': 'Round not found'}), 404
+    if error == 'round_already_finalized' and data is None:
+        return jsonify({'message': 'Round already finalized and no data available'}), 409
+
+    return safe_jsonify(data, status=200)
+
+
+@contest_bp.route('/submissions/<int:submission_id>/approve-winner', methods=['POST'])
+@role_required('organizer', 'admin')
+def approve_winner(submission_id):
+    try:
+        # Mark submission as winner_approved
+        from infrastructure.models.app import SubmissionModel
+        session = contest_service.repository.session
+        sub = session.query(SubmissionModel).filter(SubmissionModel.id == submission_id).first()
+        if not sub:
+            return jsonify({'message': 'Submission not found'}), 404
+        sub.status = 'winner_approved'
+        session.commit()
+        session.refresh(sub)
+        return jsonify({'message': 'Winner approved', 'submission_status': sub.status}), 200
+    except Exception as exc:
+        return jsonify({'message': 'Failed to approve winner', 'error': str(exc)}), 500
+
+
+@contest_bp.route('/submissions/<int:submission_id>/reject-winner', methods=['POST'])
+@role_required('organizer', 'admin')
+def reject_winner(submission_id):
+    try:
+        from infrastructure.models.app import SubmissionModel
+        session = contest_service.repository.session
+        sub = session.query(SubmissionModel).filter(SubmissionModel.id == submission_id).first()
+        if not sub:
+            return jsonify({'message': 'Submission not found'}), 404
+        sub.status = 'winner_rejected'
+        session.commit()
+        session.refresh(sub)
+        return jsonify({'message': 'Winner rejected', 'submission_status': sub.status}), 200
+    except Exception as exc:
+        return jsonify({'message': 'Failed to reject winner', 'error': str(exc)}), 500
+
+
+@contest_bp.route('/submissions/<int:submission_id>/publish', methods=['POST'])
+@role_required('organizer', 'admin')
+def publish_submission(submission_id):
+    try:
+        from infrastructure.models.app import SubmissionModel, RoundModel, DigitalArchiveExhibitModel
+        session = contest_service.repository.session
+        sub = session.query(SubmissionModel).filter(SubmissionModel.id == submission_id).first()
+        if not sub:
+            return jsonify({'message': 'Submission not found'}), 404
+
+        # determine contest
+        rnd = session.query(RoundModel).filter(RoundModel.id == sub.round_id).first()
+        contest_id = rnd.contest_id if rnd else None
+
+        # create or ignore existing exhibit
+        existing = session.query(DigitalArchiveExhibitModel).filter(
+            DigitalArchiveExhibitModel.submission_id == submission_id,
+            DigitalArchiveExhibitModel.contest_id == contest_id,
+        ).first()
+
+        if existing:
+            return jsonify({'message': 'Already published', 'exhibit_id': existing.id}), 200
+
+        exhibit = DigitalArchiveExhibitModel(contest_id=contest_id or 0, submission_id=submission_id)
+        session.add(exhibit)
+        # Optionally mark submission as published
+        sub.status = 'published'
+        session.commit()
+        session.refresh(exhibit)
+
+        # Try to include a representative image_url for the frontend to show
+        try:
+            from infrastructure.models.app import SubmissionFileModel
+            file_row = session.query(SubmissionFileModel).filter(SubmissionFileModel.submission_id == submission_id).order_by(SubmissionFileModel.id.asc()).first()
+            image_url = None
+            if file_row is not None:
+                image_url = getattr(file_row, 'thumbnail_url', None) or getattr(file_row, 'image_hd_url', None) or None
+        except Exception:
+            image_url = None
+
+        return jsonify({'message': 'Published to gallery', 'exhibit_id': exhibit.id, 'image_url': image_url}), 201
+    except Exception as exc:
+        return jsonify({'message': 'Failed to publish submission', 'error': str(exc)}), 500
+
+
+@contest_bp.route('/submissions/<int:submission_id>/archive', methods=['POST'])
+@role_required('organizer', 'admin')
+def archive_submission(submission_id):
+    try:
+        from infrastructure.models.app import SubmissionModel
+        session = contest_service.repository.session
+        sub = session.query(SubmissionModel).filter(SubmissionModel.id == submission_id).first()
+        if not sub:
+            return jsonify({'message': 'Submission not found'}), 404
+
+        sub.status = 'archived'
+        session.commit()
+        session.refresh(sub)
+        return jsonify({'message': 'Submission archived', 'submission_status': sub.status}), 200
+    except Exception as exc:
+        return jsonify({'message': 'Failed to archive submission', 'error': str(exc)}), 500
+
+
+@contest_bp.route('/exhibits', methods=['GET'])
+@role_required('organizer', 'admin')
+def list_exhibits():
+    try:
+        from infrastructure.models.app import DigitalArchiveExhibitModel
+        session = contest_service.repository.session
+        contest_id = request.args.get('contest_id', type=int)
+        query = session.query(DigitalArchiveExhibitModel)
+        if contest_id:
+            query = query.filter(DigitalArchiveExhibitModel.contest_id == contest_id)
+        exhibits = query.order_by(DigitalArchiveExhibitModel.published_at.desc()).all()
+        result = [
+            {
+                'id': e.id,
+                'contest_id': e.contest_id,
+                'submission_id': e.submission_id,
+                'published_at': e.published_at.isoformat() if e.published_at else None,
+                # include a representative image if available
+                'image_url': None,
+            }
+            for e in exhibits
+        ]
+        # enrich exhibits with image urls
+        try:
+            from infrastructure.models.app import SubmissionFileModel
+            for item in result:
+                try:
+                    file_row = session.query(SubmissionFileModel).filter(SubmissionFileModel.submission_id == item['submission_id']).order_by(SubmissionFileModel.id.asc()).first()
+                    if file_row is not None:
+                        item['image_url'] = getattr(file_row, 'thumbnail_url', None) or getattr(file_row, 'image_hd_url', None) or None
+                except Exception:
+                    item['image_url'] = None
+        except Exception:
+            pass
+        return jsonify({'exhibits': result}), 200
+    except Exception as exc:
+        return jsonify({'message': 'Failed to list exhibits', 'error': str(exc)}), 500
 # Public judge grading UI (Task CNPM-50)
 @public_bp.route('/judge/grading/<int:submission_id>', methods=['GET', 'POST'])
 def public_judge_grading(submission_id):
@@ -308,7 +512,7 @@ def create_contest_page():
 @role_required('organizer', 'admin')
 def create_contest():
     """API Táº¡o cuá»™c thi má»›i."""
-    user_id = request.user.get('user_id')
+    user_id = _request_user().get('user_id')
     data = request.get_json(silent=True) or request.form.to_dict() or {}
 
     errors = contest_create_schema.validate(data)
@@ -317,21 +521,21 @@ def create_contest():
 
     try:
         contest = contest_service.create_contest(data, user_id=user_id)
-        return jsonify({
+        return safe_jsonify({
             'message': 'Táº¡o cuá»™c thi thÃ nh cÃ´ng',
-            'contest': contest.to_dict()
-        }), 201
+            'contest': _serialize_model(contest) or {}
+        }, status=201)
     except ValueError as ve:
-        return jsonify({'message': str(ve)}), 400
+        return safe_jsonify({'message': str(ve)}, status=400)
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi táº¡o cuá»™c thi', 'error': str(e)}), 500
+        return safe_jsonify({'message': 'Lá»—i khi táº¡o cuá»™c thi', 'error': str(e)}, status=500)
 
 
 @contest_bp.route('/contests', methods=['GET'])
 @role_required('organizer', 'admin')
 def list_contests():
     """API Liá»‡t kÃª danh sÃ¡ch cuá»™c thi cá»§a Organizer."""
-    user_id = request.user.get('user_id')
+    user_id = _request_user().get('user_id')
     contests = contest_service.list_organizer_contests(user_id)
     # Enhance with submissions_count and judges_count per contest
     try:
@@ -340,7 +544,7 @@ def list_contests():
 
         contests_out = []
         for c in contests:
-            cdict = c.to_dict()
+            cdict = _serialize_model(c) or {}
             round_ids = [r.id for r in (c.rounds or []) if getattr(r, 'id', None)]
             submissions_count = 0
             judges_count = 0
@@ -358,23 +562,24 @@ def list_contests():
             cdict['judges_count'] = judges_count
             contests_out.append(cdict)
 
-        return jsonify({
+        return safe_jsonify({
             'message': 'Láº¥y danh sÃ¡ch cuá»™c thi thÃ nh cÃ´ng',
             'contests': contests_out
-        }), 200
+        }, status=200)
     except Exception:
-        return jsonify({
+        return safe_jsonify({
             'message': 'Láº¥y danh sÃ¡ch cuá»™c thi thÃ nh cÃ´ng',
-            'contests': [c.to_dict() for c in contests]
-        }), 200
+            'contests': _serialize_list(contests)
+        }, status=200)
 
 
 @contest_bp.route('/contests/<int:contest_id>', methods=['GET'])
 @role_required('organizer', 'admin')
 def get_contest(contest_id):
     """API Láº¥y thÃ´ng tin chi tiáº¿t cuá»™c thi (bao gá»“m thá»ƒ lá»‡, vÃ²ng thi, tiÃªu chÃ­)."""
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
 
     contest = contest_service.get_contest(contest_id)
     if not contest:
@@ -392,18 +597,19 @@ def get_contest(contest_id):
     if user_role != 'admin' and owner_id != actor_id:
         return jsonify({'message': 'Báº¡n khÃ´ng cÃ³ quyá»n xem cuá»™c thi nÃ y'}), 403
 
-    return jsonify({
+    return safe_jsonify({
         'message': 'Láº¥y thÃ´ng tin cuá»™c thi thÃ nh cÃ´ng',
-        'contest': contest.to_dict()
-    }), 200
+        'contest': _serialize_model(contest) or {}
+    }, status=200)
 
 
 @contest_bp.route('/contests/<int:contest_id>', methods=['PUT'])
 @role_required('organizer', 'admin')
 def update_contest(contest_id):
     """API Cáº­p nháº­t thÃ´ng tin cuá»™c thi."""
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
     data = request.get_json(silent=True) or request.form.to_dict() or {}
 
     errors = contest_update_schema.validate(data)
@@ -412,16 +618,16 @@ def update_contest(contest_id):
 
     try:
         contest = contest_service.update_contest(contest_id, data, user_id=user_id, user_role=user_role)
-        return jsonify({
+        return safe_jsonify({
             'message': 'Cáº­p nháº­t cuá»™c thi thÃ nh cÃ´ng',
-            'contest': contest.to_dict()
-        }), 200
+            'contest': _serialize_model(contest) or {}
+        }, status=200)
     except ValueError as ve:
-        return jsonify({'message': str(ve)}), 400
+        return safe_jsonify({'message': str(ve)}, status=400)
     except PermissionError as pe:
-        return jsonify({'message': str(pe)}), 403
+        return safe_jsonify({'message': str(pe)}, status=403)
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi cáº­p nháº­t cuá»™c thi', 'error': str(e)}), 500
+        return safe_jsonify({'message': 'Lá»—i khi cáº­p nháº­t cuá»™c thi', 'error': str(e)}, status=500)
 
 
 @contest_bp.route('/contests/<int:contest_id>', methods=['DELETE'])
@@ -606,8 +812,9 @@ def delete_contest_award(contest_id, award_id):
 @role_required('organizer', 'admin')
 def update_contest_rules(contest_id):
     """API Cáº­p nháº­t thá»ƒ lá»‡ cuá»™c thi."""
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
     data = request.get_json(silent=True) or request.form.to_dict() or {}
 
     errors = contest_rules_schema.validate(data)
@@ -616,10 +823,10 @@ def update_contest_rules(contest_id):
 
     try:
         contest = contest_service.update_rules(contest_id, rules=data.get('rules', ''), user_id=user_id, user_role=user_role)
-        return jsonify({
+        return safe_jsonify({
             'message': 'Cáº­p nháº­t thá»ƒ lá»‡ cuá»™c thi thÃ nh cÃ´ng',
-            'contest': contest.to_dict()
-        }), 200
+            'contest': _serialize_model(contest) or {}
+        }, status=200)
     except ValueError as ve:
         return jsonify({'message': str(ve)}), 400
     except PermissionError as pe:
@@ -636,8 +843,9 @@ def update_contest_rules(contest_id):
 @role_required('organizer', 'admin')
 def create_round(contest_id):
     """API ThÃªm vÃ²ng thi má»›i cho cuá»™c thi."""
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
     data = request.get_json(silent=True) or request.form.to_dict() or {}
 
     errors = round_schema.validate(data)
@@ -646,10 +854,10 @@ def create_round(contest_id):
 
     try:
         round_obj = contest_service.create_round(contest_id, data, user_id=user_id, user_role=user_role)
-        return jsonify({
+        return safe_jsonify({
             'message': 'Tạo vòng thi thành công',
-            'round': round_obj.to_dict()
-        }), 201
+            'round': _serialize_model(round_obj) or {}
+        }, status=201)
     except ValueError as ve:
         return jsonify({'message': str(ve)}), 400
     except PermissionError as pe:
@@ -662,16 +870,17 @@ def create_round(contest_id):
 @role_required('organizer', 'admin')
 def update_round(contest_id, round_id):
     """API Cập nhật thông tin vòng thi."""
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
     data = request.get_json(silent=True) or request.form.to_dict() or {}
 
     try:
         round_obj = contest_service.update_round(contest_id, round_id, data, user_id=user_id, user_role=user_role)
-        return jsonify({
+        return safe_jsonify({
             'message': 'Cập nhật vòng thi thành công',
-            'round': round_obj.to_dict()
-        }), 200
+            'round': _serialize_model(round_obj) or {}
+        }, status=200)
     except ValueError as ve:
         return jsonify({'message': str(ve)}), 400
     except PermissionError as pe:
@@ -706,8 +915,9 @@ def delete_round(contest_id, round_id):
 @role_required('organizer', 'admin')
 def create_criteria(contest_id, round_id):
     """API ThÃªm tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm cho vÃ²ng thi."""
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
     data = request.get_json(silent=True) or request.form.to_dict() or {}
 
     errors = criteria_schema.validate(data)
@@ -716,10 +926,10 @@ def create_criteria(contest_id, round_id):
 
     try:
         crit = contest_service.create_criteria(contest_id, round_id, data, user_id=user_id, user_role=user_role)
-        return jsonify({
+        return safe_jsonify({
             'message': 'Táº¡o tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm thÃ nh cÃ´ng',
-            'criteria': crit.to_dict()
-        }), 201
+            'criteria': _serialize_model(crit) or {}
+        }, status=201)
     except ValueError as ve:
         return jsonify({'message': str(ve)}), 400
     except PermissionError as pe:
@@ -732,16 +942,17 @@ def create_criteria(contest_id, round_id):
 @role_required('organizer', 'admin')
 def update_criteria(contest_id, round_id, criteria_id):
     """API Cáº­p nháº­t tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm."""
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
     data = request.get_json(silent=True) or request.form.to_dict() or {}
 
     try:
         crit = contest_service.update_criteria(contest_id, round_id, criteria_id, data, user_id=user_id, user_role=user_role)
-        return jsonify({
+        return safe_jsonify({
             'message': 'Cáº­p nháº­t tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm thÃ nh cÃ´ng',
-            'criteria': crit.to_dict()
-        }), 200
+            'criteria': _serialize_model(crit) or {}
+        }, status=200)
     except ValueError as ve:
         return jsonify({'message': str(ve)}), 400
     except PermissionError as pe:
@@ -776,8 +987,9 @@ def delete_criteria(contest_id, round_id, criteria_id):
 @role_required('organizer', 'admin')
 def update_contest_configuration(contest_id):
     """API Cáº¥u hÃ¬nh toÃ n bá»™ cuá»™c thi (thá»ƒ lá»‡, vÃ²ng thi vÃ  cÃ¡c tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm)."""
-    user_id = request.user.get('user_id')
-    user_role = request.user.get('role')
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role')
     data = request.get_json(silent=True) or {}
 
     errors = contest_config_schema.validate(data)
@@ -786,10 +998,10 @@ def update_contest_configuration(contest_id):
 
     try:
         contest = contest_service.update_contest_configuration(contest_id, data, user_id=user_id, user_role=user_role)
-        return jsonify({
+        return safe_jsonify({
             'message': 'Cáº­p nháº­t cáº¥u hÃ¬nh cuá»™c thi thÃ nh cÃ´ng',
-            'contest': contest.to_dict()
-        }), 200
+            'contest': _serialize_model(contest) or {}
+        }, status=200)
     except ValueError as ve:
         return jsonify({'message': str(ve)}), 400
     except PermissionError as pe:
