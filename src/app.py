@@ -1,4 +1,4 @@
-﻿from dotenv import load_dotenv
+from dotenv import load_dotenv
 from pathlib import Path
 from create_app import create_app
 
@@ -290,6 +290,18 @@ def create_app():
         return render_template(
             "submission.html"
         )
+
+    # --------------------------------------------------------
+    # PUBLIC GALLERY UI
+    # --------------------------------------------------------
+
+    @app.route('/gallery')
+    def public_gallery_page():
+        return render_template("gallery.html")
+
+    @app.route('/gallery/<int:submission_id>')
+    def public_gallery_detail_page(submission_id):
+        return render_template("gallery_detail.html", submission_id=submission_id)
 
     # --------------------------------------------------------
     # LEADERBOARD DEMO

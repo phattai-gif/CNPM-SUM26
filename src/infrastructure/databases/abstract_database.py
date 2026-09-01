@@ -40,6 +40,9 @@ class AbstractDatabase(ABC):
                     "poolclass": StaticPool,
                 }
             )
+        elif "pooler.supabase.com" in self.database_uri:
+            # Supabase session poolers have a small connection limit.
+            engine_options.update({"poolclass": NullPool})
         else:
             engine_options.update(
                 {

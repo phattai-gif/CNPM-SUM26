@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chi Tiết Tác Phẩm Nhiếp Ảnh Phim</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --bg-dark: #080c14;
+      --card-bg: #111a26;
+      --card-border: #1e2a3a;
+      --accent: #f5a623;
+      --accent-hover: #e0960a;
+      --text-main: #e8edf2;
+      --text-muted: #8899aa;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    .detail-container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .detail-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .photo-display {
+      width: 100%;
+      max-height: 75vh;
+      object-fit: contain;
+      background: #04060a;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #080c14;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-accent:hover {
+      background: var(--accent-hover);
+      color: #080c14;
+    }
+
+    .btn-outline-custom {
+      background: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 600;
+    }
+
+    .btn-outline-custom:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--text-muted);
+      color: #ffffff;
+    }
+
+    .exif-card {
+      background: #0d1622;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .exif-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .exif-item:last-child {
+      border-bottom: none;
+    }
+
+    .exif-label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .exif-val {
+      color: #ffffff;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  {% include '_nav.html' %}
+
+  <div class="detail-container">
+    <div class="mb-4">
+      <a href="/gallery" class="btn btn-outline-custom btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại Triển lãm (Gallery)
+      </a>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div id="detailLoading" class="text-center py-5">
+      <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;"></div>
+      <div class="mt-3 text-muted">Đang tải thông tin tác phẩm...</div>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div id="detailError" class="alert alert-danger" style="display: none;">
+      Không thể tải tác phẩm hoặc bài viết không tồn tại / không công khai.
+    </div>
+
+    <!-- MAIN DETAIL CONTENT -->
+    <div id="detailContent" class="detail-card" style="display: none;">
+      <div class="row g-4">
+        <!-- Photo display -->
+        <div class="col-12 col-lg-7 text-center">
+          <img id="detailImg" src="" alt="" class="photo-display shadow">
+        </div>
+
+        <!-- Metadata & Story -->
+        <div class="col-12 col-lg-5 d-flex flex-column justify-content-between">
+          <div>
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span id="detailContest" class="badge bg-warning text-dark fw-bold px-3 py-2">Cuộc thi</span>
+              <span id="detailDate" class="small text-muted"></span>
+            </div>
+
+            <h2 id="detailTitle" class="fw-bold text-white mb-3"></h2>
+
+            <div class="d-flex align-items-center gap-2 mb-4 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+              <i class="bi bi-person-circle fs-4 text-warning"></i>
+              <div>
+                <div class="small text-muted">Tác giả</div>
+                <div id="detailAuthor" class="fw-bold text-white"></div>
+              </div>
+            </div>
+
+            <!-- Story -->
+            <div id="detailStoryWrap" class="mb-4">
+              <h5 class="fw-bold text-warning mb-2"><i class="bi bi-chat-left-quote me-2"></i>Câu chuyện tác phẩm</h5>
+              <p id="detailStory" class="text-light fs-6" style="line-height: 1.6;"></p>
+            </div>
+
+            <!-- Film EXIF Metadata -->
+            <div class="exif-card">
+              <h6 class="fw-bold text-warning mb-3"><i class="bi bi-sliders me-2"></i>Thông tin Phim & Thiết bị</h6>
+              
+              <div class="exif-item">
+                <span class="exif-label"><i class="bi bi-film me-2"></i>Film Stock:</span>
+                <span class="exif-val" id="detailFilmStock">-</span>
+              </div>
+              <div class="exif-item">
+                <span class="exif-label"><i class="bi bi-camera me-2"></i>Máy ảnh:</span>
+                <span class="exif-val" id="detailCamera">-</span>
+              </div>
+              <div class="exif-item">
+                <span class="exif-label"><i class="bi bi-circle me-2"></i>Ống kính:</span>
+                <span class="exif-val" id="detailLens">-</span>
+              </div>
+              <div class="exif-item">
+                <span class="exif-label"><i class="bi bi-speedometer2 me-2"></i>ISO:</span>
+                <span class="exif-val" id="detailISO">-</span>
+              </div>
+              <div class="exif-item">
+                <span class="exif-label"><i class="bi bi-buildings me-2"></i>Lab tráng phim:</span>
+                <span class="exif-val" id="detailLab">-</span>
+              </div>
+              <div class="exif-item">
+                <span class="exif-label"><i class="bi bi-geo-alt me-2"></i>Địa điểm:</span>
+                <span class="exif-val" id="detailLocation">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 d-flex gap-2">
+            <button type="button" class="btn btn-accent flex-grow-1" onclick="copyCurrentLink()">
+              <i class="bi bi-share me-1"></i>Chia sẻ liên kết
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/api_client.js"></script>
+  <script>
+    const submissionId = {{ submission_id | default(0) }};
+
+    async function loadPhotoDetail() {
+      if (!submissionId) return;
+
+      const loadingEl = document.getElementById('detailLoading');
+      const errorEl = document.getElementById('detailError');
+      const contentEl = document.getElementById('detailContent');
+
+      try {
+        const resp = await fetch(`/api/gallery/${submissionId}`);
+        if (!resp.ok) {
+          throw new Error('Photo not found');
+        }
+
+        const data = await resp.json();
+        const sub = data.submission;
+
+        document.getElementById('detailImg').src = sub.image_hd_url || sub.thumbnail_url || '';
+        document.getElementById('detailTitle').textContent = sub.title || 'Không tiêu đề';
+        document.getElementById('detailContest').textContent = sub.contest ? sub.contest.title : 'Cuộc thi';
+        document.getElementById('detailAuthor').textContent = sub.author ? sub.author.name : 'Tác giả';
+        document.getElementById('detailDate').textContent = sub.created_at ? new Date(sub.created_at).toLocaleDateString('vi-VN') : '';
+
+        document.getElementById('detailStory').textContent = sub.story_description || 'Chưa có câu chuyện đi kèm.';
+
+        const meta = sub.film_metadata || {};
+        document.getElementById('detailFilmStock').textContent = meta.film_stock || '-';
+        document.getElementById('detailCamera').textContent = meta.camera_body || '-';
+        document.getElementById('detailLens').textContent = meta.lens || '-';
+        document.getElementById('detailISO').textContent = meta.film_iso || '-';
+        document.getElementById('detailLab').textContent = meta.lab_name || '-';
+        document.getElementById('detailLocation').textContent = meta.taken_at_location || '-';
+
+        loadingEl.style.display = 'none';
+        contentEl.style.display = 'block';
+
+      } catch (err) {
+        console.error(err);
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+      }
+    }
+
+    function copyCurrentLink() {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Đã sao chép đường dẫn tác phẩm vào bộ nhớ tạm!');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPhotoDetail);
+  </script>
+</body>
+</html>

@@ -252,14 +252,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const displayName = user.full_name || user.username || 'Nhiếp Ảnh Gia';
             const username = user.username ? `@${user.username}` : '@photographer';
             const email = user.email || 'Chưa cập nhật email';
-            const role = (user.role || 'Participant').toUpperCase();
+            const rawRole = (user.role || 'participant').toLowerCase();
+            const roleDisplay = rawRole === 'organizer' ? 'ORGANIZER' : (user.role || 'Participant').toUpperCase();
             const bio = user.bio || 'Chưa cập nhật tiểu sử nghệ sĩ. Hãy bấm "Chỉnh Sửa Hồ Sơ" để giới thiệu bản thân và chia sẻ niềm đam mê ảnh phim analog!';
             const initial = displayName.charAt(0).toUpperCase();
 
             this.profileFullName.textContent = displayName;
             this.profileUsername.textContent = username;
             this.profileEmail.textContent = email;
-            this.profileRolePill.textContent = role;
+            
+            if (this.profileRolePill) {
+                this.profileRolePill.textContent = roleDisplay;
+                this.profileRolePill.className = `role-pill role-${rawRole}`;
+            }
+
+            const btnDash = document.getElementById('btnOrganizerDashboard');
+            if (btnDash) {
+                btnDash.style.display = (rawRole === 'organizer' || rawRole === 'admin') ? 'inline-flex' : 'none';
+            }
+
             this.profileBioText.textContent = bio;
 
             if (user.created_at) {

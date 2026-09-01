@@ -376,8 +376,15 @@ class SubmissionService:
 
                         dup_result = dup_service.check_duplicate_against_database(new_image_bytes=fb, exclude_submission_id=getattr(submission, "id", None), session=getattr(self.submission_repo, "session", None))
 
-                        similarity = float(dup_result.get("similarity_score", 0.0) or 0.0)
-                        is_dup = bool(dup_result.get("is_duplicate", False))
+                if (
+                    first_bytes is None
+                    and files
+                ):
+                    first_bytes = (
+                        files[0].get(
+                            "file_bytes"
+                        )
+                    )
 
                         if is_dup:
                             try:

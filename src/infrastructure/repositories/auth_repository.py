@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-from sqlalchemy import func, insert, select
+from sqlalchemy import func, insert, select, delete
 from secrets import token_urlsafe
 from werkzeug.security import check_password_hash
 from domain.models.iauth_repository import IAuthRepository
@@ -112,9 +112,28 @@ class AuthRepository(IAuthRepository):
             print(f"Error logging in: {e}")
             return None
 
-    def login_google(self, email: str, full_name: str = None, avatar_url: str = None) -> Optional[Auth]:
-        """Find an active account by verified Google email or create a participant."""
+    def set_role(self, user_id: int, role_code: str) -> bool:
         try:
+            role_code = (role_code or 'participant').lower()
+            role_obj = self.session.query(RoleModel).filter_by(code=role_code).first()
+            if not role_obj:
+                role_obj = RoleModel(code=role_code, name=role_code.capitalize(), description=f'{role_code} role')
+                self.session.add(role_obj)
+                self.session.flush()
+
+            self.session.execute(delete(user_roles).where(user_roles.c.user_id == user_id))
+            self.session.execute(insert(user_roles).values(user_id=user_id, role_id=role_obj.id))
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error setting user role: {e}")
+            return False
+
+    def login_google(self, email: str, full_name: str = None, avatar_url: str = None, role: str = None) -> Optional[Auth]:
+        """Find an active account by verified Google email or create user with requested role."""
+        try:
+            role_code = (role or 'participant').lower()
             user_obj = self.session.query(UserModel).filter(
                 func.lower(UserModel.email) == email.lower()
             ).first()
@@ -126,6 +145,8 @@ class AuthRepository(IAuthRepository):
                     user_obj.full_name = full_name
                 if avatar_url and not user_obj.avatar_url:
                     user_obj.avatar_url = avatar_url
+                if role:
+                    self.set_role(user_obj.id, role_code)
             else:
                 username_base = email.split('@', 1)[0][:40] or 'google_user'
                 username = username_base
@@ -144,12 +165,12 @@ class AuthRepository(IAuthRepository):
                 self.session.add(user_obj)
                 self.session.flush()
 
-                role_obj = self.session.query(RoleModel).filter_by(code='participant').first()
+                role_obj = self.session.query(RoleModel).filter_by(code=role_code).first()
                 if role_obj is None:
                     role_obj = RoleModel(
-                        code='participant',
-                        name='Participant',
-                        description='Default participant role',
+                        code=role_code,
+                        name=role_code.capitalize(),
+                        description=f'{role_code} role',
                     )
                     self.session.add(role_obj)
                     self.session.flush()
@@ -162,8 +183,11 @@ class AuthRepository(IAuthRepository):
                 password='',
                 passwordcomfirm='',
                 email=user_obj.email,
-                role=self.get_user_role(user_obj.id) or 'participant',
+                role=self.get_user_role(user_obj.id) or role_code,
                 full_name=user_obj.full_name,
+                avatar_url=user_obj.avatar_url,
+                bio=getattr(user_obj, 'bio', None),
+                created_at=user_obj.created_at.isoformat() if getattr(user_obj, 'created_at', None) else None,
                 email_verified=user_obj.email_verified
             )
         except Exception as e:

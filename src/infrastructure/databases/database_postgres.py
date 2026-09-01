@@ -55,7 +55,6 @@ class DatabasePostgres(AbstractDatabase):
                     "DEFAULT CURRENT_TIMESTAMP;"
                 )
             )
-
         try:
             with self.engine.begin() as connection:
                 self._add_postgres_column_if_missing(
