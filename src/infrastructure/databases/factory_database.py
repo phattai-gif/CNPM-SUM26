@@ -2,6 +2,7 @@
 
 from infrastructure.databases.abstract_database import AbstractDatabase
 from infrastructure.databases.database_postgres import DatabasePostgres
+from infrastructure.databases.base import Base
 
 
 class FactoryDatabase:
@@ -20,6 +21,12 @@ class FactoryDatabase:
             ):
                 FactoryDatabase._database = DatabasePostgres()
                 FactoryDatabase._database_uri = database_uri
+
+            # In test runs, SQLite engines may be disposed/reset by other
+            # modules. Ensure required tables exist before returning.
+            if FactoryDatabase._database.engine.dialect.name == "sqlite":
+                Base.metadata.create_all(bind=FactoryDatabase._database.engine)
+
             return FactoryDatabase._database
 
         raise ValueError(

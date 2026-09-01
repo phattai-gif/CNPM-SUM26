@@ -193,8 +193,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const full_name = document.getElementById('full_name').value.trim();
       const password = document.getElementById('password').value;
       const passwordconfirm = document.getElementById('passwordconfirm').value;
+      const roleSelect = document.getElementById('role');
       const roleInput = document.querySelector('input[name="role"]:checked');
-      const role = roleInput ? roleInput.value : 'participant';
+      const role = roleSelect ? roleSelect.value : (roleInput ? roleInput.value : 'participant');
 
       setFormLoading(registerForm, true, 'Creating account...');
       const { ok, data } = await requestJson('/auth/signup', {

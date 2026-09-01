@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from sqlalchemy import func, insert, select
 from secrets import token_urlsafe
@@ -10,10 +11,34 @@ from infrastructure.models.app import UserModel, RoleModel, user_roles
 
 class AuthRepository(IAuthRepository):
     def __init__(self, session=None):
+        self._session = None
+        self._session_uri = None
         if session is not None:
-            self.session = session
+            self._session = session
         else:
-            self.session = db_factory.get_database('POSTGREE').session
+            self._session = db_factory.get_database('POSTGREE').session
+            self._session_uri = self._current_database_uri()
+
+    @staticmethod
+    def _current_database_uri():
+        return os.environ.get("DATABASE_URI") or os.environ.get("POSTGREE_DATABASE_URL")
+
+    @property
+    def session(self):
+        if self._session_uri is None:
+            return self._session
+
+        current_uri = self._current_database_uri()
+        if self._session is None or current_uri != self._session_uri:
+            self._session = db_factory.get_database('POSTGREE').session
+            self._session_uri = current_uri
+
+        return self._session
+
+    @session.setter
+    def session(self, value):
+        self._session = value
+        self._session_uri = None
 
     def check_exist(self, username: str) -> bool:
         existing_user = self.session.query(UserModel).filter_by(username=username).first()

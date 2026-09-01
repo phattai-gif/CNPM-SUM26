@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import os
 
 from sqlalchemy import distinct, func, select
 
@@ -16,7 +17,33 @@ from infrastructure.models.app import (
 
 class ModeratorDashboardRepository:
     def __init__(self, session=None):
-        self.session = session or db_factory.get_database('POSTGREE').session
+        self._session = None
+        self._session_uri = None
+        if session is not None:
+            self._session = session
+        else:
+            self._session = db_factory.get_database('POSTGREE').session
+            self._session_uri = self._current_database_uri()
+
+    @staticmethod
+    def _current_database_uri():
+        return os.environ.get("DATABASE_URI") or os.environ.get("POSTGREE_DATABASE_URL")
+
+    @property
+    def session(self):
+        if self._session_uri is None:
+            return self._session
+
+        current_uri = self._current_database_uri()
+        if self._session is None or current_uri != self._session_uri:
+            self._session = db_factory.get_database('POSTGREE').session
+            self._session_uri = current_uri
+        return self._session
+
+    @session.setter
+    def session(self, value):
+        self._session = value
+        self._session_uri = None
 
     def contest_ids_for_user(self, user_id):
         return [

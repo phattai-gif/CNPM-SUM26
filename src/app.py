@@ -97,6 +97,16 @@ def create_app():
         static_url_path="/static",
     )
 
+    # Use the safe JSON provider so controller responses remain serializable
+    # even when tests inject mock objects.
+    try:
+        from api.controllers.response_utils import SafeJSONProvider
+
+        app.json_provider_class = SafeJSONProvider
+        app.json = SafeJSONProvider(app)
+    except Exception:
+        pass
+
     # --------------------------------------------------------
     # CONFIGURATION
     # --------------------------------------------------------

@@ -26,19 +26,23 @@
             margin: 0 auto;
             background: #111a26;
             border: 1px solid #1e2a3a;
-            border-radius: 24px;
-            padding: 32px 36px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border-radius: 18px;
+            padding: 24px 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
             overflow: hidden;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: stretch;
         }
 
         /* (moved above) */
 
         .submission-header {
             text-align: center;
-            margin-bottom: 32px;
-            padding-bottom: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
             border-bottom: 1px solid #1e2a3a;
         }
 
@@ -46,9 +50,9 @@
         .submission-header h1 {
             font-size: 2rem;
             font-weight: 900 !important;
-            color: #f5a623 !important;  /* MÀU VÀNG CAM NỔI BẬT */
+            color: #f3f4f6 !important;  /* bright title for readability */
             margin: 0 0 8px;
-            text-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
+            text-shadow: 0 0 6px rgba(0,0,0,0.4);
         }
 
         .subtitle {
@@ -58,27 +62,30 @@
         }
 
         .form-section {
-            margin-bottom: 32px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid #1e2a3a;
+            margin-bottom: 0;
+            padding: 12px 0;
+            border-bottom: 1px solid transparent;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-sizing: border-box;
         }
-        .form-section:last-of-type {
-            border-bottom: none;
-        }
+        .form-section:last-of-type { margin-bottom: 0; }
 
-        /* ===== SECTION TITLE - MÀU ĐEN TRÊN NỀN VÀNG ===== */
+        /* ===== SECTION TITLE - dark card style (removed yellow background) ===== */
         .section-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 800 !important;
-            color: #000000 !important;
-            background: #f5a623 !important;
+            color: #f3f4f6 !important; /* brighter title */
+            background: transparent;
             display: flex;
             align-items: center;
             gap: 12px;
-            margin: 0 0 18px;
-            padding: 12px 18px;
-            border-radius: 12px;
-            border: 2px solid #e0960a;
+            margin: 0 0 8px;
+            padding: 6px 0;
+            border-radius: 8px;
+            border-left: 4px solid #374151; /* subtle gray accent */
             box-sizing: border-box;
             max-width: 100%;
         }
@@ -89,47 +96,45 @@
             justify-content: center;
             width: 32px;
             height: 32px;
-            background: #000000;
+            background: #0d1622;
             color: #f5a623;
             border-radius: 50%;
             font-size: 0.9rem;
             font-weight: 800;
             flex-shrink: 0;
+            border: 1px solid #1e2a3a;
         }
 
         .section-title .step-text {
-            color: #000000 !important;
+            color: #ffffff !important;
             font-weight: 800;
         }
 
-        /* ===== FORM LABEL - MÀU ĐEN ===== */
+        /* ===== FORM LABEL - dark theme ===== */
         .form-label {
             display: block;
-            font-weight: 800 !important;
-            color: #000000 !important;
-            background: #f5a623 !important;
-            padding: 4px 12px;
+            font-weight: 700 !important;
+            color: #ffffff !important; /* main labels bright */
+            background: transparent;
+            padding: 2px 4px;
             border-radius: 6px;
-            margin-bottom: 6px;
-            font-size: 1rem;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
             box-sizing: border-box;
             max-width: 100%;
         }
 
-        .required {
-            color: #000000 !important;
-            font-weight: 700;
-        }
+        .required { color: #f5a623 !important; font-weight: 700; }
 
-        /* ===== FORM TEXT - MÀU ĐEN ===== */
+        /* ===== FORM TEXT - muted helper text ===== */
         .form-text {
             display: block;
-            color: #000000 !important;
-            font-size: 0.8rem;
+            color: #9ca3af !important; /* subdued helper text */
+            font-size: 0.84rem;
             margin-top: 4px;
-            font-weight: 700;
-            background: #f5a623 !important;
-            padding: 4px 10px;
+            font-weight: 500;
+            background: transparent;
+            padding: 0;
             border-radius: 6px;
             box-sizing: border-box;
             max-width: 100%;
@@ -138,74 +143,72 @@
         .round-info {
             margin-top: 10px;
             padding: 10px 14px;
-            background: #f5a623 !important;
+            background: #0d1622;
             border-radius: 10px;
-            border-left: 3px solid #e0960a;
+            border-left: 3px solid #374151;
             display: none;
-            color: #000000 !important;
-            font-weight: 700;
+            color: #f0f4f8 !important;
+            font-weight: 600;
         }
-        .round-info.active {
-            display: block;
-        }
+        .round-info.active { display: block; }
 
         .section-hint {
-            color: #000000 !important;
+            color: #aab8c5 !important;
             font-size: 0.95rem;
             margin: 0 0 16px;
             padding: 12px 16px;
-            background: #f5a623 !important;
+            background: #0d1622;
             border-radius: 10px;
-            border-left: 3px solid #e0960a;
-            font-weight: 700;
+            border-left: 3px solid #1e2a3a;
+            font-weight: 500;
             box-sizing: border-box;
             max-width: 100%;
         }
 
         .form-control {
             width: 100%;
-            padding: 12px 14px;
-            border: 2px solid #1e2a3a;
-            border-radius: 12px;
+            padding: 10px 12px;
+            border: 1px solid #374151; /* subtle gray */
+            border-radius: 10px;
             font-size: 1rem;
-            background: #0d1622;
-            color: #ffffff !important;
-            transition: all 0.3s ease;
+            background: #1f2937; /* flat dark input */
+            color: #f3f4f6 !important;
+            transition: all 0.12s ease;
         }
 
         .form-control:focus {
-            border-color: #f5a623;
-            box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
+            border-color: #4b5563; /* slightly lighter gray on focus */
+            box-shadow: none;
             outline: none;
-            background: #0d1622;
-            color: #ffffff !important;
+            background: #1f2937;
+            color: #f3f4f6 !important;
         }
 
         /* ===== SỬA LỖI PLACEHOLDER ===== */
         .form-control::placeholder {
-            color: #f5a623 !important;
-            font-weight: 600;
+            color: #9ca3af !important;
+            font-weight: 500;
             opacity: 1 !important;
         }
 
         input.form-control::placeholder,
         textarea.form-control::placeholder {
-            color: #f5a623 !important;
-            font-weight: 600;
+            color: #9ca3af !important;
+            font-weight: 500;
             opacity: 1 !important;
         }
 
         input.form-control::-webkit-input-placeholder,
         textarea.form-control::-webkit-input-placeholder {
-            color: #f5a623 !important;
-            font-weight: 600;
+            color: #9ca3af !important;
+            font-weight: 500;
             opacity: 1 !important;
         }
 
         input.form-control::-moz-placeholder,
         textarea.form-control::-moz-placeholder {
-            color: #f5a623 !important;
-            font-weight: 600;
+            color: #9ca3af !important;
+            font-weight: 500;
             opacity: 1 !important;
         }
 
@@ -219,107 +222,113 @@
             color: #ffffff;
         }
 
-        /* ===== CHECKBOX - CHỮ ĐEN ===== */
+        /* ===== CHECKBOX - dark theme ===== */
         .checkbox-label {
             display: flex;
             align-items: flex-start;
             gap: 10px;
-            color: #000000 !important;
-            background: #f5a623 !important;
+            color: #e8edf2 !important;
+            background: transparent;
             padding: 8px 12px;
             border-radius: 8px;
             font-size: 1rem;
-            font-weight: 700 !important;
+            font-weight: 600 !important;
             cursor: pointer;
+            border: 1px solid transparent;
         }
 
         .checkbox-label input[type="checkbox"] {
             width: 18px;
             height: 18px;
-            accent-color: #000000;
+            accent-color: #4b5563;
             cursor: pointer;
             flex-shrink: 0;
             margin-top: 2px;
+            border-radius: 4px;
         }
 
         .metadata-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .metadata-grid .form-group { margin-bottom: 0; width:100%; }
+
+        /* Proof attachments and verification grids: force vertical stacking to avoid overflow */
+        /* Proof attachments: two columns on desktop, stacked on narrow screens */
+        .proof-attachments-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
+            align-items: start;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .metadata-grid .form-group {
-            margin-bottom: 0;
-        }
+        .proof-attachment-card,
+        .proof-preview { width: 100%; box-sizing: border-box; }
 
-        /* ===== VERIFICATION CARD - CHỮ ĐEN ===== */
+        .proof-card-header { display:flex; align-items:flex-start; gap:12px; }
+
+        .proof-card-title { color: #ffffff !important; font-weight: 700; margin: 0 0 4px; }
+        .proof-card-desc { color: #9ca3af !important; margin: 0; font-size: 0.88rem; }
+        .proof-zone-text, .proof-zone-hint, .proof-file-info, .proof-file-name, .proof-file-size { color: #9ca3af !important; }
+
+        /* ===== VERIFICATION CARD - dark theme ===== */
         .verification-card {
-            background: #f5a623 !important;
-            border: 2px solid #e0960a;
-            border-radius: 12px;
-            padding: 16px;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 10px;
+            padding: 12px;
         }
 
         .verification-card h4 {
-            color: #000000 !important;
-            font-weight: 800 !important;
+            color: #f0f4f8 !important;
+            font-weight: 700 !important;
             margin: 0 0 10px;
             font-size: 1rem;
         }
 
         .verification-status {
-            color: #000000 !important;
+            color: #aab8c5 !important;
             font-size: 0.9rem;
-            font-weight: 700;
+            font-weight: 600;
         }
-        .verification-status p {
-            margin: 0;
-        }
+        .verification-status p { margin: 0; }
 
         .image-upload-area {
             margin-bottom: 18px;
         }
 
-        /* ===== DRAG DROP ZONE - CHỮ ĐEN ===== */
+        /* ===== DRAG DROP ZONE - dark themed card with accent dashed border ===== */
         .drag-drop-zone {
-            border: 2px dashed #f5a623;
-            border-radius: 16px;
-            padding: 40px 20px;
+            border: none;
+            border-radius: 12px;
+            padding: 28px 18px;
             text-align: center;
-            background: #f5a623 !important;
-            transition: all 0.3s ease;
+            background: #1f2937 !important; /* flat upload background */
+            transition: all 0.12s ease;
             cursor: pointer;
             box-sizing: border-box;
             width: 100%;
             max-width: 100%;
+            color: #f3f4f6 !important;
         }
         .drag-drop-zone:hover {
-            background: #e0960a !important;
-            border-color: #000000;
+            background: #111827 !important;
         }
 
-        .upload-icon {
-            font-size: 3rem;
-            display: block;
-            margin-bottom: 12px;
-        }
+        .upload-icon { font-size: 3rem; display: block; margin-bottom: 12px; color: #f5a623; }
 
-        .drag-drop-zone h3 {
-            color: #000000 !important;
-            font-weight: 800 !important;
-            margin: 0 0 6px;
-        }
+        .drag-drop-zone h3 { color: #f0f4f8 !important; font-weight: 800 !important; margin: 0 0 6px; }
 
-        .drag-drop-zone p {
-            color: #000000 !important;
-            margin: 6px 0;
-            font-weight: 600;
-        }
+        .drag-drop-zone p { color: #aab8c5 !important; margin: 6px 0; font-weight: 600; }
 
         .btn-upload {
             display: inline-block;
-            background: #000000;
-            color: #f5a623 !important;
+            background: #f5a623;
+            color: #080c14 !important;
             padding: 10px 28px;
             border-radius: 10px;
             font-weight: 700;
@@ -328,18 +337,9 @@
             border: none;
             font-size: 0.95rem;
         }
-        .btn-upload:hover {
-            background: #1a1a1a;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-        }
+        .btn-upload:hover { background: #e0960a; transform: translateY(-2px); }
 
-        .upload-hint {
-            color: #000000 !important;
-            font-size: 0.8rem;
-            margin-top: 10px;
-            font-weight: 600;
-        }
+        .upload-hint { color: #aab8c5 !important; font-size: 0.85rem; margin-top: 10px; font-weight: 600; }
 
         .image-preview {
             background: #0d1622;
@@ -431,8 +431,8 @@
             color: #080c14 !important;
         }
         .btn-primary:hover {
-            background: #e0960a;
-            box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
+            background: #d97706;
+            box-shadow: none;
         }
 
         .btn-secondary {
@@ -441,9 +441,9 @@
             border: 2px solid #1e2a3a;
         }
         .btn-secondary:hover {
-            color: #f5a623 !important;
-            border-color: #f5a623;
-            background: rgba(245, 166, 35, 0.05);
+            color: #f3f4f6 !important;
+            border-color: #374151;
+            background: rgba(55,65,81,0.06);
         }
 
         .upload-progress {
@@ -553,11 +553,15 @@
             background: #0d1622;
         }
         ::-webkit-scrollbar-thumb {
-            background: #f5a623;
+            background: #374151;
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #e0960a;
+            background: #4b5563;
+        }
+
+        @media (max-width: 900px) {
+            .proof-attachments-grid { grid-template-columns: 1fr !important; }
         }
 
         @media (max-width: 768px) {
@@ -682,16 +686,11 @@
                     </div>
                 </section>
 
-                <!-- SECTION 3 -->
-                <section class="form-section">
-                    <h2 class="section-title">
-                        <span class="step-number">3</span>
-                        <span class="step-text">Submission Details</span>
                 <!-- SECTION 3: Proof Attachments -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">3</span>
-                        Proof Attachments
+                        <span class="step-text">Proof Attachments</span>
                         <span class="proof-optional-badge">Optional</span>
                     </h2>
 
@@ -709,24 +708,16 @@
                                 </div>
                             </div>
 
-                            <!-- Upload zone (shown when no file selected) -->
                             <div class="proof-upload-zone" id="negativeFilmZone">
                                 <div class="proof-zone-inner">
                                     <span class="proof-zone-icon">⬆</span>
                                     <p class="proof-zone-text">Drag & drop or</p>
                                     <label for="negativeFilmInput" class="btn-upload-proof">Browse</label>
-                                    <input
-                                        type="file"
-                                        id="negativeFilmInput"
-                                        name="negative_film"
-                                        accept=".jpg,.jpeg,.png,.webp"
-                                        style="display: none;"
-                                    >
+                                    <input type="file" id="negativeFilmInput" name="negative_film" accept=".jpg,.jpeg,.png,.webp" style="display: none;">
                                     <p class="proof-zone-hint">JPG, PNG, WEBP · Max 20MB</p>
                                 </div>
                             </div>
 
-                            <!-- Preview (shown after file selected) -->
                             <div class="proof-preview" id="negativeFilmPreview" style="display: none;">
                                 <img id="negativeFilmThumb" src="" alt="Negative Film Preview" class="proof-thumbnail">
                                 <div class="proof-file-info">
@@ -747,24 +738,16 @@
                                 </div>
                             </div>
 
-                            <!-- Upload zone -->
                             <div class="proof-upload-zone" id="contactSheetZone">
                                 <div class="proof-zone-inner">
                                     <span class="proof-zone-icon">⬆</span>
                                     <p class="proof-zone-text">Drag & drop or</p>
                                     <label for="contactSheetInput" class="btn-upload-proof">Browse</label>
-                                    <input
-                                        type="file"
-                                        id="contactSheetInput"
-                                        name="contact_sheet"
-                                        accept=".jpg,.jpeg,.png,.webp"
-                                        style="display: none;"
-                                    >
+                                    <input type="file" id="contactSheetInput" name="contact_sheet" accept=".jpg,.jpeg,.png,.webp" style="display: none;">
                                     <p class="proof-zone-hint">JPG, PNG, WEBP · Max 20MB</p>
                                 </div>
                             </div>
 
-                            <!-- Preview -->
                             <div class="proof-preview" id="contactSheetPreview" style="display: none;">
                                 <img id="contactSheetThumb" src="" alt="Contact Sheet Preview" class="proof-thumbnail">
                                 <div class="proof-file-info">
@@ -782,9 +765,9 @@
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">4</span>
-                        Submission Details
+                        <span class="step-text">Submission Details</span>
                     </h2>
-                    
+
                     <div class="form-group">
                         <label for="titleInput" class="form-label">Title <span class="required">*</span></label>
                         <input type="text" id="titleInput" name="title" class="form-control" placeholder="Give your photograph a title" maxlength="200" required>
@@ -798,17 +781,13 @@
                     </div>
                 </section>
 
-                <!-- SECTION 4 -->
-                <section class="form-section">
-                    <h2 class="section-title">
-                        <span class="step-number">4</span>
-                        <span class="step-text">Film & Camera Metadata (Optional)</span>
-                <!-- SECTION 5: Film Metadata -->
+                <!-- SECTION 5: Film & Camera Metadata -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">5</span>
-                        Film & Camera Metadata (Optional)
+                        <span class="step-text">Film & Camera Metadata (Optional)</span>
                     </h2>
+
                     <p class="section-hint">📝 Provide details about your film and camera setup. This helps verify authenticity.</p>
 
                     <div class="metadata-grid">
@@ -854,16 +833,11 @@
                     </div>
                 </section>
 
-                <!-- SECTION 5 -->
-                <section class="form-section">
-                    <h2 class="section-title">
-                        <span class="step-number">5</span>
-                        <span class="step-text">Verification & Validation</span>
-                <!-- SECTION 6: Verification Status -->
+                <!-- SECTION 6: Verification & Validation -->
                 <section class="form-section">
                     <h2 class="section-title">
                         <span class="step-number">6</span>
-                        Verification & Validation
+                        <span class="step-text">Verification & Validation</span>
                     </h2>
 
                     <div class="verification-grid">

@@ -1,5 +1,6 @@
 ﻿from typing import List, Optional
 from datetime import datetime
+import os
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -17,14 +18,37 @@ except ImportError:
 
 class JudgeAssignmentRepository(IJudgeAssignmentRepository):
     def __init__(self, session: Optional[Session] = None):
+        self._session = None
+        self._session_uri = None
         if session is not None:
-            self.session = session
+            self._session = session
         else:
             try:
-                self.session = db_factory.get_database('POSTGREE').session
+                self._session = db_factory.get_database('POSTGREE').session
+                self._session_uri = self._current_database_uri()
             except Exception:
                 from infrastructure.databases.postgres import session as pg_session
-                self.session = pg_session
+                self._session = pg_session
+
+    @staticmethod
+    def _current_database_uri():
+        return os.environ.get("DATABASE_URI") or os.environ.get("POSTGREE_DATABASE_URL")
+
+    @property
+    def session(self):
+        if self._session_uri is None:
+            return self._session
+
+        current_uri = self._current_database_uri()
+        if self._session is None or current_uri != self._session_uri:
+            self._session = db_factory.get_database('POSTGREE').session
+            self._session_uri = current_uri
+        return self._session
+
+    @session.setter
+    def session(self, value):
+        self._session = value
+        self._session_uri = None
 
     def _rollback_session(self):
         try:

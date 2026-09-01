@@ -92,23 +92,24 @@ def role_required(*allowed_roles):
         @wraps(f)
         @token_required
         def decorated(*args, **kwargs):
-            user_role = request.user.get('role')
-            if user_role == 'admin' and allowed_roles == ('admin',):
-                session = db_factory.get_database('POSTGREE').session
-                user_id = request.user.get('user_id')
-                user = session.query(UserModel).filter_by(id=user_id).first()
-                if user:
-                    user_role = session.execute(
-                        select(RoleModel.code)
-                        .select_from(user_roles)
-                        .join(RoleModel, user_roles.c.role_id == RoleModel.id)
-                        .where(user_roles.c.user_id == user.id)
-                    ).scalar() or 'participant'
-                    request.user['role'] = user_role
-            if allowed_roles and user_role not in allowed_roles:
+            # normalize allowed_roles: permit passing lists/tuples or multiple args
+            normalized = set()
+            for r in allowed_roles:
+                if isinstance(r, (list, tuple, set)):
+                    for v in r:
+                        if v:
+                            normalized.add(str(v).lower())
+                elif r:
+                    normalized.add(str(r).lower())
+
+            user_role = (request.user.get('role') or 'participant')
+            user_role = str(user_role).lower()
+
+            # If no allowed roles specified, allow any authenticated user
+            if normalized and user_role not in normalized:
                 return _forbidden_response(
                     'Bạn không có quyền truy cập khu vực quản lý này.',
-                    allowed_roles,
+                    normalized,
                 )
 
             return f(*args, **kwargs)

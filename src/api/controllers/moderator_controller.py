@@ -1,11 +1,26 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request
+from api.controllers.response_utils import safe_jsonify
 
 from api.role_required import role_required
 from services.moderator_dashboard_service import ModeratorDashboardService
+from infrastructure.databases.factory_database import FactoryDatabase as db_factory
+from infrastructure.repositories.moderator_dashboard_repository import ModeratorDashboardRepository
 
 
 moderator_bp = Blueprint('moderator', __name__, url_prefix='/moderator')
 moderator_service = ModeratorDashboardService()
+
+
+@moderator_bp.before_request
+def _sync_moderator_repository_session():
+    repository = getattr(moderator_service, 'repository', None)
+    if isinstance(repository, ModeratorDashboardRepository):
+        repository.session = db_factory.get_database('POSTGREE').session
+
+
+def _request_user():
+    user = getattr(request, 'user', None)
+    return user if isinstance(user, dict) else {}
 
 
 def _filters():
@@ -24,53 +39,62 @@ def _filters():
 @role_required('organizer', 'admin')
 def dashboard():
     try:
+        user = _request_user()
         contest_id = request.args.get('contest_id', type=int)
-        data = moderator_service.dashboard(request.user['user_id'], request.user['role'], contest_id)
-        return jsonify({'message': 'Moderator dashboard data retrieved successfully', **data}), 200
+        data = moderator_service.dashboard(user.get('user_id'), user.get('role'), contest_id)
+        # Merge into a response dict safely
+        resp = {'message': 'Moderator dashboard data retrieved successfully'}
+        if isinstance(data, dict):
+            resp.update(data)
+        else:
+            resp['data'] = data
+        return safe_jsonify(resp, status=200)
     except ValueError as exc:
-        return jsonify({'message': str(exc)}), 404
+        return safe_jsonify({'message': str(exc)}, status=404)
     except PermissionError as exc:
-        return jsonify({'message': str(exc)}), 403
+        return safe_jsonify({'message': str(exc)}, status=403)
     except Exception as exc:
-        return jsonify({'message': 'Unable to load moderator dashboard', 'error': str(exc)}), 500
+        return safe_jsonify({'message': 'Unable to load moderator dashboard', 'error': str(exc)}, status=500)
 
 
 @moderator_bp.route('/submissions', methods=['GET'])
 @role_required('organizer', 'admin')
 def submissions():
     try:
+        user = _request_user()
         page, per_page, status, ai_risk = _filters()
         data = moderator_service.submissions(
-            request.user['user_id'], request.user['role'], request.args.get('contest_id', type=int),
+            user.get('user_id'), user.get('role'), request.args.get('contest_id', type=int),
             page, per_page, status, ai_risk,
         )
-        return jsonify(data), 200
+        return safe_jsonify(data, status=200)
     except ValueError as exc:
-        return jsonify({'message': str(exc)}), 400
+        return safe_jsonify({'message': str(exc)}, status=400)
     except PermissionError as exc:
-        return jsonify({'message': str(exc)}), 403
+        return safe_jsonify({'message': str(exc)}, status=403)
     except Exception as exc:
-        return jsonify({'message': 'Unable to load moderator submissions', 'error': str(exc)}), 500
+        return safe_jsonify({'message': 'Unable to load moderator submissions', 'error': str(exc)}, status=500)
 
 
 @moderator_bp.route('/submissions/<int:submission_id>/ai-report', methods=['GET'])
 @role_required('organizer', 'admin')
 def submission_ai_report(submission_id):
     try:
+        user = _request_user()
         contest_id = request.args.get('contest_id', type=int)
         data = moderator_service.ai_report(
-            request.user['user_id'],
-            request.user['role'],
+            user.get('user_id'),
+            user.get('role'),
             submission_id,
             contest_id,
         )
-        return jsonify(data), 200
+        return safe_jsonify(data, status=200)
     except ValueError as exc:
-        return jsonify({'message': str(exc)}), 404
+        return safe_jsonify({'message': str(exc)}, status=404)
     except PermissionError as exc:
-        return jsonify({'message': str(exc)}), 403
+        return safe_jsonify({'message': str(exc)}, status=403)
     except Exception as exc:
-        return jsonify({'message': 'Unable to load AI report', 'error': str(exc)}), 500
+        return safe_jsonify({'message': 'Unable to load AI report', 'error': str(exc)}, status=500)
 
 
 @moderator_bp.route('/submissions/<int:submission_id>/approve', methods=['POST'])
@@ -93,6 +117,7 @@ def dismiss_flag(submission_id):
 
 def _moderate(submission_id, action):
     try:
+        user = _request_user()
         payload = request.get_json(silent=True) or {}
         review_notes = payload.get('review_notes')
         contest_id = payload.get('contest_id') or request.args.get('contest_id', type=int)
@@ -100,17 +125,17 @@ def _moderate(submission_id, action):
             contest_id = int(contest_id)
 
         data = moderator_service.moderate(
-            request.user['user_id'],
-            request.user['role'],
+            user.get('user_id'),
+            user.get('role'),
             submission_id,
             action,
             contest_id=contest_id,
             review_notes=review_notes,
         )
-        return jsonify({'message': 'Moderation action completed', 'result': data}), 200
+        return safe_jsonify({'message': 'Moderation action completed', 'result': data}, status=200)
     except ValueError as exc:
-        return jsonify({'message': str(exc)}), 404
+        return safe_jsonify({'message': str(exc)}, status=404)
     except PermissionError as exc:
-        return jsonify({'message': str(exc)}), 403
+        return safe_jsonify({'message': str(exc)}, status=403)
     except Exception as exc:
-        return jsonify({'message': 'Unable to moderate submission', 'error': str(exc)}), 500
+        return safe_jsonify({'message': 'Unable to moderate submission', 'error': str(exc)}, status=500)

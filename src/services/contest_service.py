@@ -29,7 +29,7 @@ class ContestService:
         return None
 
     def _check_ownership(self, contest: Contest, user_id: int, user_role: str):
-        if user_role == 'admin':
+        if isinstance(user_role, str) and user_role.lower() == 'admin':
             return
         try:
             owner_id = int(contest.created_by)

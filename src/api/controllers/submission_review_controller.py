@@ -1,4 +1,5 @@
-﻿from flask import Blueprint, render_template, request, jsonify
+﻿from flask import Blueprint, render_template, request
+from api.controllers.response_utils import safe_jsonify
 from api.role_required import token_required, role_required
 from services.submission_review_service import SubmissionReviewService
 from infrastructure.repositories.submission_review_repository import SubmissionReviewRepository
@@ -93,7 +94,7 @@ def create_submission_review(current_user, submission_id):
         decision_reason=decision_reason
     )
     
-    return jsonify({
+    return safe_jsonify({
         'id': review.id,
         'submission_id': review.submission_id,
         'reviewer_id': review.reviewer_id,
@@ -102,7 +103,7 @@ def create_submission_review(current_user, submission_id):
         'decision_reason': review.decision_reason,
         'created_at': review.created_at.isoformat() if review.created_at else None,
         'message': 'Review created successfully'
-    }), 201
+    }, status=201)
 
 
 @bp.route('/api/submissions/<int:submission_id>/reviews', methods=['GET'])
@@ -129,7 +130,7 @@ def get_submission_reviews(current_user, submission_id):
     """
     reviews = submission_review_service.repository.list_by_submission(submission_id)
     
-    return jsonify({
+    return safe_jsonify({
         'count': len(reviews),
         'reviews': [
             {
@@ -144,7 +145,7 @@ def get_submission_reviews(current_user, submission_id):
             }
             for r in reviews
         ]
-    }), 200
+    }, status=200)
 
 
 @bp.route('/api/reviews/<int:review_id>', methods=['GET'])
@@ -177,9 +178,9 @@ def get_review(current_user, review_id):
     review = submission_review_service.repository.session.query(SubmissionReviewModel).filter_by(id=review_id).first()
     
     if not review:
-        return jsonify({'message': 'Review not found'}), 404
-    
-    return jsonify({
+      return safe_jsonify({'message': 'Review not found'}, status=404)
+
+    return safe_jsonify({
         'id': review.id,
         'submission_id': review.submission_id,
         'reviewer_id': review.reviewer_id,
@@ -188,7 +189,7 @@ def get_review(current_user, review_id):
         'decision_reason': review.decision_reason,
         'created_at': review.created_at.isoformat() if review.created_at else None,
         'updated_at': review.updated_at.isoformat() if review.updated_at else None,
-    }), 200
+    }, status=200)
 
 
 @bp.route('/api/reviews/<int:review_id>', methods=['PUT'])
@@ -243,9 +244,9 @@ def update_review(current_user, review_id):
     )
     
     if not updated:
-        return jsonify({'message': 'Review not found'}), 404
-    
-    return jsonify({
+      return safe_jsonify({'message': 'Review not found'}, status=404)
+
+    return safe_jsonify({
         'id': updated.id,
         'submission_id': updated.submission_id,
         'reviewer_id': updated.reviewer_id,
@@ -255,4 +256,4 @@ def update_review(current_user, review_id):
         'created_at': updated.created_at.isoformat() if updated.created_at else None,
         'updated_at': updated.updated_at.isoformat() if updated.updated_at else None,
         'message': 'Review updated successfully'
-    }), 200
+    }, status=200)

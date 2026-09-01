@@ -1,5 +1,6 @@
 ﻿import os
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
+from api.controllers.response_utils import safe_jsonify
 
 try:
     from services.ai_detection_service import AiDetectionService
@@ -27,6 +28,6 @@ def check_ai_detection():
     except Exception as e:
         return jsonify({'error': f"Internal error during image analysis: {str(e)}"}), 500
 
-    return jsonify(result), 200
+    return safe_jsonify(result, status=200)
 
 

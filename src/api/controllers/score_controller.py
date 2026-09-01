@@ -82,9 +82,7 @@ def submit_score(submission_id):
         }), 500
 
     if error == "submission_not_found":
-        return jsonify({
-            "message": "Submission not found"
-        }), 404
+        return safe_jsonify({"message": "Submission not found"}, status=404)
 
     if error == "criteria_not_found":
         return jsonify({
@@ -256,11 +254,9 @@ def get_submission_state(submission_id):
         }), 403
 
     if payload is None:
-        return jsonify({
-            "message": "Failed to get submission state"
-        }), 500
+        return safe_jsonify({"message": "Failed to get submission state"}, status=500)
 
-    return jsonify(payload), 200
+    return safe_jsonify(payload, status=200)
 
 
 @score_bp.route(
@@ -344,8 +340,6 @@ def finalize_round(round_id):
         }), 409
 
     if result is None:
-        return jsonify({
-            "message": "Failed to finalize round"
-        }), 500
+        return safe_jsonify({"message": "Failed to finalize round"}, status=500)
 
-    return jsonify(result), 200
+    return safe_jsonify(result, status=200)

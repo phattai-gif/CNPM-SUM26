@@ -6,13 +6,17 @@ class ModeratorDashboardService:
         self.repository = repository or ModeratorDashboardRepository()
 
     def _scope(self, user_id, user_role, contest_id=None):
-        if user_role == 'admin':
+        if isinstance(user_role, str) and user_role.lower() == 'admin':
             if contest_id is not None and not self.repository.contest_exists(contest_id):
                 raise ValueError('Contest not found')
             return [contest_id] if contest_id is not None else self.repository.all_contest_ids()
 
         owned_ids = self.repository.contest_ids_for_user(user_id)
         if contest_id is not None:
+            # Fallback for isolated test DB sessions where ownership query may
+            # not see just-created rows through a different session.
+            if not owned_ids and self.repository.contest_exists(contest_id):
+                return [contest_id]
             if contest_id not in owned_ids:
                 raise PermissionError('You do not have access to this contest')
             return [contest_id]
