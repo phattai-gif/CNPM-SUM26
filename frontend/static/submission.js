@@ -53,6 +53,17 @@ class SubmissionForm {
             return;
         }
 
+        const role = String((this.session && this.session.role) || (this.session && this.session.user && this.session.user.role) || '').toLowerCase();
+        if (role === 'organizer' || role === 'admin') {
+            this.showError('Quyền truy cập hạn chế', 'Tài khoản Ban Tổ Chức / Admin không thể tự nộp bài thi vào cuộc thi.');
+            if (this.submitBtn) this.submitBtn.disabled = true;
+            if (this.draftBtn) this.draftBtn.disabled = true;
+            setTimeout(() => {
+                window.location.href = '/organizer/dashboard';
+            }, 2500);
+            return;
+        }
+
         if (this.draftId) {
             this.setupDraftMode();
         }

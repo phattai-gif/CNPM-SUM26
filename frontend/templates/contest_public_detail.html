@@ -387,7 +387,17 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadContest();
-      document.getElementById('btnOpenModal').onclick = openSubmissionForm;
+      const session = window.AuthSession ? window.AuthSession.getSession() : {};
+      const role = String((session && session.role) || (session && session.user && session.user.role) || '').toLowerCase();
+      const canManage = role === 'organizer' || role === 'admin';
+      const btnOpen = document.getElementById('btnOpenModal');
+      if (btnOpen) {
+        if (canManage) {
+          btnOpen.style.display = 'none';
+        } else {
+          btnOpen.onclick = openSubmissionForm;
+        }
+      }
     });
   </script>
 </body>
