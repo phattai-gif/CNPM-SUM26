@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = user.username ? `@${user.username}` : '@photographer';
             const email = user.email || 'Chưa cập nhật email';
             const rawRole = (user.role || 'participant').toLowerCase();
-            const roleDisplay = rawRole === 'organizer' ? 'ORGANIZER' : (user.role || 'Participant').toUpperCase();
+            const roleDisplay = rawRole === 'organizer' ? 'ORGANIZER' : rawRole === 'admin' ? 'ADMINISTRATOR' : (user.role || 'Participant').toUpperCase();
             const bio = user.bio || 'Chưa cập nhật tiểu sử nghệ sĩ. Hãy bấm "Chỉnh Sửa Hồ Sơ" để giới thiệu bản thân và chia sẻ niềm đam mê ảnh phim analog!';
             const initial = displayName.charAt(0).toUpperCase();
 
@@ -266,9 +266,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.profileRolePill.className = `role-pill role-${rawRole}`;
             }
 
+            const isManager = rawRole === 'organizer' || rawRole === 'admin';
             const btnDash = document.getElementById('btnOrganizerDashboard');
             if (btnDash) {
-                btnDash.style.display = (rawRole === 'organizer' || rawRole === 'admin') ? 'inline-flex' : 'none';
+                btnDash.style.display = isManager ? 'inline-flex' : 'none';
+            }
+
+            const btnHeroSubmit = document.getElementById('btnHeroSubmit');
+            const btnEmptySubmit = document.getElementById('btnEmptySubmit');
+            if (btnHeroSubmit) {
+                btnHeroSubmit.style.display = isManager ? 'none' : 'inline-flex';
+            }
+            if (btnEmptySubmit) {
+                btnEmptySubmit.style.display = isManager ? 'none' : 'inline-flex';
             }
 
             this.profileBioText.textContent = bio;

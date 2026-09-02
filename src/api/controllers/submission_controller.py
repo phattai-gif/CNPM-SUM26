@@ -1118,6 +1118,7 @@ def upload_submission_image():
 @token_required
 def create_submission():
     user_id = _get_user_id()
+    role = _get_user_role()
 
     if not user_id:
         return jsonify(
@@ -1128,6 +1129,16 @@ def create_submission():
                 )
             }
         ), 401
+
+    if role in ("organizer", "admin"):
+        return jsonify(
+            {
+                "message": (
+                    "Ban Tổ Chức và Quản trị viên "
+                    "không thể tự nộp bài thi vào cuộc thi."
+                )
+            }
+        ), 403
 
     data = request.form
 

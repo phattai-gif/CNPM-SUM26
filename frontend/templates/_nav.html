@@ -91,8 +91,9 @@
         const canManage = role === 'organizer' || role === 'admin';
 
         // show organizer link only for logged-in users with organizer/admin role
+        // hide submissions link for organizer/admin because organizers cannot submit to their own contests
         setHidden(organizerLink, !(isLoggedIn && canManage));
-        setHidden(submissionsLink, !isLoggedIn);
+        setHidden(submissionsLink, !(isLoggedIn && !canManage));
         setHidden(profileLink, !isLoggedIn);
         setHidden(loginLink, isLoggedIn);
         setHidden(registerLink, isLoggedIn);

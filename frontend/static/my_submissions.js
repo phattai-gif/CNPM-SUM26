@@ -51,6 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (this.brandHomeLink) {
                 this.brandHomeLink.href = canManage ? '/organizer/dashboard' : '/contests';
             }
+
+            if (canManage) {
+                const btnSubmitHeader = document.getElementById('btnMySubmissionsSubmit');
+                const btnSubmitEmpty = document.getElementById('btnEmptySubmissionsSubmit');
+                if (btnSubmitHeader) btnSubmitHeader.style.display = 'none';
+                if (btnSubmitEmpty) btnSubmitEmpty.style.display = 'none';
+            }
             
             if (this.userNameEl && user && (user.username || user.full_name)) {
                 const displayName = user.full_name || user.username;
