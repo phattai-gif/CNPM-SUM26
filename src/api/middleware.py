@@ -30,7 +30,14 @@ def handle_options_request():
 
 
 def error_handling_middleware(error):
-    response = jsonify({'error': str(error)})
+    from werkzeug.exceptions import HTTPException
+    
+    # If it's an HTTP exception (404, 405, etc.), use its status code
+    if isinstance(error, HTTPException):
+        return jsonify({'message': error.description}), error.code
+    
+    # For other exceptions, return 500
+    response = jsonify({'error': str(error), 'message': 'Internal server error'})
     response.status_code = 500
     return response
 
