@@ -5,7 +5,7 @@ import weakref
 from sqlalchemy import create_engine
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import NullPool, StaticPool
 
 
 class ResilientSession(Session):

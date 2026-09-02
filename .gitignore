@@ -9,6 +9,7 @@ __pycache__/
 # Scratch / temp files
 scratch/
 pyrefly.toml
+login_selenium.py
 
 # LaTeX build files
 *.aux

@@ -50,6 +50,12 @@ def create_app():
     # Global exception handler to ensure unhandled exceptions return JSON
     try:
         from api.controllers.response_utils import safe_jsonify
+        from werkzeug.exceptions import HTTPException
+
+        @app.errorhandler(HTTPException)
+        def _handle_http_error(e):
+            # Handle HTTP errors (404, 405, etc.) with proper status codes
+            return safe_jsonify({'message': e.description}, status=e.code)
 
         @app.errorhandler(Exception)
         def _handle_unexpected_error(e):
