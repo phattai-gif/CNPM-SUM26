@@ -924,7 +924,7 @@
       method: (options && options.method) || 'GET',
       headers,
       body: options && options.body ? JSON.stringify(options.body) : undefined,
-      credentials: 'same-origin',
+      credentials: 'omit',
     });
 
     const contentType = response.headers.get('content-type') || '';

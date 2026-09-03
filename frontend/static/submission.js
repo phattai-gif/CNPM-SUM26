@@ -176,7 +176,7 @@ class SubmissionForm {
         const response = await fetch('/auth/contests', {
             method: 'GET',
             headers: headers,
-            credentials: 'same-origin'
+            credentials: 'omit'
         });
 
         console.log(
