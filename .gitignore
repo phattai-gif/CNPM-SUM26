@@ -10,6 +10,7 @@ __pycache__/
 scratch/
 pyrefly.toml
 login_selenium.py
+main.synctex.gz
 
 # LaTeX build files
 *.aux
