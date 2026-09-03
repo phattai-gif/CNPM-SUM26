@@ -47,10 +47,6 @@ def _extract_bearer_token():
     if alt_header:
         return alt_header
 
-    cookie_token = request.cookies.get('access_token') or request.cookies.get('authToken')
-    if cookie_token:
-        return cookie_token
-
     return None
 
 

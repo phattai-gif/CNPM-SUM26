@@ -163,8 +163,7 @@ class SubmissionForm {
     try {
         console.log('[Submission] Loading contests...');
 
-        const tokenKey = 'authToken';
-        const token = localStorage.getItem(tokenKey);
+        const token = window.AuthSession?.getSession()?.token;
 
         const headers = {
             'Accept': 'application/json'
@@ -177,7 +176,7 @@ class SubmissionForm {
         const response = await fetch('/auth/contests', {
             method: 'GET',
             headers: headers,
-            credentials: 'same-origin'
+            credentials: 'omit'
         });
 
         console.log(
