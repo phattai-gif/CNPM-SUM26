@@ -8,20 +8,14 @@
   const AUTH_ROUTE_PREFIXES = ['/auth/login', '/auth/signup', '/auth/register'];
 
   function storageGet(key) {
-    const localValue = localStorage.getItem(key);
-    if (localValue !== null && localValue !== undefined && localValue !== '') {
-      return localValue;
-    }
     return sessionStorage.getItem(key);
   }
 
   function storageSet(key, value) {
-    localStorage.setItem(key, value);
     sessionStorage.setItem(key, value);
   }
 
   function storageRemove(key) {
-    localStorage.removeItem(key);
     sessionStorage.removeItem(key);
   }
 
