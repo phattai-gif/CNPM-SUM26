@@ -269,13 +269,36 @@
         <p class="auth-radio-hint">Chọn vai trò đăng ký. Lựa chọn Organizer/Admin sẽ tạo tài khoản quản lý.</p>
 
         <label for="password">Mật khẩu</label>
-        <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Tạo mật khẩu">
+        <div style="position: relative; display: flex; align-items: center; width: 100%;">
+          <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Tạo mật khẩu" style="padding-right: 44px;">
+          <button type="button" id="togglePasswordBtn" title="Hiện/Ẩn mật khẩu" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
+        </div>
 
         <label for="passwordconfirm">Xác nhận mật khẩu</label>
-        <input id="passwordconfirm" name="passwordconfirm" type="password" required autocomplete="new-password" placeholder="Nhập lại mật khẩu">
+        <div style="position: relative; display: flex; align-items: center; width: 100%;">
+          <input id="passwordconfirm" name="passwordconfirm" type="password" required autocomplete="new-password" placeholder="Nhập lại mật khẩu" style="padding-right: 44px;">
+          <button type="button" id="togglePasswordConfirmBtn" title="Hiện/Ẩn mật khẩu" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
+        </div>
 
         <button type="submit">Đăng ký</button>
       </form>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          function setupToggle(btnId, inputId) {
+            const toggleBtn = document.getElementById(btnId);
+            const passInput = document.getElementById(inputId);
+            if (toggleBtn && passInput) {
+              toggleBtn.addEventListener('click', function() {
+                const isPass = passInput.type === 'password';
+                passInput.type = isPass ? 'text' : 'password';
+                toggleBtn.textContent = isPass ? '🙈' : '👁️';
+              });
+            }
+          }
+          setupToggle('togglePasswordBtn', 'password');
+          setupToggle('togglePasswordConfirmBtn', 'passwordconfirm');
+        });
+      </script>
 
       <div id="message" class="message"></div>
       <p class="secondary-text">Đã có tài khoản? <a href="{{ url_for('auth.login_page') }}">Đăng nhập tại đây</a></p>
