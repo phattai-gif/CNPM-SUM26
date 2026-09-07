@@ -430,7 +430,11 @@
                     <button class="btn btn-outline-secondary" disabled>← Previous</button>
                 {% endif %}
 
-                <a href="{{ url_for('judge_ui.judge_grading_ui', submission_id=submission.next_id) }}" class="btn btn-outline-secondary">Next →</a>
+                {% if submission.next_id %}
+                    <a href="{{ url_for('judge_ui.judge_grading_ui', submission_id=submission.next_id) }}" class="btn btn-outline-secondary">Next →</a>
+                {% else %}
+                    <button class="btn btn-outline-secondary" disabled>Next →</button>
+                {% endif %}
             </div>
         </div>
 
@@ -465,8 +469,10 @@
                     <h6>AI Warning</h6>
                     <ul class="ai-warning-list">
                         <li><span>AI Verification</span><strong>{{ ai_warning.verification if ai_warning is defined else 'Review Required' }}</strong></li>
+                        <li><span>AI Risk</span><strong>{{ ai_warning.risk if ai_warning is defined else 'Pending' }}</strong></li>
                         <li><span>Duplicate Similarity</span><strong>{{ ai_warning.duplicate_similarity if ai_warning is defined else '92%' }}</strong></li>
                         <li><span>Metadata Status</span><strong>{{ ai_warning.metadata_status if ai_warning is defined else 'Mismatch' }}</strong></li>
+                        <li><span>Review Status</span><strong>{{ ai_warning.review_status if ai_warning is defined else 'Pending' }}</strong></li>
                     </ul>
                 </div>
 
