@@ -430,7 +430,11 @@
                     <button class="btn btn-outline-secondary" disabled>← Previous</button>
                 {% endif %}
 
-                <a href="{{ url_for('judge_ui.judge_grading_ui', submission_id=submission.next_id) }}" class="btn btn-outline-secondary">Next →</a>
+                {% if submission.next_id %}
+                    <a href="{{ url_for('judge_ui.judge_grading_ui', submission_id=submission.next_id) }}" class="btn btn-outline-secondary">Next →</a>
+                {% else %}
+                    <button class="btn btn-outline-secondary" disabled>Next →</button>
+                {% endif %}
             </div>
         </div>
 

@@ -1,4 +1,3 @@
-from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
 from flask import Blueprint, request, jsonify, render_template, flash, redirect, session, url_for
 from api.controllers.response_utils import safe_jsonify
 
@@ -6,6 +5,7 @@ try:
     from infrastructure.repositories.contest_repository import ContestRepository
     from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
     from services.judge_assignment_service import JudgeAssignmentService
+    from services.score_service import ScoreService
     from api.schemas.judge import (
         AssignJudgeRequestSchema,
         JudgeAssignmentResponseSchema
@@ -15,6 +15,7 @@ except ImportError:
     from infrastructure.repositories.contest_repository import ContestRepository
     from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
     from services.judge_assignment_service import JudgeAssignmentService
+    from services.score_service import ScoreService
     from api.schemas.judge import (
         AssignJudgeRequestSchema,
         JudgeAssignmentResponseSchema
@@ -33,6 +34,8 @@ judge_service = JudgeAssignmentService(
     contest_repo=ContestRepository()
 )
 
+score_service = ScoreService()
+
 assign_judge_schema = AssignJudgeRequestSchema()
 assignment_response_schema = JudgeAssignmentResponseSchema()
 
@@ -40,6 +43,15 @@ assignment_response_schema = JudgeAssignmentResponseSchema()
 def _request_user():
     user = getattr(request, 'user', None)
     return user if isinstance(user, dict) else {}
+
+
+def _prefers_html_response():
+    best = request.accept_mimetypes.best_match(['text/html', 'application/json'])
+    return (
+        request.method == 'GET'
+        and best == 'text/html'
+        and request.accept_mimetypes[best] > request.accept_mimetypes['application/json']
+    )
 
 
 def _serialize_assignment(item):
@@ -318,30 +330,76 @@ def get_my_assignments():
 
 # Simple judge grading UI for direct testing at /judge/<id>
 @judge_ui_bp.route('/<int:submission_id>', methods=['GET', 'POST'])
+@role_required('judge')
 def judge_grading_ui(submission_id):
-    """Render judge grading UI with mock data and safe error handling.
-    This route is intended for local testing/demo when DB/services are unavailable.
-    """
+    """Render judge grading UI using DB data and safe error handling."""
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = user.get('role', 'judge')
+
     try:
-        # Mock submission
+        review_data, error = score_service.get_submission_review_data(
+            submission_id=submission_id,
+            judge_id=user_id,
+            user_role=user_role,
+        )
+
+        if error == 'submission_not_found':
+            if _prefers_html_response():
+                flash('Không tìm thấy bài dự thi.')
+                return redirect('/contests')
+            return jsonify({'message': 'Submission not found'}), 404
+
+        if error == 'not_assigned':
+            message = 'Giám khảo không được phân công chấm bài dự thi này.'
+            if _prefers_html_response():
+                flash(message, 'warning')
+                return redirect('/contests')
+            return jsonify({'message': message}), 403
+
+        if not review_data:
+            return jsonify({'message': 'Failed to load review data'}), 500
+
+        sub_data = review_data.get('submission') or {}
+        media_assets = review_data.get('media_assets') or {}
+        proof_attachments = review_data.get('proof_attachments') or []
+        next_previous = review_data.get('next_previous') or {}
+
         submission = {
-            'id': submission_id,
-            'title': f'Bài mẫu #{submission_id}: Bình minh trên phố cổ',
-            'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
-            'negative_film_url': None,
-            'contact_sheet_url': None,
-            'camera': 'Nikon F3',
-            'film_stock': 'Kodak Portra 400',
-            'prev_id': submission_id - 1 if submission_id > 1 else None,
-            'next_id': submission_id + 1,
+            'id': sub_data.get('id', submission_id),
+            'title': sub_data.get('title') or f'Bài dự thi #{submission_id}',
+            'image_url': review_data.get('image_url') or media_assets.get('main_image_url'),
+            'negative_film_url': media_assets.get('negative_film_url'),
+            'contact_sheet_url': media_assets.get('contact_sheet_url'),
+            'proof_attachments': proof_attachments,
+            'camera': sub_data.get('camera') or 'Nikon F3',
+            'film_stock': sub_data.get('film_stock') or 'Kodak Portra 400',
+            'prev_id': next_previous.get('previous'),
+            'next_id': next_previous.get('next'),
         }
 
-        # Mock criteria
-        criteria_list = [
-            {'id': 1, 'name': 'Composition', 'max': 40},
-            {'id': 2, 'name': 'Exposure', 'max': 30},
-            {'id': 3, 'name': 'Creativity', 'max': 30},
-        ]
+        criteria_payload = review_data.get('criteria') or []
+        criteria_list = []
+        existing_scores = {}
+        for c in criteria_payload:
+            max_val = c.get('max_score')
+            if max_val is None:
+                max_val = 10.0
+            crit_max = int(max_val) if float(max_val).is_integer() else float(max_val)
+            criteria_list.append({
+                'id': c['id'],
+                'name': c.get('name', f"Tiêu chí #{c['id']}"),
+                'max': crit_max,
+                'weight': c.get('weight', 1.0),
+            })
+            val = c.get('score_value')
+            if val is not None:
+                existing_scores[str(c['id'])] = int(val) if float(val).is_integer() else float(val)
+
+        feedback_info = review_data.get('feedback') or {}
+        existing_comment = feedback_info.get('summary_feedback', '') or ''
+        review_state = review_data.get('review_state') or {}
+        is_finalized = bool(review_state.get('is_locked') or feedback_info.get('is_finalized'))
 
         ai_warning = {
             'verification': 'Review Required',
@@ -349,48 +407,53 @@ def judge_grading_ui(submission_id):
             'metadata_status': 'Mismatch',
         }
 
-        grading_state = session.get('judge_grading', {}).get(str(submission_id), {})
-        existing_scores = grading_state.get(
-            'scores',
-            {str(c['id']): None for c in criteria_list},
-        )
-        existing_comment = grading_state.get('comment', '')
-        is_finalized = bool(grading_state.get('is_finalized', False))
-
         if request.method == 'POST':
-            form = request.form.to_dict(flat=True)
-            existing_comment = form.get('comment', '')
-            action = form.get('action', 'save_draft')
-            submitted_scores = {}
-            for crit in criteria_list:
-                key = str(crit['id'])
-                val = form.get(key)
-                try:
-                    submitted_scores[key] = int(val) if val is not None and val != '' else None
-                except ValueError:
-                    submitted_scores[key] = None
-
             if is_finalized:
                 flash('Bài chấm đã finalized và không thể chỉnh sửa.')
                 return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
 
-            if action == 'finalize' and any(
-                submitted_scores.get(str(criterion['id'])) is None
-                for criterion in criteria_list
-            ):
+            form = request.form.to_dict(flat=True)
+            existing_comment = form.get('comment', '').strip()
+            action = form.get('action', 'save_draft')
+            is_finalize_action = (action == 'finalize')
+
+            submitted_scores = {}
+            for crit in criteria_list:
+                key = str(crit['id'])
+                val = form.get(key)
+                if val is not None and str(val).strip() != '':
+                    try:
+                        submitted_scores[crit['id']] = float(val)
+                    except ValueError:
+                        submitted_scores[crit['id']] = None
+                else:
+                    submitted_scores[crit['id']] = None
+
+            if is_finalize_action and any(submitted_scores.get(c['id']) is None for c in criteria_list):
                 flash('Vui lòng nhập đủ điểm cho tất cả criteria trước khi finalize.')
                 return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
 
-            grading_states = dict(session.get('judge_grading', {}))
-            grading_states[str(submission_id)] = {
-                'scores': submitted_scores,
-                'comment': existing_comment,
-                'is_finalized': action == 'finalize',
-            }
-            session['judge_grading'] = grading_states
+            # Save scores into scores table
+            for crit_id, score_val in submitted_scores.items():
+                if score_val is not None:
+                    score_service.submit_score(
+                        submission_id=submission_id,
+                        judge_id=user_id,
+                        criteria_id=crit_id,
+                        score_value=score_val,
+                    )
+
+            # Save feedback into score_feedbacks table
+            score_service.submit_feedback(
+                submission_id=submission_id,
+                judge_id=user_id,
+                summary_feedback=existing_comment,
+                is_finalized=is_finalize_action,
+            )
+
             flash(
                 'Bài chấm đã finalized.'
-                if action == 'finalize'
+                if is_finalize_action
                 else 'Draft điểm và nhận xét đã được lưu.'
             )
             return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
@@ -406,7 +469,6 @@ def judge_grading_ui(submission_id):
         )
 
     except Exception as e:
-        # Safe fallback: render template with minimal data and show error message
         fallback_submission = {
             'id': submission_id,
             'title': 'Không thể tải bài dự thi',
