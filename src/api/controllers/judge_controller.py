@@ -325,8 +325,10 @@ def judge_grading_ui(submission_id):
         # Mock submission
         submission = {
             'id': submission_id,
-            'title': f'BÃ i máº«u #{submission_id}: BÃ¬nh minh trÃªn phá»‘ cá»•',
+            'title': f'Bài mẫu #{submission_id}: Bình minh trên phố cổ',
             'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
+            'negative_film_url': None,
+            'contact_sheet_url': None,
             'camera': 'Nikon F3',
             'film_stock': 'Kodak Portra 400',
             'prev_id': submission_id - 1 if submission_id > 1 else None,
@@ -339,6 +341,12 @@ def judge_grading_ui(submission_id):
             {'id': 2, 'name': 'Exposure', 'max': 30},
             {'id': 3, 'name': 'Creativity', 'max': 30},
         ]
+
+        ai_warning = {
+            'verification': 'Review Required',
+            'duplicate_similarity': '92%',
+            'metadata_status': 'Mismatch',
+        }
 
         grading_state = session.get('judge_grading', {}).get(str(submission_id), {})
         existing_scores = grading_state.get(
@@ -393,14 +401,17 @@ def judge_grading_ui(submission_id):
             existing_scores=existing_scores,
             existing_comment=existing_comment,
             is_finalized=is_finalized,
+            ai_warning=ai_warning,
         )
 
     except Exception as e:
         # Safe fallback: render template with minimal data and show error message
         fallback_submission = {
             'id': submission_id,
-            'title': 'KhÃ´ng thá»ƒ táº£i bÃ i dá»± thi',
+            'title': 'Không thể tải bài dự thi',
             'image_url': None,
+            'negative_film_url': None,
+            'contact_sheet_url': None,
             'camera': '',
             'film_stock': '',
             'prev_id': None,

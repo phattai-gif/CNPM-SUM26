@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -181,6 +181,60 @@
             border-radius: 10px;
             object-fit: contain;
             display: block;
+        }
+
+        .media-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .media-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .media-tab.active {
+            background: rgba(245, 166, 35, 0.12);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .media-tab:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .ai-warning {
+            border-color: rgba(245, 166, 35, 0.45);
+        }
+
+        .ai-warning-list {
+            display: grid;
+            gap: 10px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .ai-warning-list li {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            color: var(--muted);
+        }
+
+        .ai-warning-list strong {
+            color: #f5a623;
+            text-align: right;
         }
 
         .text-white {
@@ -393,6 +447,11 @@
 
             <div class="col-lg-7">
                 <div class="card">
+                    <div class="media-tabs" role="tablist" aria-label="Submission media">
+                        <button type="button" class="media-tab active" data-media-key="main">Main Image</button>
+                        <button type="button" class="media-tab" data-media-key="negative">Negative Film</button>
+                        <button type="button" class="media-tab" data-media-key="contact">Contact Sheet</button>
+                    </div>
                     <div class="image-container">
                                                 {% if submission.image_url %}
                                                     <img id="judgeSubmissionPreview" src="{{ submission.image_url }}" alt="Submission image">
@@ -403,6 +462,15 @@
                                         <div class="d-flex justify-content-end mt-3">
                                                 <button type="button" class="btn btn-outline-secondary" id="openHdViewerBtn">Open HD Viewer</button>
                                         </div>
+                </div>
+
+                <div class="card ai-warning">
+                    <h6>AI Warning</h6>
+                    <ul class="ai-warning-list">
+                        <li><span>AI Verification</span><strong>{{ ai_warning.verification if ai_warning is defined else 'Review Required' }}</strong></li>
+                        <li><span>Duplicate Similarity</span><strong>{{ ai_warning.duplicate_similarity if ai_warning is defined else '92%' }}</strong></li>
+                        <li><span>Metadata Status</span><strong>{{ ai_warning.metadata_status if ai_warning is defined else 'Mismatch' }}</strong></li>
+                    </ul>
                 </div>
 
                 <div class="card">
@@ -490,6 +558,41 @@
             } | tojson }}
         </script>
         <script>
+            (function () {
+                const previewImage = document.getElementById('judgeSubmissionPreview');
+                const payloadNode = document.getElementById('judgeHdPayload');
+                const mediaTabs = Array.from(document.querySelectorAll('[data-media-key]'));
+                if (!payloadNode || !mediaTabs.length) return;
+
+                let payload = { items: [] };
+                try {
+                    payload = JSON.parse(payloadNode.textContent || '{}');
+                } catch (error) {}
+
+                function selectMedia(key) {
+                    const item = (payload.items || []).find(function (candidate) {
+                        return candidate && candidate.key === key;
+                    });
+                    mediaTabs.forEach(function (tab) {
+                        tab.classList.toggle('active', tab.dataset.mediaKey === key);
+                    });
+                    if (previewImage && item && item.url) {
+                        previewImage.src = item.url;
+                        previewImage.alt = item.label || 'Submission image';
+                    }
+                }
+
+                mediaTabs.forEach(function (tab) {
+                    const item = (payload.items || []).find(function (candidate) {
+                        return candidate && candidate.key === tab.dataset.mediaKey;
+                    });
+                    tab.disabled = !item || !item.url;
+                    tab.addEventListener('click', function () {
+                        selectMedia(tab.dataset.mediaKey);
+                    });
+                });
+            })();
+
             (function () {
                 const scoreInputs = Array.from(document.querySelectorAll('input[type="number"][data-max]'));
                 const currentTotal = document.getElementById('currentTotal');
