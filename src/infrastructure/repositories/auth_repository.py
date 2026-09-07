@@ -94,7 +94,7 @@ class AuthRepository(IAuthRepository):
                 return None
 
             if user_obj.status != 'active':
-                return None
+                raise ValueError('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Quản trị viên.')
 
             # Kiểm tra mật khẩu mã hóa với check_password_hash
             if not check_password_hash(user_obj.password_hash, auth.password):

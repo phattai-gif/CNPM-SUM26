@@ -103,12 +103,16 @@
         const session = safeGetSession();
         const isLoggedIn = Boolean(session && session.token);
         const role = String((session && session.role) || (session && session.user && session.user.role) || '').toLowerCase();
-        const canManage = role === 'organizer' || role === 'admin';
+        const isManager = role === 'organizer' || role === 'admin';
 
-        // show organizer link only for logged-in users with organizer/admin role
-        // hide submissions link for organizer/admin because organizers cannot submit to their own contests
-        setHidden(organizerLink, !(isLoggedIn && canManage));
-        setHidden(submissionsLink, !(isLoggedIn && !canManage));
+        if (organizerLink) {
+          organizerLink.href = role === 'admin' ? '/admin/dashboard' : '/organizer/dashboard';
+        }
+
+        // Show organizer/admin link only for logged-in users with organizer/admin role
+        // Hide submissions link for organizer/admin because managers do not submit to contests
+        setHidden(organizerLink, !(isLoggedIn && isManager));
+        setHidden(submissionsLink, !isLoggedIn || isManager);
         setHidden(profileLink, !isLoggedIn);
         setHidden(loginLink, isLoggedIn);
         setHidden(registerLink, isLoggedIn);

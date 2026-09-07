@@ -327,9 +327,12 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    user = auth_service.login(username, password)
-    if not user:
-        return jsonify({'message': 'Invalid username or password'}), 401
+    try:
+        user = auth_service.login(username, password)
+        if not user:
+            return jsonify({'message': 'Tên đăng nhập hoặc mật khẩu không chính xác.'}), 401
+    except ValueError as exc:
+        return jsonify({'message': str(exc)}), 403
 
     # Táº¡o JWT Payload chá»©a thÃ´ng tin User ID, Username vÃ  Role
     payload = {

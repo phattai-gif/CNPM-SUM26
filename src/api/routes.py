@@ -119,14 +119,9 @@ def register_routes(app):
     # Admin dashboard route aliases
     try:
         app.add_url_rule(
-            "/admin/dashboard",
-            "admin_dashboard_page",
-            lambda: redirect("/organizer/dashboard"),
-        )
-        app.add_url_rule(
             "/admin",
             "admin_root_page",
-            lambda: redirect("/organizer/dashboard"),
+            lambda: redirect("/admin/dashboard"),
         )
     except Exception:
         pass
