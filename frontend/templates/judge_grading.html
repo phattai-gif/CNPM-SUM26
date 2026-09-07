@@ -231,6 +231,24 @@
             font-weight: 700;
         }
 
+        .judging-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 16px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(245, 166, 35, 0.12);
+            color: #f5a623;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .judging-status.is-finalized {
+            background: rgba(52, 211, 153, 0.12);
+            color: #34d399;
+        }
+
         /* ===== FORM ELEMENTS ===== */
         .form-label {
             display: flex;
@@ -399,18 +417,21 @@
             <div class="col-lg-5">
                 <div class="card">
                     <h5>Grading Criteria</h5>
-                    <form method="post" action="{{ url_for('judge_ui.judge_grading_ui', submission_id=submission.id) }}">
+                    <div class="judging-status{% if is_finalized %} is-finalized{% endif %}" id="judgingStatus">
+                        Judging Status: <span id="judgingStatusText">{{ 'Finalized' if is_finalized else 'In Progress' }}</span>
+                    </div>
+                    <form method="post" action="{{ url_for('judge_ui.judge_grading_ui', submission_id=submission.id) }}" id="gradingForm" data-finalized="{{ 'true' if is_finalized else 'false' }}">
                         {% for item in criteria_list %}
                         <div style="margin-bottom:16px;">
                             <label class="form-label">
                                 <span>{{ item.name }}</span>
                                 <span style="color: var(--muted); font-size: 0.8rem;">(Max: {{ item.max }} pts)</span>
                             </label>
-                            <input name="{{ item.id }}" type="number" class="form-control" min="0" max="{{ item.max }}" data-max="{{ item.max }}" data-weight="{{ item.weight if item.weight is defined else item.max }}" placeholder="Enter score (0 - {{ item.max }})" required value="{{ existing_scores[item.id|string] if existing_scores else '' }}">
+                            <input name="{{ item.id }}" type="number" class="form-control score-input" min="0" max="{{ item.max }}" data-max="{{ item.max }}" data-weight="{{ item.weight if item.weight is defined else item.max }}" placeholder="Enter score (0 - {{ item.max }})" value="{{ existing_scores[item.id|string] if existing_scores else '' }}"{% if is_finalized %} disabled{% endif %}>
                         </div>
                         {% endfor %}
 
-                        <div class="score-summary" aria-live="polite">
+                        <div class="score-summary" id="scoreSummary" aria-live="polite">
                             <div class="score-summary-item">
                                 <span class="score-summary-label">Current Total</span>
                                 <span class="score-summary-value" id="currentTotal">0 / 0</span>
@@ -431,10 +452,14 @@
 
                         <div style="margin-bottom:16px;">
                             <label class="form-label" style="display:block; margin-bottom:8px;">Judge Comment</label>
-                            <textarea name="comment" class="form-control" rows="4" placeholder="Write review...">{{ existing_comment }}</textarea>
+                            <textarea name="comment" class="form-control" rows="4" placeholder="Write review..."{% if is_finalized %} disabled{% endif %}>{{ existing_comment }}</textarea>
                         </div>
 
-                        <button type="submit" class="btn btn-success" style="width:100%; padding: 12px 16px; font-size: 1rem;">Save Score & Comment</button>
+                        <div class="btn-group" style="width:100%;">
+                            <button type="submit" name="action" value="save_draft" class="btn btn-outline-secondary" style="flex:1;"{% if is_finalized %} disabled{% endif %}>Save Draft</button>
+                            <button type="submit" name="action" value="finalize" class="btn btn-success" style="flex:1;"{% if is_finalized %} hidden{% endif %}>Finalize Judging</button>
+                            <a href="#scoreSummary" class="btn btn-outline-secondary" id="viewResultsButton" style="flex:1;{% if not is_finalized %} display:none;{% endif %}">View Results</a>
+                        </div>
                     </form>
                 </div>
             </div>

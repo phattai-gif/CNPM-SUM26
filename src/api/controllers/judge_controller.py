@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
+﻿from flask import Blueprint, request, jsonify, render_template, flash, redirect, session, url_for
 from api.controllers.response_utils import safe_jsonify
 
 try:
@@ -340,13 +340,18 @@ def judge_grading_ui(submission_id):
             {'id': 3, 'name': 'Creativity', 'max': 30},
         ]
 
-        # Mock existing scores and comment (could be None)
-        existing_scores = {str(c['id']): None for c in criteria_list}
-        existing_comment = ''
+        grading_state = session.get('judge_grading', {}).get(str(submission_id), {})
+        existing_scores = grading_state.get(
+            'scores',
+            {str(c['id']): None for c in criteria_list},
+        )
+        existing_comment = grading_state.get('comment', '')
+        is_finalized = bool(grading_state.get('is_finalized', False))
 
         if request.method == 'POST':
             form = request.form.to_dict(flat=True)
             existing_comment = form.get('comment', '')
+            action = form.get('action', 'save_draft')
             submitted_scores = {}
             for crit in criteria_list:
                 key = str(crit['id'])
@@ -356,11 +361,39 @@ def judge_grading_ui(submission_id):
                 except ValueError:
                     submitted_scores[key] = None
 
-            # In demo mode, we don't persist; just flash and redirect to GET
-            flash('Äiá»ƒm vÃ  nháº­n xÃ©t Ä‘Ã£ Ä‘Æ°á»£c nháº­n (demo).')
+            if is_finalized:
+                flash('Bài chấm đã finalized và không thể chỉnh sửa.')
+                return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
+
+            if action == 'finalize' and any(
+                submitted_scores.get(str(criterion['id'])) is None
+                for criterion in criteria_list
+            ):
+                flash('Vui lòng nhập đủ điểm cho tất cả criteria trước khi finalize.')
+                return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
+
+            grading_states = dict(session.get('judge_grading', {}))
+            grading_states[str(submission_id)] = {
+                'scores': submitted_scores,
+                'comment': existing_comment,
+                'is_finalized': action == 'finalize',
+            }
+            session['judge_grading'] = grading_states
+            flash(
+                'Bài chấm đã finalized.'
+                if action == 'finalize'
+                else 'Draft điểm và nhận xét đã được lưu.'
+            )
             return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
 
-        return render_template('judge_grading.html', submission=submission, criteria_list=criteria_list, existing_scores=existing_scores, existing_comment=existing_comment)
+        return render_template(
+            'judge_grading.html',
+            submission=submission,
+            criteria_list=criteria_list,
+            existing_scores=existing_scores,
+            existing_comment=existing_comment,
+            is_finalized=is_finalized,
+        )
 
     except Exception as e:
         # Safe fallback: render template with minimal data and show error message
