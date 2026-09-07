@@ -202,6 +202,35 @@
             color: #e8edf2;
         }
 
+        /* ===== SCORE SUMMARY ===== */
+        .score-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin: 4px 0 20px;
+            padding: 14px;
+            background: #0d1622;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+        }
+
+        .score-summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .score-summary-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .score-summary-value {
+            color: #f5a623;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
         /* ===== FORM ELEMENTS ===== */
         .form-label {
             display: flex;
@@ -377,9 +406,28 @@
                                 <span>{{ item.name }}</span>
                                 <span style="color: var(--muted); font-size: 0.8rem;">(Max: {{ item.max }} pts)</span>
                             </label>
-                            <input name="{{ item.id }}" type="number" class="form-control" min="0" max="{{ item.max }}" placeholder="Enter score (0 - {{ item.max }})" required value="{{ existing_scores[item.id|string] if existing_scores else '' }}">
+                            <input name="{{ item.id }}" type="number" class="form-control" min="0" max="{{ item.max }}" data-max="{{ item.max }}" data-weight="{{ item.weight if item.weight is defined else item.max }}" placeholder="Enter score (0 - {{ item.max }})" required value="{{ existing_scores[item.id|string] if existing_scores else '' }}">
                         </div>
                         {% endfor %}
+
+                        <div class="score-summary" aria-live="polite">
+                            <div class="score-summary-item">
+                                <span class="score-summary-label">Current Total</span>
+                                <span class="score-summary-value" id="currentTotal">0 / 0</span>
+                            </div>
+                            <div class="score-summary-item">
+                                <span class="score-summary-label">Weighted Score</span>
+                                <span class="score-summary-value" id="weightedScore">0.0</span>
+                            </div>
+                            <div class="score-summary-item">
+                                <span class="score-summary-label">Completed Criteria</span>
+                                <span class="score-summary-value" id="completedCriteria">0 / 0</span>
+                            </div>
+                            <div class="score-summary-item">
+                                <span class="score-summary-label">Completion</span>
+                                <span class="score-summary-value" id="completionPercent">0%</span>
+                            </div>
+                        </div>
 
                         <div style="margin-bottom:16px;">
                             <label class="form-label" style="display:block; margin-bottom:8px;">Judge Comment</label>
@@ -417,6 +465,54 @@
             } | tojson }}
         </script>
         <script>
+            (function () {
+                const scoreInputs = Array.from(document.querySelectorAll('input[type="number"][data-max]'));
+                const currentTotal = document.getElementById('currentTotal');
+                const weightedScore = document.getElementById('weightedScore');
+                const completedCriteria = document.getElementById('completedCriteria');
+                const completionPercent = document.getElementById('completionPercent');
+
+                function updateScoreSummary() {
+                    let total = 0;
+                    let maxTotal = 0;
+                    let weightedTotal = 0;
+                    let totalWeight = 0;
+                    let completed = 0;
+
+                    scoreInputs.forEach(function (input) {
+                        const max = Number(input.dataset.max) || 0;
+                        const weight = Number(input.dataset.weight) || 0;
+                        const score = Number(input.value);
+                        const hasScore = input.value.trim() !== '' && Number.isFinite(score);
+
+                        maxTotal += max;
+                        totalWeight += weight;
+                        if (hasScore) {
+                            total += score;
+                            completed += 1;
+                            weightedTotal += max > 0 ? (score / max) * weight : 0;
+                        }
+                    });
+
+                    const completion = scoreInputs.length > 0
+                        ? (completed / scoreInputs.length) * 100
+                        : 0;
+                    const weighted = totalWeight > 0
+                        ? (weightedTotal / totalWeight) * 100
+                        : 0;
+
+                    currentTotal.textContent = `${total.toFixed(1).replace(/\.0$/, '')} / ${maxTotal.toFixed(1).replace(/\.0$/, '')}`;
+                    weightedScore.textContent = weighted.toFixed(1);
+                    completedCriteria.textContent = `${completed} / ${scoreInputs.length}`;
+                    completionPercent.textContent = `${completion.toFixed(0)}%`;
+                }
+
+                scoreInputs.forEach(function (input) {
+                    input.addEventListener('input', updateScoreSummary);
+                });
+                updateScoreSummary();
+            })();
+
             (function () {
                 const openButton = document.getElementById('openHdViewerBtn');
                 const previewImage = document.getElementById('judgeSubmissionPreview');
