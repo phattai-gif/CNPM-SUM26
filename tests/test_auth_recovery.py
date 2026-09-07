@@ -22,6 +22,11 @@ def generate_random_user():
         "role": "participant"
     }
 
+def get_user_fresh(repo, email):
+    """Re-query user from DB to avoid DetachedInstanceError."""
+    repo.session.expire_all()
+    return repo.session.query(UserModel).filter_by(email=email).first()
+
 def test_auth_recovery_and_verification_flow():
     app = create_app()
     client = app.test_client()
@@ -33,11 +38,13 @@ def test_auth_recovery_and_verification_flow():
     assert res.status_code == 201
     
     # Check that user is active by default
-    user_obj = repo.session.query(UserModel).filter_by(email=user_data['email']).first()
+    user_obj = get_user_fresh(repo, user_data['email'])
     assert user_obj is not None
     assert user_obj.status == 'active'
     assert user_obj.email_verified is False
     assert 'verification_token' in res.get_json()
+
+    user_id = user_obj.id
 
     # 2. Test GET pages (render templates)
     res = client.get('/auth/forgot-password')
@@ -87,7 +94,7 @@ def test_auth_recovery_and_verification_flow():
     secret_key = app.config.get('SECRET_KEY', 'a_default_secret_key')
     expired_payload = {
         'reset_email': user_data['email'],
-        'user_id': user_obj.id,
+        'user_id': user_id,
         'type': 'password_reset',
         'exp': datetime.now(timezone.utc) - timedelta(minutes=5)
     }
@@ -119,8 +126,9 @@ def test_auth_recovery_and_verification_flow():
 
     # 6. Test Email Verification Flow
     # - Manually set user status to pending
-    repo.update_status(user_obj.id, 'pending')
-    repo.session.refresh(user_obj)
+    repo.update_status(user_id, 'pending')
+    # Re-query to avoid DetachedInstanceError
+    user_obj = get_user_fresh(repo, user_data['email'])
     assert user_obj.status == 'pending'
 
     # - Try logging in (should fail because status is not active)
@@ -144,8 +152,8 @@ def test_auth_recovery_and_verification_flow():
     assert res.status_code == 200
     assert res.get_json()['message'] == 'Email verified successfully'
 
-    # - User status should now be active
-    repo.session.refresh(user_obj)
+    # - User status should now be active (re-query to avoid DetachedInstanceError)
+    user_obj = get_user_fresh(repo, user_data['email'])
     assert user_obj.status == 'active'
     assert user_obj.email_verified is True
 
