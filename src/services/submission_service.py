@@ -1,4 +1,5 @@
-import threading
+import os
+import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
 from infrastructure.repositories.submission_repository import SubmissionRepository
@@ -13,9 +14,8 @@ class SubmissionService:
       `file_bytes` + `filename` pair.
     - Uploads bytes via `storage_service.upload_image` when present.
     - Calls `submission_repo.create_submission(...)` to persist submission.
-    - When `status != 'draft'`, creates two pending AI flags via
-      `submission_repo.save_ai_flag(...)` and starts a background thread
-      using `threading.Thread(target=self._run_ai_detection, args=(...))`.
+        - When `status != 'draft'`, creates pending AI flags and runs the AI
+            analysis before returning the created submission.
     """
 
     DEFAULT_CONTENT_TYPE = "image/jpeg"
@@ -27,15 +27,167 @@ class SubmissionService:
     ):
         self.submission_repo = submission_repo or SubmissionRepository()
         self.storage_service = storage_service or StorageService()
+        self.last_duplicate_result = None
 
     def upload_submission_image(self, file_bytes: bytes, filename: str, content_type: str = DEFAULT_CONTENT_TYPE) -> Dict[str, Any]:
         if hasattr(self.storage_service, "upload_image"):
             return self.storage_service.upload_image(file_bytes=file_bytes, filename=filename, content_type=content_type)
         return {"hd_url": None, "thumbnail_url": None, "sha256": None, "width": None, "height": None, "file_size": None}
 
-    def _run_ai_detection(self, submission_id: int, image_url: Optional[str], file_bytes: Optional[bytes]) -> None:
-        # No-op stub for tests; real implementation would analyze image/file_bytes
-        return None
+    def _notify_fraud(self, submission_id: int, flag_type: str, risk_level: str, score: float, details: str = "") -> None:
+        """Notify contest owners/admins when an AI or duplicate flag needs review."""
+        if risk_level not in {"medium", "high"}:
+            return
+
+        session = getattr(self.submission_repo, "session", None)
+        if session is None:
+            return
+
+        try:
+            from infrastructure.models.app import (
+                ContestModel,
+                NotificationModel,
+                RoleModel,
+                RoundModel,
+                SubmissionModel,
+                UserModel,
+                user_roles,
+            )
+
+            row = (
+                session.query(SubmissionModel, RoundModel, ContestModel)
+                .join(RoundModel, SubmissionModel.round_id == RoundModel.id)
+                .join(ContestModel, RoundModel.contest_id == ContestModel.id)
+                .filter(SubmissionModel.id == submission_id)
+                .first()
+            )
+            if not row:
+                return
+
+            submission, _round, contest = row
+            recipient_ids = {contest.created_by}
+            admin_rows = (
+                session.query(UserModel.id)
+                .join(user_roles, user_roles.c.user_id == UserModel.id)
+                .join(RoleModel, RoleModel.id == user_roles.c.role_id)
+                .filter(RoleModel.code == "admin", UserModel.status == "active")
+                .all()
+            )
+            recipient_ids.update(user_id for (user_id,) in admin_rows)
+
+            label = "AI" if flag_type == "AI_METADATA" else "trùng lặp"
+            title = f"Cảnh báo {label}: bài dự thi #{submission_id}"
+            body = (
+                f"Bài '{submission.title or 'Không có tiêu đề'}' có mức rủi ro {risk_level} "
+                f"(điểm {score:.0f}%). Cần kiểm tra thủ công."
+            )
+            if details:
+                body = f"{body} {details}"
+
+            for user_id in recipient_ids:
+                if not user_id:
+                    continue
+                exists = (
+                    session.query(NotificationModel)
+                    .filter(
+                        NotificationModel.user_id == user_id,
+                        NotificationModel.contest_id == contest.id,
+                        NotificationModel.title == title,
+                        NotificationModel.body == body,
+                        NotificationModel.is_read == False,
+                    )
+                    .first()
+                )
+                if not exists:
+                    session.add(NotificationModel(
+                        user_id=user_id,
+                        contest_id=contest.id,
+                        title=title,
+                        body=body,
+                        notification_type="fraud_alert",
+                    ))
+            session.commit()
+        except Exception:
+            session.rollback()
+
+    def _run_ai_detection(
+        self,
+        submission_id: int,
+        image_url: Optional[str],
+        file_bytes: Optional[bytes],
+        declared_metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Run the AI/EXIF check and persist the final flag and report."""
+        if not submission_id:
+            return
+
+        temp_path = None
+        worker_repo = self.submission_repo
+        owns_worker_repo = False
+        try:
+            if file_bytes:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
+                    temp_file.write(file_bytes)
+                    temp_path = temp_file.name
+
+            image_path = temp_path or image_url
+            from services.ai_detection_service import AiDetectionService
+
+            result = AiDetectionService().detect_ai(image_path, declared_metadata=declared_metadata or {})
+            score = float(result.get("ai_score", 0) or 0)
+            risk_level = result.get("risk_level") or ("high" if score >= 70 else "medium" if score >= 30 else "safe")
+            # SQLAlchemy sessions must not be shared across request threads.
+            # Use a fresh repository when the service is backed by the real DB.
+            if isinstance(self.submission_repo, SubmissionRepository):
+                worker_repo = SubmissionRepository()
+                owns_worker_repo = True
+            flag = worker_repo.save_ai_flag(
+                submission_id=submission_id,
+                confidence_score=score,
+                risk_level=risk_level,
+                flag_type="AI_METADATA",
+                status=("flagged" if risk_level in {"medium", "high"} else "completed"),
+            )
+            worker_repo.save_ai_analysis_report(
+                submission_id=submission_id,
+                ai_flag_id=getattr(flag, "id", None),
+                ai_model_name="AI Metadata Detection",
+                ai_confidence_score=score,
+                raw_details=result,
+            )
+            self._notify_fraud(
+                submission_id,
+                "AI_METADATA",
+                risk_level,
+                score,
+                result.get("ai_message", ""),
+            )
+        except Exception as error:
+            try:
+                worker_repo.save_ai_flag(
+                    submission_id=submission_id,
+                    confidence_score=0,
+                    risk_level="unknown",
+                    flag_type="AI_METADATA",
+                    status="failed",
+                )
+                worker_repo.save_ai_analysis_report(
+                    submission_id=submission_id,
+                    ai_flag_id=None,
+                    ai_model_name="AI Metadata Detection",
+                    ai_confidence_score=0,
+                    raw_details={"error": str(error)},
+                )
+            except Exception:
+                pass
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    pass
+            if owns_worker_repo:
+                worker_repo.session.close()
 
     def _calculate_image_hashes(self, file_bytes: Optional[bytes]):
         if not file_bytes:
@@ -329,8 +481,8 @@ class SubmissionService:
             try:
                 self.submission_repo.save_ai_flag(
                     submission_id=getattr(submission, "id", None),
-                    confidence_score=None,
-                    risk_level=None,
+                    confidence_score=0,
+                    risk_level="unknown",
                     flag_type="AI_METADATA",
                     status="pending",
                 )
@@ -340,29 +492,30 @@ class SubmissionService:
             try:
                 self.submission_repo.save_ai_flag(
                     submission_id=getattr(submission, "id", None),
-                    confidence_score=None,
-                    risk_level=None,
+                    confidence_score=0,
+                    risk_level="unknown",
                     flag_type="duplicate_similarity",
                     status="pending",
                 )
             except Exception:
                 pass
 
-            # Start background thread; prefer bytes from files list, then the single file_bytes arg
+            # Analyze before responding so the result is persisted reliably.
             thread_file_bytes = None
             if files and isinstance(files, list) and len(files) > 0:
                 thread_file_bytes = files[0].get("file_bytes")
             else:
                 thread_file_bytes = file_bytes
 
-            try:
-                t = threading.Thread(target=self._run_ai_detection, args=(getattr(submission, "id", None), (files_data[0].get("image_hd_url") if files_data and len(files_data) > 0 else image_hd_url), thread_file_bytes))
-                t.daemon = True
-                t.start()
-            except Exception:
-                pass
+            self._run_ai_detection(
+                getattr(submission, "id", None),
+                (files_data[0].get("image_hd_url") if files_data and len(files_data) > 0 else image_hd_url),
+                thread_file_bytes,
+                film_metadata,
+            )
 
         # Run duplicate detection immediately for submissions with file bytes
+        self.last_duplicate_result = None
         try:
             if status != "draft" and files and isinstance(files, list):
                 try:
@@ -387,6 +540,7 @@ class SubmissionService:
                             session=getattr(self.submission_repo, "session", None),
                         )
                         if isinstance(dup_result, dict):
+                            self.last_duplicate_result = dup_result
                             similarity = float(dup_result.get("similarity_score", 0.0) or 0.0)
                             is_dup = bool(dup_result.get("is_duplicate", False))
 
@@ -397,7 +551,7 @@ class SubmissionService:
                                         confidence_score=similarity,
                                         risk_level=("high" if similarity >= 90 else "medium"),
                                         flag_type="duplicate_similarity",
-                                        status="completed",
+                                        status="flagged",
                                     )
 
                                     self.submission_repo.save_ai_analysis_report(
@@ -411,6 +565,13 @@ class SubmissionService:
                                             if isinstance(dup_result, dict)
                                             else None
                                         ),
+                                    )
+                                    self._notify_fraud(
+                                        getattr(submission, "id", None),
+                                        "duplicate_similarity",
+                                        ("high" if similarity >= 90 else "medium"),
+                                        similarity,
+                                        "Ảnh có độ tương đồng cao với bài đã nộp trước đó.",
                                     )
                                 except Exception:
                                     pass

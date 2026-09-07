@@ -8,7 +8,15 @@
       <a href="/leaderboard" class="app-nav-link">Bảng xếp hạng</a>
       <a href="/my-submissions" id="nav-submissions-link" class="app-nav-link is-hidden">Bài dự thi của tôi</a>
       <a href="/organizer/dashboard" id="nav-organizer-link" class="app-nav-btn app-nav-btn-solid">Quản lý</a>
+      <button type="button" id="nav-notifications" class="app-nav-btn app-nav-btn-outline is-hidden" title="Xem cảnh báo fraud">
+        🔔 <span id="nav-notification-count" class="is-hidden">0</span>
+      </button>
     </nav>
+
+    <div id="nav-notification-panel" class="is-hidden" style="position:absolute;right:24px;top:58px;z-index:1400;width:min(380px,calc(100vw - 32px));max-height:420px;overflow:auto;background:#111a26;border:1px solid #1e2a3a;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.45);padding:12px;">
+      <strong style="color:#f0f4f8;">Cảnh báo mới</strong>
+      <div id="nav-notification-list" style="display:grid;gap:8px;margin-top:10px;"></div>
+    </div>
 
     <div class="app-nav-right" id="nav-right-auth">
       <a href="/auth/login" id="nav-login" class="app-nav-btn app-nav-btn-outline">Đăng nhập</a>
@@ -48,6 +56,10 @@
       const registerLink = document.getElementById('nav-register');
       const usernameLabel = document.getElementById('nav-username');
       const logoutButton = document.getElementById('nav-logout');
+      const notificationsButton = document.getElementById('nav-notifications');
+      const notificationCount = document.getElementById('nav-notification-count');
+      const notificationPanel = document.getElementById('nav-notification-panel');
+      const notificationList = document.getElementById('nav-notification-list');
 
       function safeGetSession() {
         if (window.AuthSession && typeof window.AuthSession.getSession === 'function') {
@@ -76,6 +88,16 @@
         element.classList.toggle('is-hidden', hidden);
       }
 
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, (character) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[character]));
+      }
+
       function displayNameFromUser(user) {
         if (!user || typeof user !== 'object') {
           return 'Tài khoản';
@@ -99,10 +121,31 @@
         setHidden(registerLink, isLoggedIn);
         setHidden(usernameLabel, !isLoggedIn);
         setHidden(logoutButton, !isLoggedIn);
+        setHidden(notificationsButton, !(isLoggedIn && canManage));
 
         if (isLoggedIn && usernameLabel) {
           usernameLabel.textContent = displayNameFromUser(session.user);
           usernameLabel.title = usernameLabel.textContent;
+        }
+      }
+
+      async function loadNotifications() {
+        const session = safeGetSession();
+        if (!session.token || !notificationsButton || notificationsButton.classList.contains('is-hidden')) return;
+        try {
+          const response = await fetch('/notifications?unread_only=true', {
+            headers: { Authorization: `Bearer ${session.token}`, Accept: 'application/json' }
+          });
+          if (!response.ok) return;
+          const payload = await response.json();
+          const notifications = payload.notifications || [];
+          notificationCount.textContent = String(notifications.length);
+          setHidden(notificationCount, notifications.length === 0);
+          notificationList.innerHTML = notifications.length
+            ? notifications.map((item) => `<div style="border:1px solid #1e2a3a;border-radius:8px;padding:8px;color:#cbd5e1;font-size:.88rem;"><strong style="color:#f5a623;">${escapeHtml(item.title || 'Cảnh báo')}</strong><br>${escapeHtml(item.body || '')}</div>`).join('')
+            : '<span style="color:#8899aa;font-size:.88rem;">Không có cảnh báo mới.</span>';
+        } catch (error) {
+          console.warn('Unable to load notifications', error);
         }
       }
 
@@ -125,6 +168,14 @@
       }
 
       renderByAuthState();
+      loadNotifications();
+
+      if (notificationsButton) {
+        notificationsButton.addEventListener('click', () => {
+          notificationPanel.classList.toggle('is-hidden');
+          loadNotifications();
+        });
+      }
 
       window.addEventListener('pageshow', renderByAuthState);
     })();

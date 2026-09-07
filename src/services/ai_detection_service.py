@@ -16,7 +16,7 @@ except ImportError:
 
 class AiDetectionService:
 
-    def detect_ai(self, image_path: str) -> dict:
+    def detect_ai(self, image_path: str, declared_metadata: dict = None) -> dict:
         """Analyze the image by EXIF metadata and return structured EXIF and risk level."""
         if not image_path:
             return {
@@ -74,9 +74,16 @@ class AiDetectionService:
             raw_exif = {}
 
             if not exif_data:
-                ai_score = 85
-                reasons.append("Image is completely missing EXIF metadata.")
-                risk_level = "high"
+                # Missing EXIF is not proof of generated content. A submitted
+                # image gets a review score, while direct scans without any
+                # declaration keep the legacy high-risk behavior.
+                has_declared_metadata = any(
+                    str(value or "").strip()
+                    for value in (declared_metadata or {}).values()
+                )
+                ai_score = 50 if declared_metadata is not None else 85
+                reasons.append("Image contains no readable EXIF metadata; authenticity requires manual verification.")
+                risk_level = "medium" if has_declared_metadata or declared_metadata is not None else "high"
                 exif_payload = {
                     "camera_model": "Unknown",
                     "lens": "Unknown",
@@ -122,8 +129,8 @@ class AiDetectionService:
                     ai_score = 45
                     reasons.append(f"Image contains exposure settings (ISO: {iso}, Aperture: {aperture}, Shutter: {shutter_speed}) but capture device is missing.")
                 else:
-                    ai_score = 85
-                    reasons.append("Image is completely missing capture device information and exposure settings.")
+                    ai_score = 50
+                    reasons.append("Image contains EXIF data, but no camera or exposure fields could be verified.")
 
                 if ai_score >= 70 or missing_count >= 5:
                     risk_level = "high"
@@ -131,6 +138,30 @@ class AiDetectionService:
                     risk_level = "medium"
                 else:
                     risk_level = "safe"
+
+            comparison = None
+            if declared_metadata is not None:
+                comparison = self.compare_metadata_with_exif(declared_metadata, exif_payload)
+                if not exif_data:
+                    # EXIF is the minimum automatic authenticity evidence.
+                    # Declarations cannot replace it.
+                    risk_level = "high"
+                    ai_score = 85
+                    reasons.append("No EXIF is embedded in the image; metadata entered in the form cannot verify the file.")
+                else:
+                    # A readable EXIF block means the image passes the AI
+                    # gate. Declarations are only a confidence adjustment.
+                    mismatches = len(comparison.get("mismatched_fields", []))
+                    matching_fields = sum(
+                        1 for item in comparison["comparison"].values()
+                        if item.get("status") == "match"
+                    )
+                    ai_score = min(30, max(0, ai_score + (mismatches * 5) - (matching_fields * 10)))
+                    risk_level = "safe" if ai_score < 30 else "medium"
+                    if matching_fields:
+                        reasons.append(f"{matching_fields} declared metadata field(s) match the readable EXIF and reduce the score.")
+                    if mismatches:
+                        reasons.append("Some declared fields differ from EXIF, but the embedded EXIF still passes the AI gate.")
 
             final_score = min(100, max(0, ai_score))
 
@@ -143,13 +174,16 @@ class AiDetectionService:
 
             ai_message = f"[{status}] " + " ".join(reasons)
 
-            return {
+            result = {
                 "ai_score": final_score,
                 "ai_message": ai_message,
                 "risk_level": risk_level,
                 "exif_data": exif_payload,
                 "raw_exif": raw_exif
             }
+            if comparison is not None:
+                result["metadata_comparison"] = comparison
+            return result
         finally:
             if temp_downloaded_file and os.path.exists(temp_downloaded_file):
                 try:
@@ -160,38 +194,62 @@ class AiDetectionService:
     @staticmethod
     def extract_exif(image_path: str):
         """Extract EXIF metadata from a specific image file."""
-        if not exifread:
-            return None
+        tags = {}
         try:
-            with open(image_path, "rb") as file:
-                tags = exifread.process_file(file, details=False)
-
-            if not tags:
-                return None
-
-            # Date Taken fallback
-            date_taken = "Unknown"
-            for tag in ["EXIF DateTimeOriginal", "Image DateTime", "EXIF DateTimeDigitized"]:
-                if tag in tags:
-                    date_taken = str(tags[tag])
-                    break
-
-            raw_exif = {}
-            for key, val in tags.items():
-                if "JPEGThumbnail" not in key and "TIFFThumbnail" not in key:
-                    raw_exif[str(key)] = str(val)
-
-            return {
-                "camera_model": str(tags.get("Image Model", "Unknown")),
-                "lens": str(tags.get("EXIF LensModel", "Unknown")),
-                "iso": str(tags.get("EXIF ISOSpeedRatings", "Unknown")),
-                "aperture": str(tags.get("EXIF FNumber", "Unknown")),
-                "shutter_speed": str(tags.get("EXIF ExposureTime", "Unknown")),
-                "date_taken": date_taken,
-                "raw_exif": raw_exif
-            }
+            if exifread:
+                with open(image_path, "rb") as file:
+                    tags = exifread.process_file(file, details=False) or {}
         except Exception:
+            tags = {}
+
+        # Pillow is a fallback for phone images whose EXIF block is valid but
+        # not exposed by exifread (common after mobile export/compression).
+        if not tags:
+            try:
+                from PIL import ExifTags, Image
+
+                with Image.open(image_path) as image:
+                    pil_exif = image.getexif()
+                    for tag_id, value in pil_exif.items():
+                        tag_name = ExifTags.TAGS.get(tag_id, str(tag_id))
+                        tags[tag_name] = value
+
+                    gps = pil_exif.get(34853)
+                    if gps:
+                        tags["GPSInfo"] = gps
+            except Exception:
+                tags = {}
+
+        if not tags:
             return None
+
+        # Date Taken fallback
+        date_taken = "Unknown"
+        for tag in ["EXIF DateTimeOriginal", "DateTimeOriginal", "Image DateTime", "DateTime", "EXIF DateTimeDigitized"]:
+            if tag in tags:
+                date_taken = str(tags[tag])
+                break
+
+        raw_exif = {}
+        for key, val in tags.items():
+            if "JPEGThumbnail" not in key and "TIFFThumbnail" not in key:
+                raw_exif[str(key)] = str(val)
+
+        def first_value(*names):
+            for name in names:
+                if name in tags and str(tags[name]).strip():
+                    return str(tags[name])
+            return "Unknown"
+
+        return {
+            "camera_model": first_value("Image Model", "Model"),
+            "lens": first_value("EXIF LensModel", "LensModel"),
+            "iso": first_value("EXIF ISOSpeedRatings", "ISOSpeedRatings"),
+            "aperture": first_value("EXIF FNumber", "FNumber"),
+            "shutter_speed": first_value("EXIF ExposureTime", "ExposureTime"),
+            "date_taken": date_taken,
+            "raw_exif": raw_exif
+        }
 
     @staticmethod
     def compare_metadata_with_exif(declared_metadata: dict, exif_data: dict) -> dict:
@@ -211,6 +269,28 @@ class AiDetectionService:
 
         declared_metadata = declared_metadata or {}
         exif_data = exif_data or {}
+
+        # Missing EXIF must not be bypassed with arbitrary form values.
+        suspicious_fields = []
+        film_stock = normalize_val(declared_metadata.get("film_stock"))
+        if film_stock and film_stock.isdigit():
+            suspicious_fields.append("film_stock")
+
+        for field in ("camera_body", "lens"):
+            value = normalize_val(declared_metadata.get(field))
+            if value and (value.isdigit() or (len(value) < 3 and not any(char.isalpha() for char in value))):
+                suspicious_fields.append(field)
+
+        user_iso_value = normalize_val(declared_metadata.get("film_iso"))
+        if user_iso_value:
+            iso_digits = extract_digits(user_iso_value)
+            # Digital camera EXIF ISO is not limited to film-stock speeds.
+            try:
+                numeric_iso = int(iso_digits)
+            except (TypeError, ValueError):
+                numeric_iso = 0
+            if not iso_digits or numeric_iso < 1 or numeric_iso > 12800:
+                suspicious_fields.append("film_iso")
 
         # 1. Compare Camera
         user_cam = normalize_val(declared_metadata.get("camera_body"))
@@ -259,6 +339,12 @@ class AiDetectionService:
         if mismatched_fields:
             risk_level = "high"
             confidence_score = 80.0 + 10.0 * len(mismatched_fields)
+        elif len(suspicious_fields) >= 2:
+            risk_level = "high"
+            confidence_score = 85.0
+        elif suspicious_fields:
+            risk_level = "medium"
+            confidence_score = 50.0
         elif camera_status == "match" or lens_status == "match" or iso_status == "match":
             # No mismatch, at least one match
             risk_level = "safe"
@@ -287,6 +373,7 @@ class AiDetectionService:
                 }
             },
             "mismatched_fields": mismatched_fields,
+            "suspicious_fields": suspicious_fields,
             "risk_level": risk_level,
             "confidence_score": confidence_score
         }

@@ -1362,6 +1362,11 @@ def create_submission():
             )
         )
 
+        duplicate_warning = getattr(submission_service, "last_duplicate_result", None) or {
+            "similarity_score": 0.0,
+            "is_duplicate": False,
+        }
+
         return jsonify(
             {
                 "message": (
@@ -1370,6 +1375,7 @@ def create_submission():
                 "submission": _serialize_submission(
                     submission
                 ),
+                "duplicate_warning": duplicate_warning,
             }
         ), 201
 
@@ -2211,6 +2217,50 @@ def submit_submission(submission_id):
 
 
 # ============================================================
+# DELETE SUBMISSION (ADMIN/ORGANIZER RESET)
+# ============================================================
+
+@submission_bp.route(
+    "/<int:submission_id>",
+    methods=["DELETE"],
+)
+@role_required("organizer", "admin")
+def delete_submission(submission_id):
+    """Delete a submission and its cascade-linked flags/reports/files."""
+    user = getattr(request, "user", {}) or {}
+    user_id = user.get("user_id")
+    role = str(user.get("role") or "").lower()
+
+    try:
+        from infrastructure.models.app import ContestModel, RoundModel, SubmissionModel
+
+        session = submission_repo.session
+        row = (
+            session.query(SubmissionModel, RoundModel, ContestModel)
+            .join(RoundModel, SubmissionModel.round_id == RoundModel.id)
+            .join(ContestModel, RoundModel.contest_id == ContestModel.id)
+            .filter(SubmissionModel.id == submission_id)
+            .first()
+        )
+        if not row:
+            return jsonify({"message": "Submission not found"}), 404
+
+        submission, _round, contest = row
+        if role != "admin" and int(contest.created_by) != int(user_id):
+            return jsonify({"message": "You do not own this contest"}), 403
+
+        submission_repo.delete(submission_id)
+        return jsonify({
+            "message": "Submission deleted successfully",
+            "submission_id": submission_id,
+        }), 200
+    except PermissionError as error:
+        return jsonify({"message": str(error)}), 403
+    except Exception as error:
+        return jsonify({"message": "Failed to delete submission", "error": str(error)}), 500
+
+
+# ============================================================
 # GET SUBMISSION DETAIL
 # ============================================================
 
@@ -2603,12 +2653,19 @@ def get_submission(submission_id):
         )
 
         if existing_flag:
+            analysis_report = getattr(existing_flag, "analysis_report", None)
+            raw_details = getattr(analysis_report, "raw_details", None) or {}
             ai_flag_data = {
                 "ai_score": float(
-                    existing_flag.confidence_score
+                    existing_flag.confidence_score or 0
+                ),
+                "confidence_score": float(
+                    existing_flag.confidence_score or 0
                 ),
                 "risk_level": existing_flag.risk_level,
                 "status": existing_flag.status,
+                "ai_message": raw_details.get("ai_message"),
+                "metadata_comparison": raw_details.get("metadata_comparison"),
             }
 
     except Exception:
