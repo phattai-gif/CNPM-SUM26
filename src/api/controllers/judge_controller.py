@@ -85,6 +85,46 @@ def _serialize_assignments(items):
     ]
 
 
+@judge_ui_bp.route('', methods=['GET'])
+@role_required('judge', 'admin')
+def judge_home():
+    """Open the first submission assigned to the current judge."""
+    user = _request_user()
+    user_id = user.get('user_id')
+    user_role = str(user.get('role', 'judge')).lower()
+
+    if user_role == 'admin':
+        first_submission = (
+            submission_repository.session.query(SubmissionModel)
+            .order_by(SubmissionModel.submitted_at.asc(), SubmissionModel.id.asc())
+            .first()
+        )
+    else:
+        first_submission = (
+            submission_repository.session.query(SubmissionModel)
+            .join(
+                JudgeAssignmentModel,
+                or_(
+                    JudgeAssignmentModel.submission_id == SubmissionModel.id,
+                    JudgeAssignmentModel.submission_id.is_(None),
+                ),
+            )
+            .filter(
+                JudgeAssignmentModel.judge_id == user_id,
+                JudgeAssignmentModel.status == 'assigned',
+                JudgeAssignmentModel.round_id == SubmissionModel.round_id,
+            )
+            .order_by(SubmissionModel.submitted_at.asc(), SubmissionModel.id.asc())
+            .first()
+        )
+
+    if first_submission is None:
+        flash('Bạn chưa được phân công bài dự thi nào.', 'warning')
+        return redirect('/contests')
+
+    return redirect(url_for('judge_ui.judge_grading_ui', submission_id=first_submission.id))
+
+
 @judge_bp.route('/organizer/judges', methods=['GET'])
 @role_required('organizer')
 def list_available_judges():

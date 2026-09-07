@@ -7,6 +7,7 @@
       <a href="/gallery" class="app-nav-link">Thư viện</a>
       <a href="/leaderboard" class="app-nav-link">Bảng xếp hạng</a>
       <a href="/my-submissions" id="nav-submissions-link" class="app-nav-link is-hidden">Bài dự thi của tôi</a>
+      <a href="/judge" id="nav-judge-link" class="app-nav-link is-hidden">Khu vực Judge</a>
       <a href="/organizer/dashboard" id="nav-organizer-link" class="app-nav-btn app-nav-btn-solid">Quản lý</a>
     </nav>
 
@@ -43,6 +44,7 @@
 
       const organizerLink = document.getElementById('nav-organizer-link');
       const submissionsLink = document.getElementById('nav-submissions-link');
+      const judgeLink = document.getElementById('nav-judge-link');
       const profileLink = document.getElementById('nav-profile-link');
       const loginLink = document.getElementById('nav-login');
       const registerLink = document.getElementById('nav-register');
@@ -89,11 +91,13 @@
         const isLoggedIn = Boolean(session && session.token);
         const role = String((session && session.role) || (session && session.user && session.user.role) || '').toLowerCase();
         const canManage = role === 'organizer' || role === 'admin';
+        const isJudge = role === 'judge';
 
         // show organizer link only for logged-in users with organizer/admin role
         // hide submissions link for organizer/admin because organizers cannot submit to their own contests
         setHidden(organizerLink, !(isLoggedIn && canManage));
-        setHidden(submissionsLink, !(isLoggedIn && !canManage));
+        setHidden(submissionsLink, !(isLoggedIn && !canManage && !isJudge));
+        setHidden(judgeLink, !(isLoggedIn && isJudge));
         setHidden(profileLink, !isLoggedIn);
         setHidden(loginLink, isLoggedIn);
         setHidden(registerLink, isLoggedIn);
