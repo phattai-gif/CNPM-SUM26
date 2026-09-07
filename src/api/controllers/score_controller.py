@@ -1,5 +1,6 @@
-﻿from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request
 
+from api.controllers.response_utils import safe_jsonify
 from api.role_required import token_required, role_required
 from services.score_service import ScoreService
 
@@ -220,7 +221,7 @@ def submit_feedback(submission_id):
     "/submissions/<int:submission_id>/state",
     methods=["GET"],
 )
-@role_required("judge", "admin")
+@role_required("judge")
 def get_submission_state(submission_id):
 
     judge_id = request.user.get("user_id")
@@ -316,7 +317,7 @@ def calculate_submission_score(submission_id):
     "/rounds/<int:round_id>/finalize",
     methods=["POST"],
 )
-@role_required("organizer", "admin")
+@role_required("organizer")
 def finalize_round(round_id):
 
     try:

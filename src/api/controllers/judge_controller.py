@@ -1,4 +1,5 @@
-﻿from flask import Blueprint, request, jsonify, render_template, flash, redirect, session, url_for
+from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
+from flask import Blueprint, request, jsonify, render_template, flash, redirect, session, url_for
 from api.controllers.response_utils import safe_jsonify
 
 try:
@@ -64,7 +65,7 @@ def _serialize_assignments(items):
 
 
 @judge_bp.route('/organizer/judges', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def list_available_judges():
     """API Láº¥y danh sÃ¡ch giÃ¡m kháº£o kháº£ dá»¥ng Ä‘á»ƒ phÃ¢n cÃ´ng."""
     try:
@@ -114,7 +115,7 @@ def list_available_judges():
     '/organizer/contests/<int:contest_id>/rounds/<int:round_id>/judges',
     methods=['POST']
 )
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def assign_judge_to_round(contest_id, round_id):
     """API PhÃ¢n cÃ´ng giÃ¡m kháº£o vÃ o vÃ²ng thi hoáº·c bÃ i thi cá»¥ thá»ƒ."""
     
@@ -191,7 +192,7 @@ def assign_judge_to_round(contest_id, round_id):
     '/organizer/contests/<int:contest_id>/rounds/<int:round_id>/judges',
     methods=['GET']
 )
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def get_round_judges(contest_id, round_id):
     """API Láº¥y danh sÃ¡ch giÃ¡m kháº£o Ä‘Ã£ Ä‘Æ°á»£c phÃ¢n cÃ´ng trong vÃ²ng thi."""
 
@@ -236,7 +237,7 @@ def get_round_judges(contest_id, round_id):
     '<int:round_id>/judges/<int:judge_id>',
     methods=['DELETE']
 )
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def remove_judge_from_round(contest_id, round_id, judge_id):
     """API Há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o khá»i vÃ²ng thi."""
 
@@ -290,7 +291,7 @@ def remove_judge_from_round(contest_id, round_id, judge_id):
     '/judge/assignments',
     methods=['GET']
 )
-@role_required('judge', 'admin')
+@role_required('judge')
 def get_my_assignments():
     """API DÃ nh cho giÃ¡m kháº£o xem cÃ¡c nhiá»‡m vá»¥ cháº¥m thi."""
 

@@ -3077,7 +3077,6 @@ def list_submissions():
 )
 @role_required(
     "organizer",
-    "admin",
 )
 def get_organizer_contest_submissions(
     contest_id,
@@ -3205,7 +3204,6 @@ def get_organizer_contest_submissions(
 )
 @role_required(
     "judge",
-    "admin",
 )
 def get_judge_assignment_submissions(
     assignment_id,
@@ -3333,7 +3331,6 @@ def get_judge_assignment_submissions(
 )
 @role_required(
     "organizer",
-    "admin",
 )
 def get_flagged_submissions():
     status = request.args.get(
@@ -3392,7 +3389,6 @@ def get_flagged_submissions():
 )
 @role_required(
     "organizer",
-    "admin",
 )
 def update_flag_status(flag_id):
     if request.is_json:
