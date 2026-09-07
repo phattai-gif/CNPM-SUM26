@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify
 from flask import flash, redirect, url_for
 from datetime import datetime
 
@@ -90,7 +90,6 @@ def _serialize_list(items):
 # -------------------------------------------------------------------------
 
 @contest_bp.route('/dashboard', methods=['GET'])
-@role_required('organizer', 'admin')
 def organizer_dashboard():
     """Render dashboard for organizers showing contests they manage.
 
@@ -117,7 +116,6 @@ def organizer_dashboard():
 
 
 @contest_bp.route('/contest-detail', methods=['GET'])
-@role_required('organizer', 'admin')
 def organizer_contest_detail_page():
     """Render frontend contest detail page which will fetch contest details via API."""
     # Page itself doesn't require server-side authentication; JS will call protected API using token
@@ -496,7 +494,6 @@ def public_judge_grading(submission_id):
 
 
 @contest_bp.route('/create-contest', methods=['GET'])
-@role_required('organizer', 'admin')
 def create_contest_page():
     # Serve the create contest HTML page without requiring Authorization header.
     # The frontend will call the POST API with the token in Authorization header.
