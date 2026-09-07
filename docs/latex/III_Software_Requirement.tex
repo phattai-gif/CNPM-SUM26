@@ -549,3 +549,1378 @@ UC-61 & Filter Logs by User & Admin, System Audit Engine & Allows the Admin to s
 \begin{center}
     \includegraphics[width=0.99\textwidth]{images/ERD}
 \end{center}
+
+\subsubsection{Authentication}
+\label{subsubsec:authentication}
+
+\paragraph*{3.2.1 Register Account}\leavevmode\\[-0.5em]
+\label{par:register-account}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.2.1}Register Account}
+
+\textbf{Function Trigger:} The Guest submits the registration form.
+
+\textbf{Function Description:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Guest and Participant.
+    \item Purpose: To create a new user account for accessing the system.
+    \item Interface: register.html, AuthController, AuthService and UserRepository.
+    \item Data Processing: The system validates the registration information, checks username and email uniqueness, hashes the password, creates the user account and assigns the default Participant role.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: Username, email and password are required. The email must have a valid format. Username and email must be unique.
+    \item Business Rule: BR-01, BR-02, BR-03 and BR-04.
+    \item Normal Case: The account is created successfully and the user is redirected to the login page.
+    \item Abnormal Case: The registration fails when the username or email already exists, the email format is invalid or a database error occurs.
+\end{itemize}
+
+\paragraph*{3.2.2 Login}\leavevmode\\[-0.5em]
+\label{par:login}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.2.2}Login}
+
+\textbf{Function Trigger:} The user submits the login form.
+
+\textbf{Function Description:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Guest and Registered User.
+    \item Purpose: To authenticate a user and provide secure access to the system.
+    \item Interface: login.html, AuthController, AuthService and JWTService.
+    \item Data Processing: The system verifies the credentials, checks the account status, retrieves the user role and generates a JWT token.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: Username or email and password are required. The account must exist and be active.
+    \item Business Rule: BR-05, BR-06, BR-07 and BR-08.
+    \item Normal Case: The system returns a JWT token and redirects the user to the appropriate dashboard.
+    \item Abnormal Case: The login fails when the credentials are invalid, the account is suspended or token generation fails.
+\end{itemize}
+
+\paragraph*{3.2.3 Google Authentication}\leavevmode\\[-0.5em]
+\label{par:google-authentication}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.2.3}Google Authentication}
+
+\textbf{Function Trigger:} The user selects the ``Continue with Google'' option.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Guest and Google OAuth Provider.
+    \item Purpose: To authenticate users through Google OAuth.
+    \item Interface: Google OAuth Client, AuthController and AuthService.
+    \item Data Processing: The system verifies the Google token, retrieves the verified email and creates or retrieves the corresponding user account.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The Google token must be valid, unexpired and associated with a verified email.
+    \item Business Rule: BR-04, BR-07, BR-08, BR-09 and BR-10.
+    \item Normal Case: The user is authenticated and receives a JWT token.
+    \item Abnormal Case: Authentication fails when the Google token is invalid, expired or cannot be verified.
+\end{itemize}
+
+\paragraph*{3.2.4 Password Recovery and Email Verification}\leavevmode\\[-0.5em]
+\label{par:password-recovery-email-verification}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.2.4}Password Recovery and Email Verification}
+
+\textbf{Function Trigger:} The user requests password recovery or email verification.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: User and Email Service.
+    \item Purpose: To recover user accounts and verify email addresses.
+    \item Interface: forgot\_password.html, reset\_password.html, AuthController and EmailService.
+    \item Data Processing: The system generates a temporary token, sends it by email, validates the token and updates the password or verification status.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The email and token must be valid. The token must not be expired or previously used.
+    \item Business Rule: BR-03 and BR-11.
+    \item Normal Case: The password is changed or the email is successfully verified.
+    \item Abnormal Case: The operation fails when the email is unknown, the token is invalid or email delivery fails.
+\end{itemize}
+
+\subsubsection{User and Role Management}
+\label{subsubsec:user-role-management}
+
+\paragraph*{3.3.1 View and Update User Profile}\leavevmode\\[-0.5em]
+\label{par:view-update-user-profile}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.3.1}View and Update User Profile}
+
+\textbf{Function Trigger:} The user opens the profile page or submits profile changes.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Authenticated User.
+    \item Purpose: To manage personal profile and portfolio information.
+    \item Interface: profile.html, AuthController and ProfileService.
+    \item Data Processing: The system retrieves the authenticated user and saves updated profile information.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The user must be authenticated and profile fields must satisfy the defined length limits.
+    \item Business Rule: BR-12.
+    \item Normal Case: The updated profile is displayed successfully.
+    \item Abnormal Case: The operation fails when the JWT is invalid or the profile data is not valid.
+\end{itemize}
+
+\paragraph*{3.3.2 Admin Manage Users}\leavevmode\\[-0.5em]
+\label{par:admin-manage-users}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.3.2}Admin Manage Users}
+
+\textbf{Function Trigger:} The Admin selects a user management action.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Admin.
+    \item Purpose: To manage user accounts, roles and account status.
+    \item Interface: AdminController and AdminUserService.
+    \item Data Processing: The system retrieves users and updates the selected user's role or account status.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The current user must have the Admin role. The target user, role and status must be valid.
+    \item Business Rule: BR-13, BR-14 and BR-15.
+    \item Normal Case: The selected user account is updated successfully.
+    \item Abnormal Case: The operation fails when the user is unauthorized or the target data is invalid.
+\end{itemize}
+
+\paragraph*{3.3.3 Manage Roles and Permissions}\leavevmode\\[-0.5em]
+\label{par:manage-roles-permissions}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.3.3}Manage Roles and Permissions}
+
+\textbf{Function Trigger:} The Admin assigns or removes a role or permission.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Admin.
+    \item Purpose: To control access to system functions through RBAC.
+    \item Interface: RoleModel, PermissionModel, user\_roles and role\_permissions.
+    \item Data Processing: The system creates or removes relationships between users, roles and permissions.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The user, role and permission must exist.
+    \item Business Rule: BR-13 and BR-14.
+    \item Normal Case: The role or permission relationship is updated successfully.
+    \item Abnormal Case: The operation fails when the role or permission is invalid or already exists.
+\end{itemize}
+
+\subsubsection{Contest Management}
+\label{subsubsec:contest-management}
+
+\paragraph*{3.4.1 Create Contest}\leavevmode\\[-0.5em]
+\label{par:create-contest}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.4.1}Create Contest}
+
+\textbf{Function Trigger:} The Organizer submits the contest creation form.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer and Admin.
+    \item Purpose: To create a new photography contest.
+    \item Interface: create\_contest.html, ContestController and ContestService.
+    \item Data Processing: The system validates contest information, generates a unique slug and stores the contest.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The title is required. Start and end dates must be valid, and the end date must be later than the start date.
+    \item Business Rule: BR-16, BR-17 and BR-18.
+    \item Normal Case: A new contest is created with draft status.
+    \item Abnormal Case: The operation fails because of a duplicate slug, invalid date range or insufficient permission.
+\end{itemize}
+
+\paragraph*{3.4.2 Configure Contest Information}\leavevmode\\[-0.5em]
+\label{par:configure-contest-information}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.4.2}Configure Contest Information}
+
+\textbf{Function Trigger:} The Organizer saves contest rules, categories or awards.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer and Admin.
+    \item Purpose: To configure the content and structure of a contest.
+    \item Interface: ContestController, ContestService and create\_contest.html.
+    \item Data Processing: The system updates contest rules, categories, awards and status.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The contest must exist and the user must be authorized to edit it.
+    \item Business Rule: BR-16, BR-17 and BR-18.
+    \item Normal Case: Contest information is updated successfully.
+    \item Abnormal Case: The operation fails when the contest does not exist or the user has no permission.
+\end{itemize}
+
+\paragraph*{3.4.3 Configure Contest Settings}\leavevmode\\[-0.5em]
+\label{par:configure-contest-settings}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.4.3}Configure Contest Settings}
+
+\textbf{Function Trigger:} The Organizer saves contest settings.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer and Admin.
+    \item Purpose: To configure submission, scoring, voting and AI policies.
+    \item Interface: ContestSettingsController and ContestSettingsService.
+    \item Data Processing: The system creates or updates the settings record associated with the contest.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The contest must exist. Submission limits must be positive and AI thresholds must be valid.
+    \item Business Rule: BR-19, BR-20 and BR-21.
+    \item Normal Case: The contest settings are saved successfully.
+    \item Abnormal Case: The operation fails because of invalid limits, thresholds or scoring mode.
+\end{itemize}
+
+\paragraph*{3.4.4 Manage Contest Announcements}\leavevmode\\[-0.5em]
+\label{par:manage-contest-announcements}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.4.4}Manage Contest Announcements}
+
+\textbf{Function Trigger:} The Organizer creates, updates or deletes an announcement.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer, Admin, Participant and Judge.
+    \item Purpose: To communicate important contest information.
+    \item Interface: ContestController and AnnouncementService.
+    \item Data Processing: The system stores and retrieves announcements associated with a contest.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The contest must exist. Announcement title and content are required.
+    \item Business Rule: BR-16.
+    \item Normal Case: The announcement is saved and displayed to relevant users.
+\end{itemize}
+
+\subsubsection{Round and Criteria Management}
+\label{subsubsec:round-criteria-management}
+
+\paragraph*{3.5.1 Create and Configure Round}\leavevmode\\[-0.5em]
+\label{par:create-configure-round}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.5.1}Create and Configure Round}
+
+\textbf{Function Trigger:} The Organizer creates or edits a contest round.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer and Admin.
+    \item Purpose: To define a judging stage in a contest.
+    \item Interface: ContestController and RoundService.
+    \item Data Processing: The system stores the round number, title, dates, weight and status.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The contest must exist. The round number must be positive and dates must be valid.
+    \item Business Rule: BR-22, BR-23 and BR-24.
+    \item Normal Case: The round is created or updated successfully.
+    \item Abnormal Case: The operation fails because of a duplicate round number, invalid dates or finalized round status.
+\end{itemize}
+
+\paragraph*{3.5.2 Configure Judging Criteria}\leavevmode\\[-0.5em]
+\label{par:configure-judging-criteria}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.5.2}Configure Judging Criteria}
+
+\textbf{Function Trigger:} The Organizer creates or edits a judging criterion.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer and Admin.
+    \item Purpose: To define the evaluation criteria for a round.
+    \item Interface: ContestController and CriteriaService.
+    \item Data Processing: The system stores the criterion name, description, maximum score and weight.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The round must exist. The criterion name, maximum score and weight must be valid.
+    \item Business Rule: BR-25 and BR-26.
+    \item Normal Case: The criterion becomes available to Judges.
+    \item Abnormal Case: The operation fails because of an invalid round or score configuration.
+\end{itemize}
+
+\paragraph*{3.5.3 Automatic Round Status Transition}\leavevmode\\[-0.5em]
+\label{par:automatic-round-status-transition}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.5.3}Automatic Round Status Transition}
+
+\textbf{Function Trigger:} The scheduler executes periodically.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: System Scheduler.
+    \item Purpose: To automatically update contest and round statuses.
+    \item Interface: SchedulerService, ContestService and RoundService.
+    \item Data Processing: The scheduler compares the current time with configured dates and updates statuses.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Business Rule: BR-24.
+    \item Normal Case: The correct contest or round status is applied automatically.
+    \item Abnormal Case: The operation fails because of an invalid date configuration or database update error.
+\end{itemize}
+
+\subsubsection{Submission Management}
+\label{subsubsec:submission-management}
+
+\paragraph*{3.6.1 Create Submission Draft}\leavevmode\\[-0.5em]
+\label{par:create-submission-draft}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.6.1}Create Submission Draft}
+
+\textbf{Function Trigger:} The Participant selects ``Create Submission''.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Participant.
+    \item Purpose: To create an entry that can be completed before official submission.
+    \item Interface: SubmissionController and SubmissionService.
+    \item Data Processing: The system creates a submission linked to the current Participant and selected round with draft status.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The Participant must be authenticated. The round must be open and the submission limit must not be exceeded.
+    \item Business Rule: BR-27 and BR-28.
+    \item Normal Case: A draft submission is created successfully.
+    \item Abnormal Case: The operation fails because the round is closed or the submission limit has been exceeded.
+\end{itemize}
+
+\paragraph*{3.6.2 Upload Submission Files}\leavevmode\\[-0.5em]
+\label{par:upload-submission-files}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.6.2}Upload Submission Files}
+
+\textbf{Function Trigger:} The Participant selects an image file for upload.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Participant and Storage Service.
+    \item Purpose: To attach image files to a submission.
+    \item Interface: SubmissionController, StorageService and SubmissionFileModel.
+    \item Data Processing: The system validates the file, generates hash and fingerprint values, uploads the file and stores its URL.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The submission must exist, the user must own it, and the file type and size must be valid.
+    \item Business Rule: BR-27, BR-30 and BR-31.
+    \item Normal Case: The image is uploaded and linked to the submission.
+    \item Abnormal Case: The operation fails because of an unsupported file, excessive size, storage failure or duplicate file.
+\end{itemize}
+
+\paragraph*{3.6.3 Enter Film Metadata}\leavevmode\\[-0.5em]
+\label{par:enter-film-metadata}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.6.3}Enter Film Metadata}
+
+\textbf{Function Trigger:} The Participant submits film and camera information.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Participant.
+    \item Purpose: To record the technical information of a film photograph.
+    \item Interface: Submission form, SubmissionService and SubmissionFilmMetadataModel.
+    \item Data Processing: The system creates or updates the film metadata record.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The submission must belong to the current Participant. Film stock is required and ISO must be numeric when provided.
+    \item Business Rule: BR-32.
+    \item Normal Case: The film metadata is saved successfully.
+    \item Abnormal Case: The operation fails because of missing or invalid metadata.
+\end{itemize}
+
+\paragraph*{3.6.4 Submit Official Entry}\leavevmode\\[-0.5em]
+\label{par:submit-official-entry}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.6.4}Submit Official Entry}
+
+\textbf{Function Trigger:} The Participant selects ``Submit Official Entry''.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Participant.
+    \item Purpose: To submit a completed entry for moderation and judging.
+    \item Interface: SubmissionController and SubmissionService.
+    \item Data Processing: The system verifies files and metadata, changes the status from draft to submitted and starts the review workflow.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: Required files and film metadata must exist. The round must be open.
+    \item Business Rule: BR-24, BR-28, BR-29 and BR-33.
+    \item Normal Case: The submission is accepted for moderation and AI processing.
+    \item Abnormal Case: The operation fails because of missing files, missing metadata, closed round or an already submitted entry.
+\end{itemize}
+
+\paragraph*{3.6.5 View Submission History and Detail}\leavevmode\\[-0.5em]
+\label{par:view-submission-history-detail}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.6.5}View Submission History and Detail}
+
+\textbf{Function Trigger:} The user opens the submission history or detail page.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Participant, Organizer, Judge and Moderator.
+    \item Purpose: To display submission status, files, metadata, reviews and scores.
+    \item Interface: my\_submissions.html, submission\_detail.html and SubmissionController.
+    \item Data Processing: The system applies role-based filtering and returns the permitted information.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The submission must exist and the user must have viewing permission.
+    \item Business Rule: BR-38 and BR-39.
+    \item Normal Case: The permitted submission information is displayed.
+\end{itemize}
+
+\subsubsection{Submission Review}
+\label{subsubsec:submission-review}
+
+\paragraph*{3.7.1 Review Submission}\leavevmode\\[-0.5em]
+\label{par:review-submission}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.7.1}Review Submission}
+
+\textbf{Function Trigger:} The Moderator opens a pending submission.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Moderator and Organizer.
+    \item Purpose: To inspect a submission before judging.
+    \item Interface: submission\_review.html, SubmissionReviewController and ModeratorController.
+    \item Data Processing: The system loads files, film metadata, review status and AI reports.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The reviewer must have the required permission and the submission must be reviewable.
+    \item Business Rule: BR-34 and BR-47.
+    \item Normal Case: The reviewer can inspect the submission and record notes.
+\end{itemize}
+
+\paragraph*{3.7.2 Approve or Reject Submission}\leavevmode\\[-0.5em]
+\label{par:approve-reject-submission}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.7.2}Approve or Reject Submission}
+
+\textbf{Function Trigger:} The reviewer selects Approve, Reject or Dismiss Flag.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Moderator and Organizer.
+    \item Purpose: To determine whether a submission can proceed to judging.
+    \item Interface: ModeratorController, SubmissionReviewService and NotificationService.
+    \item Data Processing: The system saves the decision, updates submission status, creates a notification and records the operation.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The decision must be valid. Rejection must include a reason.
+    \item Business Rule: BR-34, BR-35, BR-47, BR-54 and BR-56.
+    \item Normal Case: The submission status is updated and the Participant is notified.
+    \item Abnormal Case: The operation fails because of an invalid decision, missing rejection reason or unauthorized reviewer.
+\end{itemize}
+
+\subsubsection{Judge Assignment and Blind Judging}
+\label{subsubsec:judge-assignment-blind-judging}
+
+\paragraph*{3.8.1 Assign Judge}\leavevmode\\[-0.5em]
+\label{par:assign-judge}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.8.1}Assign Judge}
+
+\textbf{Function Trigger:} The Organizer submits a Judge assignment.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer and Admin.
+    \item Purpose: To assign qualified Judges to rounds or submissions.
+    \item Interface: JudgeController and JudgeAssignmentService.
+    \item Data Processing: The system verifies the Judge role, checks duplicate assignments and creates an assignment record.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The Judge, round and submission must exist. The selected user must have the Judge role.
+    \item Business Rule: BR-36 and BR-37.
+    \item Normal Case: The Judge assignment is created successfully.
+    \item Abnormal Case: The operation fails because the user is not a Judge or the assignment already exists.
+\end{itemize}
+
+\paragraph*{3.8.2 View Assigned Submissions}\leavevmode\\[-0.5em]
+\label{par:view-assigned-submissions}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.8.2}View Assigned Submissions}
+
+\textbf{Function Trigger:} The Judge opens the judging dashboard.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Judge.
+    \item Purpose: To display submissions assigned to the authenticated Judge.
+    \item Interface: Judge dashboard and JudgeController.
+    \item Data Processing: The system retrieves assignments using the Judge ID from the JWT and hides Participant identity.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The user must be authenticated and must have the Judge role.
+    \item Business Rule: BR-38 and BR-39.
+    \item Normal Case: The assigned submissions are displayed.
+\end{itemize}
+
+\paragraph*{3.8.3 Blind Judging Portal}\leavevmode\\[-0.5em]
+\label{par:blind-judging-portal}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.8.3}Blind Judging Portal}
+
+\textbf{Function Trigger:} The Judge opens an assigned submission.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Judge.
+    \item Purpose: To support anonymous and impartial judging.
+    \item Interface: judge\_grading.html and JudgeController.
+    \item Data Processing: The system loads images, metadata and criteria without returning Participant identity.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The Judge must be assigned to the submission.
+    \item Business Rule: BR-38, BR-39 and BR-40.
+    \item Normal Case: The Judge views the anonymized submission.
+    \item Abnormal Case: Access is denied when the Judge is not assigned to the submission.
+\end{itemize}
+
+\subsubsection{Scoring and Feedback}
+\label{subsubsec:scoring-feedback}
+
+\paragraph*{3.9.1 Score Submission by Criteria}\leavevmode\\[-0.5em]
+\label{par:score-submission-by-criteria}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.9.1}Score Submission by Criteria}
+
+\textbf{Function Trigger:} The Judge submits scores for one or more criteria.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Judge.
+    \item Purpose: To evaluate a submission using configured criteria.
+    \item Interface: judge\_grading.html, ScoreController and ScoreService.
+    \item Data Processing: The system loads criteria, validates score values, calculates weighted scores and stores the result.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The Judge must be assigned to the submission. The score must be numeric and within the allowed range.
+    \item Business Rule: BR-40, BR-41 and BR-42.
+    \item Normal Case: The score is saved and the calculated result is displayed.
+    \item Abnormal Case: The operation fails because the score exceeds the maximum, is duplicated or has already been finalized.
+\end{itemize}
+
+\paragraph*{3.9.2 Save Feedback}\leavevmode\\[-0.5em]
+\label{par:save-feedback}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.9.2}Save Feedback}
+
+\textbf{Function Trigger:} The Judge submits comments or a recommendation.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Judge.
+    \item Purpose: To record qualitative evaluation.
+    \item Interface: judge\_grading.html, ScoreController and ScoreFeedbackService.
+    \item Data Processing: The system creates or updates feedback for the selected submission.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The Judge must be assigned and required feedback must be completed before finalization.
+    \item Business Rule: BR-40, BR-42 and BR-43.
+    \item Normal Case: The feedback is saved successfully.
+    \item Abnormal Case: The operation fails because feedback is missing or already finalized.
+\end{itemize}
+
+\paragraph*{3.9.3 Finalize Judging}\leavevmode\\[-0.5em]
+\label{par:finalize-judging}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.9.3}Finalize Judging}
+
+\textbf{Function Trigger:} The Judge selects ``Finalize Judging''.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Judge.
+    \item Purpose: To confirm completion of the judging task.
+    \item Interface: ScoreController and ScoreService.
+    \item Data Processing: The system checks all criteria, finalizes the feedback and updates the assignment status.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: All required criteria must have scores and required feedback must be completed.
+    \item Business Rule: BR-43 and BR-44.
+    \item Normal Case: The judging task is marked as completed.
+    \item Abnormal Case: Finalization fails when scores or feedback are incomplete.
+\end{itemize}
+
+\paragraph*{3.9.4 Calculate Leaderboard}\leavevmode\\[-0.5em]
+\label{par:calculate-leaderboard}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.9.4}Calculate Leaderboard}
+
+\textbf{Function Trigger:} The user opens the result or leaderboard page.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer, Admin and Public User.
+    \item Purpose: To calculate and display contest rankings.
+    \item Interface: ContestController, ScoreService and leaderboard.html.
+    \item Data Processing: The system retrieves finalized scores, applies weights, calculates totals and sorts submissions.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The contest or round must exist. Only finalized scores are included.
+    \item Business Rule: BR-45.
+    \item Normal Case: The leaderboard is generated and displayed.
+    \item Abnormal Case: No ranking is generated when there are no valid finalized scores.
+\end{itemize}
+
+\paragraph*{3.9.5 Finalize Round and Approve Winners}\leavevmode\\[-0.5em]
+\label{par:finalize-round-approve-winners}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.9.5}Finalize Round and Approve Winners}
+
+\textbf{Function Trigger:} The Organizer selects ``Finalize Round''.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer and Admin.
+    \item Purpose: To officially close a judging round and approve its winners.
+    \item Interface: ContestController, ScoreService and FinalizeRoundService.
+    \item Data Processing: The system verifies judging completion, calculates ranking, locks the round, publishes winners and sends notifications.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: All required judging assignments must be completed. The round must not already be finalized.
+    \item Business Rule: BR-44, BR-45, BR-46, BR-50, BR-54 and BR-56.
+    \item Normal Case: The round is finalized and approved winners are published.
+    \item Abnormal Case: Finalization fails because judging is incomplete or the round is already finalized.
+\end{itemize}
+
+\subsubsection{AI Anti-cheat Processing}
+\label{subsubsec:ai-anti-cheat-processing}
+
+\paragraph*{3.10.1 Normalize Image File}\leavevmode\\[-0.5em]
+\label{par:normalize-image-file}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.10.1}Normalize Image File}
+
+\textbf{Function Trigger:} A submission image is uploaded.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: System and AI Service.
+    \item Purpose: To prepare a consistent image for AI analysis.
+    \item Interface: ImageInputHandler and StorageService.
+    \item Data Processing: The system validates the image, normalizes its format and creates a processing version.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The file must be readable and supported.
+    \item Business Rule: BR-30 and BR-31.
+    \item Normal Case: A normalized image is created.
+    \item Abnormal Case: Processing fails when the image is corrupted or unsupported.
+\end{itemize}
+
+\paragraph*{3.10.2 Extract EXIF Metadata}\leavevmode\\[-0.5em]
+\label{par:extract-exif-metadata}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.10.2}Extract EXIF Metadata}
+
+\textbf{Function Trigger:} The normalized image is ready for analysis.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: AI Service.
+    \item Purpose: To extract technical information embedded in the image.
+    \item Interface: ExifExtractionEngine and AIProcessingService.
+    \item Data Processing: The system reads camera, lens, ISO, date and other available EXIF fields.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The image must exist and be readable.
+    \item Business Rule: BR-31 and BR-47.
+    \item Normal Case: EXIF information is returned for further processing.
+    \item Abnormal Case: EXIF data is unavailable or extraction fails.
+\end{itemize}
+
+\paragraph*{3.10.3 Compare EXIF with Declared Metadata}\leavevmode\\[-0.5em]
+\label{par:compare-exif-declared-metadata}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.10.3}Compare EXIF with Declared Metadata}
+
+\textbf{Function Trigger:} EXIF extraction is completed.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: AI Service and Moderator.
+    \item Purpose: To detect inconsistencies between embedded and declared metadata.
+    \item Interface: AI Detection Service, SubmissionFilmMetadata and AIFlagModel.
+    \item Data Processing: The system compares metadata fields, calculates mismatch confidence and creates an AI flag when necessary.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: Metadata must be available and threshold values must be valid.
+    \item Business Rule: BR-21, BR-47 and BR-48.
+    \item Normal Case: The comparison result is stored as an AI report.
+    \item Abnormal Case: The comparison cannot be completed when metadata is missing.
+\end{itemize}
+
+\paragraph*{3.10.4 Detect Duplicate Images}\leavevmode\\[-0.5em]
+\label{par:detect-duplicate-images}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.10.4}Detect Duplicate Images}
+
+\textbf{Function Trigger:} An image is uploaded or a duplicate check is requested.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: AI Service and Moderator.
+    \item Purpose: To detect duplicate or highly similar images.
+    \item Interface: DuplicateDetectionService and DuplicateDetectionController.
+    \item Data Processing: The system calculates pHash values, compares them with existing images and stores the similarity result.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The image and fingerprint must be valid.
+    \item Business Rule: BR-31, BR-47 and BR-49.
+    \item Normal Case: The similarity result is returned and stored.
+    \item Abnormal Case: Processing fails when fingerprint generation or comparison fails.
+\end{itemize}
+
+\paragraph*{3.10.5 Create and Review AI Flags}\leavevmode\\[-0.5em]
+\label{par:create-review-ai-flags}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.10.5}Create and Review AI Flags}
+
+\textbf{Function Trigger:} An AI warning is created or the Moderator opens the AI review dashboard.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: AI Service, Moderator and Organizer.
+    \item Purpose: To integrate AI warnings into the manual review workflow.
+    \item Interface: ModeratorController, ModeratorDashboardService and AIFlagModel.
+    \item Data Processing: The system retrieves flags, displays evidence, stores the reviewer decision and updates the flag status.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The reviewer must have the required permission and the flag must exist.
+    \item Business Rule: BR-34, BR-47, BR-48 and BR-56.
+    \item Normal Case: The AI flag is reviewed and its status is updated.
+    \item Abnormal Case: The operation fails because the reviewer is unauthorized or the flag is invalid.
+\end{itemize}
+
+\subsubsection{Gallery and Digital Archive}
+\label{subsubsec:gallery-digital-archive}
+
+\paragraph*{3.11.1 Publish Winning Submission}\leavevmode\\[-0.5em]
+\label{par:publish-winning-submission}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.11.1}Publish Winning Submission}
+
+\textbf{Function Trigger:} The Organizer approves a winning submission for publication.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Organizer and Admin.
+    \item Purpose: To publish approved winners in the digital archive.
+    \item Interface: GalleryController, ContestController and DigitalArchiveModel.
+    \item Data Processing: The system verifies the winner and creates an archive exhibit with award information and display order.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The submission must be an approved winner and must not already be published.
+    \item Business Rule: BR-50 and BR-51.
+    \item Normal Case: The winning submission appears in the public archive.
+    \item Abnormal Case: Publication fails when the submission is not approved or is already archived.
+\end{itemize}
+
+\paragraph*{3.11.2 Display Public Gallery}\leavevmode\\[-0.5em]
+\label{par:display-public-gallery}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.11.2}Display Public Gallery}
+
+\textbf{Function Trigger:} The user opens the Gallery page.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Public User.
+    \item Purpose: To display published film photography works.
+    \item Interface: gallery.html and GalleryController.
+    \item Data Processing: The system retrieves published exhibits and returns image, contest and award information.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: Only published exhibits can be returned.
+    \item Business Rule: BR-52.
+    \item Normal Case: The public gallery is displayed.
+\end{itemize}
+
+\paragraph*{3.11.3 Filter Gallery}\leavevmode\\[-0.5em]
+\label{par:filter-gallery}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.11.3}Filter Gallery}
+
+\textbf{Function Trigger:} The user selects one or more gallery filters.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Public User.
+    \item Purpose: To search exhibits by film stock, camera, contest or year.
+    \item Interface: gallery.html, GalleryController and gallery.js.
+    \item Data Processing: The system applies the selected filters to the gallery query.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: Filter values must be valid.
+    \item Business Rule: BR-52.
+    \item Normal Case: Matching exhibits are displayed.
+\end{itemize}
+
+\paragraph*{3.11.4 Public Voting}\leavevmode\\[-0.5em]
+\label{par:public-voting}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.11.4}Public Voting}
+
+\textbf{Function Trigger:} The user selects the Vote or Like action.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Authenticated User and Public User.
+    \item Purpose: To support community engagement with public exhibits.
+    \item Interface: VoteController and VoteService.
+    \item Data Processing: The system verifies exhibit visibility, checks existing votes and updates the vote count.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The exhibit must exist and be public. Duplicate voting must be checked.
+    \item Business Rule: BR-20, BR-52 and BR-53.
+    \item Normal Case: The vote is recorded successfully.
+    \item Abnormal Case: Voting is rejected when the exhibit is private, the user has already voted or voting is disabled.
+\end{itemize}
+
+\subsubsection{Notification and Certificate}
+\label{subsubsec:notification-certificate}
+
+\paragraph*{3.12.1 System Notification}\leavevmode\\[-0.5em]
+\label{par:system-notification}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.12.1}System Notification}
+
+\textbf{Function Trigger:} A contest, submission, judging or AI workflow event occurs.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: System, Organizer, Moderator, Participant and Judge.
+    \item Purpose: To inform users about important workflow changes.
+    \item Interface: NotificationController and NotificationService.
+    \item Data Processing: The system creates a notification, associates it with a user and updates its read status.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The target user and notification type must be valid.
+    \item Business Rule: BR-54 and BR-56.
+    \item Normal Case: The notification appears in the user's notification list.
+\end{itemize}
+
+\paragraph*{3.12.2 Winner Certificate}\leavevmode\\[-0.5em]
+\label{par:winner-certificate}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.12.2}Winner Certificate}
+
+\textbf{Function Trigger:} The user opens a certificate link.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Winner and Public User.
+    \item Purpose: To provide official recognition for contest winners.
+    \item Interface: CertificateController and CertificateService.
+    \item Data Processing: The system verifies the certificate identifier, retrieves winner information and generates the certificate.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: The certificate identifier must be valid. The result must be finalized and the winner must be approved.
+    \item Business Rule: BR-55.
+    \item Normal Case: The certificate is displayed or downloaded.
+    \item Abnormal Case: Certificate generation fails when the identifier is invalid or the result is not finalized.
+\end{itemize}
+
+\subsubsection{Audit and System Logging}
+\label{subsubsec:audit-system-logging}
+
+\paragraph*{3.13.1 Record Audit Log}\leavevmode\\[-0.5em]
+\label{par:record-audit-log}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.13.1}Record Audit Log}
+
+\textbf{Function Trigger:} A sensitive entity is created, updated, approved or deleted.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: System, Admin, Organizer and Moderator.
+    \item Purpose: To provide traceability for important operations.
+    \item Interface: AuditLogService and audit\_logs table.
+    \item Data Processing: The system records the actor, action, entity, entity ID, old value, new value and timestamp.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: Action, entity name and entity ID are required. Passwords and tokens must not be recorded.
+    \item Business Rule: BR-56 and BR-57.
+    \item Normal Case: The audit record is stored successfully.
+    \item Abnormal Case: Logging fails when entity information is missing or invalid.
+\end{itemize}
+
+\paragraph*{3.13.2 Database Transaction and Error Handling}\leavevmode\\[-0.5em]
+\label{par:database-transaction-error-handling}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.13.2}Database Transaction and Error Handling}
+
+\textbf{Function Trigger:} A service performs multiple related database operations.
+
+\textbf{Function Description}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Actors: Application Service, Repository and PostgreSQL Database.
+    \item Purpose: To maintain data consistency during system operations.
+    \item Interface: Application services, repository classes and PostgreSQL session.
+    \item Data Processing: The system opens a database session, executes operations, commits successful changes and rolls back failed transactions.
+\end{itemize}
+
+\textbf{Function Details}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Validation: Foreign key relationships, unique constraints and required fields must be valid.
+    \item Business Rule: BR-58, BR-59 and BR-60.
+    \item Normal Case: The transaction is committed and a successful response is returned.
+    \item Abnormal Case: The transaction is rolled back when a database or application error occurs.
+\end{itemize}
+
+\subsection{Non-Functional Requirements}
+\label{subsec:non-functional-requirements}
+
+\subsubsection{External Interfaces}
+\label{subsubsec:external-interfaces}
+
+\paragraph*{4.1.1 Customer Interface}\leavevmode\\[-0.5em]
+\label{par:customer-interface}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.1.1}Customer Interface}
+
+The system provides a web-based interface for four main user roles: Participant, Judge, Organizer, and Administrator. Each role is given access to functions appropriate to its permissions through Role-Based Access Control (RBAC).
+
+The interface supports the following main functions:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Participants can register, log in, browse contests, submit photographs, upload film-negative proof, enter technical metadata, track submission status, view scores and feedback, vote on public exhibits, and download certificates.
+    \item Judges can view their assigned submissions through an anonymized judging interface, enter scores based on configured criteria, provide comments, and finalize their evaluations.
+    \item Organizers can create and manage contests, configure categories and judging criteria, assign judges, review AI warnings, manage submissions, finalize rounds, approve winners, and publish results.
+    \item Administrators can manage users, roles, permissions, AI detection thresholds, system data, and audit logs.
+    \item Public users can view the public gallery, filter exhibits, view winning photographs, and access publicly available certificates.
+\end{itemize}
+
+The interface is implemented as a responsive web application using HTML, CSS, and JavaScript. It is designed to work on desktop computers, tablets, and smartphones. The system uses clear navigation, consistent forms, validation messages, role-specific dashboards, and appropriate feedback after user operations.
+
+The system does not currently provide a native mobile application. Mobile access is supported through responsive web pages.
+
+\paragraph*{4.1.2 Authentication and Authorization Interface}\leavevmode\\[-0.5em]
+\label{par:authentication-authorization-interface}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.1.2}Authentication and Authorization Interface}
+
+The system provides authentication interfaces for account registration, login, logout, password recovery, and password reset.
+
+Supported authentication mechanisms include:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Username/email and password authentication.
+    \item OTP verification through email during registration and password recovery.
+    \item Google Sign-In when the required Google OAuth configuration is available.
+    \item JWT-based authentication for protected API requests.
+    \item Role-Based Access Control for Administrator, Organizer, Judge, and Participant roles.
+\end{itemize}
+
+Protected operations verify the user's authentication status and role before allowing access. Sensitive operations, such as managing contests, assigning judges, reviewing AI warnings, entering scores, and managing users, are restricted to authorized roles.
+
+\paragraph*{4.1.3 Image and File Storage Interface}\leavevmode\\[-0.5em]
+\label{par:image-file-storage-interface}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.1.3}Image and File Storage Interface}
+
+The system provides an image storage interface for uploading and retrieving contest photographs and supporting files.
+
+The storage layer supports:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Local file storage for development and testing.
+    \item Cloudinary storage for deployments configured with Cloudinary.
+    \item Image validation based on file extension, MIME type, file size, and image integrity.
+    \item Support for common image formats such as JPEG, PNG, WebP, BMP, and TIFF.
+    \item SHA-256 calculation for uploaded files.
+    \item Image dimension extraction and thumbnail generation.
+    \item Original image preservation for judging and verification.
+    \item Dynamic image access for galleries and image viewers.
+\end{itemize}
+
+The maximum upload size is configurable and is 50 MB by default. The storage provider is selected through system configuration and is not hard-coded into the application services.
+
+\paragraph*{4.1.4 AI Verification Interface}\leavevmode\\[-0.5em]
+\label{par:ai-verification-interface}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.1.4}AI Verification Interface}
+
+The system communicates with its AI verification and image-processing components to analyze submitted photographs.
+
+The AI-related interface supports:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Image normalization before analysis.
+    \item EXIF metadata extraction.
+    \item Comparison between declared technical metadata and extracted EXIF metadata.
+    \item Perceptual hash calculation for duplicate-image detection.
+    \item Similarity comparison with other submissions.
+    \item AI-generated or manipulated image detection where the configured detection service is available.
+    \item Creation and storage of AI analysis reports and warning flags.
+    \item Manual review of AI warnings by authorized staff.
+\end{itemize}
+
+AI results are used as warning information to support manual review. They do not automatically replace the Organizer's or Moderator's final decision.
+
+\paragraph*{4.1.5 Email and Notification Interface}\leavevmode\\[-0.5em]
+\label{par:email-notification-interface}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.1.5}Email and Notification Interface}
+
+The system provides internal notifications and email communication for important workflow events.
+
+The notification interface supports:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Registration OTP delivery.
+    \item Password recovery and password reset links.
+    \item Submission confirmation.
+    \item Contest and judging status updates.
+    \item AI review and submission status notifications.
+    \item Winner and result notifications.
+    \item In-application notification lists and read-status management.
+\end{itemize}
+
+Email delivery uses an SMTP server configured through environment variables. If SMTP is not configured, the core application can still operate, but external email delivery is unavailable.
+
+\paragraph*{4.1.6 Database Interface}\leavevmode\\[-0.5em]
+\label{par:database-interface}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.1.6}Database Interface}
+
+The system uses a relational database interface implemented through SQLAlchemy repositories and database models.
+
+The database stores:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item User accounts, roles, and permissions.
+    \item Contests, rounds, categories, schedules, and criteria.
+    \item Submissions, uploaded files, and film metadata.
+    \item Judge assignments, scores, and feedback.
+    \item AI analysis reports and warning flags.
+    \item Notifications, votes, certificates, digital archive records, and audit logs.
+\end{itemize}
+
+PostgreSQL is the primary database target for the current system. Database access is separated from business logic through repositories and database adapters. The codebase also contains database adapter support for other database systems, but PostgreSQL is the recommended configuration for deployment and testing.
+
+\subsubsection{Quality Attributes}
+\label{subsubsec:quality-attributes}
+
+\paragraph*{4.2.1 Usability}\leavevmode\\[-0.5em]
+\label{par:usability}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.2.1}Usability}
+
+The system should provide a clear and consistent interface for all supported user roles.
+
+Usability requirements include:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Each role should see only the functions relevant to its responsibilities.
+    \item Navigation, buttons, forms, validation messages, and status indicators should be presented consistently.
+    \item Submission forms should clearly identify required fields and accepted file formats.
+    \item Judges should be able to access assigned submissions and enter scores without seeing participant identity information.
+    \item Organizers should be able to monitor contest progress, review warnings, and manage judging results from dedicated dashboards.
+    \item The interface should remain usable on desktop, tablet, and smartphone screen sizes.
+    \item Error messages should explain the problem and provide enough information for the user to correct it.
+    \item Public gallery pages and image viewers should support efficient browsing and image inspection.
+\end{itemize}
+
+The target familiarization time is:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Participants: no more than 1 hour to learn registration, contest browsing, submission, and result viewing.
+    \item Judges: approximately 1 to 2 hours to learn assigned-submission review, scoring, feedback, and finalization.
+    \item Organizers and Administrators: approximately 2 to 3 hours with supporting documentation to learn contest management, user management, AI review, and result publication.
+\end{itemize}
+
+For a normal submission workflow, the target is that a participant can complete the required form and submit a valid photograph within approximately 2 minutes, excluding upload time for large files and external email delivery time.
+
+Usability should be evaluated through functional testing, task-completion time, error rates, and feedback from representative users.
+
+\paragraph*{4.2.2 Reliability}\leavevmode\\[-0.5em]
+\label{par:reliability}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.2.2}Reliability}
+
+The system should preserve the consistency and traceability of contest data throughout the contest lifecycle.
+
+Reliability requirements include:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Database transactions should be committed only when all related operations complete successfully.
+    \item Failed operations should roll back incomplete database changes.
+    \item Foreign-key, unique-value, required-field, and role constraints should be enforced.
+    \item A submission should not be judged unless it satisfies the required contest and assignment rules.
+    \item A judge should not access submissions that are not assigned to that judge.
+    \item Finalized scores and rounds should not be modified without the appropriate authorization.
+    \item Duplicate votes should be rejected.
+    \item AI warnings and manual review decisions should be stored for later auditing.
+    \item Sensitive operations should be recorded in audit logs without storing passwords, tokens, or other secrets.
+    \item Original uploaded files should be preserved when configured storage is available.
+    \item Automatic contest and round status transitions should be handled by the scheduler service.
+\end{itemize}
+
+The prototype target is stable operation during demonstrations and controlled testing. A production availability target of 99.9\% per year may be adopted only after production infrastructure, monitoring, backup, deployment, and recovery procedures have been established.
+
+For incident management, the intended targets are:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Critical application errors should be detected and investigated as soon as possible.
+    \item Database and application recovery procedures should aim for a recovery time of less than 30 minutes for serious incidents, subject to the deployment environment.
+    \item Regular database backups and storage backups should be configured before production deployment.
+\end{itemize}
+
+Because the current project is a student-developed prototype, MTBF of 10,000 hours and an annual uptime of 99.9\% have not yet been experimentally verified. These values should therefore be treated as future production targets rather than confirmed system capabilities.
+
+\paragraph*{4.2.3 Security}\leavevmode\\[-0.5em]
+\label{par:security}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.2.3}Security}
+
+The system should protect user accounts, contest data, submissions, and judging results.
+
+Security requirements include:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Passwords must be stored using secure password hashing.
+    \item Authentication tokens must be validated for protected requests.
+    \item Role and permission checks must be applied to administrative, judging, contest-management, and review operations.
+    \item Uploaded files must be validated before being stored or processed.
+    \item File size and allowed MIME type restrictions must be enforced.
+    \item Secrets such as database credentials, SMTP credentials, Google credentials, and Cloudinary credentials must be provided through environment variables.
+    \item Audit logs must not contain passwords, access tokens, or other sensitive authentication data.
+    \item Participant identity must be hidden from judges during blind judging.
+    \item Production deployments should use HTTPS to protect credentials, tokens, and uploaded data during transmission.
+    \item Error responses should not expose internal implementation details in production mode.
+\end{itemize}
+
+\paragraph*{4.2.4 Performance}\leavevmode\\[-0.5em]
+\label{par:performance}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.2.4}Performance}
+
+The system should provide acceptable response times for normal contest-management operations.
+
+The performance targets for the current project are:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Normal API requests that read or update database records should respond within approximately 2 seconds under ordinary development or demonstration load.
+    \item Requests under heavy load should return within 5 seconds when possible.
+    \item Image upload and AI processing times may be longer because they depend on file size, image complexity, storage provider performance, and external processing services.
+    \item Gallery pages should use thumbnails or resized images to reduce network usage and improve loading time.
+    \item Database queries should retrieve only the required records and should use appropriate indexes as the dataset grows.
+    \item Long-running AI analysis should not unnecessarily block unrelated contest-management operations.
+\end{itemize}
+
+The current implementation has not been load-tested to prove a throughput of 1,000 transactions per minute or support for 10,000 concurrent users. Those figures should be treated as future scalability targets, not current guaranteed capabilities.
+
+For a future production deployment, performance can be improved through:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item PostgreSQL query and index optimization.
+    \item Connection pooling.
+    \item Image thumbnail and caching strategies.
+    \item Cloud storage and CDN usage.
+    \item Background processing for AI analysis and email delivery.
+    \item Horizontal application scaling and load balancing.
+    \item Monitoring of CPU, memory, disk, network, database connections, and request latency.
+\end{itemize}
+
+\paragraph*{4.2.5 Maintainability}\leavevmode\\[-0.5em]
+\label{par:maintainability}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.2.5}Maintainability}
+
+The system follows a Clean Architecture structure to separate responsibilities between the presentation/API layer, services, domain models, repositories, infrastructure adapters, and database models.
+
+Maintainability requirements include:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Business rules should remain in services or domain components rather than being duplicated in controllers.
+    \item Database access should be performed through repositories and adapters.
+    \item External services such as email, storage, and AI processing should be replaceable through service interfaces.
+    \item Configuration should be controlled through environment variables and configuration classes.
+    \item API behavior should be documented through the existing Swagger configuration and endpoint definitions.
+    \item Automated tests should cover authentication, contest management, submissions, judging, AI verification, gallery, voting, notifications, and database behavior.
+    \item New features should preserve existing role and transaction rules.
+\end{itemize}
+
+\paragraph*{4.2.6 Compatibility and Portability}\leavevmode\\[-0.5em]
+\label{par:compatibility-portability}
+\addcontentsline{toc}{paragraph}{\protect\numberline{4.2.6}Compatibility and Portability}
+
+The system should run in environments that support Python, Flask, the configured relational database, and the required Python dependencies.
+
+The application is intended to support:
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Modern desktop browsers.
+    \item Modern mobile and tablet browsers.
+    \item Local development using local storage.
+    \item Deployment using Cloudinary for image storage.
+    \item PostgreSQL-based deployment.
+    \item Configuration through environment variables.
+    \item Testing with the application's Flask testing configuration.
+\end{itemize}
+
+The current system is a web application and does not require users to install a separate desktop or mobile application.
+
+\subsection{Requirement Appendix}
+\label{subsec:requirement-appendix}
+
+\subsubsection{Business Rules}
+\label{subsubsec:business-rules}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.12\textwidth}|>{\raggedright\arraybackslash}p{0.80\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{ID}} & \multicolumn{1}{c|}{\textbf{Rule Definition}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|c|}{\textbf{ID}} & \multicolumn{1}{c|}{\textbf{Rule Definition}} \\
+\hline
+\endhead
+BR-01 & Each username must be unique in the system. \\
+\hline
+BR-02 & Each email address must be unique in the system. \\
+\hline
+BR-03 & Passwords must be hashed before being stored in the database. \\
+\hline
+BR-04 & A newly registered account is assigned the Participant role by default. \\
+\hline
+BR-05 & Only active accounts are allowed to log in. \\
+\hline
+BR-06 & Invalid login attempts must return a generic authentication error. \\
+\hline
+BR-07 & JWT tokens must contain the authenticated user ID and role information. \\
+\hline
+BR-08 & Expired or invalid JWT tokens must not be accepted. \\
+\hline
+BR-09 & Google accounts must be created only after successful Google token verification. \\
+\hline
+BR-10 & A Google email must not create a duplicate local account. \\
+\hline
+BR-11 & Password recovery tokens must be time-limited and single-use. \\
+\hline
+BR-12 & Only the account owner can update their own profile. \\
+\hline
+BR-13 & Only Admin users can manage system users and roles. \\
+\hline
+BR-14 & Only valid system roles can be assigned to a user. \\
+\hline
+BR-15 & Suspended users cannot access protected functions. \\
+\hline
+BR-16 & Only Admin or Organizer users can create contests. \\
+\hline
+BR-17 & Each contest must have a unique slug. \\
+\hline
+BR-18 & A contest end date must be later than its start date. \\
+\hline
+BR-19 & Each contest can have only one contest settings record. \\
+\hline
+BR-20 & Submission limits must be positive numbers. \\
+\hline
+BR-21 & AI risk and duplicate thresholds must be within the configured range. \\
+\hline
+BR-22 & A round must belong to exactly one contest. \\
+\hline
+BR-23 & Round numbers must be unique within the same contest. \\
+\hline
+BR-24 & A closed or finalized round cannot receive new submissions. \\
+\hline
+BR-25 & Each criterion must belong to one round. \\
+\hline
+BR-26 & Criterion maximum score and weight must be positive values. \\
+\hline
+BR-27 & A Participant can edit only their own draft submission. \\
+\hline
+BR-28 & A Participant cannot exceed the submission limit configured for a contest. \\
+\hline
+BR-29 & Official submissions must contain all required files and film metadata. \\
+\hline
+BR-30 & Only supported and valid image files can be uploaded. \\
+\hline
+BR-31 & The original uploaded image must not be overwritten during AI processing. \\
+\hline
+BR-32 & Each submission has one film metadata record. \\
+\hline
+BR-33 & A submitted entry cannot be edited as a draft. \\
+\hline
+BR-34 & Only authorized Moderators or Organizers can review submissions. \\
+\hline
+BR-35 & A rejected submission must contain a rejection reason. \\
+\hline
+BR-36 & Only users with the Judge role can be assigned to judging tasks. \\
+\hline
+BR-37 & Duplicate Judge assignments for the same round or submission are not allowed. \\
+\hline
+BR-38 & A Judge can access only submissions assigned to that Judge. \\
+\hline
+BR-39 & Participant identity must be hidden during blind judging. \\
+\hline
+BR-40 & A Judge can score only assigned submissions. \\
+\hline
+BR-41 & A score must be between zero and the criterion maximum score. \\
+\hline
+BR-42 & Only one score is allowed for each submission, Judge and criterion combination. \\
+\hline
+BR-43 & All required criteria must be scored before judging can be finalized. \\
+\hline
+BR-44 & Finalized scores cannot be modified through the normal Judge interface. \\
+\hline
+BR-45 & Only finalized scores are included in leaderboard calculation. \\
+\hline
+BR-46 & A round cannot be finalized while required judging assignments are incomplete. \\
+\hline
+BR-47 & AI results are warnings for human review and do not automatically reject submissions. \\
+\hline
+BR-48 & AI flags must store the risk type, confidence score and review status. \\
+\hline
+BR-49 & Duplicate detection must use the configured similarity threshold. \\
+\hline
+BR-50 & Only approved submissions can be published in the digital archive. \\
+\hline
+BR-51 & A submission cannot be published twice in the same contest. \\
+\hline
+BR-52 & Only published exhibits are visible in the public gallery. \\
+\hline
+BR-53 & A public user cannot vote repeatedly when the one-vote policy is enabled. \\
+\hline
+BR-54 & Notifications must belong to a valid target user. \\
+\hline
+BR-55 & Certificates can be generated only for approved winners. \\
+\hline
+BR-56 & Important administrative and moderation operations must be recorded in audit logs. \\
+\hline
+BR-57 & Passwords, JWT tokens and other sensitive data must not be written to audit logs. \\
+\hline
+BR-58 & Related database changes must be committed as one transaction. \\
+\hline
+BR-59 & Failed database operations must be rolled back. \\
+\hline
+BR-60 & Internal database errors must not be exposed in API responses. \\
+\hline
+\end{longtable}

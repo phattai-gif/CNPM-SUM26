@@ -7,21 +7,17 @@
 
   const AUTH_ROUTE_PREFIXES = ['/auth/login', '/auth/signup', '/auth/register'];
 
+  Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
+
   function storageGet(key) {
-    const localValue = localStorage.getItem(key);
-    if (localValue !== null && localValue !== undefined && localValue !== '') {
-      return localValue;
-    }
     return sessionStorage.getItem(key);
   }
 
   function storageSet(key, value) {
-    localStorage.setItem(key, value);
     sessionStorage.setItem(key, value);
   }
 
   function storageRemove(key) {
-    localStorage.removeItem(key);
     sessionStorage.removeItem(key);
   }
 
@@ -121,7 +117,7 @@
         ...options,
         method,
         headers,
-        credentials: options.credentials || 'same-origin'
+        credentials: options.credentials || 'omit'
       });
 
       const contentType = response.headers.get('content-type') || '';
@@ -288,14 +284,14 @@
         return originalFetch(input, {
           ...init,
           headers: requestHeaders,
-          credentials: init.credentials || 'same-origin'
+          credentials: init.credentials || 'omit'
         });
       }
 
       const mergedRequest = new Request(input, {
         ...init,
         headers: requestHeaders,
-        credentials: init.credentials || input.credentials || 'same-origin'
+        credentials: init.credentials || input.credentials || 'omit'
       });
       return originalFetch(mergedRequest);
     };

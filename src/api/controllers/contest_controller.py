@@ -460,7 +460,6 @@ def public_judge_grading(submission_id):
     submission = {
         'id': submission_id,
         'title': 'Bài mẫu: Bình minh trên phố cổ',
-        'author': 'Nguyễn Văn A',
         'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
         'camera': 'Nikon F3',
         'film_stock': 'Kodak Portra 400',

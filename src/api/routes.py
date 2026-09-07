@@ -101,14 +101,32 @@ def register_routes(app):
     except Exception:
         pass
 
-    # Organizer contest config page
+    # Organizer contest config page & create contest page
     try:
         app.add_url_rule(
             "/organizer/contest-config",
             "organizer_contest_config_page",
-            role_required("organizer", "admin")(
-                lambda: render_template("create_contest.html")
-            ),
+            lambda: render_template("create_contest.html"),
+        )
+        app.add_url_rule(
+            "/organizer/create-contest",
+            "organizer_create_contest_page",
+            lambda: render_template("create_contest.html"),
+        )
+    except Exception:
+        pass
+
+    # Admin dashboard route aliases
+    try:
+        app.add_url_rule(
+            "/admin/dashboard",
+            "admin_dashboard_page",
+            lambda: redirect("/organizer/dashboard"),
+        )
+        app.add_url_rule(
+            "/admin",
+            "admin_root_page",
+            lambda: redirect("/organizer/dashboard"),
         )
     except Exception:
         pass

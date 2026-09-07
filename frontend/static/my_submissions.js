@@ -72,7 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.AuthSession) {
                         window.AuthSession.logout();
                     } else {
-                        localStorage.clear();
+                        sessionStorage.removeItem('authToken');
+                        sessionStorage.removeItem('authUser');
+                        sessionStorage.removeItem('authRole');
                         window.location.href = '/auth/login';
                     }
                 });

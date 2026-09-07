@@ -43,19 +43,6 @@ def _request_user():
   return user if isinstance(user, dict) else {}
 
 
-def _set_auth_cookie(response, token):
-  response.set_cookie(
-    'access_token',
-    token,
-    max_age=24 * 60 * 60,
-    httponly=True,
-    secure=False,
-    samesite='Lax',
-    path='/',
-  )
-  return response
-
-
 def verify_google_token(id_token):
   """Verify Google's signed ID token and audience on the backend."""
   from google.auth.transport import requests as google_requests
@@ -121,9 +108,6 @@ def google_login():
         return jsonify({'message': 'Could not authenticate Google user.'}), 500
 
     resp, status_code = _jwt_response(user)
-    token_json = resp.get_json() if hasattr(resp, 'get_json') else {}
-    if token_json and token_json.get('token'):
-        _set_auth_cookie(resp, token_json['token'])
     return resp, status_code
 
 
@@ -294,26 +278,13 @@ def register():
       '24 hours',
     )
 
-    # Auto-generate JWT token for newly registered user (auto-login)
-    payload = {
-      'user_id': new_user.id,
-      'username': new_user.username,
-      'role': new_user.role,
-      'exp': datetime.utcnow() + timedelta(hours=24)
-    }
-    secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
-    token = jwt.encode(payload, secret_key, algorithm='HS256')
-
     result = register_response_schema.dump(new_user)
-    response = jsonify({
+    return jsonify({
       'message': 'User registered successfully!',
-      'token': token,
       'verification_token': verification_token,
       'email_verification_required': True,
       'user': result
-    })
-    _set_auth_cookie(response, token)
-    return response, 201
+    }), 201
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -382,7 +353,6 @@ def login():
             'role': user.role
         }
     })
-    _set_auth_cookie(response, token)
     return response, 200
 
 
