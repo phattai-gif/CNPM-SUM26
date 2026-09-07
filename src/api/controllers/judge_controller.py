@@ -1,4 +1,5 @@
-﻿from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
+from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
+from flask import Blueprint, request, jsonify, render_template, flash, redirect, session, url_for
 from api.controllers.response_utils import safe_jsonify
 
 try:
@@ -64,7 +65,7 @@ def _serialize_assignments(items):
 
 
 @judge_bp.route('/organizer/judges', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def list_available_judges():
     """API Láº¥y danh sÃ¡ch giÃ¡m kháº£o kháº£ dá»¥ng Ä‘á»ƒ phÃ¢n cÃ´ng."""
     try:
@@ -114,7 +115,7 @@ def list_available_judges():
     '/organizer/contests/<int:contest_id>/rounds/<int:round_id>/judges',
     methods=['POST']
 )
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def assign_judge_to_round(contest_id, round_id):
     """API PhÃ¢n cÃ´ng giÃ¡m kháº£o vÃ o vÃ²ng thi hoáº·c bÃ i thi cá»¥ thá»ƒ."""
     
@@ -191,7 +192,7 @@ def assign_judge_to_round(contest_id, round_id):
     '/organizer/contests/<int:contest_id>/rounds/<int:round_id>/judges',
     methods=['GET']
 )
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def get_round_judges(contest_id, round_id):
     """API Láº¥y danh sÃ¡ch giÃ¡m kháº£o Ä‘Ã£ Ä‘Æ°á»£c phÃ¢n cÃ´ng trong vÃ²ng thi."""
 
@@ -236,7 +237,7 @@ def get_round_judges(contest_id, round_id):
     '<int:round_id>/judges/<int:judge_id>',
     methods=['DELETE']
 )
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def remove_judge_from_round(contest_id, round_id, judge_id):
     """API Há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o khá»i vÃ²ng thi."""
 
@@ -290,7 +291,7 @@ def remove_judge_from_round(contest_id, round_id, judge_id):
     '/judge/assignments',
     methods=['GET']
 )
-@role_required('judge', 'admin')
+@role_required('judge')
 def get_my_assignments():
     """API DÃ nh cho giÃ¡m kháº£o xem cÃ¡c nhiá»‡m vá»¥ cháº¥m thi."""
 
@@ -325,9 +326,10 @@ def judge_grading_ui(submission_id):
         # Mock submission
         submission = {
             'id': submission_id,
-            'title': f'BÃ i máº«u #{submission_id}: BÃ¬nh minh trÃªn phá»‘ cá»•',
-            'author': 'Nguyá»…n VÄƒn A',
+            'title': f'Bài mẫu #{submission_id}: Bình minh trên phố cổ',
             'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
+            'negative_film_url': None,
+            'contact_sheet_url': None,
             'camera': 'Nikon F3',
             'film_stock': 'Kodak Portra 400',
             'prev_id': submission_id - 1 if submission_id > 1 else None,
@@ -341,13 +343,24 @@ def judge_grading_ui(submission_id):
             {'id': 3, 'name': 'Creativity', 'max': 30},
         ]
 
-        # Mock existing scores and comment (could be None)
-        existing_scores = {str(c['id']): None for c in criteria_list}
-        existing_comment = ''
+        ai_warning = {
+            'verification': 'Review Required',
+            'duplicate_similarity': '92%',
+            'metadata_status': 'Mismatch',
+        }
+
+        grading_state = session.get('judge_grading', {}).get(str(submission_id), {})
+        existing_scores = grading_state.get(
+            'scores',
+            {str(c['id']): None for c in criteria_list},
+        )
+        existing_comment = grading_state.get('comment', '')
+        is_finalized = bool(grading_state.get('is_finalized', False))
 
         if request.method == 'POST':
             form = request.form.to_dict(flat=True)
             existing_comment = form.get('comment', '')
+            action = form.get('action', 'save_draft')
             submitted_scores = {}
             for crit in criteria_list:
                 key = str(crit['id'])
@@ -357,19 +370,49 @@ def judge_grading_ui(submission_id):
                 except ValueError:
                     submitted_scores[key] = None
 
-            # In demo mode, we don't persist; just flash and redirect to GET
-            flash('Äiá»ƒm vÃ  nháº­n xÃ©t Ä‘Ã£ Ä‘Æ°á»£c nháº­n (demo).')
+            if is_finalized:
+                flash('Bài chấm đã finalized và không thể chỉnh sửa.')
+                return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
+
+            if action == 'finalize' and any(
+                submitted_scores.get(str(criterion['id'])) is None
+                for criterion in criteria_list
+            ):
+                flash('Vui lòng nhập đủ điểm cho tất cả criteria trước khi finalize.')
+                return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
+
+            grading_states = dict(session.get('judge_grading', {}))
+            grading_states[str(submission_id)] = {
+                'scores': submitted_scores,
+                'comment': existing_comment,
+                'is_finalized': action == 'finalize',
+            }
+            session['judge_grading'] = grading_states
+            flash(
+                'Bài chấm đã finalized.'
+                if action == 'finalize'
+                else 'Draft điểm và nhận xét đã được lưu.'
+            )
             return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
 
-        return render_template('judge_grading.html', submission=submission, criteria_list=criteria_list, existing_scores=existing_scores, existing_comment=existing_comment)
+        return render_template(
+            'judge_grading.html',
+            submission=submission,
+            criteria_list=criteria_list,
+            existing_scores=existing_scores,
+            existing_comment=existing_comment,
+            is_finalized=is_finalized,
+            ai_warning=ai_warning,
+        )
 
     except Exception as e:
         # Safe fallback: render template with minimal data and show error message
         fallback_submission = {
             'id': submission_id,
-            'title': 'KhÃ´ng thá»ƒ táº£i bÃ i dá»± thi',
-            'author': 'N/A',
+            'title': 'Không thể tải bài dự thi',
             'image_url': None,
+            'negative_film_url': None,
+            'contact_sheet_url': None,
             'camera': '',
             'film_stock': '',
             'prev_id': None,

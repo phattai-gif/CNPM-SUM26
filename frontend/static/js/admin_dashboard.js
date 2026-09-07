@@ -68,7 +68,7 @@
     try {
       const data = await window.apiClient.get('/admin/dashboard/metrics');
       const metrics = data.metrics || {};
-      
+
       const setVal = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.textContent = val ?? 0;
@@ -81,14 +81,58 @@
       setVal('statParticipants', metrics.participants_count);
       setVal('statLockedUsers', metrics.locked_users);
       setVal('statTotalContests', metrics.total_contests);
+      setVal('statActiveContests', metrics.active_contests);
       setVal('statPendingContests', metrics.pending_contests);
       setVal('statTotalSubmissions', metrics.total_submissions);
+      setVal('statPendingSubmissions', metrics.pending_submissions);
       setVal('statAiFlaggedSubmissions', metrics.ai_flagged_submissions);
+      setVal('statHighSeverityAiFlags', metrics.high_severity_ai_flags);
 
+      renderSystemHealth(data.system_health || {});
       renderRecentActivities(data.recent_activities || []);
     } catch (error) {
       console.error('Error fetching admin metrics:', error);
     }
+  }
+
+  function renderSystemHealth(systemHealth) {
+    const container = document.getElementById('systemHealthContainer');
+    if (!container) return;
+
+    const services = [
+      { key: 'database', defaultName: 'Database (PostgreSQL Supabase)' },
+      { key: 'storage', defaultName: 'Storage (Tải lên media)' },
+      { key: 'email', defaultName: 'Dịch vụ Email Notification' }
+    ];
+
+    container.innerHTML = services.map(srv => {
+      const info = systemHealth[srv.key] || {};
+      const status = (info.status || 'online').toLowerCase();
+      const isOnline = status === 'online' || status === 'active' || status === 'ok';
+
+      const badgeBg = isOnline ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+      const badgeColor = isOnline ? '#4ade80' : '#f87171';
+      const badgeBorder = isOnline ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+      const dot = isOnline ? '🟢' : '🔴';
+      const statusText = isOnline ? 'HOẠT ĐỘNG TỐT (ONLINE)' : 'CẦN KIỂM TRA (DEGRADED)';
+
+      return `
+        <div style="background: rgba(13, 22, 34, 0.6); border: 1px solid #1e2a3a; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <div style="font-weight: 700; color: #f0f4f8; font-size: 0.95rem; margin-bottom: 4px;">
+              ${escapeHtml(info.name || srv.defaultName)}
+            </div>
+            <div style="font-size: 0.8rem; color: ${badgeColor}; display: flex; align-items: center; gap: 6px;">
+              <span>${dot}</span>
+              <span style="font-weight: 700;">${statusText}</span>
+            </div>
+          </div>
+          <span style="padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder};">
+            ${isOnline ? 'STABLE' : 'ALERT'}
+          </span>
+        </div>
+      `;
+    }).join('');
   }
 
   function renderRecentActivities(activities) {
@@ -190,7 +234,7 @@
             const isSelf = currentUserId && String(currentUserId) === String(u.id);
             const roleClass = `role-${u.role || 'participant'}`;
             const statusClass = `status-${u.status || 'active'}`;
-            
+
             return `
               <tr>
                 <td>#${escapeHtml(u.id)}</td>

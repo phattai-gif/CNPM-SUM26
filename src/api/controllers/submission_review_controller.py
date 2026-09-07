@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request
 from api.controllers.response_utils import safe_jsonify
 from api.role_required import token_required, role_required
 from services.submission_review_service import SubmissionReviewService
@@ -42,9 +42,8 @@ def submission_review(submission_id):
 
 # API Routes for Submission Review CRUD
 @bp.route('/api/submissions/<int:submission_id>/reviews', methods=['POST'])
-@token_required
-@role_required(['judge', 'admin', 'organizer'])
-def create_submission_review(current_user, submission_id):
+@role_required('organizer')
+def create_submission_review(submission_id):
     """
     Create a review for a submission
     ---
@@ -85,10 +84,11 @@ def create_submission_review(current_user, submission_id):
     review_status = data.get('review_status', 'pending')
     review_notes = data.get('review_notes')
     decision_reason = data.get('decision_reason')
+    reviewer_id = request.user.get('user_id')
     
     review = submission_review_service.create_review(
         submission_id=submission_id,
-        reviewer_id=current_user.id,
+        reviewer_id=reviewer_id,
         review_status=review_status,
         review_notes=review_notes,
         decision_reason=decision_reason
@@ -108,7 +108,7 @@ def create_submission_review(current_user, submission_id):
 
 @bp.route('/api/submissions/<int:submission_id>/reviews', methods=['GET'])
 @token_required
-def get_submission_reviews(current_user, submission_id):
+def get_submission_reviews(submission_id):
     """
     Get all reviews for a submission
     ---
@@ -150,7 +150,7 @@ def get_submission_reviews(current_user, submission_id):
 
 @bp.route('/api/reviews/<int:review_id>', methods=['GET'])
 @token_required
-def get_review(current_user, review_id):
+def get_review(review_id):
     """
     Get a specific review
     ---
@@ -172,8 +172,6 @@ def get_review(current_user, review_id):
         404:
           description: Review not found
     """
-    review = submission_review_service.repository.session.query(SubmissionReviewRepository.__bases__[0].__subclasses__()[0]).filter_by(id=review_id).first()
-    # Simplified: just get from session
     from infrastructure.models.app import SubmissionReviewModel
     review = submission_review_service.repository.session.query(SubmissionReviewModel).filter_by(id=review_id).first()
     
@@ -193,9 +191,8 @@ def get_review(current_user, review_id):
 
 
 @bp.route('/api/reviews/<int:review_id>', methods=['PUT'])
-@token_required
-@role_required(['judge', 'admin', 'organizer'])
-def update_review(current_user, review_id):
+@role_required('organizer')
+def update_review(review_id):
     """
     Update a review
     ---

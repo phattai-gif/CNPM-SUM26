@@ -36,7 +36,7 @@ def _filters():
 
 
 @moderator_bp.route('/dashboard', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def dashboard():
     try:
         user = _request_user()
@@ -58,7 +58,7 @@ def dashboard():
 
 
 @moderator_bp.route('/submissions', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def submissions():
     try:
         user = _request_user()
@@ -77,7 +77,7 @@ def submissions():
 
 
 @moderator_bp.route('/submissions/<int:submission_id>/ai-report', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def submission_ai_report(submission_id):
     try:
         user = _request_user()
@@ -98,19 +98,19 @@ def submission_ai_report(submission_id):
 
 
 @moderator_bp.route('/submissions/<int:submission_id>/approve', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def approve_submission(submission_id):
     return _moderate(submission_id, 'approve')
 
 
 @moderator_bp.route('/submissions/<int:submission_id>/reject', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def reject_submission(submission_id):
     return _moderate(submission_id, 'reject')
 
 
 @moderator_bp.route('/submissions/<int:submission_id>/dismiss-flag', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def dismiss_flag(submission_id):
     return _moderate(submission_id, 'dismiss-flag')
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -183,6 +183,60 @@
             display: block;
         }
 
+        .media-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .media-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .media-tab.active {
+            background: rgba(245, 166, 35, 0.12);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .media-tab:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .ai-warning {
+            border-color: rgba(245, 166, 35, 0.45);
+        }
+
+        .ai-warning-list {
+            display: grid;
+            gap: 10px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .ai-warning-list li {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            color: var(--muted);
+        }
+
+        .ai-warning-list strong {
+            color: #f5a623;
+            text-align: right;
+        }
+
         .text-white {
             color: #8899aa;
             font-weight: 500;
@@ -200,6 +254,53 @@
 
         .meta-grid strong {
             color: #e8edf2;
+        }
+
+        /* ===== SCORE SUMMARY ===== */
+        .score-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin: 4px 0 20px;
+            padding: 14px;
+            background: #0d1622;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+        }
+
+        .score-summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .score-summary-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .score-summary-value {
+            color: #f5a623;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .judging-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 16px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(245, 166, 35, 0.12);
+            color: #f5a623;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .judging-status.is-finalized {
+            background: rgba(52, 211, 153, 0.12);
+            color: #34d399;
         }
 
         /* ===== FORM ELEMENTS ===== */
@@ -320,7 +421,7 @@
         <div class="header-bar">
             <div>
                 <h4>Judge Grading Panel</h4>
-                <p>{{ submission.title }} · Author: {{ submission.author }}</p>
+                <p>{{ submission.title }}</p>
             </div>
             <div class="btn-group">
                 {% if submission.prev_id %}
@@ -346,6 +447,11 @@
 
             <div class="col-lg-7">
                 <div class="card">
+                    <div class="media-tabs" role="tablist" aria-label="Submission media">
+                        <button type="button" class="media-tab active" data-media-key="main">Main Image</button>
+                        <button type="button" class="media-tab" data-media-key="negative">Negative Film</button>
+                        <button type="button" class="media-tab" data-media-key="contact">Contact Sheet</button>
+                    </div>
                     <div class="image-container">
                                                 {% if submission.image_url %}
                                                     <img id="judgeSubmissionPreview" src="{{ submission.image_url }}" alt="Submission image">
@@ -356,6 +462,15 @@
                                         <div class="d-flex justify-content-end mt-3">
                                                 <button type="button" class="btn btn-outline-secondary" id="openHdViewerBtn">Open HD Viewer</button>
                                         </div>
+                </div>
+
+                <div class="card ai-warning">
+                    <h6>AI Warning</h6>
+                    <ul class="ai-warning-list">
+                        <li><span>AI Verification</span><strong>{{ ai_warning.verification if ai_warning is defined else 'Review Required' }}</strong></li>
+                        <li><span>Duplicate Similarity</span><strong>{{ ai_warning.duplicate_similarity if ai_warning is defined else '92%' }}</strong></li>
+                        <li><span>Metadata Status</span><strong>{{ ai_warning.metadata_status if ai_warning is defined else 'Mismatch' }}</strong></li>
+                    </ul>
                 </div>
 
                 <div class="card">
@@ -370,23 +485,49 @@
             <div class="col-lg-5">
                 <div class="card">
                     <h5>Grading Criteria</h5>
-                    <form method="post" action="{{ url_for('judge_ui.judge_grading_ui', submission_id=submission.id) }}">
+                    <div class="judging-status{% if is_finalized %} is-finalized{% endif %}" id="judgingStatus">
+                        Judging Status: <span id="judgingStatusText">{{ 'Finalized' if is_finalized else 'In Progress' }}</span>
+                    </div>
+                    <form method="post" action="{{ url_for('judge_ui.judge_grading_ui', submission_id=submission.id) }}" id="gradingForm" data-finalized="{{ 'true' if is_finalized else 'false' }}">
                         {% for item in criteria_list %}
                         <div style="margin-bottom:16px;">
                             <label class="form-label">
                                 <span>{{ item.name }}</span>
                                 <span style="color: var(--muted); font-size: 0.8rem;">(Max: {{ item.max }} pts)</span>
                             </label>
-                            <input name="{{ item.id }}" type="number" class="form-control" min="0" max="{{ item.max }}" placeholder="Enter score (0 - {{ item.max }})" required value="{{ existing_scores[item.id|string] if existing_scores else '' }}">
+                            <input name="{{ item.id }}" type="number" class="form-control score-input" min="0" max="{{ item.max }}" data-max="{{ item.max }}" data-weight="{{ item.weight if item.weight is defined else item.max }}" placeholder="Enter score (0 - {{ item.max }})" value="{{ existing_scores[item.id|string] if existing_scores else '' }}"{% if is_finalized %} disabled{% endif %}>
                         </div>
                         {% endfor %}
 
-                        <div style="margin-bottom:16px;">
-                            <label class="form-label" style="display:block; margin-bottom:8px;">Judge Comment</label>
-                            <textarea name="comment" class="form-control" rows="4" placeholder="Write review...">{{ existing_comment }}</textarea>
+                        <div class="score-summary" id="scoreSummary" aria-live="polite">
+                            <div class="score-summary-item">
+                                <span class="score-summary-label">Current Total</span>
+                                <span class="score-summary-value" id="currentTotal">0 / 0</span>
+                            </div>
+                            <div class="score-summary-item">
+                                <span class="score-summary-label">Weighted Score</span>
+                                <span class="score-summary-value" id="weightedScore">0.0</span>
+                            </div>
+                            <div class="score-summary-item">
+                                <span class="score-summary-label">Completed Criteria</span>
+                                <span class="score-summary-value" id="completedCriteria">0 / 0</span>
+                            </div>
+                            <div class="score-summary-item">
+                                <span class="score-summary-label">Completion</span>
+                                <span class="score-summary-value" id="completionPercent">0%</span>
+                            </div>
                         </div>
 
-                        <button type="submit" class="btn btn-success" style="width:100%; padding: 12px 16px; font-size: 1rem;">Save Score & Comment</button>
+                        <div style="margin-bottom:16px;">
+                            <label class="form-label" style="display:block; margin-bottom:8px;">Judge Comment</label>
+                            <textarea name="comment" class="form-control" rows="4" placeholder="Write review..."{% if is_finalized %} disabled{% endif %}>{{ existing_comment }}</textarea>
+                        </div>
+
+                        <div class="btn-group" style="width:100%;">
+                            <button type="submit" name="action" value="save_draft" class="btn btn-outline-secondary" style="flex:1;"{% if is_finalized %} disabled{% endif %}>Save Draft</button>
+                            <button type="submit" name="action" value="finalize" class="btn btn-success" style="flex:1;"{% if is_finalized %} hidden{% endif %}>Finalize Judging</button>
+                            <a href="#scoreSummary" class="btn btn-outline-secondary" id="viewResultsButton" style="flex:1;{% if not is_finalized %} display:none;{% endif %}">View Results</a>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -417,6 +558,89 @@
             } | tojson }}
         </script>
         <script>
+            (function () {
+                const previewImage = document.getElementById('judgeSubmissionPreview');
+                const payloadNode = document.getElementById('judgeHdPayload');
+                const mediaTabs = Array.from(document.querySelectorAll('[data-media-key]'));
+                if (!payloadNode || !mediaTabs.length) return;
+
+                let payload = { items: [] };
+                try {
+                    payload = JSON.parse(payloadNode.textContent || '{}');
+                } catch (error) {}
+
+                function selectMedia(key) {
+                    const item = (payload.items || []).find(function (candidate) {
+                        return candidate && candidate.key === key;
+                    });
+                    mediaTabs.forEach(function (tab) {
+                        tab.classList.toggle('active', tab.dataset.mediaKey === key);
+                    });
+                    if (previewImage && item && item.url) {
+                        previewImage.src = item.url;
+                        previewImage.alt = item.label || 'Submission image';
+                    }
+                }
+
+                mediaTabs.forEach(function (tab) {
+                    const item = (payload.items || []).find(function (candidate) {
+                        return candidate && candidate.key === tab.dataset.mediaKey;
+                    });
+                    tab.disabled = !item || !item.url;
+                    tab.addEventListener('click', function () {
+                        selectMedia(tab.dataset.mediaKey);
+                    });
+                });
+            })();
+
+            (function () {
+                const scoreInputs = Array.from(document.querySelectorAll('input[type="number"][data-max]'));
+                const currentTotal = document.getElementById('currentTotal');
+                const weightedScore = document.getElementById('weightedScore');
+                const completedCriteria = document.getElementById('completedCriteria');
+                const completionPercent = document.getElementById('completionPercent');
+
+                function updateScoreSummary() {
+                    let total = 0;
+                    let maxTotal = 0;
+                    let weightedTotal = 0;
+                    let totalWeight = 0;
+                    let completed = 0;
+
+                    scoreInputs.forEach(function (input) {
+                        const max = Number(input.dataset.max) || 0;
+                        const weight = Number(input.dataset.weight) || 0;
+                        const score = Number(input.value);
+                        const hasScore = input.value.trim() !== '' && Number.isFinite(score);
+
+                        maxTotal += max;
+                        totalWeight += weight;
+                        if (hasScore) {
+                            total += score;
+                            completed += 1;
+                            weightedTotal += max > 0 ? (score / max) * weight : 0;
+                        }
+                    });
+
+                    const completion = scoreInputs.length > 0
+                        ? (completed / scoreInputs.length) * 100
+                        : 0;
+                    const weighted = totalWeight > 0
+                        ? (weightedTotal / totalWeight) * 100
+                        : 0;
+
+                    currentTotal.textContent = `${total.toFixed(1).replace(/\.0$/, '')} / ${maxTotal.toFixed(1).replace(/\.0$/, '')}`;
+                    weightedScore.textContent = weighted.toFixed(1);
+                    completedCriteria.textContent = `${completed} / ${scoreInputs.length}`;
+                    completionPercent.textContent = `${completion.toFixed(0)}%`;
+                }
+
+                scoreInputs.forEach(function (input) {
+                    input.addEventListener('input', updateScoreSummary);
+                });
+                updateScoreSummary();
+            })();
+
             (function () {
                 const openButton = document.getElementById('openHdViewerBtn');
                 const previewImage = document.getElementById('judgeSubmissionPreview');
