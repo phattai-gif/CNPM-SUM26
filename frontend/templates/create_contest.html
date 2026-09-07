@@ -357,8 +357,8 @@
             <div>
               <label>Status</label>
               <select name="status">
-                <option value="draft">Draft</option>
                 <option value="published">Published</option>
+                <option value="draft">Draft</option>
                 <option value="ended">Ended</option>
               </select>
             </div>
@@ -457,6 +457,7 @@
           <div class="inline-actions">
             <button type="submit" id="submitBtn" class="btn-primary">Save All Changes</button>
             <button type="button" id="publishBtn" class="btn-success" style="display:none;">Publish Contest</button>
+            <button type="button" id="deleteContestBtn" class="btn-danger" style="display:none;">Xóa Contest</button>
           </div>
         </form>
       </div>
@@ -498,6 +499,7 @@
         const awardList = document.getElementById('awardList');
 
         const publishBtn = document.getElementById('publishBtn');
+        const deleteContestBtn = document.getElementById('deleteContestBtn');
         const modal = document.getElementById('confirmModal');
         const modalCancel = document.getElementById('confirmCancel');
         const modalConfirm = document.getElementById('confirmPublish');
@@ -509,6 +511,16 @@
         let nextRoundIdx = 1;
         let categoriesState = [];
         let awardsState = [];
+
+        function escapeHtml(value) {
+          return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+          }[character]));
+        }
 
         // Ensure an active contest exists. If not, create one from the form payload.
         async function ensureContest() {
@@ -989,6 +1001,79 @@
           return el;
         }
 
+        function readRoundPayload(roundElement) {
+          const value = (name) => roundElement.querySelector(`[name="${name}"]`)?.value.trim() || '';
+          return {
+            title: value(roundElement.querySelector('[name$="_title"]')?.name),
+            round_number: Number(value(roundElement.querySelector('[name$="_number"]')?.name) || 1),
+            weight: Number(value(roundElement.querySelector('[name$="_weight"]')?.name) || 1),
+            status: value(roundElement.querySelector('[name$="_status"]')?.name) || 'upcoming',
+            start_date: value(roundElement.querySelector('[name$="_start"]')?.name) || null,
+            end_date: value(roundElement.querySelector('[name$="_end"]')?.name) || null,
+            description: value(roundElement.querySelector('[name$="_desc"]')?.name) || null
+          };
+        }
+
+        async function saveRound(roundElement) {
+          await ensureContest();
+          const payload = readRoundPayload(roundElement);
+          if (!payload.title) throw new Error('Tên round không được để trống');
+
+          const roundId = roundElement.dataset.roundId;
+          const response = roundId
+            ? await window.apiClient.put(`/organizer/contests/${activeContestId}/rounds/${roundId}`, payload)
+            : await window.apiClient.post(`/organizer/contests/${activeContestId}/rounds`, payload);
+          const savedRound = response && (response.round || response);
+          if (savedRound?.id) {
+            roundElement.dataset.roundId = String(savedRound.id);
+            roundElement.querySelector('.round-id-label').textContent = `#${savedRound.id}`;
+          }
+          showToast('Lưu round thành công');
+        }
+
+        async function deleteRound(roundElement) {
+          const roundId = roundElement.dataset.roundId;
+          if (roundId) {
+            await window.apiClient.delete(`/organizer/contests/${activeContestId}/rounds/${roundId}`);
+          }
+          roundElement.remove();
+          showToast('Xóa round thành công');
+        }
+
+        async function saveCriteria(criteriaElement) {
+          await ensureContest();
+          const roundElement = criteriaElement.closest('.round-item');
+          const roundId = roundElement?.dataset.roundId;
+          if (!roundId) throw new Error('Hãy lưu round trước khi lưu criteria');
+          const value = (suffix) => criteriaElement.querySelector(`[name$="_${suffix}"]`)?.value.trim() || '';
+          const payload = {
+            name: value('name'),
+            max_score: Number(value('max') || 10),
+            weight: Number(value('weight') || 1),
+            description: value('desc') || null
+          };
+          if (!payload.name) throw new Error('Tên criteria không được để trống');
+
+          const criteriaId = criteriaElement.dataset.criteriaId;
+          const response = criteriaId
+            ? await window.apiClient.put(`/organizer/contests/${activeContestId}/rounds/${roundId}/criteria/${criteriaId}`, payload)
+            : await window.apiClient.post(`/organizer/contests/${activeContestId}/rounds/${roundId}/criteria`, payload);
+          const savedCriteria = response && (response.criteria || response);
+          if (savedCriteria?.id) criteriaElement.dataset.criteriaId = String(savedCriteria.id);
+          showToast('Lưu criteria thành công');
+        }
+
+        async function deleteCriteria(criteriaElement) {
+          const roundElement = criteriaElement.closest('.round-item');
+          const roundId = roundElement?.dataset.roundId;
+          const criteriaId = criteriaElement.dataset.criteriaId;
+          if (roundId && criteriaId) {
+            await window.apiClient.delete(`/organizer/contests/${activeContestId}/rounds/${roundId}/criteria/${criteriaId}`);
+          }
+          criteriaElement.remove();
+          showToast('Xóa criteria thành công');
+        }
+
         function getContestPayload() {
           const title = form.querySelector('input[name="title"]').value.trim();
           const description = form.querySelector('textarea[name="description"]').value.trim();
@@ -1008,6 +1093,7 @@
             status: status || 'draft'
           };
           return payload;
+        }
 
         async function saveContest() {
           if (!hasSession()) throw new Error('Bạn cần đăng nhập để lưu contest');
@@ -1030,6 +1116,21 @@
                 url.searchParams.set('contest_id', activeContestId);
                 window.history.replaceState({}, '', url.toString());
                 setEditModeText();
+                if (!roundsContainer.children.length) {
+                  const defaultRound = {
+                    title: 'Submission Round',
+                    round_number: 1,
+                    status: 'ongoing',
+                    start_date: payload.start_date,
+                    end_date: payload.end_date,
+                    description: 'Open round for participant submissions'
+                  };
+                  const roundResponse = await window.apiClient.post(
+                    `/organizer/contests/${activeContestId}/rounds`,
+                    defaultRound
+                  );
+                  if (roundResponse?.round) addRound(roundResponse.round);
+                }
                 await refreshCategoryAwardData();
                 showToast('Tạo contest thành công');
                 return resp;
@@ -1038,6 +1139,20 @@
             }
           } finally {
             setButtonLoading(saveContestBtn, false, 'Lưu thông tin Contest');
+          }
+        }
+
+        async function deleteContest() {
+          if (!activeContestId) return;
+          if (!confirm('Xóa contest sẽ xóa toàn bộ round, bài dự thi, cờ AI/duplicate và thông báo liên quan. Tiếp tục?')) return;
+
+          setButtonLoading(deleteContestBtn, true, 'Đang xóa...');
+          try {
+            await window.apiClient.delete(`/organizer/contests/${encodeURIComponent(activeContestId)}`);
+            window.location.href = '/organizer/dashboard';
+          } catch (error) {
+            showToast(error.message || 'Xóa contest thất bại', 3500, true);
+            setButtonLoading(deleteContestBtn, false, 'Xóa Contest');
           }
         }
 
@@ -1071,6 +1186,33 @@
             }
           });
         }
+
+        if (deleteContestBtn) {
+          deleteContestBtn.addEventListener('click', () => {
+            deleteContest().catch((error) => {
+              showToast(error.message || 'Xóa contest thất bại', 3500, true);
+            });
+          });
+        }
+
+        if (addRoundBtn) {
+          addRoundBtn.addEventListener('click', () => addRound());
+        }
+
+        if (resetRoundsBtn) {
+          resetRoundsBtn.addEventListener('click', () => {
+            roundsContainer.innerHTML = '';
+            nextRoundIdx = 1;
+            showToast('Đã xóa các round chưa lưu');
+          });
+        }
+
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          saveContest().catch((err) => {
+            showToast(err.message || 'Lưu contest thất bại', 3000, true);
+          });
+        });
 
         // Defensive delegated handlers: ensure clicks trigger even if elements are replaced
         document.addEventListener('click', function (evt) {
@@ -1129,13 +1271,17 @@
 
         // If page opened with an existing contest id, load its data and switch UI to edit mode
         if (activeContestId) {
+          if (deleteContestBtn) deleteContestBtn.style.display = 'inline-block';
           if (saveContestBtn) {
             if (!saveContestBtn.dataset.defaultText) saveContestBtn.dataset.defaultText = saveContestBtn.textContent;
             saveContestBtn.textContent = 'Cập nhật / Lưu thay đổi';
           }
           document.title = `Cập nhật Contest #${activeContestId} - Contest Configuration Manager`;
-          // load details (no await to avoid blocking)
           loadContestDetails(activeContestId).catch((err) => {
             console.error('loadContestDetails error', err);
           });
         }
+      });
+    </script>
+  </body>
+</html>
