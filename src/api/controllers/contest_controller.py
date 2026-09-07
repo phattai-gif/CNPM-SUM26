@@ -90,6 +90,7 @@ def _serialize_list(items):
 # -------------------------------------------------------------------------
 
 @contest_bp.route('/dashboard', methods=['GET'])
+@role_required('organizer')
 def organizer_dashboard():
     """Render dashboard for organizers showing contests they manage.
 
@@ -116,6 +117,7 @@ def organizer_dashboard():
 
 
 @contest_bp.route('/contest-detail', methods=['GET'])
+@role_required('organizer')
 def organizer_contest_detail_page():
     """Render frontend contest detail page which will fetch contest details via API."""
     # Page itself doesn't require server-side authentication; JS will call protected API using token
@@ -123,7 +125,7 @@ def organizer_contest_detail_page():
 
 
 @contest_bp.route('/dashboard/metrics', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def organizer_dashboard_metrics():
     """Return simple aggregated metrics for the organizer dashboard."""
     try:
@@ -181,7 +183,7 @@ def organizer_dashboard_metrics():
 
 
 @contest_bp.route('/dashboard/seed', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def organizer_dashboard_seed():
     """Create a sample contest + round + submissions for the current organizer (for testing)."""
     user_id = request.user.get('user_id')
@@ -236,7 +238,7 @@ def organizer_dashboard_seed():
         return jsonify({'message': 'Failed to create seed data', 'error': str(e)}), 500
 
 @contest_bp.route('/results', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def results():
     """
     Render contest results / leaderboard (mock data).
@@ -286,7 +288,7 @@ def public_leaderboard():
 
 
 @contest_bp.route('/rounds/<int:round_id>/leaderboard', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def get_round_leaderboard(round_id):
     """Return finalized leaderboard for a round. This will call finalize
     which computes and returns leaderboard data (it is idempotent in the
@@ -312,7 +314,7 @@ def get_round_leaderboard(round_id):
 
 
 @contest_bp.route('/submissions/<int:submission_id>/approve-winner', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def approve_winner(submission_id):
     try:
         # Mark submission as winner_approved
@@ -330,7 +332,7 @@ def approve_winner(submission_id):
 
 
 @contest_bp.route('/submissions/<int:submission_id>/reject-winner', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def reject_winner(submission_id):
     try:
         from infrastructure.models.app import SubmissionModel
@@ -347,7 +349,7 @@ def reject_winner(submission_id):
 
 
 @contest_bp.route('/submissions/<int:submission_id>/publish', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def publish_submission(submission_id):
     try:
         from infrastructure.models.app import SubmissionModel, RoundModel, DigitalArchiveExhibitModel
@@ -392,7 +394,7 @@ def publish_submission(submission_id):
 
 
 @contest_bp.route('/submissions/<int:submission_id>/archive', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def archive_submission(submission_id):
     try:
         from infrastructure.models.app import SubmissionModel
@@ -410,7 +412,7 @@ def archive_submission(submission_id):
 
 
 @contest_bp.route('/exhibits', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def list_exhibits():
     try:
         from infrastructure.models.app import DigitalArchiveExhibitModel
@@ -446,54 +448,15 @@ def list_exhibits():
         return jsonify({'exhibits': result}), 200
     except Exception as exc:
         return jsonify({'message': 'Failed to list exhibits', 'error': str(exc)}), 500
-# Public judge grading UI (Task CNPM-50)
+# Legacy judge grading URL (Task CNPM-50)
 @public_bp.route('/judge/grading/<int:submission_id>', methods=['GET', 'POST'])
 def public_judge_grading(submission_id):
-    """
-    Public-facing judge grading UI for testing and demos.
-    Provides mock submission data and mock criteria when DB/services are unavailable.
-    Handles POST to receive scores and comment (stores nothing; flashes success).
-    """
-    # Mock submission data
-    submission = {
-        'id': submission_id,
-        'title': 'Bài mẫu: Bình minh trên phố cổ',
-        'author': 'Nguyễn Văn A',
-        'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
-        'camera': 'Nikon F3',
-        'film_stock': 'Kodak Portra 400',
-        'prev_id': submission_id - 1 if submission_id > 1 else None,
-        'next_id': submission_id + 1,
-    }
-
-    # Mock criteria list
-    criteria_list = [
-        {'id': 1, 'name': 'Composition', 'max': 40},
-        {'id': 2, 'name': 'Exposure', 'max': 30},
-        {'id': 3, 'name': 'Creativity', 'max': 30},
-    ]
-
-    if request.method == 'POST':
-        # Collect scores from form
-        form = request.form.to_dict(flat=True)
-        comment = form.pop('comment', '')
-        scores = {}
-        for crit in criteria_list:
-            key = str(crit['id'])
-            val = form.get(key)
-            try:
-                scores[key] = int(val) if val is not None and val != '' else None
-            except ValueError:
-                scores[key] = None
-
-        # In a real app we'd persist scores via ScoreService; here we just flash
-        flash('Điểm và nhận xét đã được lưu (demo).')
-        return redirect(url_for('contest_public.public_judge_grading', submission_id=submission_id))
-
-    return render_template('judge_grading.html', submission=submission, criteria_list=criteria_list)
+    """Redirect the legacy URL to the authenticated real-submission UI."""
+    return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
 
 
 @contest_bp.route('/create-contest', methods=['GET'])
+@role_required('organizer')
 def create_contest_page():
     # Serve the create contest HTML page without requiring Authorization header.
     # The frontend will call the POST API with the token in Authorization header.
@@ -506,7 +469,7 @@ def create_contest_page():
 
 @contest_bp.route('/contests', methods=['POST'])
 @contest_bp.route('/create-contest', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def create_contest():
     """API Táº¡o cuá»™c thi má»›i."""
     user_id = _request_user().get('user_id')
@@ -529,7 +492,7 @@ def create_contest():
 
 
 @contest_bp.route('/contests', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def list_contests():
     """API Liá»‡t kÃª danh sÃ¡ch cuá»™c thi cá»§a Organizer."""
     user_id = _request_user().get('user_id')
@@ -571,7 +534,7 @@ def list_contests():
 
 
 @contest_bp.route('/contests/<int:contest_id>', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def get_contest(contest_id):
     """API Láº¥y thÃ´ng tin chi tiáº¿t cuá»™c thi (bao gá»“m thá»ƒ lá»‡, vÃ²ng thi, tiÃªu chÃ­)."""
     user = _request_user()
@@ -601,7 +564,7 @@ def get_contest(contest_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>', methods=['PUT'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def update_contest(contest_id):
     """API Cáº­p nháº­t thÃ´ng tin cuá»™c thi."""
     user = _request_user()
@@ -628,7 +591,7 @@ def update_contest(contest_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>', methods=['DELETE'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def delete_contest(contest_id):
     """API XÃ³a cuá»™c thi."""
     user_id = request.user.get('user_id')
@@ -650,7 +613,7 @@ def delete_contest(contest_id):
 # -------------------------------------------------------------------------
 
 @contest_bp.route('/contests/<int:contest_id>/categories', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def list_contest_categories(contest_id):
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -667,7 +630,7 @@ def list_contest_categories(contest_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/categories', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def create_contest_category(contest_id):
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -687,7 +650,7 @@ def create_contest_category(contest_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/categories/<int:category_id>', methods=['PUT'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def update_contest_category(contest_id, category_id):
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -707,7 +670,7 @@ def update_contest_category(contest_id, category_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/categories/<int:category_id>', methods=['DELETE'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def delete_contest_category(contest_id, category_id):
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -726,7 +689,7 @@ def delete_contest_category(contest_id, category_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/awards', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def list_contest_awards(contest_id):
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -743,7 +706,7 @@ def list_contest_awards(contest_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/awards', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def create_contest_award(contest_id):
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -763,7 +726,7 @@ def create_contest_award(contest_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/awards/<int:award_id>', methods=['PUT'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def update_contest_award(contest_id, award_id):
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -783,7 +746,7 @@ def update_contest_award(contest_id, award_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/awards/<int:award_id>', methods=['DELETE'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def delete_contest_award(contest_id, award_id):
     user_id = request.user.get('user_id')
     user_role = request.user.get('role')
@@ -806,7 +769,7 @@ def delete_contest_award(contest_id, award_id):
 # -------------------------------------------------------------------------
 
 @contest_bp.route('/contests/<int:contest_id>/rules', methods=['PUT'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def update_contest_rules(contest_id):
     """API Cáº­p nháº­t thá»ƒ lá»‡ cuá»™c thi."""
     user = _request_user()
@@ -837,7 +800,7 @@ def update_contest_rules(contest_id):
 # -------------------------------------------------------------------------
 
 @contest_bp.route('/contests/<int:contest_id>/rounds', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def create_round(contest_id):
     """API ThÃªm vÃ²ng thi má»›i cho cuá»™c thi."""
     user = _request_user()
@@ -864,7 +827,7 @@ def create_round(contest_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>', methods=['PUT'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def update_round(contest_id, round_id):
     """API Cập nhật thông tin vòng thi."""
     user = _request_user()
@@ -887,7 +850,7 @@ def update_round(contest_id, round_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>', methods=['DELETE'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def delete_round(contest_id, round_id):
     """API Xóa vòng thi."""
     user_id = request.user.get('user_id')
@@ -909,7 +872,7 @@ def delete_round(contest_id, round_id):
 # -------------------------------------------------------------------------
 
 @contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/criteria', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def create_criteria(contest_id, round_id):
     """API ThÃªm tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm cho vÃ²ng thi."""
     user = _request_user()
@@ -936,7 +899,7 @@ def create_criteria(contest_id, round_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/criteria/<int:criteria_id>', methods=['PUT'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def update_criteria(contest_id, round_id, criteria_id):
     """API Cáº­p nháº­t tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm."""
     user = _request_user()
@@ -959,7 +922,7 @@ def update_criteria(contest_id, round_id, criteria_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/criteria/<int:criteria_id>', methods=['DELETE'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def delete_criteria(contest_id, round_id, criteria_id):
     """API XÃ³a tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm."""
     user_id = request.user.get('user_id')
@@ -981,7 +944,7 @@ def delete_criteria(contest_id, round_id, criteria_id):
 # -------------------------------------------------------------------------
 
 @contest_bp.route('/contests/<int:contest_id>/configuration', methods=['PUT'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def update_contest_configuration(contest_id):
     """API Cáº¥u hÃ¬nh toÃ n bá»™ cuá»™c thi (thá»ƒ lá»‡, vÃ²ng thi vÃ  cÃ¡c tiÃªu chÃ­ cháº¥m Ä‘iá»ƒm)."""
     user = _request_user()
@@ -1012,7 +975,7 @@ def update_contest_configuration(contest_id):
 # -------------------------------------------------------------------------
 
 @contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/winners', methods=['GET'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def get_round_winners(contest_id, round_id):
     """Return leaderboard candidates for organizer winner approval."""
     try:
@@ -1032,7 +995,7 @@ def get_round_winners(contest_id, round_id):
 
 
 @contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/winners/<int:submission_id>', methods=['PATCH'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def decide_winner(contest_id, round_id, submission_id):
     """Approve or reject a winner candidate and publish to the archive when approved."""
     payload = request.get_json(silent=True) or {}
@@ -1072,7 +1035,7 @@ def decide_winner(contest_id, round_id, submission_id):
 
 @contest_bp.route('/rounds/<int:round_id>/finalize', methods=['POST'])
 @contest_bp.route('/contests/<int:contest_id>/rounds/<int:round_id>/finalize', methods=['POST'])
-@role_required('organizer', 'admin')
+@role_required('organizer')
 def finalize_round(round_id, contest_id=None):
     """API Chá»‘t Ä‘iá»ƒm má»™t vÃ²ng thi."""
     try:
