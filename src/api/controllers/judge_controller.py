@@ -5,6 +5,9 @@ try:
     from infrastructure.repositories.contest_repository import ContestRepository
     from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
     from services.judge_assignment_service import JudgeAssignmentService
+    from services.score_service import ScoreService
+    from infrastructure.repositories.submission_repository import SubmissionRepository
+    from infrastructure.models.app import JudgeAssignmentModel
     from api.schemas.judge import (
         AssignJudgeRequestSchema,
         JudgeAssignmentResponseSchema
@@ -14,6 +17,9 @@ except ImportError:
     from infrastructure.repositories.contest_repository import ContestRepository
     from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
     from services.judge_assignment_service import JudgeAssignmentService
+    from services.score_service import ScoreService
+    from infrastructure.repositories.submission_repository import SubmissionRepository
+    from infrastructure.models.app import JudgeAssignmentModel
     from api.schemas.judge import (
         AssignJudgeRequestSchema,
         JudgeAssignmentResponseSchema
@@ -30,6 +36,11 @@ judge_ui_bp = Blueprint('judge_ui', __name__, url_prefix='/judge')
 judge_service = JudgeAssignmentService(
     judge_repo=JudgeAssignmentRepository(),
     contest_repo=ContestRepository()
+)
+submission_repository = SubmissionRepository()
+score_service = ScoreService(
+    submission_repo=submission_repository,
+    contest_repo=ContestRepository(),
 )
 
 assign_judge_schema = AssignJudgeRequestSchema()
@@ -317,35 +328,99 @@ def get_my_assignments():
 
 # Simple judge grading UI for direct testing at /judge/<id>
 @judge_ui_bp.route('/<int:submission_id>', methods=['GET', 'POST'])
+@role_required('judge', 'admin')
 def judge_grading_ui(submission_id):
-    """Render judge grading UI with mock data and safe error handling.
-    This route is intended for local testing/demo when DB/services are unavailable.
-    """
+    """Render the assigned submission with its real files and film metadata."""
     try:
-        # Mock submission
+        user = _request_user()
+        user_id = user.get('user_id')
+        user_role = user.get('role', 'judge')
+        result = submission_repository.get_by_id_with_details(submission_id)
+        if not result:
+            return jsonify({'message': 'Submission not found'}), 404
+
+        submission_model, file_models, film_metadata = result
+        assignment_query = submission_repository.session.query(JudgeAssignmentModel).filter(
+            JudgeAssignmentModel.round_id == submission_model.round_id,
+            JudgeAssignmentModel.judge_id == user_id,
+        )
+        assignments = assignment_query.all()
+        is_assigned = str(user_role).lower() == 'admin' or any(
+            assignment.submission_id is None
+            or assignment.submission_id == submission_id
+            for assignment in assignments
+        )
+        if not is_assigned:
+            return jsonify({'message': 'Judge is not assigned to this submission'}), 403
+
+        files_by_type = {}
+        for file_model in file_models or []:
+            file_type = getattr(file_model, 'file_type', 'main_image')
+            files_by_type.setdefault(file_type, file_model)
+        main_file = (
+            files_by_type.get('main_image')
+            or files_by_type.get('main')
+            or (file_models or [None])[0]
+        )
+        negative_file = files_by_type.get('negative') or files_by_type.get('negative_film')
+        contact_file = files_by_type.get('contact_sheet')
+
         submission = {
-            'id': submission_id,
-            'title': f'Bài mẫu #{submission_id}: Bình minh trên phố cổ',
-            'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
-            'negative_film_url': None,
-            'contact_sheet_url': None,
-            'camera': 'Nikon F3',
-            'film_stock': 'Kodak Portra 400',
-            'prev_id': submission_id - 1 if submission_id > 1 else None,
-            'next_id': submission_id + 1,
+            'id': submission_model.id,
+            'title': submission_model.title,
+            'image_url': getattr(main_file, 'image_hd_url', None),
+            'image_hd_url': getattr(main_file, 'image_hd_url', None),
+            'negative_film_url': getattr(negative_file, 'image_hd_url', None),
+            'contact_sheet_url': getattr(contact_file, 'image_hd_url', None),
+            'proof_attachments': [
+                {
+                    'label': getattr(file_model, 'file_type', 'Attachment'),
+                    'url': file_model.image_hd_url,
+                }
+                for file_model in (file_models or [])
+                if getattr(file_model, 'file_type', 'main_image') not in {
+                    'main_image', 'main', 'negative', 'negative_film', 'contact_sheet'
+                }
+            ],
+            'camera': getattr(film_metadata, 'camera_body', None) or 'Not provided',
+            'film_stock': getattr(film_metadata, 'film_stock', None) or 'Not provided',
+            'prev_id': None,
+            'next_id': None,
         }
 
-        # Mock criteria
+        # Criteria and AI flags belong to the real submission round.
+        criteria_models = score_service.contest_repo.get_criteria_by_round_id(
+            submission_model.round_id
+        ) or []
         criteria_list = [
-            {'id': 1, 'name': 'Composition', 'max': 40},
-            {'id': 2, 'name': 'Exposure', 'max': 30},
-            {'id': 3, 'name': 'Creativity', 'max': 30},
+            {
+                'id': criterion.id,
+                'name': criterion.name,
+                'max': criterion.max_score,
+                'weight': criterion.weight,
+            }
+            for criterion in criteria_models
         ]
 
+        ai_flags = getattr(submission_model, 'ai_flags', None) or []
+        duplicate_flag = next(
+            (flag for flag in ai_flags if flag.flag_type == 'duplicate_similarity'),
+            None,
+        )
+        metadata_flag = next(
+            (flag for flag in ai_flags if 'metadata' in flag.flag_type.lower()),
+            None,
+        )
         ai_warning = {
-            'verification': 'Review Required',
-            'duplicate_similarity': '92%',
-            'metadata_status': 'Mismatch',
+            'verification': 'Review Required' if any(
+                getattr(flag, 'status', 'pending') == 'pending' for flag in ai_flags
+            ) else 'Verified',
+            'duplicate_similarity': (
+                f"{float(duplicate_flag.confidence_score):.0f}%"
+                if duplicate_flag is not None and duplicate_flag.confidence_score is not None
+                else 'Not available'
+            ),
+            'metadata_status': 'Mismatch' if metadata_flag is not None else 'Not checked',
         }
 
         grading_state = session.get('judge_grading', {}).get(str(submission_id), {})
@@ -405,21 +480,5 @@ def judge_grading_ui(submission_id):
         )
 
     except Exception as e:
-        # Safe fallback: render template with minimal data and show error message
-        fallback_submission = {
-            'id': submission_id,
-            'title': 'Không thể tải bài dự thi',
-            'image_url': None,
-            'negative_film_url': None,
-            'contact_sheet_url': None,
-            'camera': '',
-            'film_stock': '',
-            'prev_id': None,
-            'next_id': None,
-        }
-        try:
-            flash(f'Internal error while rendering judge UI: {e}')
-        except Exception:
-            pass
-        return render_template('judge_grading.html', submission=fallback_submission, criteria_list=[], existing_scores={}, existing_comment='')
+        return jsonify({'message': 'Failed to load submission', 'error': str(e)}), 500
         
