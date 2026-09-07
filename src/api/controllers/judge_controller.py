@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template, flash, redirect, session, url_for
+from sqlalchemy import or_
 from api.controllers.response_utils import safe_jsonify
 
 try:
@@ -6,6 +7,13 @@ try:
     from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
     from services.judge_assignment_service import JudgeAssignmentService
     from services.score_service import ScoreService
+    from infrastructure.repositories.submission_repository import SubmissionRepository
+    from infrastructure.models.app import (
+        AIAnalysisReportModel,
+        AIFlagModel,
+        JudgeAssignmentModel,
+        SubmissionModel,
+    )
     from api.schemas.judge import (
         AssignJudgeRequestSchema,
         JudgeAssignmentResponseSchema
@@ -16,6 +24,13 @@ except ImportError:
     from infrastructure.repositories.judge_assignment_repository import JudgeAssignmentRepository
     from services.judge_assignment_service import JudgeAssignmentService
     from services.score_service import ScoreService
+    from infrastructure.repositories.submission_repository import SubmissionRepository
+    from infrastructure.models.app import (
+        AIAnalysisReportModel,
+        AIFlagModel,
+        JudgeAssignmentModel,
+        SubmissionModel,
+    )
     from api.schemas.judge import (
         AssignJudgeRequestSchema,
         JudgeAssignmentResponseSchema
@@ -33,8 +48,11 @@ judge_service = JudgeAssignmentService(
     judge_repo=JudgeAssignmentRepository(),
     contest_repo=ContestRepository()
 )
-
-score_service = ScoreService()
+submission_repository = SubmissionRepository()
+score_service = ScoreService(
+    submission_repo=submission_repository,
+    contest_repo=ContestRepository(),
+)
 
 assign_judge_schema = AssignJudgeRequestSchema()
 assignment_response_schema = JudgeAssignmentResponseSchema()
@@ -150,7 +168,7 @@ def assign_judge_to_round(contest_id, round_id):
     submission_id = data.get('submission_id')
 
     try:
-        # PhÃ¢n cÃ´ng nhiá»u giÃ¡m kháº£o
+        # PhÃ¢n cÃ´ng nhiá» u giÃ¡m kháº£o
         if judge_ids:
             assignments = judge_service.batch_assign_judges_to_round(
                 contest_id=contest_id,
@@ -163,7 +181,7 @@ def assign_judge_to_round(contest_id, round_id):
 
             return safe_jsonify({
                 'message': (
-                    f'ÄÃ£ phÃ¢n cÃ´ng {len(assignments)} '
+                    f'Ä Ã£ phÃ¢n cÃ´ng {len(assignments)} '
                     'giÃ¡m kháº£o vÃ o vÃ²ng thi thÃ nh cÃ´ng'
                 ),
                 'assignments': _serialize_assignments(assignments)
@@ -251,7 +269,7 @@ def get_round_judges(contest_id, round_id):
 )
 @role_required('organizer')
 def remove_judge_from_round(contest_id, round_id, judge_id):
-    """API Há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o khá»i vÃ²ng thi."""
+    """API Há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o khá» i vÃ²ng thi."""
 
     user = _request_user()
     user_id = user.get('user_id')

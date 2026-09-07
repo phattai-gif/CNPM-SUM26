@@ -448,50 +448,11 @@ def list_exhibits():
         return jsonify({'exhibits': result}), 200
     except Exception as exc:
         return jsonify({'message': 'Failed to list exhibits', 'error': str(exc)}), 500
-# Public judge grading UI (Task CNPM-50)
+# Legacy judge grading URL (Task CNPM-50)
 @public_bp.route('/judge/grading/<int:submission_id>', methods=['GET', 'POST'])
 def public_judge_grading(submission_id):
-    """
-    Public-facing judge grading UI for testing and demos.
-    Provides mock submission data and mock criteria when DB/services are unavailable.
-    Handles POST to receive scores and comment (stores nothing; flashes success).
-    """
-    # Mock submission data
-    submission = {
-        'id': submission_id,
-        'title': 'Bài mẫu: Bình minh trên phố cổ',
-        'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
-        'camera': 'Nikon F3',
-        'film_stock': 'Kodak Portra 400',
-        'prev_id': submission_id - 1 if submission_id > 1 else None,
-        'next_id': submission_id + 1,
-    }
-
-    # Mock criteria list
-    criteria_list = [
-        {'id': 1, 'name': 'Composition', 'max': 40},
-        {'id': 2, 'name': 'Exposure', 'max': 30},
-        {'id': 3, 'name': 'Creativity', 'max': 30},
-    ]
-
-    if request.method == 'POST':
-        # Collect scores from form
-        form = request.form.to_dict(flat=True)
-        comment = form.pop('comment', '')
-        scores = {}
-        for crit in criteria_list:
-            key = str(crit['id'])
-            val = form.get(key)
-            try:
-                scores[key] = int(val) if val is not None and val != '' else None
-            except ValueError:
-                scores[key] = None
-
-        # In a real app we'd persist scores via ScoreService; here we just flash
-        flash('Điểm và nhận xét đã được lưu (demo).')
-        return redirect(url_for('contest_public.public_judge_grading', submission_id=submission_id))
-
-    return render_template('judge_grading.html', submission=submission, criteria_list=criteria_list)
+    """Redirect the legacy URL to the authenticated real-submission UI."""
+    return redirect(url_for('judge_ui.judge_grading_ui', submission_id=submission_id))
 
 
 @contest_bp.route('/create-contest', methods=['GET'])

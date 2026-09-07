@@ -457,11 +457,8 @@
                         <button type="button" class="media-tab" data-media-key="contact">Contact Sheet</button>
                     </div>
                     <div class="image-container">
-                                                {% if submission.image_url %}
-                                                    <img id="judgeSubmissionPreview" src="{{ submission.image_url }}" alt="Submission image">
-                                                {% else %}
-                          <div class="text-white">No image available</div>
-                                                {% endif %}
+                        <img id="judgeSubmissionPreview" src="{{ submission.image_url or '' }}" alt="Submission image"{% if not submission.image_url %} style="display:none;"{% endif %}>
+                        <div class="text-white" id="judgeSubmissionEmpty"{% if submission.image_url %} style="display:none;"{% endif %}>No image available</div>
                     </div>
                                         <div class="d-flex justify-content-end mt-3">
                                                 <button type="button" class="btn btn-outline-secondary" id="openHdViewerBtn">Open HD Viewer</button>
@@ -472,8 +469,10 @@
                     <h6>AI Warning</h6>
                     <ul class="ai-warning-list">
                         <li><span>AI Verification</span><strong>{{ ai_warning.verification if ai_warning is defined else 'Review Required' }}</strong></li>
+                        <li><span>AI Risk</span><strong>{{ ai_warning.risk if ai_warning is defined else 'Pending' }}</strong></li>
                         <li><span>Duplicate Similarity</span><strong>{{ ai_warning.duplicate_similarity if ai_warning is defined else '92%' }}</strong></li>
                         <li><span>Metadata Status</span><strong>{{ ai_warning.metadata_status if ai_warning is defined else 'Mismatch' }}</strong></li>
+                        <li><span>Review Status</span><strong>{{ ai_warning.review_status if ai_warning is defined else 'Pending' }}</strong></li>
                     </ul>
                 </div>
 
@@ -564,6 +563,7 @@
         <script>
             (function () {
                 const previewImage = document.getElementById('judgeSubmissionPreview');
+                const emptyState = document.getElementById('judgeSubmissionEmpty');
                 const payloadNode = document.getElementById('judgeHdPayload');
                 const mediaTabs = Array.from(document.querySelectorAll('[data-media-key]'));
                 if (!payloadNode || !mediaTabs.length) return;
@@ -583,18 +583,29 @@
                     if (previewImage && item && item.url) {
                         previewImage.src = item.url;
                         previewImage.alt = item.label || 'Submission image';
+                        previewImage.style.display = 'block';
+                        if (emptyState) emptyState.style.display = 'none';
+                    } else if (previewImage) {
+                        previewImage.removeAttribute('src');
+                        previewImage.style.display = 'none';
+                        if (emptyState) emptyState.style.display = 'block';
                     }
                 }
 
+                let firstAvailableKey = null;
                 mediaTabs.forEach(function (tab) {
                     const item = (payload.items || []).find(function (candidate) {
                         return candidate && candidate.key === tab.dataset.mediaKey;
                     });
                     tab.disabled = !item || !item.url;
+                    if (!tab.disabled && !firstAvailableKey) {
+                        firstAvailableKey = tab.dataset.mediaKey;
+                    }
                     tab.addEventListener('click', function () {
                         selectMedia(tab.dataset.mediaKey);
                     });
                 });
+                selectMedia(firstAvailableKey || 'main');
             })();
 
             (function () {
