@@ -326,7 +326,6 @@ def judge_grading_ui(submission_id):
         submission = {
             'id': submission_id,
             'title': f'BÃ i máº«u #{submission_id}: BÃ¬nh minh trÃªn phá»‘ cá»•',
-            'author': 'Nguyá»…n VÄƒn A',
             'image_url': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
             'camera': 'Nikon F3',
             'film_stock': 'Kodak Portra 400',
@@ -368,7 +367,6 @@ def judge_grading_ui(submission_id):
         fallback_submission = {
             'id': submission_id,
             'title': 'KhÃ´ng thá»ƒ táº£i bÃ i dá»± thi',
-            'author': 'N/A',
             'image_url': None,
             'camera': '',
             'film_stock': '',
