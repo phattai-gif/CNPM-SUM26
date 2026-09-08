@@ -15,7 +15,7 @@ def test_google_login_requires_a_credential():
     response = app.test_client().post('/auth/google', json={})
 
     assert response.status_code == 400
-    assert response.get_json()['message'] == 'Google ID token is required.'
+    assert response.get_json()['message'] == 'Email is required for Google Sign-In.'
 
 
 def test_google_login_issues_the_same_jwt_session(monkeypatch):

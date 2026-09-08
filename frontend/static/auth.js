@@ -74,11 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const redirectToRole = async (role) => {
-    const normalizedRole = (role || '').toLowerCase();
-    const target = normalizedRole === 'participant'
-      ? await resolveParticipantTarget()
-      : (ROLE_REDIRECTS[normalizedRole] || '/');
-    window.location.href = target;
+    // Open user profile page directly after login/register as requested
+    window.location.href = '/profile';
   };
 
   const requestJson = async (url, payload) => {

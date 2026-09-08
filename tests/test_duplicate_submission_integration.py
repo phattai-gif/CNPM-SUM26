@@ -15,12 +15,18 @@ DB_FILE = Path(tempfile.gettempdir()) / (
     f'flask_clean_architecture_duplicate_{os.getpid()}.db'
 )
 DB_FILE.unlink(missing_ok=True)
+# Override both environment variables - DATABASE_URI takes priority over POSTGREE_DATABASE_URL
+os.environ['DATABASE_URI'] = f'sqlite:///{DB_FILE.as_posix()}'
 os.environ['POSTGREE_DATABASE_URL'] = f'sqlite:///{DB_FILE.as_posix()}'
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from infrastructure.databases.base import Base
 from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 from infrastructure.models import *
+
+# Force reset singleton so that env-var override takes effect
+db_factory._database = None
+db_factory._database_uri = None
 
 def cleanup_test_database():
     try:

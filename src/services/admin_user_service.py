@@ -32,3 +32,8 @@ class AdminUserService:
         if actor_id == user_id:
             raise ValueError('An admin cannot change their own status')
         return self.repository.set_status(user_id, status)
+
+    def delete_user(self, actor_id, user_id):
+        if actor_id == user_id:
+            raise ValueError('An admin cannot delete their own account')
+        return self.repository.delete_user(user_id)

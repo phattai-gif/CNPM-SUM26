@@ -97,3 +97,16 @@ class AdminUserRepository:
         except Exception:
             self.session.rollback()
             raise
+
+    def delete_user(self, user_id):
+        user = self.session.query(UserModel).filter_by(id=user_id).first()
+        if not user:
+            return False
+        try:
+            self.session.execute(delete(user_roles).where(user_roles.c.user_id == user_id))
+            self.session.delete(user)
+            self.session.commit()
+            return True
+        except Exception:
+            self.session.rollback()
+            raise

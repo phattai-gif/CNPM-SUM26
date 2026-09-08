@@ -7,18 +7,37 @@
 
   const AUTH_ROUTE_PREFIXES = ['/auth/login', '/auth/signup', '/auth/register'];
 
-  Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
-
-  function storageGet(key) {
-    return sessionStorage.getItem(key);
+    function storageGet(key) {
+    return sessionStorage.getItem(key) || localStorage.getItem(key);
   }
 
   function storageSet(key, value) {
-    sessionStorage.setItem(key, value);
+    try { sessionStorage.setItem(key, value); } catch (e) {}
+    try { localStorage.setItem(key, value); } catch (e) {}
   }
 
   function storageRemove(key) {
-    sessionStorage.removeItem(key);
+    try { sessionStorage.removeItem(key); } catch (e) {}
+    try { localStorage.removeItem(key); } catch (e) {}
+  }
+
+  function parseJwtPayload(token) {
+    if (!token || typeof token !== 'string') return null;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
   }
 
   function normalizeRequestPath(url) {
@@ -77,7 +96,29 @@
       }
 
       const token = storageGet(STORAGE_KEYS.TOKEN);
-      const role = storageGet(STORAGE_KEYS.ROLE) || user?.role || null;
+      let role = storageGet(STORAGE_KEYS.ROLE) || user?.role || null;
+
+      // Decode JWT token payload as robust fallback if role or user details are missing
+      if (token) {
+        const payload = parseJwtPayload(token);
+        if (payload) {
+          if (!role && payload.role) {
+            role = payload.role;
+            storageSet(STORAGE_KEYS.ROLE, role);
+          }
+          if (!user || typeof user !== 'object') {
+            user = {
+              id: payload.user_id,
+              username: payload.username,
+              role: payload.role
+            };
+            storageSet(STORAGE_KEYS.USER, JSON.stringify(user));
+          } else if (!user.role && payload.role) {
+            user.role = payload.role;
+            storageSet(STORAGE_KEYS.USER, JSON.stringify(user));
+          }
+        }
+      }
 
       return { token, user, role };
     },
