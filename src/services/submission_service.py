@@ -500,19 +500,25 @@ class SubmissionService:
             except Exception:
                 pass
 
-            # Analyze before responding so the result is persisted reliably.
+            # Analyze in background thread so the response is fast and non-blocking.
             thread_file_bytes = None
             if files and isinstance(files, list) and len(files) > 0:
                 thread_file_bytes = files[0].get("file_bytes")
             else:
                 thread_file_bytes = file_bytes
 
-            self._run_ai_detection(
-                getattr(submission, "id", None),
-                (files_data[0].get("image_hd_url") if files_data and len(files_data) > 0 else image_hd_url),
-                thread_file_bytes,
-                film_metadata,
+            import threading
+            ai_thread = threading.Thread(
+                target=self._run_ai_detection,
+                args=(
+                    getattr(submission, "id", None),
+                    (files_data[0].get("image_hd_url") if files_data and len(files_data) > 0 else image_hd_url),
+                    thread_file_bytes,
+                    film_metadata,
+                ),
+                daemon=True,
             )
+            ai_thread.start()
 
         # Run duplicate detection immediately for submissions with file bytes
         self.last_duplicate_result = None

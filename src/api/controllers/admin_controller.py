@@ -259,6 +259,7 @@ def get_admin_metrics():
 
 
 @admin_bp.route('/dashboard', methods=['GET'])
+@role_required('admin')
 def admin_dashboard():
     """Render dedicated Admin Dashboard HTML page."""
     from flask import render_template

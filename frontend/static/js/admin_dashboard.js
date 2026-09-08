@@ -4,7 +4,12 @@
     pagination: { page: 1, per_page: 20, total: 0, pages: 1 },
     search: '',
     role: '',
-    status: ''
+    status: '',
+    contests: [],
+    contestSearch: '',
+    contestStatus: '',
+    aiReports: [],
+    auditLogs: []
   };
 
   function showToast(message, isError = false) {
@@ -30,14 +35,18 @@
   }
 
   function requireAdminSession() {
-    const session = window.AuthSession.getSession();
+    const session = window.AuthSession ? window.AuthSession.getSession() : null;
     if (!session || !session.token) {
       window.location.href = '/auth/login';
       return null;
     }
     const role = String(session.role || (session.user && session.user.role) || '').toLowerCase();
     if (role !== 'admin') {
-      window.location.href = '/contests';
+      if (role === 'organizer') {
+        window.location.href = '/organizer/dashboard';
+      } else {
+        window.location.href = '/contests';
+      }
       return null;
     }
     return session;
@@ -63,6 +72,7 @@
     }
   }
 
+  // --- Metrics & Health ---
   async function loadAdminMetrics() {
     if (!requireAdminSession()) return;
     try {
@@ -172,6 +182,7 @@
     }).join('');
   }
 
+  // --- TAB 1: User & Role Management ---
   async function loadUsers(page = 1) {
     if (!requireAdminSession()) return;
     state.pagination.page = page;
@@ -214,8 +225,8 @@
       return;
     }
 
-    const currentSession = window.AuthSession.getSession();
-    const currentUserId = currentSession.user ? currentSession.user.id : null;
+    const currentSession = window.AuthSession ? window.AuthSession.getSession() : null;
+    const currentUserId = currentSession && currentSession.user ? currentSession.user.id : null;
 
     const tableHtml = `
       <table>
@@ -232,7 +243,6 @@
         <tbody>
           ${state.users.map(u => {
             const isSelf = currentUserId && String(currentUserId) === String(u.id);
-            const roleClass = `role-${u.role || 'participant'}`;
             const statusClass = `status-${u.status || 'active'}`;
 
             return `
@@ -279,7 +289,6 @@
     const container = document.getElementById('usersListContainer');
     if (!container) return;
 
-    // Role select change handler
     container.querySelectorAll('.role-select').forEach(select => {
       select.addEventListener('change', async (e) => {
         const userId = Number(select.dataset.userId);
@@ -296,7 +305,6 @@
       });
     });
 
-    // Toggle status button handler
     container.querySelectorAll('.toggle-status-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const userId = Number(btn.dataset.userId);
@@ -313,7 +321,6 @@
       });
     });
 
-    // Delete user button handler
     container.querySelectorAll('.delete-user-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const userId = Number(btn.dataset.userId);
@@ -358,6 +365,321 @@
     if (nextBtn) nextBtn.addEventListener('click', () => loadUsers(page + 1));
   }
 
+  // --- TAB 2: Contest Oversight ---
+  async function loadContests() {
+    if (!requireAdminSession()) return;
+    const container = document.getElementById('contestsListContainer');
+    if (container) {
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải danh sách cuộc thi...</p>';
+    }
+
+    try {
+      const response = await window.apiClient.get('/admin/contests');
+      state.contests = response.contests || [];
+      renderContestsTable();
+    } catch (error) {
+      console.error(error);
+      if (container) {
+        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Lỗi khi tải cuộc thi: ${escapeHtml(error.message)}</p>`;
+      }
+    }
+  }
+
+  function renderContestsTable() {
+    const container = document.getElementById('contestsListContainer');
+    if (!container) return;
+
+    let filtered = state.contests;
+    if (state.contestSearch) {
+      const kw = state.contestSearch.toLowerCase();
+      filtered = filtered.filter(c => (c.title || '').toLowerCase().includes(kw) || String(c.id).includes(kw));
+    }
+    if (state.contestStatus) {
+      filtered = filtered.filter(c => String(c.status || '').toLowerCase() === state.contestStatus.toLowerCase());
+    }
+
+    if (!filtered.length) {
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Không tìm thấy cuộc thi nào phù hợp.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tên Cuộc Thi</th>
+            <th>Ban Tổ Chức (Organizer)</th>
+            <th>Trạng Thái</th>
+            <th>Hành Động Quản Trị</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map(c => {
+            const st = (c.status || 'draft').toLowerCase();
+            let stBadge = `<span class="status-badge status-active">${escapeHtml(st.toUpperCase())}</span>`;
+            if (st === 'suspended') {
+              stBadge = `<span class="status-badge status-locked">ĐÌNH CHỈ</span>`;
+            } else if (st === 'draft' || st === 'pending') {
+              stBadge = `<span class="status-badge" style="background:rgba(245,166,35,0.18);color:#f5a623;">CHỜ DUYỆT</span>`;
+            }
+
+            return `
+              <tr>
+                <td>#${escapeHtml(c.id)}</td>
+                <td>
+                  <div class="user-meta-name">${escapeHtml(c.title)}</div>
+                  <div class="user-meta-sub">${escapeHtml(c.description || 'Không có mô tả')}</div>
+                </td>
+                <td>ID: #${escapeHtml(c.organizer_id || '-')}</td>
+                <td>${stBadge}</td>
+                <td>
+                  <div class="action-group">
+                    ${st !== 'published' && st !== 'active' ? `
+                      <button class="btn btn-outline btn-sm approve-contest-btn" data-contest-id="${escapeHtml(c.id)}">
+                        ✅ Duyệt / Xuất Bản
+                      </button>
+                    ` : ''}
+                    ${st !== 'suspended' ? `
+                      <button class="btn btn-danger btn-sm suspend-contest-btn" data-contest-id="${escapeHtml(c.id)}">
+                        ⛔ Đình Chỉ
+                      </button>
+                    ` : ''}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Bind Contest actions
+    container.querySelectorAll('.approve-contest-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = Number(btn.dataset.contestId);
+        try {
+          await window.apiClient.post(`/admin/contests/${id}/approve`);
+          showToast(`Đã xuất bản / phê duyệt cuộc thi #${id}`);
+          await loadContests();
+          await loadAdminMetrics();
+        } catch (err) {
+          showToast(err.message || 'Không thể duyệt cuộc thi', true);
+        }
+      });
+    });
+
+    container.querySelectorAll('.suspend-contest-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = Number(btn.dataset.contestId);
+        if (!confirm(`Bạn có chắc muốn ĐÌNH CHỈ cuộc thi #${id}?`)) return;
+        try {
+          await window.apiClient.post(`/admin/contests/${id}/suspend`);
+          showToast(`Đã đình chỉ cuộc thi #${id}`);
+          await loadContests();
+          await loadAdminMetrics();
+        } catch (err) {
+          showToast(err.message || 'Không thể đình chỉ cuộc thi', true);
+        }
+      });
+    });
+  }
+
+  // --- TAB 3: AI Inspection ---
+  async function loadAiReports() {
+    if (!requireAdminSession()) return;
+    const container = document.getElementById('aiReportsListContainer');
+    if (container) {
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải báo cáo kiểm tra AI...</p>';
+    }
+
+    try {
+      const response = await window.apiClient.get('/admin/ai-reports');
+      state.aiReports = response.reports || [];
+      renderAiReportsTable();
+    } catch (error) {
+      console.error(error);
+      if (container) {
+        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Lỗi khi tải báo cáo AI: ${escapeHtml(error.message)}</p>`;
+      }
+    }
+  }
+
+  function renderAiReportsTable() {
+    const container = document.getElementById('aiReportsListContainer');
+    if (!container) return;
+
+    if (!state.aiReports.length) {
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Chưa có báo cáo vi phạm AI nào trong hệ thống.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>ID Report</th>
+            <th>ID Bài Thi (Submission)</th>
+            <th>Model AI Phân Tích</th>
+            <th>Độ Tin Cậy AI (Confidence)</th>
+            <th>Chi Tiết Kết Quả</th>
+            <th>Thời Gian</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${state.aiReports.map(r => {
+            const score = r.ai_confidence_score !== null ? (r.ai_confidence_score * 100).toFixed(1) + '%' : 'N/A';
+            const isHighRisk = (r.ai_confidence_score || 0) >= 0.75;
+            const badgeColor = isHighRisk ? '#ef4444' : '#f5a623';
+
+            return `
+              <tr>
+                <td>#${escapeHtml(r.id)}</td>
+                <td><strong>#${escapeHtml(r.submission_id)}</strong></td>
+                <td>${escapeHtml(r.ai_model_name || 'Sightengine / OpenAI Vision')}</td>
+                <td><span style="font-weight:800;color:${badgeColor}">${score}</span></td>
+                <td style="font-size:0.85rem;color:#8899aa;max-width:300px;overflow:hidden;text-overflow:ellipsis;">
+                  ${escapeHtml(JSON.stringify(r.raw_details || {}))}
+                </td>
+                <td>${escapeHtml(formatTimestamp(r.created_at))}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // --- TAB 4: Audit Logs ---
+  async function loadAuditLogs() {
+    if (!requireAdminSession()) return;
+    const container = document.getElementById('auditLogsListContainer');
+    if (container) {
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải nhật ký audit log...</p>';
+    }
+
+    try {
+      const response = await window.apiClient.get('/admin/audit-logs');
+      state.auditLogs = response.audit_logs || [];
+      renderAuditLogsTable();
+    } catch (error) {
+      console.error(error);
+      if (container) {
+        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Lỗi khi tải audit log: ${escapeHtml(error.message)}</p>`;
+      }
+    }
+  }
+
+  function renderAuditLogsTable() {
+    const container = document.getElementById('auditLogsListContainer');
+    if (!container) return;
+
+    if (!state.auditLogs.length) {
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Chưa có dữ liệu nhật ký hệ thống nào.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>ID Log</th>
+            <th>Tài Khoản Thực Hiện</th>
+            <th>Hành Động (Action)</th>
+            <th>Đối Tượng (Entity)</th>
+            <th>Thời Gian</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${state.auditLogs.map(l => `
+            <tr>
+              <td>#${escapeHtml(l.id)}</td>
+              <td>User #${escapeHtml(l.user_id || 'System')}</td>
+              <td><span style="font-weight:700;color:#f5a623;">${escapeHtml(l.action)}</span></td>
+              <td>${escapeHtml(l.entity_name || '')} #${escapeHtml(l.entity_id || '')}</td>
+              <td>${escapeHtml(formatTimestamp(l.created_at))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // --- TAB 5 & 6 Event Handlers ---
+  function bindSettingsForm() {
+    const form = document.getElementById('systemSettingsForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        max_file_size_mb: Number(document.getElementById('cfgMaxFileSize').value),
+        allowed_extensions: document.getElementById('cfgAllowedExts').value,
+        ai_threshold_percent: Number(document.getElementById('cfgAiThreshold').value),
+        ai_action: document.getElementById('cfgAiAction').value,
+        maintenance_mode: document.getElementById('cfgMaintenanceMode').checked
+      };
+
+      try {
+        await window.apiClient.put('/admin/settings', payload);
+        showToast('Đã cập nhật cấu hình hệ thống thành công');
+      } catch (err) {
+        showToast(err.message || 'Lỗi khi lưu cấu hình hệ thống', true);
+      }
+    });
+  }
+
+  function bindNotificationForm() {
+    const form = document.getElementById('systemNotificationForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('notifTitle').value.trim();
+      const body = document.getElementById('notifBody').value.trim();
+
+      if (!title || !body) {
+        showToast('Vui lòng điền đầy đủ tiêu đề và nội dung thông báo', true);
+        return;
+      }
+
+      try {
+        const response = await window.apiClient.post('/admin/notifications/system', { title, body });
+        showToast(response.message || 'Đã gửi thông báo hệ thống thành công!');
+        form.reset();
+      } catch (err) {
+        showToast(err.message || 'Không thể gửi thông báo hệ thống', true);
+      }
+    });
+  }
+
+  // --- TAB SWITCHING LOGIC ---
+  function bindTabs() {
+    const tabBtns = document.querySelectorAll('.admin-tab-btn');
+    const tabContents = document.querySelectorAll('.admin-tab-content');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.dataset.tab;
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+
+        btn.classList.add('active');
+        const targetContent = document.getElementById(targetId);
+        if (targetContent) targetContent.classList.add('active');
+
+        // Lazy load data for selected tab
+        if (targetId === 'tab-contests' && !state.contests.length) {
+          loadContests();
+        } else if (targetId === 'tab-ai' && !state.aiReports.length) {
+          loadAiReports();
+        } else if (targetId === 'tab-audit' && !state.auditLogs.length) {
+          loadAuditLogs();
+        }
+      });
+    });
+  }
+
   function bindEvents() {
     const searchInput = document.getElementById('searchInput');
     const roleFilter = document.getElementById('roleFilter');
@@ -394,6 +716,52 @@
         showToast('Đã làm mới danh sách người dùng & thống kê');
       });
     }
+
+    // Contest Oversight filters & buttons
+    const contestSearchInput = document.getElementById('contestSearchInput');
+    const contestStatusFilter = document.getElementById('contestStatusFilter');
+    const btnRefreshContests = document.getElementById('btnRefreshContests');
+
+    if (contestSearchInput) {
+      contestSearchInput.addEventListener('input', (e) => {
+        state.contestSearch = e.target.value.trim();
+        renderContestsTable();
+      });
+    }
+
+    if (contestStatusFilter) {
+      contestStatusFilter.addEventListener('change', (e) => {
+        state.contestStatus = e.target.value;
+        renderContestsTable();
+      });
+    }
+
+    if (btnRefreshContests) {
+      btnRefreshContests.addEventListener('click', () => {
+        loadContests();
+        showToast('Đã làm mới danh sách cuộc thi');
+      });
+    }
+
+    const btnRefreshAiReports = document.getElementById('btnRefreshAiReports');
+    if (btnRefreshAiReports) {
+      btnRefreshAiReports.addEventListener('click', () => {
+        loadAiReports();
+        showToast('Đã làm mới báo cáo AI');
+      });
+    }
+
+    const btnRefreshAuditLogs = document.getElementById('btnRefreshAuditLogs');
+    if (btnRefreshAuditLogs) {
+      btnRefreshAuditLogs.addEventListener('click', () => {
+        loadAuditLogs();
+        showToast('Đã làm mới nhật ký audit log');
+      });
+    }
+
+    bindTabs();
+    bindSettingsForm();
+    bindNotificationForm();
   }
 
   document.addEventListener('DOMContentLoaded', () => {

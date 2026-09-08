@@ -185,10 +185,15 @@ def setup_gallery_test_data(session):
                     tzinfo=timezone.utc,
                 ),
             )
-
             session.add(sub1)
             session.commit()
+        else:
+            sub1.round_id = round1.id
+            sub1.status = "published"
+            session.commit()
 
+        file1 = session.query(SubmissionFileModel).filter_by(submission_id=sub1.id).first()
+        if not file1:
             file1 = SubmissionFileModel(
                 submission_id=sub1.id,
                 image_hd_url="https://example.com/img1_hd.jpg",
@@ -196,27 +201,30 @@ def setup_gallery_test_data(session):
                 file_hash="hash1",
                 file_type="main_image",
             )
+            session.add(file1)
 
+        meta1 = session.query(SubmissionFilmMetadataModel).filter_by(submission_id=sub1.id).first()
+        if not meta1:
             meta1 = SubmissionFilmMetadataModel(
                 submission_id=sub1.id,
                 film_stock="Kodak Portra 400",
                 camera_body="Fujifilm X100V",
             )
+            session.add(meta1)
+        else:
+            meta1.film_stock = "Kodak Portra 400"
+            meta1.camera_body = "Fujifilm X100V"
 
+        exhibit1 = session.query(DigitalArchiveExhibitModel).filter_by(submission_id=sub1.id).first()
+        if not exhibit1:
             exhibit1 = DigitalArchiveExhibitModel(
                 contest_id=contest1.id,
                 submission_id=sub1.id,
                 award_title="Gold Prize",
             )
+            session.add(exhibit1)
 
-            session.add_all(
-                [
-                    file1,
-                    meta1,
-                    exhibit1,
-                ]
-            )
-            session.commit()
+        session.commit()
 
         # ============================================================
         # 7. Submission: Old Quarter Alley
@@ -253,10 +261,15 @@ def setup_gallery_test_data(session):
                     tzinfo=timezone.utc,
                 ),
             )
-
             session.add(sub2)
             session.commit()
+        else:
+            sub2.round_id = round1.id
+            sub2.status = "approved"
+            session.commit()
 
+        file2 = session.query(SubmissionFileModel).filter_by(submission_id=sub2.id).first()
+        if not file2:
             file2 = SubmissionFileModel(
                 submission_id=sub2.id,
                 image_hd_url="https://example.com/img2_hd.jpg",
@@ -264,20 +277,21 @@ def setup_gallery_test_data(session):
                 file_hash="hash2",
                 file_type="main_image",
             )
+            session.add(file2)
 
+        meta2 = session.query(SubmissionFilmMetadataModel).filter_by(submission_id=sub2.id).first()
+        if not meta2:
             meta2 = SubmissionFilmMetadataModel(
                 submission_id=sub2.id,
                 film_stock="Ilford HP5 Plus",
                 camera_body="Leica M6",
             )
+            session.add(meta2)
+        else:
+            meta2.film_stock = "Ilford HP5 Plus"
+            meta2.camera_body = "Leica M6"
 
-            session.add_all(
-                [
-                    file2,
-                    meta2,
-                ]
-            )
-            session.commit()
+        session.commit()
 
         # ============================================================
         # 8. Submission: Saigon River Dusk
@@ -314,10 +328,15 @@ def setup_gallery_test_data(session):
                     tzinfo=timezone.utc,
                 ),
             )
-
             session.add(sub3)
             session.commit()
+        else:
+            sub3.round_id = round2.id
+            sub3.status = "published"
+            session.commit()
 
+        file3 = session.query(SubmissionFileModel).filter_by(submission_id=sub3.id).first()
+        if not file3:
             file3 = SubmissionFileModel(
                 submission_id=sub3.id,
                 image_hd_url="https://example.com/img3_hd.jpg",
@@ -325,20 +344,21 @@ def setup_gallery_test_data(session):
                 file_hash="hash3",
                 file_type="main_image",
             )
+            session.add(file3)
 
+        meta3 = session.query(SubmissionFilmMetadataModel).filter_by(submission_id=sub3.id).first()
+        if not meta3:
             meta3 = SubmissionFilmMetadataModel(
                 submission_id=sub3.id,
                 film_stock="Kodak Portra 400",
                 camera_body="Nikon F3",
             )
+            session.add(meta3)
+        else:
+            meta3.film_stock = "Kodak Portra 400"
+            meta3.camera_body = "Nikon F3"
 
-            session.add_all(
-                [
-                    file3,
-                    meta3,
-                ]
-            )
-            session.commit()
+        session.commit()
 
         # ============================================================
         # 9. Non-public submissions
@@ -356,7 +376,6 @@ def setup_gallery_test_data(session):
                 title="Draft Photo",
                 status="draft",
             )
-
             session.add(sub4)
 
         sub5 = (
@@ -372,7 +391,6 @@ def setup_gallery_test_data(session):
                 title="Rejected Photo",
                 status="rejected",
             )
-
             session.add(sub5)
 
         sub6 = (
@@ -388,7 +406,6 @@ def setup_gallery_test_data(session):
                 title="Submitted Photo",
                 status="submitted",
             )
-
             session.add(sub6)
 
         session.commit()

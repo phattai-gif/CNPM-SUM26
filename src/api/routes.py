@@ -805,6 +805,7 @@ def register_routes(app):
             "/<path:path>",
             "spa_fallback",
             spa_fallback,
+            methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
         )
     except Exception:
         pass

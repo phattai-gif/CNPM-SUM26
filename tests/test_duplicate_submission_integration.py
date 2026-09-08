@@ -15,6 +15,9 @@ DB_FILE = Path(tempfile.gettempdir()) / (
     f'flask_clean_architecture_duplicate_{os.getpid()}.db'
 )
 DB_FILE.unlink(missing_ok=True)
+ORIGINAL_DB_URI = os.environ.get('DATABASE_URI')
+ORIGINAL_PG_URL = os.environ.get('POSTGREE_DATABASE_URL')
+
 # Override both environment variables - DATABASE_URI takes priority over POSTGREE_DATABASE_URL
 os.environ['DATABASE_URI'] = f'sqlite:///{DB_FILE.as_posix()}'
 os.environ['POSTGREE_DATABASE_URL'] = f'sqlite:///{DB_FILE.as_posix()}'
@@ -34,6 +37,16 @@ def cleanup_test_database():
         close_all_sessions()
         database.engine.dispose()
     finally:
+        if ORIGINAL_DB_URI is not None:
+            os.environ['DATABASE_URI'] = ORIGINAL_DB_URI
+        else:
+            os.environ.pop('DATABASE_URI', None)
+        if ORIGINAL_PG_URL is not None:
+            os.environ['POSTGREE_DATABASE_URL'] = ORIGINAL_PG_URL
+        else:
+            os.environ.pop('POSTGREE_DATABASE_URL', None)
+        db_factory._database = None
+        db_factory._database_uri = None
         try:
             DB_FILE.unlink(missing_ok=True)
         except PermissionError:
@@ -64,13 +77,13 @@ def test_duplicate_submission_integration():
     # Seed minimum dependencies
     session.execute(text("INSERT OR IGNORE INTO roles (code, name) VALUES ('participant', 'Participant')"))
     session.execute(text("INSERT INTO users (username, email, password_hash, status) VALUES ('part1', 'p1@ex.com', 'hash', 'active')"))
-    user_id = session.execute(text("SELECT id FROM users LIMIT 1")).scalar()
+    user_id = session.execute(text("SELECT id FROM users ORDER BY id DESC LIMIT 1")).scalar()
     
     session.execute(text("INSERT INTO contests (title, slug, created_by, status) VALUES ('Contest 1', 'c1', :uid, 'published')"), {"uid": user_id})
-    contest_id = session.execute(text("SELECT id FROM contests LIMIT 1")).scalar()
+    contest_id = session.execute(text("SELECT id FROM contests ORDER BY id DESC LIMIT 1")).scalar()
     
-    session.execute(text("INSERT INTO rounds (contest_id, round_number, title, status) VALUES (:cid, 1, 'Round 1', 'open')"), {"cid": contest_id})
-    round_id = session.execute(text("SELECT id FROM rounds LIMIT 1")).scalar()
+    session.execute(text("INSERT INTO rounds (contest_id, round_number, title, status) VALUES (:cid, 1, 'Round 1', 'ongoing')"), {"cid": contest_id})
+    round_id = session.execute(text("SELECT id FROM rounds ORDER BY id DESC LIMIT 1")).scalar()
     session.commit()
 
     # Load test image bytes
