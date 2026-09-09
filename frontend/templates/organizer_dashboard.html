@@ -398,6 +398,11 @@
         <a href="/organizer/create-contest" class="btn">Create New Contest</a>
       </div>
 
+      <div class="action-row" style="margin-bottom:16px;">
+        <a href="/leaderboard" class="btn btn-outline">Leaderboard & Winner Publication</a>
+        <a href="/gallery" class="btn btn-outline">Public Gallery</a>
+      </div>
+
       <div id="dashboard" class="panel" data-organizer-id="{{ organizer_id }}" data-api-token="{{ api_token }}">
         <div id="overview">
           <div>
@@ -496,6 +501,42 @@
             </div>
           </section>
         </div>
+
+        <section class="manager-card" style="margin-top:16px;">
+          <div class="judge-card-top">
+            <div>
+              <h2>AI Review Queue</h2>
+              <p class="muted">Review submissions flagged by EXIF, duplicate-image, or authenticity checks.</p>
+            </div>
+            <button id="refresh-flagged-btn" class="btn btn-outline">Refresh AI Queue</button>
+          </div>
+          <div class="table-responsive" style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Submission</th>
+                  <th>Warning Type</th>
+                  <th>Confidence</th>
+                  <th>Risk</th>
+                  <th>Reason</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="flagged-submissions-body">
+                <tr><td colspan="6" class="empty-state">Loading AI flags...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside id="ai-report-drawer" class="manager-card" style="display:none;margin-top:16px;">
+          <div class="judge-card-top">
+            <h2>AI Report</h2>
+            <button id="close-ai-report-btn" class="btn btn-outline">Close</button>
+          </div>
+          <pre id="ai-report-summary" style="white-space:pre-wrap;color:#111827;background:#f8fafc;padding:12px;border-radius:8px;">Select AI Report to view details.</pre>
+          <pre id="ai-report-raw" style="white-space:pre-wrap;overflow:auto;color:#cbd5e1;background:#111827;padding:12px;border-radius:8px;">{}</pre>
+        </aside>
       </div>
     </div>
     <div id="dashboard-toast" class="toast" aria-live="polite"></div>

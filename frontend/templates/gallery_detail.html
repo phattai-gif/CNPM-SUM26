@@ -191,6 +191,10 @@
           </div>
 
           <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 d-flex gap-2">
+            <button type="button" class="btn btn-outline-custom" id="voteButton" onclick="toggleVote()">
+              <i class="bi bi-heart me-1"></i><span id="voteButtonText">Vote</span>
+              <span id="voteCount" class="ms-1">0</span>
+            </button>
             <button type="button" class="btn btn-accent flex-grow-1" onclick="copyCurrentLink()">
               <i class="bi bi-share me-1"></i>Share Link
             </button>
@@ -236,6 +240,8 @@
         document.getElementById('detailLab').textContent = meta.lab_name || '-';
         document.getElementById('detailLocation').textContent = meta.taken_at_location || '-';
 
+        await loadVoteState(submissionId);
+
         loadingEl.style.display = 'none';
         contentEl.style.display = 'block';
 
@@ -243,6 +249,37 @@
         console.error(err);
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
+      }
+    }
+
+    async function loadVoteState(id) {
+      try {
+        const response = await fetch(`/api/votes/${encodeURIComponent(id)}/count`);
+        if (!response.ok) return;
+        const data = await response.json();
+        document.getElementById('voteCount').textContent = String(data.count || data.vote_count || 0);
+      } catch (error) {
+        console.warn('Unable to load vote count', error);
+      }
+    }
+
+    async function toggleVote() {
+      const session = window.AuthSession ? window.AuthSession.getSession() : {};
+      if (!session || !session.token) {
+        window.location.href = '/auth/login';
+        return;
+      }
+      try {
+        const response = await fetch(`/api/votes/${encodeURIComponent(submissionId)}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.token}`, Accept: 'application/json' }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Unable to vote.');
+        document.getElementById('voteButtonText').textContent = 'Voted';
+        document.getElementById('voteCount').textContent = String(data.vote_count || data.count || 0);
+      } catch (error) {
+        alert(error.message || 'Unable to vote.');
       }
     }
 

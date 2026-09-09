@@ -350,6 +350,41 @@
         </div>
       </div>
 
+      <div class="admin-tabs-nav" aria-label="Evidence and administration panels">
+        <button type="button" class="admin-tab-btn" data-tab="tab-ai">AI Reports</button>
+        <button type="button" class="admin-tab-btn" data-tab="tab-audit">Audit Logs</button>
+      </div>
+
+      <section id="tab-ai" class="admin-tab-content panel" style="margin-bottom: 28px;">
+        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
+          <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">AI Reports</h2>
+          <button id="btnRefreshAiReports" class="btn btn-outline">Refresh</button>
+        </div>
+        <div id="aiReportsListContainer">
+          <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load AI reports.</p>
+        </div>
+      </section>
+
+      <section id="tab-audit" class="admin-tab-content panel" style="margin-bottom: 28px;">
+        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
+          <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">Audit Logs</h2>
+          <button id="btnRefreshAuditLogs" class="btn btn-outline">Refresh</button>
+        </div>
+        <div id="auditLogsListContainer">
+          <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load audit logs.</p>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-bottom: 28px;">
+        <h2 style="margin:0 0 8px;color:#f0f4f8;font-size:1.3rem;">System Notification</h2>
+        <p style="margin:0 0 16px;color:#8899aa;">Send a notification to organizer and moderator accounts.</p>
+        <form id="systemNotificationForm" style="display:grid;gap:10px;max-width:720px;">
+          <input id="notifTitle" class="field-input" type="text" placeholder="Notification title" required>
+          <textarea id="notifBody" class="field-input" rows="3" placeholder="Notification message" required></textarea>
+          <button type="submit" class="btn" style="width:max-content;">Send Notification</button>
+        </form>
+      </section>
+
       <div class="panel">
         <div style="margin-bottom: 20px;">
           <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">System Account Management</h2>
