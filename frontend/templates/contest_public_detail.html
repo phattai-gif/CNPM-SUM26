@@ -221,25 +221,30 @@
   {% include '_nav.html' %}
 
   <div class="container py-4" style="max-width: 960px;">
-    <!-- Thông tin cuộc thi -->
+    <!-- Contest information -->
     <div id="contestRoot" class="card-custom p-4 mb-4">
-      <div class="text-center text-muted py-3">Đang tải thông tin cuộc thi...</div>
+      <div class="text-center text-muted py-3">Loading contest information...</div>
     </div>
 
-    <!-- Danh sách bài dự thi -->
+    <!-- Submission list -->
     <div class="card-custom p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
+
           <h4 class="fw-bold m-0 text-light-gray">Submitted Entries</h4>
           <small class="text-muted">Danh sách các sản phẩm đã tham gia trong cuộc thi này</small>
+
+          <h4 class="fw-bold m-0 text-light-gray">Submitted Works</h4>
+          <small class="text-muted">Works submitted to this contest</small>
+
         </div>
         <button id="btnOpenModal" class="btn btn-primary px-3 py-2 fw-semibold rounded-3">
-          <i class="bi bi-cloud-upload me-1"></i> Nộp bài dự thi
+          <i class="bi bi-cloud-upload me-1"></i> Submit Work
         </button>
       </div>
 
       <div id="public-submission-list" class="row g-3">
-        <div class="col-12 text-center text-muted py-4">Đang tải danh sách bài dự thi...</div>
+        <div class="col-12 text-center text-muted py-4">Loading submissions...</div>
       </div>
     </div>
   </div>
@@ -270,19 +275,19 @@
           root.innerHTML = `
             <div class="d-flex justify-content-between align-items-start">
               <div>
-                <span class="badge badge-primary-subtle mb-2 px-2 py-1">Trạng thái: ${c.status || 'published'}</span>
-                <h2 class="fw-bold text-light-gray mb-1">${c.title || 'Cuộc thi'}</h2>
-                <p class="text-secondary mb-0">${c.description || 'Chưa có mô tả'}</p>
+                <span class="badge badge-primary-subtle mb-2 px-2 py-1">Status: ${c.status || 'published'}</span>
+                <h2 class="fw-bold text-light-gray mb-1">${c.title || 'Contest'}</h2>
+                <p class="text-secondary mb-0">${c.description || 'No description'}</p>
               </div>
             </div>
           `;
           loadSubmissions(currentContestId);
         } else {
-          root.innerHTML = '<div class="text-muted">Không tìm thấy thông tin cuộc thi</div>';
+          root.innerHTML = '<div class="text-muted">Contest information not found.</div>';
         }
       } catch (e) {
         console.error(e);
-        root.innerHTML = '<div class="text-danger">Lỗi kết nối khi tải cuộc thi</div>';
+        root.innerHTML = '<div class="text-danger">Unable to load contest.</div>';
       }
     }
 
@@ -327,14 +332,18 @@
           const isDrive = Boolean(targetHref && targetHref.includes('drive.google.com'));
           const opensNewTab = Boolean(externalUrl);
           const buttonLabel = externalUrl
-            ? (isDrive ? 'Mở Google Drive ↗' : 'Xem sản phẩm ↗')
-            : 'Xem chi tiết';
+            ? (isDrive ? 'Open Google Drive ↗' : 'View Work ↗')
+            : 'View Details';
           const buttonHtml = targetHref
             ? `<a href="${targetHref}" ${opensNewTab ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn btn-outline-primary btn-sm w-100 fw-medium">
                     <i class="bi ${externalUrl ? (isDrive ? 'bi-google-drive' : 'bi-box-arrow-up-right') : 'bi-eye'} me-1"></i>
                     ${buttonLabel}
                   </a>`
+
             : '<button type="button" class="btn btn-outline-secondary btn-sm w-100 fw-medium" disabled>No Product Link</button>';
+
+            : '<button type="button" class="btn btn-outline-secondary btn-sm w-100 fw-medium" disabled>No work link available</button>';
+
 
           return `
             <div class="col-md-6 col-lg-4">
@@ -342,13 +351,13 @@
                 <div>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="badge badge-warning-subtle">
-                      ${s.status || 'Chờ chấm'}
+                      ${s.status || 'Awaiting Review'}
                     </span>
                     <small class="text-muted">#${s.id || (idx + 1)}</small>
                   </div>
-                  <h6 class="fw-bold text-light-gray mb-2 text-truncate">${s.title || 'Bài dự thi'}</h6>
+                  <h6 class="fw-bold text-light-gray mb-2 text-truncate">${s.title || 'Submission'}</h6>
                   <p class="text-muted small mb-3 text-truncate" style="max-height: 40px;">
-                    ${s.story_description || 'Không có mô tả thêm'}
+                    ${s.story_description || 'No additional description'}
                   </p>
                 </div>
                 <div>
@@ -362,7 +371,7 @@
         container.innerHTML = `
           <div class="col-12 text-center text-muted py-5">
             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-            Chưa có bài dự thi nào được nộp cho cuộc thi này.
+            No submissions have been made to this contest yet.
           </div>`;
       }
     }
@@ -379,7 +388,7 @@
 
     function openSubmissionForm() {
       if (!currentContestId) {
-        showToast('Không xác định được cuộc thi để nộp bài', false);
+        showToast('The contest could not be identified for submission.', false);
         return;
       }
       window.location.href = `/submit?contest_id=${encodeURIComponent(currentContestId)}`;

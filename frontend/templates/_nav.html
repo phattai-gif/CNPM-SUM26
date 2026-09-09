@@ -3,6 +3,7 @@
 
   <div class="app-nav-wrap">
     <nav class="app-nav-left" aria-label="Điều hướng chính">
+    <nav class="app-nav-left" aria-label="Main navigation">
       <a href="/contests" class="app-nav-link primary">Contests</a>
       <a href="/gallery" class="app-nav-link">Gallery</a>
       <a href="/leaderboard" class="app-nav-link">Leaderboard</a>
@@ -10,12 +11,15 @@
       <a href="/judge" id="nav-judge-link" class="app-nav-link is-hidden">Judge Area</a>
       <a href="/organizer/dashboard" id="nav-organizer-link" class="app-nav-btn app-nav-btn-solid">Manage</a>
       <button type="button" id="nav-notifications" class="app-nav-btn app-nav-btn-outline is-hidden" title="Xem cảnh báo fraud">
+
+      <button type="button" id="nav-notifications" class="app-nav-btn app-nav-btn-outline is-hidden" title="View fraud alerts">
+
         🔔 <span id="nav-notification-count" class="is-hidden">0</span>
       </button>
     </nav>
 
     <div id="nav-notification-panel" class="is-hidden" style="position:absolute;right:24px;top:58px;z-index:1400;width:min(380px,calc(100vw - 32px));max-height:420px;overflow:auto;background:#111a26;border:1px solid #1e2a3a;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.45);padding:12px;">
-      <strong style="color:#f0f4f8;">Cảnh báo mới</strong>
+      <strong style="color:#f0f4f8;">New Alerts</strong>
       <div id="nav-notification-list" style="display:grid;gap:8px;margin-top:10px;"></div>
     </div>
 
@@ -23,7 +27,7 @@
       <a href="/auth/login" id="nav-login" class="app-nav-btn app-nav-btn-outline">Log In</a>
       <a href="/auth/register" id="nav-register" class="app-nav-btn app-nav-btn-solid">Sign Up</a>
 
-      <a href="/profile" id="nav-profile-link" class="app-nav-btn app-nav-btn-outline is-hidden" title="Xem Hồ sơ & Portfolio">
+      <a href="/profile" id="nav-profile-link" class="app-nav-btn app-nav-btn-outline is-hidden" title="View Profile & Portfolio">
         <span id="nav-avatar" style="margin-right: 6px; font-size: 1.1rem;">👤</span>
         <span id="nav-username" class="app-nav-user" style="padding:0; max-width:150px;"></span>
       </a>
@@ -117,10 +121,10 @@
 
       function displayNameFromUser(user) {
         if (!user || typeof user !== 'object') {
-          return 'Tài khoản';
+          return 'Account';
         }
 
-        return user.full_name || user.username || user.email || 'Tài khoản';
+        return user.full_name || user.username || user.email || 'Account';
       }
 
       function renderByAuthState() {
@@ -132,7 +136,7 @@
 
         if (organizerLink) {
           organizerLink.href = role === 'admin' ? '/admin/dashboard' : '/organizer/dashboard';
-          organizerLink.textContent = role === 'admin' ? 'Dashboard Admin' : (role === 'organizer' ? 'Dashboard Organizer' : 'Quản lý');
+          organizerLink.textContent = role === 'admin' ? 'Admin Dashboard' : (role === 'organizer' ? 'Organizer Dashboard' : 'Manage');
         }
 
         setHidden(organizerLink, !(isLoggedIn && isManager));
@@ -164,8 +168,8 @@
           notificationCount.textContent = String(notifications.length);
           setHidden(notificationCount, notifications.length === 0);
           notificationList.innerHTML = notifications.length
-            ? notifications.map((item) => `<div style="border:1px solid #1e2a3a;border-radius:8px;padding:8px;color:#cbd5e1;font-size:.88rem;"><strong style="color:#f5a623;">${escapeHtml(item.title || 'Cảnh báo')}</strong><br>${escapeHtml(item.body || '')}</div>`).join('')
-            : '<span style="color:#8899aa;font-size:.88rem;">Không có cảnh báo mới.</span>';
+            ? notifications.map((item) => `<div style="border:1px solid #1e2a3a;border-radius:8px;padding:8px;color:#cbd5e1;font-size:.88rem;"><strong style="color:#f5a623;">${escapeHtml(item.title || 'Alert')}</strong><br>${escapeHtml(item.body || '')}</div>`).join('')
+            : '<span style="color:#8899aa;font-size:.88rem;">No new alerts.</span>';
         } catch (error) {
           console.warn('Unable to load notifications', error);
         }

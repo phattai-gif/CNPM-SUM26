@@ -53,20 +53,20 @@
   }
 
   function formatTimestamp(isoString) {
-    if (!isoString) return 'Vừa xong';
+    if (!isoString) return 'Just now';
     try {
       const date = new Date(isoString);
       if (isNaN(date.getTime())) return isoString;
       const now = new Date();
       const diffMs = now - date;
       const diffMins = Math.floor(diffMs / 60000);
-      if (diffMins < 1) return 'Vừa xong';
-      if (diffMins < 60) return `${diffMins} phút trước`;
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins} minutes ago`;
       const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return `${diffHours} giờ trước`;
+      if (diffHours < 24) return `${diffHours} hours ago`;
       const diffDays = Math.floor(diffHours / 24);
-      if (diffDays < 7) return `${diffDays} ngày trước`;
-      return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      if (diffDays < 7) return `${diffDays} days ago`;
+      return date.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     } catch {
       return isoString;
     }

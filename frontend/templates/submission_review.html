@@ -423,8 +423,13 @@
     <div class="card-body py-3">
       <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div>
+
           <h4 class="mb-1">Submission Review (CNPM-75)</h4>
           <div class="text-muted" id="headerSubtitle">Chọn assignment và submission để bắt đầu.</div>
+
+          <h4 class="mb-1">Grade Submission (CNPM-75)</h4>
+          <div class="text-muted" id="headerSubtitle">Select an assignment and submission to begin.</div>
+
         </div>
         <div class="d-flex gap-2">
           <button type="button" class="btn btn-outline-secondary" id="prevButton" disabled>Previous</button>
@@ -445,7 +450,7 @@
           </div>
           <div class="card-body p-2">
             <div id="assignmentList" class="list-group list-group-flush"></div>
-            <div id="assignmentEmpty" class="text-muted small p-2 d-none">Chưa có assignment nào.</div>
+            <div id="assignmentEmpty" class="text-muted small p-2 d-none">No assignments found.</div>
           </div>
         </div>
 
@@ -456,7 +461,7 @@
           </div>
           <div class="card-body p-2">
             <div id="submissionList" class="list-group list-group-flush"></div>
-            <div id="submissionEmpty" class="text-muted small p-2 d-none">Assignment hiện tại chưa có submission.</div>
+            <div id="submissionEmpty" class="text-muted small p-2 d-none">The current assignment has no submissions.</div>
           </div>
         </div>
       </div>
@@ -466,8 +471,8 @@
       <div class="card shadow-sm mb-3">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
           <div>
-            <strong id="submissionTitle">Chi tiết submission</strong>
-            <div class="small text-muted" id="submissionMeta">Chưa chọn submission.</div>
+            <strong id="submissionTitle">Submission Details</strong>
+            <div class="small text-muted" id="submissionMeta">No submission selected.</div>
           </div>
           <div class="d-flex align-items-center gap-2">
             <button type="button" class="btn btn-sm btn-outline-dark" id="openHdViewerButton" disabled>Open HD Viewer</button>
@@ -476,7 +481,7 @@
         </div>
         <div class="card-body">
           <div id="imageContainer">
-            <div class="submission-image-empty">Chưa có ảnh để hiển thị</div>
+            <div class="submission-image-empty">No image available</div>
           </div>
 
           <hr>
@@ -487,26 +492,26 @@
 
       <div class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-          <strong>Tổng quan điểm</strong>
+          <strong>Score Overview</strong>
           <span class="badge text-bg-info" id="criteriaCount">0 criteria</span>
         </div>
         <div class="card-body">
           <div class="d-flex justify-content-between mb-1">
-            <span class="text-muted">Đã nhập điểm</span>
+            <span class="text-muted">Scores entered</span>
             <strong id="filledCount">0/0</strong>
           </div>
           <div class="d-flex justify-content-between mb-1">
-            <span class="text-muted">Tổng điểm tạm thời (quy đổi theo trọng số)</span>
+            <span class="text-muted">Current weighted score</span>
             <strong id="provisionalScore">--</strong>
           </div>
           <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Điểm tối đa quy đổi</span>
+            <span class="text-muted">Maximum weighted score</span>
             <strong id="maxWeightedScore">--</strong>
           </div>
           <div class="progress" role="progressbar" aria-label="Score completion">
             <div class="progress-bar" id="scoreProgress" style="width: 0%;"></div>
           </div>
-          <div class="small text-muted mt-2" id="scoreHint">Nhập điểm cho từng tiêu chí để tính tổng điểm tạm thời.</div>
+          <div class="small text-muted mt-2" id="scoreHint">Enter scores for each criterion to calculate the current total.</div>
         </div>
       </div>
     </div>
@@ -514,37 +519,41 @@
     <div class="col-lg-4">
       <div class="card shadow-sm mb-3">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-          <strong>Criteria & điểm số</strong>
+          <strong>Criteria & Scores</strong>
           <span class="badge text-bg-warning" id="draftState">Draft</span>
         </div>
         <div class="card-body">
           <div id="criteriaList" class="d-grid gap-2"></div>
-          <div id="criteriaEmpty" class="text-muted small d-none">Round này chưa có criteria.</div>
+          <div id="criteriaEmpty" class="text-muted small d-none">This round has no criteria.</div>
         </div>
       </div>
 
       <div class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-          <strong>Feedback chung</strong>
-          <span class="badge text-bg-secondary" id="feedbackState">Nháp</span>
+          <strong>Overall Feedback</strong>
+          <span class="badge text-bg-secondary" id="feedbackState">Draft</span>
         </div>
         <div class="card-body">
           <div class="mb-3">
             <label for="summaryFeedback" class="form-label">Overall Feedback</label>
+
             <textarea class="form-control" id="summaryFeedback" rows="5" placeholder="Nhập nhận xét của giám khảo..."></textarea>
+
+            <textarea class="form-control" id="summaryFeedback" rows="5" placeholder="Enter judge feedback..."></textarea>
+
           </div>
 
           <div class="mb-3">
             <label for="finalRecommendation" class="form-label">Recommendation</label>
             <select id="finalRecommendation" class="form-select">
-              <option value="">Chưa chọn</option>
+              <option value="">Not selected</option>
               <option value="approve">Approve</option>
               <option value="revise">Need revision</option>
               <option value="reject">Reject</option>
             </select>
           </div>
 
-          <div class="small text-muted mb-3" id="saveStateText">Dữ liệu điểm đang lưu cục bộ theo draft khi bạn nhập.</div>
+          <div class="small text-muted mb-3" id="saveStateText">Scores are saved locally as a draft while you work.</div>
 
           <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
             <button type="button" class="btn btn-outline-secondary" id="saveDraftButton">Save Draft</button>

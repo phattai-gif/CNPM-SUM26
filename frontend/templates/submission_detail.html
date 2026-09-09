@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi Tiết Bài Dự Thi - Analog Film Photography</title>
+    <title>Submission Details - Analog Film Photography</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -552,22 +552,27 @@
             <div class="back-bar">
                 <a href="/my-submissions" class="btn-back">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    Quay lại danh sách bài dự thi
+                    Back to submissions
                 </a>
             </div>
 
             <!-- Loading State -->
             <div class="loading-state" id="loadingState">
                 <div class="spinner"></div>
-                <p>Đang tải dữ liệu chi tiết tác phẩm từ cơ sở dữ liệu...</p>
+                <p>Loading work details from the database...</p>
             </div>
 
             <!-- Error State -->
             <div class="error-state" id="errorState" style="display: none;">
                 <div class="error-icon">⚠️</div>
+
                 <h3 id="errorTitle">Submission Not Found</h3>
                 <p id="errorMessage">Bài dự thi không tồn tại hoặc bạn không có quyền truy cập.</p>
                 <a href="/my-submissions" class="btn-primary-action">Back to Submissions</a>
+                <h3 id="errorTitle">Submission not found</h3>
+                <p id="errorMessage">This submission does not exist or you do not have access.</p>
+                <a href="/my-submissions" class="btn-primary-action">Back to submissions</a>
+
             </div>
 
             <!-- Detail Content (Populated by JS) -->
@@ -578,14 +583,19 @@
                     <div class="draft-banner-content">
                         <span class="draft-icon">📝</span>
                         <div>
+
                             <h4>This work is currently a Draft</h4>
                             <p>Tác phẩm này chưa được gửi chấm điểm chính thức. Bạn có thể bổ sung thông tin hoặc nộp ngay.</p>
+
+                            <h4>This work is a Draft</h4>
+                            <p>This work has not been officially submitted for judging. Add information or submit it now.</p>
+
                         </div>
                     </div>
                     <div class="draft-banner-actions">
                         <a href="#" id="btnEditDraft" class="btn-edit-draft">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                            Sửa và Nộp Bài
+                            Edit and Submit
                         </a>
                     </div>
                 </div>
@@ -600,13 +610,13 @@
                                 <img id="detailImage" src="" alt="Submission Image" class="main-image">
                                 <div class="no-image-box" id="noImageBox" style="display: none;">
                                     <span>📷</span>
-                                    <p>Tác phẩm chưa có ảnh tải lên</p>
+                                    <p>No image uploaded</p>
                                 </div>
                             </div>
                             <div class="image-actions">
                                 <a id="btnOpenFullImage" href="#" target="_blank" class="btn-img-action">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M10 14L21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
-                                    Xem Ảnh Gốc HD
+                                    View Original HD Image
                                 </a>
                             </div>
                         </div>
@@ -614,19 +624,19 @@
                         <!-- Technical File Specs Card -->
                         <div class="card-box file-specs-card">
                             <h3 class="box-title">
-                                <span>📐</span> Thông Số Tệp Ảnh
+                                <span>📐</span> Image File Details
                             </h3>
                             <div class="specs-list" id="specsList">
                                 <div class="spec-row">
-                                    <span class="spec-label">Kích thước:</span>
+                                    <span class="spec-label">Dimensions:</span>
                                     <span class="spec-value" id="specDimensions">-</span>
                                 </div>
                                 <div class="spec-row">
-                                    <span class="spec-label">Dung lượng:</span>
+                                    <span class="spec-label">File size:</span>
                                     <span class="spec-value" id="specFileSize">-</span>
                                 </div>
                                 <div class="spec-row">
-                                    <span class="spec-label">Mã băm SHA-256:</span>
+                                    <span class="spec-label">SHA-256 hash:</span>
                                     <span class="spec-value spec-hash" id="specFileHash">-</span>
                                 </div>
                             </div>
@@ -642,58 +652,62 @@
                                 <div class="contest-badge" id="detailContestBadge">Analog Contest</div>
                                 <div class="status-badge-lg" id="detailStatusBadge">Submitted</div>
                             </div>
+
                             <h1 class="submission-title" id="detailTitle">Work Title</h1>
+
+                            <h1 class="submission-title" id="detailTitle">Work title</h1>
+
                             <div class="meta-row">
-                                <span class="meta-item">📍 <strong id="detailRoundName">Vòng 1</strong></span>
-                                <span class="meta-item">📅 Nộp ngày: <strong id="detailSubmittedDate">-</strong></span>
-                                <span class="meta-item">🆔 Mã bài: <strong id="detailSubmissionId">#0</strong></span>
+                                <span class="meta-item">📍 <strong id="detailRoundName">Round 1</strong></span>
+                                <span class="meta-item">📅 Submitted: <strong id="detailSubmittedDate">-</strong></span>
+                                <span class="meta-item">🆔 Submission ID: <strong id="detailSubmissionId">#0</strong></span>
                             </div>
                         </div>
 
                         <!-- Story & Description Box -->
                         <div class="card-box">
                             <h3 class="box-title">
-                                <span>📖</span> Câu Chuyện Tác Phẩm
+                                <span>📖</span> Work Story
                             </h3>
-                            <p class="story-text" id="detailStory">Không có mô tả nào được cung cấp.</p>
+                            <p class="story-text" id="detailStory">No description provided.</p>
                         </div>
 
                         <!-- Analog Film & Camera Metadata Box -->
                         <div class="card-box">
                             <h3 class="box-title">
-                                <span>🎞️</span> Thông Số Phim & Máy Ảnh
+                                <span>🎞️</span> Film & Camera Details
                             </h3>
                             <div class="metadata-grid" id="metadataGrid">
                                 <div class="meta-cell">
-                                    <span class="cell-label">Loại Phim (Film Stock)</span>
+                                    <span class="cell-label">Film Stock</span>
                                     <span class="cell-value highlight" id="metaFilmStock">-</span>
                                 </div>
                                 <div class="meta-cell">
-                                    <span class="cell-label">Độ Nhạy Sáng (ISO)</span>
+                                    <span class="cell-label">ISO</span>
                                     <span class="cell-value" id="metaFilmIso">-</span>
                                 </div>
                                 <div class="meta-cell">
-                                    <span class="cell-label">Thân Máy (Camera Body)</span>
+                                    <span class="cell-label">Camera Body</span>
                                     <span class="cell-value" id="metaCamera">-</span>
                                 </div>
                                 <div class="meta-cell">
-                                    <span class="cell-label">Ống Kính (Lens)</span>
+                                    <span class="cell-label">Lens</span>
                                     <span class="cell-value" id="metaLens">-</span>
                                 </div>
                                 <div class="meta-cell">
-                                    <span class="cell-label">Lab Tráng Phim</span>
+                                    <span class="cell-label">Processing Lab</span>
                                     <span class="cell-value" id="metaLab">-</span>
                                 </div>
                                 <div class="meta-cell">
-                                    <span class="cell-label">Thiết Bị Scan</span>
+                                    <span class="cell-label">Scanner</span>
                                     <span class="cell-value" id="metaScanner">-</span>
                                 </div>
                                 <div class="meta-cell">
-                                    <span class="cell-label">Quy Trình Tráng</span>
+                                    <span class="cell-label">Development Process</span>
                                     <span class="cell-value" id="metaProcess">-</span>
                                 </div>
                                 <div class="meta-cell">
-                                    <span class="cell-label">Địa Điểm Chụp</span>
+                                    <span class="cell-label">Location</span>
                                     <span class="cell-value" id="metaLocation">-</span>
                                 </div>
                             </div>
@@ -703,10 +717,10 @@
                         <div class="card-box scores-box" id="scoresBox">
                             <div class="box-header-flex">
                                 <h3 class="box-title">
-                                    <span>🏆</span> Đánh Giá Của Ban Giám Khảo
+                                    <span>🏆</span> Judge Feedback
                                 </h3>
                                 <div class="final-score-display" id="finalScoreContainer" style="display: none;">
-                                    <span class="score-label">Điểm Tổng Kết</span>
+                                    <span class="score-label">Final Score</span>
                                     <span class="score-val" id="finalScoreVal">0.0</span>
                                     <span class="score-max">/ 100</span>
                                 </div>
@@ -720,7 +734,7 @@
                         <!-- AI Authenticity & Detection Report Box -->
                         <div class="card-box ai-report-box">
                             <h3 class="box-title">
-                                <span>🤖</span> Kiểm Tra Tính Xác Thực & Cảnh Báo AI
+                                <span>🤖</span> Authenticity Check & AI Alerts
                             </h3>
                             <div class="ai-report-content" id="aiReportContent">
                                 <!-- Populated dynamically -->

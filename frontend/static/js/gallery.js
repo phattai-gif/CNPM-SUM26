@@ -64,7 +64,7 @@ async function initGalleryFilters() {
       data.years.forEach(y => {
         const opt = document.createElement('option');
         opt.value = y;
-        opt.textContent = `Năm ${y}`;
+        opt.textContent = `Year ${y}`;
         yearSelect.appendChild(opt);
       });
     }
@@ -154,8 +154,8 @@ function renderGalleryGrid(items) {
     const thumbnailSrc = item.thumbnail_url || item.image_hd_url || '/static/images/placeholder.jpg';
     const filmBadge = item.film_metadata?.film_stock ? `<span class="badge-film">${escapeHtml(item.film_metadata.film_stock)}</span>` : '';
     const cameraBadge = item.film_metadata?.camera_body ? `<span class="badge-camera">${escapeHtml(item.film_metadata.camera_body)}</span>` : '';
-    const contestTitle = item.contest?.title ? escapeHtml(item.contest.title) : 'Cuộc thi ảnh';
-    const authorName = item.author?.name ? escapeHtml(item.author.name) : 'Tác giả';
+    const contestTitle = item.contest?.title ? escapeHtml(item.contest.title) : 'Photo Contest';
+    const authorName = item.author?.name ? escapeHtml(item.author.name) : 'Author';
     const authorAvatar = item.author?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(authorName);
 
     card.innerHTML = `
@@ -171,7 +171,7 @@ function renderGalleryGrid(items) {
           <div class="card-contest-name">
             <i class="bi bi-trophy-fill"></i> ${contestTitle}
           </div>
-          <h5 class="card-photo-title">${escapeHtml(item.title || 'Chưa có tiêu đề')}</h5>
+          <h5 class="card-photo-title">${escapeHtml(item.title || 'Untitled')}</h5>
         </div>
         <div class="card-meta-footer">
           <div class="author-info">
@@ -258,14 +258,14 @@ function openPhotoDetailModal(submissionId) {
 }
 
 function populateModalData(item) {
-  document.getElementById('modalPhotoTitle').textContent = item.title || 'Chi tiết tác phẩm';
-  document.getElementById('modalPhotoHeaderTitle').textContent = item.title || 'Không tiêu đề';
+  document.getElementById('modalPhotoTitle').textContent = item.title || 'Work Details';
+  document.getElementById('modalPhotoHeaderTitle').textContent = item.title || 'Untitled';
   document.getElementById('modalPhotoImg').src = item.image_hd_url || item.thumbnail_url || '';
-  document.getElementById('modalContestBadge').textContent = item.contest?.title || 'Cuộc thi';
-  document.getElementById('modalAuthorName').textContent = item.author?.name || 'Tác giả vô danh';
-  document.getElementById('modalPhotoYear').textContent = item.year ? `Năm ${item.year}` : '';
+  document.getElementById('modalContestBadge').textContent = item.contest?.title || 'Contest';
+  document.getElementById('modalAuthorName').textContent = item.author?.name || 'Anonymous Author';
+  document.getElementById('modalPhotoYear').textContent = item.year ? `Year ${item.year}` : '';
 
-  document.getElementById('modalStoryText').textContent = item.story_description || 'Chưa có câu chuyện đi kèm tác phẩm này.';
+  document.getElementById('modalStoryText').textContent = item.story_description || 'No story provided for this work.';
 
   const meta = item.film_metadata || {};
   document.getElementById('modalFilmStock').textContent = meta.film_stock || '-';
@@ -283,17 +283,17 @@ function populateModalData(item) {
  */
 function updateFilterSummary(total, filmStock, camera, contestId, year, search) {
   const summaryEl = document.getElementById('activeFiltersSummary');
-  let text = `Tìm thấy <strong>${total}</strong> tác phẩm công khai`;
+  let text = `Found <strong>${total}</strong> public works`;
 
   const active = [];
   if (filmStock) active.push(`Film: <i>${escapeHtml(filmStock)}</i>`);
-  if (camera) active.push(`Máy: <i>${escapeHtml(camera)}</i>`);
-  if (contestId) active.push(`Cuộc thi ID: <i>${escapeHtml(contestId)}</i>`);
-  if (year) active.push(`Năm: <i>${escapeHtml(year)}</i>`);
-  if (search) active.push(`Từ khóa: "<i>${escapeHtml(search)}</i>"`);
+  if (camera) active.push(`Camera: <i>${escapeHtml(camera)}</i>`);
+  if (contestId) active.push(`Contest ID: <i>${escapeHtml(contestId)}</i>`);
+  if (year) active.push(`Year: <i>${escapeHtml(year)}</i>`);
+  if (search) active.push(`Search: "<i>${escapeHtml(search)}</i>"`);
 
   if (active.length > 0) {
-    text += ` với bộ lọc [ ${active.join(' • ')} ]`;
+    text += ` with filters [ ${active.join(' • ')} ]`;
   }
   summaryEl.innerHTML = text;
 }

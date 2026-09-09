@@ -168,7 +168,7 @@ function renderContestOptions() {
   if (!select) return;
 
   if (!dashboardState.contests.length) {
-    select.innerHTML = '<option value="">Không có contest</option>';
+    select.innerHTML = '<option value="">No contests</option>';
     return;
   }
 
@@ -192,6 +192,9 @@ function renderRoundOptions() {
     dashboardState.selectedRoundId = '';
     select.innerHTML = '<option value="">Contest chưa có round</option>';
     if (summary) summary.textContent = 'This contest has no rounds available for judge assignment.';
+
+    select.innerHTML = '<option value="">Contest has no rounds</option>';
+    if (summary) summary.textContent = 'This contest has no rounds for judge assignment.';
     renderAssignments([]);
     return;
   }
@@ -210,6 +213,7 @@ function renderRoundOptions() {
   const selectedRound = getSelectedRound();
   if (summary && selectedRound) {
     summary.textContent = `Assigning judges to Round ${selectedRound.round_number || '-'} of Contest #${contest.id}.`;
+    summary.textContent = `Assigning judges for Round ${selectedRound.round_number || '-'} of contest #${contest.id}.`;
   }
 }
 
@@ -226,7 +230,7 @@ function renderAvailableJudges() {
   container.innerHTML = dashboardState.judges.map((judge) => {
     const stats = judge.stats || {};
     const disabled = assignedJudgeIds.has(String(judge.id)) ? 'disabled' : '';
-    const checkedLabel = assignedJudgeIds.has(String(judge.id)) ? '<span class="stat-pill" style="background:#dcfce7;color:#166534;">Đã gán round này</span>' : '';
+    const checkedLabel = assignedJudgeIds.has(String(judge.id)) ? '<span class="stat-pill" style="background:#dcfce7;color:#166534;">Assigned to this round</span>' : '';
     return `
       <label class="judge-card">
         <div class="judge-card-top">
@@ -238,7 +242,7 @@ function renderAvailableJudges() {
         </div>
         <div class="judge-stats">
           <span class="stat-pill">${escapeHtml(stats.assigned_rounds ?? 0)} round</span>
-          <span class="stat-pill">${escapeHtml(stats.assigned_submissions ?? 0)} bài</span>
+          <span class="stat-pill">${escapeHtml(stats.assigned_submissions ?? 0)} submissions</span>
           <span class="stat-pill">${escapeHtml(stats.total_assignments ?? 0)} assignment</span>
           ${checkedLabel}
         </div>
@@ -268,7 +272,7 @@ function renderAssignments(assignments) {
             <div class="muted">Judge ID: ${escapeHtml(assignment.judge_id)} | Status: ${escapeHtml(assignment.status || 'assigned')}</div>
             <div class="muted">Assigned at: ${escapeHtml(assignment.assigned_at || '-')}</div>
           </div>
-          <button class="btn btn-danger btn-sm unassign-btn" data-judge-id="${escapeHtml(assignment.judge_id)}">Gỡ</button>
+          <button class="btn btn-danger btn-sm unassign-btn" data-judge-id="${escapeHtml(assignment.judge_id)}">Unassign</button>
         </div>
       </div>
     `;
@@ -307,6 +311,7 @@ function renderFlaggedSubmissions(items) {
 
   if (!dashboardState.flaggedSubmissions.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No flagged submissions in this contest.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No flagged submissions in the current contest.</td></tr>';
     return;
   }
 
@@ -348,19 +353,19 @@ function renderFlaggedSubmissions(items) {
 
   tbody.querySelectorAll('.approve-flag-btn').forEach((button) => {
     button.addEventListener('click', async () => {
-      await handleModeration(button.dataset.submissionId, 'approve', 'Đã approve submission');
+      await handleModeration(button.dataset.submissionId, 'approve', 'Submission approved.');
     });
   });
 
   tbody.querySelectorAll('.reject-flag-btn').forEach((button) => {
     button.addEventListener('click', async () => {
-      await handleModeration(button.dataset.submissionId, 'reject', 'Đã reject submission');
+      await handleModeration(button.dataset.submissionId, 'reject', 'Submission rejected.');
     });
   });
 
   tbody.querySelectorAll('.dismiss-flag-btn').forEach((button) => {
     button.addEventListener('click', async () => {
-      await handleModeration(button.dataset.submissionId, 'dismiss-flag', 'Đã dismiss AI flag');
+      await handleModeration(button.dataset.submissionId, 'dismiss-flag', 'AI flag dismissed.');
     });
   });
 }
@@ -375,6 +380,7 @@ function closeAiReportDrawer() {
   const drawer = document.getElementById('ai-report-drawer');
   if (!drawer) return;
   drawer.classList.remove('active');
+  drawer.style.display = 'none';
   dashboardState.currentAiReportSubmissionId = null;
 }
 
@@ -387,6 +393,7 @@ async function openAiReport(submissionId) {
   try {
     summaryNode.textContent = 'Loading AI report...';
     rawNode.textContent = '{}';
+    drawer.style.display = 'block';
     drawer.classList.add('active');
 
     const contestId = dashboardState.selectedContestId || null;
@@ -410,7 +417,7 @@ async function openAiReport(submissionId) {
     rawNode.textContent = JSON.stringify(report.raw_details || {}, null, 2);
     dashboardState.currentAiReportSubmissionId = submissionId;
   } catch (error) {
-    summaryNode.textContent = error.message || 'Không thể tải AI report';
+    summaryNode.textContent = error.message || 'Unable to load AI report.';
     rawNode.textContent = '{}';
   }
 }
@@ -447,7 +454,7 @@ async function assignSelectedJudges() {
   const contest = getSelectedContest();
   const round = getSelectedRound();
   if (!contest || !round) {
-    showToast('Vui lòng chọn contest và round trước', true);
+    showToast('Please select a contest and round first.', true);
     return;
   }
 
@@ -456,7 +463,7 @@ async function assignSelectedJudges() {
     .filter((value) => Number.isFinite(value));
 
   if (!selectedJudgeIds.length) {
-    showToast('Chọn ít nhất một judge để phân công', true);
+    showToast('Select at least one judge to assign.', true);
     return;
   }
 
@@ -465,7 +472,7 @@ async function assignSelectedJudges() {
     { judge_ids: selectedJudgeIds }
   );
 
-  showToast(`Đã gán ${selectedJudgeIds.length} judge vào round`);
+  showToast(`${selectedJudgeIds.length} judge(s) assigned to the round.`);
   await refreshJudgeManager();
 }
 
@@ -473,7 +480,7 @@ async function unassignJudge(judgeId) {
   const contest = getSelectedContest();
   const round = getSelectedRound();
   if (!contest || !round) {
-    showToast('Không xác định được round để gỡ judge', true);
+    showToast('Unable to identify the round for unassignment.', true);
     return;
   }
 
@@ -481,7 +488,7 @@ async function unassignJudge(judgeId) {
     `/organizer/contests/${encodeURIComponent(contest.id)}/rounds/${encodeURIComponent(round.id)}/judges/${encodeURIComponent(judgeId)}`
   );
 
-  showToast('Đã gỡ judge khỏi round');
+  showToast('Judge unassigned from the round.');
   await refreshJudgeManager();
 }
 
@@ -523,7 +530,7 @@ function bindManagerEvents() {
         await assignSelectedJudges();
       } catch (error) {
         console.error(error);
-        showToast(error.message || 'Không thể phân công judge', true);
+        showToast(error.message || 'Unable to assign judge.', true);
       } finally {
         assignButton.disabled = false;
       }
@@ -541,10 +548,10 @@ function bindManagerEvents() {
         renderRoundOptions();
         await refreshJudgeManager();
         await loadFlaggedSubmissions();
-        showToast('Đã làm mới dữ liệu judge assignment');
+        showToast('Judge assignments refreshed.');
       } catch (error) {
         console.error(error);
-        showToast(error.message || 'Không thể làm mới dữ liệu', true);
+        showToast(error.message || 'Unable to refresh data.', true);
       } finally {
         refreshButton.disabled = false;
       }
@@ -556,9 +563,9 @@ function bindManagerEvents() {
       try {
         refreshFlaggedButton.disabled = true;
         await loadFlaggedSubmissions();
-        showToast('Đã làm mới AI flag queue');
+        showToast('AI review queue refreshed.');
       } catch (error) {
-        showToast(error.message || 'Không thể tải AI flag queue', true);
+        showToast(error.message || 'Unable to load the AI review queue.', true);
       } finally {
         refreshFlaggedButton.disabled = false;
       }
@@ -590,7 +597,7 @@ async function initDashboard() {
     if (errEl) {
       errEl.textContent = 'Unable to load data. Please try again.';
     }
-    showToast(error.message || 'Không thể tải dashboard', true);
+    showToast(error.message || 'Unable to load the dashboard.', true);
   }
 }
 

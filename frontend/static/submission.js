@@ -55,7 +55,7 @@ class SubmissionForm {
 
         const role = String((this.session && this.session.role) || (this.session && this.session.user && this.session.user.role) || '').toLowerCase();
         if (role === 'organizer' || role === 'admin') {
-            this.showError('Quyền truy cập hạn chế', 'Tài khoản Ban Tổ Chức / Admin không thể tự nộp bài thi vào cuộc thi.');
+            this.showError('Restricted Access', 'Organizer and administrator accounts cannot submit contest entries.');
             if (this.submitBtn) this.submitBtn.disabled = true;
             if (this.draftBtn) this.draftBtn.disabled = true;
             setTimeout(() => {
@@ -141,16 +141,16 @@ class SubmissionForm {
             banner.style.cssText = 'background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #f8fafc; padding: 14px 20px; border-radius: 12px; margin-top: 16px; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between;';
             banner.innerHTML = `
                 <div>
-                    <strong>📝 Đang chỉnh sửa bản nháp #${this.draftId}</strong>
-                    <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 4px;">Bạn có thể cập nhật thông số hoặc nộp bài thi chính thức.</div>
+                    <strong>📝 Editing Draft #${this.draftId}</strong>
+                    <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 4px;">You can update the details or submit the entry officially.</div>
                 </div>
-                <a href="/my-submissions" style="color: #f59e0b; font-weight: 700; text-decoration: underline; font-size: 0.85rem;">Quay lại danh sách</a>
+                <a href="/my-submissions" style="color: #f59e0b; font-weight: 700; text-decoration: underline; font-size: 0.85rem;">Back to submissions</a>
             `;
             header.appendChild(banner);
         }
 
-        if (this.submitBtn) this.submitBtn.textContent = '✓ Cập Nhật & Nộp Bài';
-        if (this.draftBtn) this.draftBtn.textContent = '💾 Cập Nhật Bản Nháp';
+        if (this.submitBtn) this.submitBtn.textContent = '✓ Update & Submit';
+        if (this.draftBtn) this.draftBtn.textContent = '💾 Update Draft';
         if (this.imageInput) this.imageInput.removeAttribute('required');
     }
 
@@ -274,7 +274,7 @@ class SubmissionForm {
         this.roundsList = [];
 
         this.showRoundLoadState(
-            'Không tải được danh sách vòng thi. Vui lòng thử lại sau.'
+            'Unable to load rounds. Please try again later.'
         );
     }
 }

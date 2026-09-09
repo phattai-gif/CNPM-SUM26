@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Đăng nhập tài khoản</title>
+  <title>Log In</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -199,14 +199,22 @@
       <h1>Log In</h1>
       <form id="loginForm" novalidate>
         <label for="username">Username</label>
+
         <input id="username" name="username" type="text" required autocomplete="username" placeholder="Nhập tên đăng nhập">
+
+        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Enter your username">
+
 
         <label for="password">Password</label>
         <div style="position: relative; display: flex; align-items: center; width: 100%;">
-          <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Nhập mật khẩu" style="padding-right: 44px;">
-          <button type="button" id="togglePasswordBtn" title="Hiện/Ẩn mật khẩu" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
+          <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Enter your password" style="padding-right: 44px;">
+          <button type="button" id="togglePasswordBtn" title="Show/Hide password" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
         </div>
+
         <p style="margin-top: 6px; text-align: right; font-size: 0.9rem;"><a href="{{ url_for('auth.forgot_password_page') }}" style="color: var(--primary); text-decoration: none;">Forgot Password?</a></p>
+
+        <p style="margin-top: 6px; text-align: right; font-size: 0.9rem;"><a href="{{ url_for('auth.forgot_password_page') }}" style="color: var(--primary); text-decoration: none;">Forgot password?</a></p>
+
 
         <button type="submit">Log In</button>
       </form>
@@ -225,7 +233,7 @@
       </script>
 
       <div class="auth-separator">
-        <span>Hoặc tiếp tục với</span>
+        <span>Or continue with</span>
       </div>
       <div id="googleBtnContainer" class="google-btn-wrapper">
         <div id="googleBtn" class="google-btn-container"></div>
@@ -241,8 +249,13 @@
       </div>
 
       <div id="message" class="message"></div>
+
       <p class="secondary-text">No account yet? <a href="{{ url_for('auth.register_page') }}">Create an Account</a></p>
       <p class="secondary-text" style="margin-top: 8px;">Already registered? <a href="{{ url_for('auth.verify_email_page') }}">Verify Email</a></p>
+
+      <p class="secondary-text">New here? <a href="{{ url_for('auth.register_page') }}">Create an account</a></p>
+      <p class="secondary-text" style="margin-top: 8px;">Already registered? <a href="{{ url_for('auth.verify_email_page') }}">Verify your email</a></p>
+
     </div>
   </div>
   <script>
