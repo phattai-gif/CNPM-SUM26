@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const ROLE_REDIRECTS = {
     participant: '/contests',
     organizer: '/organizer/dashboard',
-    judge: '/judge/1',
-    admin: '/organizer/dashboard'
+    judge: '/judge',
+    admin: '/admin/dashboard'
   };
 
   const setFormLoading = (form, isLoading, label) => {
@@ -74,11 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const redirectToRole = async (role) => {
-    const normalizedRole = (role || '').toLowerCase();
-    const target = normalizedRole === 'participant'
-      ? await resolveParticipantTarget()
-      : (ROLE_REDIRECTS[normalizedRole] || '/');
-    window.location.href = target;
+    const userRole = String(role || '').toLowerCase();
+    const targetPath = ROLE_REDIRECTS[userRole] || '/contests';
+    window.location.href = targetPath;
   };
 
   const requestJson = async (url, payload) => {

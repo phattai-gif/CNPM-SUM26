@@ -7,8 +7,17 @@
       <a href="/gallery" class="app-nav-link">Thư viện</a>
       <a href="/leaderboard" class="app-nav-link">Bảng xếp hạng</a>
       <a href="/my-submissions" id="nav-submissions-link" class="app-nav-link is-hidden">Bài dự thi của tôi</a>
+      <a href="/judge" id="nav-judge-link" class="app-nav-link is-hidden">Khu vực Judge</a>
       <a href="/organizer/dashboard" id="nav-organizer-link" class="app-nav-btn app-nav-btn-solid">Quản lý</a>
+      <button type="button" id="nav-notifications" class="app-nav-btn app-nav-btn-outline is-hidden" title="Xem cảnh báo fraud">
+        🔔 <span id="nav-notification-count" class="is-hidden">0</span>
+      </button>
     </nav>
+
+    <div id="nav-notification-panel" class="is-hidden" style="position:absolute;right:24px;top:58px;z-index:1400;width:min(380px,calc(100vw - 32px));max-height:420px;overflow:auto;background:#111a26;border:1px solid #1e2a3a;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.45);padding:12px;">
+      <strong style="color:#f0f4f8;">Cảnh báo mới</strong>
+      <div id="nav-notification-list" style="display:grid;gap:8px;margin-top:10px;"></div>
+    </div>
 
     <div class="app-nav-right" id="nav-right-auth">
       <a href="/auth/login" id="nav-login" class="app-nav-btn app-nav-btn-outline">Đăng nhập</a>
@@ -43,11 +52,16 @@
 
       const organizerLink = document.getElementById('nav-organizer-link');
       const submissionsLink = document.getElementById('nav-submissions-link');
+      const judgeLink = document.getElementById('nav-judge-link');
       const profileLink = document.getElementById('nav-profile-link');
       const loginLink = document.getElementById('nav-login');
       const registerLink = document.getElementById('nav-register');
       const usernameLabel = document.getElementById('nav-username');
       const logoutButton = document.getElementById('nav-logout');
+      const notificationsButton = document.getElementById('nav-notifications');
+      const notificationCount = document.getElementById('nav-notification-count');
+      const notificationPanel = document.getElementById('nav-notification-panel');
+      const notificationList = document.getElementById('nav-notification-list');
 
       function safeGetSession() {
         if (window.AuthSession && typeof window.AuthSession.getSession === 'function') {
@@ -56,16 +70,31 @@
 
         let user = null;
         let role = null;
+        const token = sessionStorage.getItem(tokenKey) || localStorage.getItem(tokenKey);
         try {
-          user = JSON.parse(localStorage.getItem(userKey) || 'null');
+          user = JSON.parse(sessionStorage.getItem(userKey) || localStorage.getItem(userKey) || 'null');
         } catch (error) {
           user = null;
         }
 
-        role = localStorage.getItem('authRole') || sessionStorage.getItem('authRole') || (user && user.role) || null;
+        role = sessionStorage.getItem('authRole') || localStorage.getItem('authRole') || (user && user.role) || null;
+
+        if (token && (!role || !user)) {
+          try {
+            const parts = token.split('.');
+            if (parts.length === 3) {
+              const base64Url = parts[1];
+              const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+              const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+              const payload = JSON.parse(jsonPayload);
+              if (!role && payload.role) role = payload.role;
+              if (!user) user = { id: payload.user_id, username: payload.username, role: payload.role };
+            }
+          } catch(e) {}
+        }
 
         return {
-          token: localStorage.getItem(tokenKey),
+          token,
           user,
           role
         };
@@ -74,6 +103,16 @@
       function setHidden(element, hidden) {
         if (!element) return;
         element.classList.toggle('is-hidden', hidden);
+      }
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, (character) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[character]));
       }
 
       function displayNameFromUser(user) {
@@ -88,17 +127,23 @@
         const session = safeGetSession();
         const isLoggedIn = Boolean(session && session.token);
         const role = String((session && session.role) || (session && session.user && session.user.role) || '').toLowerCase();
-        const canManage = role === 'organizer' || role === 'admin';
+        const isManager = role === 'organizer' || role === 'admin';
+        const isJudge = role === 'judge';
 
-        // show organizer link only for logged-in users with organizer/admin role
-        // hide submissions link for organizer/admin because organizers cannot submit to their own contests
-        setHidden(organizerLink, !(isLoggedIn && canManage));
-        setHidden(submissionsLink, !(isLoggedIn && !canManage));
+        if (organizerLink) {
+          organizerLink.href = role === 'admin' ? '/admin/dashboard' : '/organizer/dashboard';
+          organizerLink.textContent = role === 'admin' ? 'Dashboard Admin' : (role === 'organizer' ? 'Dashboard Organizer' : 'Quản lý');
+        }
+
+        setHidden(organizerLink, !(isLoggedIn && isManager));
+        setHidden(submissionsLink, !(isLoggedIn && !isManager && !isJudge));
+        setHidden(judgeLink, !(isLoggedIn && isJudge));
         setHidden(profileLink, !isLoggedIn);
         setHidden(loginLink, isLoggedIn);
         setHidden(registerLink, isLoggedIn);
         setHidden(usernameLabel, !isLoggedIn);
         setHidden(logoutButton, !isLoggedIn);
+        setHidden(notificationsButton, !(isLoggedIn && isManager));
 
         if (isLoggedIn && usernameLabel) {
           usernameLabel.textContent = displayNameFromUser(session.user);
@@ -106,10 +151,27 @@
         }
       }
 
+      async function loadNotifications() {
+        const session = safeGetSession();
+        if (!session.token || !notificationsButton || notificationsButton.classList.contains('is-hidden')) return;
+        try {
+          const response = await fetch('/notifications?unread_only=true', {
+            headers: { Authorization: `Bearer ${session.token}`, Accept: 'application/json' }
+          });
+          if (!response.ok) return;
+          const payload = await response.json();
+          const notifications = payload.notifications || [];
+          notificationCount.textContent = String(notifications.length);
+          setHidden(notificationCount, notifications.length === 0);
+          notificationList.innerHTML = notifications.length
+            ? notifications.map((item) => `<div style="border:1px solid #1e2a3a;border-radius:8px;padding:8px;color:#cbd5e1;font-size:.88rem;"><strong style="color:#f5a623;">${escapeHtml(item.title || 'Cảnh báo')}</strong><br>${escapeHtml(item.body || '')}</div>`).join('')
+            : '<span style="color:#8899aa;font-size:.88rem;">Không có cảnh báo mới.</span>';
+        } catch (error) {
+          console.warn('Unable to load notifications', error);
+        }
+      }
+
       function clearAuthStorage() {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('authUser');
-        localStorage.removeItem('authRole');
         sessionStorage.removeItem('authToken');
         sessionStorage.removeItem('authUser');
         sessionStorage.removeItem('authRole');
@@ -128,13 +190,16 @@
       }
 
       renderByAuthState();
+      loadNotifications();
 
-      // Đồng bộ trạng thái nav khi phiên đăng nhập thay đổi ở tab khác.
-      window.addEventListener('storage', function (event) {
-        if (event.key === 'authToken' || event.key === 'authUser' || event.key === 'authRole') {
-          renderByAuthState();
-        }
-      });
+      if (notificationsButton) {
+        notificationsButton.addEventListener('click', () => {
+          notificationPanel.classList.toggle('is-hidden');
+          loadNotifications();
+        });
+      }
+
+      window.addEventListener('pageshow', renderByAuthState);
     })();
   </script>
 </header>

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app, render_template
+from flask import Blueprint, request, jsonify, current_app, render_template, session, redirect
 from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -41,19 +41,6 @@ def _sync_auth_repository_session():
 def _request_user():
   user = getattr(request, 'user', None)
   return user if isinstance(user, dict) else {}
-
-
-def _set_auth_cookie(response, token):
-  response.set_cookie(
-    'access_token',
-    token,
-    max_age=24 * 60 * 60,
-    httponly=True,
-    secure=False,
-    samesite='Lax',
-    path='/',
-  )
-  return response
 
 
 def verify_google_token(id_token):
@@ -121,9 +108,6 @@ def google_login():
         return jsonify({'message': 'Could not authenticate Google user.'}), 500
 
     resp, status_code = _jwt_response(user)
-    token_json = resp.get_json() if hasattr(resp, 'get_json') else {}
-    if token_json and token_json.get('token'):
-        _set_auth_cookie(resp, token_json['token'])
     return resp, status_code
 
 
@@ -294,26 +278,13 @@ def register():
       '24 hours',
     )
 
-    # Auto-generate JWT token for newly registered user (auto-login)
-    payload = {
-      'user_id': new_user.id,
-      'username': new_user.username,
-      'role': new_user.role,
-      'exp': datetime.utcnow() + timedelta(hours=24)
-    }
-    secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
-    token = jwt.encode(payload, secret_key, algorithm='HS256')
-
     result = register_response_schema.dump(new_user)
-    response = jsonify({
+    return jsonify({
       'message': 'User registered successfully!',
-      'token': token,
       'verification_token': verification_token,
       'email_verification_required': True,
       'user': result
-    })
-    _set_auth_cookie(response, token)
-    return response, 201
+    }), 201
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -356,9 +327,12 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    user = auth_service.login(username, password)
-    if not user:
-        return jsonify({'message': 'Invalid username or password'}), 401
+    try:
+        user = auth_service.login(username, password)
+        if not user:
+            return jsonify({'message': 'Tên đăng nhập hoặc mật khẩu không chính xác.'}), 401
+    except ValueError as exc:
+        return jsonify({'message': str(exc)}), 403
 
     # Táº¡o JWT Payload chá»©a thÃ´ng tin User ID, Username vÃ  Role
     payload = {
@@ -382,7 +356,6 @@ def login():
             'role': user.role
         }
     })
-    _set_auth_cookie(response, token)
     return response, 200
 
 
@@ -396,6 +369,17 @@ def login_page():
 @auth_bp.route('/register', methods=['GET'])
 def register_page():
     return render_template('register.html')
+
+
+@auth_bp.route('/logout', methods=['POST', 'GET'])
+def logout():
+    session.clear()
+    resp = jsonify({'message': 'Logged out successfully'})
+    resp.delete_cookie('token', path='/')
+    resp.delete_cookie('access_token', path='/')
+    if request.method == 'GET' or (request.accept_mimetypes.best_match(['text/html', 'application/json']) == 'text/html'):
+        return redirect('/auth/login')
+    return resp, 200
 
 
 @auth_bp.route('/submit', methods=['GET'])

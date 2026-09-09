@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const canManage = role === 'organizer' || role === 'admin';
 
             if (this.brandHomeLink) {
-                this.brandHomeLink.href = canManage ? '/organizer/dashboard' : '/contests';
+                this.brandHomeLink.href = role === 'admin' ? '/admin/dashboard' : (role === 'organizer' ? '/organizer/dashboard' : '/contests');
             }
 
             if (canManage) {
@@ -72,7 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.AuthSession) {
                         window.AuthSession.logout();
                     } else {
-                        localStorage.clear();
+                        sessionStorage.removeItem('authToken');
+                        sessionStorage.removeItem('authUser');
+                        sessionStorage.removeItem('authRole');
                         window.location.href = '/auth/login';
                     }
                 });

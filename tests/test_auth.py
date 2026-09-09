@@ -80,8 +80,11 @@ def test_auth_flow():
     mock_response_obj.read.return_value = json.dumps(mock_google_response).encode('utf-8')
     mock_urlopen.return_value.__enter__.return_value = mock_response_obj
 
+    import jwt as pyjwt
+    mock_id_token = pyjwt.encode(mock_google_response, 'secret', algorithm='HS256')
+
     with patch('urllib.request.urlopen', mock_urlopen):
-        res = client.post('/auth/google', json={"id_token": "mocked_google_id_token"})
+        res = client.post('/auth/google', json={"id_token": mock_id_token, "email": mock_google_response["email"]})
         print(f"\n5. POST /auth/google -> Status: {res.status_code}")
         print(f"   Response: {res.get_json()}")
         assert res.status_code == 200

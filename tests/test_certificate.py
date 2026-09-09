@@ -5,7 +5,6 @@ import pytest
 from datetime import datetime, timezone
 
 os.environ["TESTING"] = "True"
-os.environ["POSTGREE_DATABASE_URL"] = "sqlite:///:memory:"
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
@@ -59,11 +58,12 @@ def db_session(app):
 
 @pytest.fixture
 def setup_test_data(db_session):
-    db_session.query(SubmissionReviewModel).delete()
-    db_session.query(SubmissionModel).delete()
-    db_session.query(RoundModel).delete()
-    db_session.query(ContestModel).delete()
-    db_session.query(UserModel).delete()
+    db_session.rollback()
+    db_session.query(SubmissionReviewModel).delete(synchronize_session=False)
+    db_session.query(SubmissionModel).delete(synchronize_session=False)
+    db_session.query(RoundModel).delete(synchronize_session=False)
+    db_session.query(ContestModel).delete(synchronize_session=False)
+    db_session.query(UserModel).delete(synchronize_session=False)
     db_session.commit()
 
     # Create Users
@@ -145,6 +145,10 @@ def setup_test_data(db_session):
 
     db_session.add_all([approved_winner_sub, unapproved_winner_sub, non_winner_sub])
     db_session.commit()
+
+    from sqlalchemy.orm import make_transient
+    for obj in [winner_user, other_user, unapproved_winner_user, contest, round_obj, approved_winner_sub, unapproved_winner_sub, non_winner_sub]:
+        make_transient(obj)
 
     return {
         "winner_user": winner_user,

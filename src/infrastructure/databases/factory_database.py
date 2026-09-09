@@ -1,4 +1,4 @@
-﻿import os
+import os
 
 from infrastructure.databases.abstract_database import AbstractDatabase
 from infrastructure.databases.database_postgres import DatabasePostgres
@@ -9,11 +9,22 @@ class FactoryDatabase:
     _database = None
     _database_uri = None
 
+    @classmethod
+    def reset(cls):
+        if cls._database is not None:
+            try:
+                cls._database.session.close()
+                cls._database.engine.dispose()
+            except Exception:
+                pass
+        cls._database = None
+        cls._database_uri = None
+
     @staticmethod
     def get_database(database_type) -> AbstractDatabase:
         if database_type in {"POSTGREE", "POSTGRES"}:
-            database_uri = os.environ.get("DATABASE_URI") or os.environ.get(
-                "POSTGREE_DATABASE_URL"
+            database_uri = os.environ.get("POSTGREE_DATABASE_URL") or os.environ.get(
+                "DATABASE_URI"
             )
             if (
                 FactoryDatabase._database is None

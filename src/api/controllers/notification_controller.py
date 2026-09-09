@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 from api.role_required import token_required
 from services.notification_service import NotificationService
 from infrastructure.repositories.notification_repository import NotificationRepository
@@ -7,9 +7,14 @@ notification_bp = Blueprint('notification', __name__, url_prefix='/notifications
 notification_service = NotificationService(NotificationRepository())
 
 
+def _current_user_id():
+  user = getattr(request, 'user', None)
+  return user.get('user_id') if isinstance(user, dict) else None
+
+
 @notification_bp.route('', methods=['GET'])
 @token_required
-def get_notifications(current_user):
+def get_notifications():
     """
     Get all notifications for the current user
     ---
@@ -32,7 +37,7 @@ def get_notifications(current_user):
           description: Unauthorized
     """
     unread_only = request.args.get('unread_only', 'false').lower() == 'true'
-    notifications = notification_service.get_user_notifications(current_user.id, unread_only=unread_only)
+    notifications = notification_service.get_user_notifications(_current_user_id(), unread_only=unread_only)
     
     return jsonify({
         'count': len(notifications),
@@ -53,7 +58,7 @@ def get_notifications(current_user):
 
 @notification_bp.route('/<int:notification_id>', methods=['GET'])
 @token_required
-def get_notification(current_user, notification_id):
+def get_notification(notification_id):
     """
     Get a specific notification
     ---
@@ -76,7 +81,7 @@ def get_notification(current_user, notification_id):
           description: Notification not found
     """
     notification = notification_service.repository.get_by_id(notification_id)
-    if not notification or notification.user_id != current_user.id:
+    if not notification or notification.user_id != _current_user_id():
         return jsonify({'message': 'Notification not found'}), 404
     
     return jsonify({
@@ -92,7 +97,7 @@ def get_notification(current_user, notification_id):
 
 @notification_bp.route('/<int:notification_id>/mark-read', methods=['POST'])
 @token_required
-def mark_notification_read(current_user, notification_id):
+def mark_notification_read(notification_id):
     """
     Mark a notification as read
     ---
@@ -115,7 +120,7 @@ def mark_notification_read(current_user, notification_id):
           description: Notification not found
     """
     notification = notification_service.repository.get_by_id(notification_id)
-    if not notification or notification.user_id != current_user.id:
+    if not notification or notification.user_id != _current_user_id():
         return jsonify({'message': 'Notification not found'}), 404
     
     updated = notification_service.mark_notification_read(notification_id)

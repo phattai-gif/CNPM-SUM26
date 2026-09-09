@@ -113,7 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.AuthSession) {
                         window.AuthSession.logout();
                     } else {
-                        localStorage.clear();
+                        sessionStorage.removeItem('authToken');
+                        sessionStorage.removeItem('authUser');
+                        sessionStorage.removeItem('authRole');
                         window.location.href = '/auth/login';
                     }
                 });
@@ -270,6 +272,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const btnDash = document.getElementById('btnOrganizerDashboard');
             if (btnDash) {
                 btnDash.style.display = isManager ? 'inline-flex' : 'none';
+                btnDash.href = rawRole === 'admin' ? '/admin/dashboard' : '/organizer/dashboard';
+                btnDash.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    ${rawRole === 'admin' ? 'Dashboard Admin' : 'Dashboard Quản Lý'}
+                `;
             }
 
             const btnHeroSubmit = document.getElementById('btnHeroSubmit');

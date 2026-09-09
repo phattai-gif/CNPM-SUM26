@@ -10,8 +10,17 @@ const dashboardState = {
 
 function requireDashboardSession() {
   const session = window.AuthSession.getSession();
-  if (!session.token) {
+  if (!session || !session.token) {
     window.location.href = '/auth/login';
+    return null;
+  }
+  const role = String(session.role || (session.user && session.user.role) || '').toLowerCase();
+  if (role !== 'organizer') {
+    if (role === 'admin') {
+      window.location.href = '/admin/dashboard';
+    } else {
+      window.location.href = '/contests';
+    }
     return null;
   }
   return session;
