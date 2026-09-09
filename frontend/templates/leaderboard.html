@@ -17,9 +17,15 @@
             <h3>Leaderboard</h3>
 
             <div style="display:flex; gap:18px; margin-bottom:16px; align-items:center; justify-content:space-between;">
-                <div>
-                    <label for="round-id-input" class="text-muted">Round ID:</label>
-                    <input id="round-id-input" type="number" class="round-input" />
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <label for="contest-select" class="text-muted">Contest:</label>
+                    <select id="contest-select" class="round-input">
+                        <option value="">Loading contests...</option>
+                    </select>
+                    <label for="round-id-input" class="text-muted">Round:</label>
+                    <select id="round-id-input" class="round-input">
+                        <option value="">Select a round</option>
+                    </select>
                     <button id="load-leaderboard-btn" class="btn" style="margin-left:8px;">Load Leaderboard</button>
                 </div>
                 <div>
@@ -39,7 +45,7 @@
                                     <th>Author</th>
                                     <th>Title</th>
                                     <th>Award</th>
-                                    <th class="text-end">Tổng điểm</th>
+                                    <th class="text-end">Total Score</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -201,7 +207,7 @@
 
         function renderLeaderboardTable(leaderboard){
             const body = document.getElementById('leaderboard-body');
-            if(!leaderboard || !leaderboard.length){ body.innerHTML = '<tr><td colspan="6" class="empty-state">Không có dữ liệu.</td></tr>'; return; }
+            if(!leaderboard || !leaderboard.length){ body.innerHTML = '<tr><td colspan="6" class="empty-state">No data.</td></tr>'; return; }
             body.innerHTML = leaderboard.map(item=>{
                 const title = escapeHtml(item.title||item.submission_title||'Untitled');
                 const author = escapeHtml(item.author||item.user_id||'-');
@@ -224,22 +230,22 @@
 
             // attach handlers with confirmation + error handling
             document.querySelectorAll('.approve-row').forEach(b=>b.addEventListener('click', async (ev)=>{ 
-                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Xác nhận phê duyệt người thắng?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Approving...';
+                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Approve this winner?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Approving...';
                 try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/approve-winner`); btn.innerText = 'Approved'; btn.classList.remove('btn-success'); btn.classList.add('btn-outline'); }catch(e){ const msg = e && e.message ? e.message : String(e); if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; } alert('Failed to approve: '+msg); btn.disabled=false; btn.innerText=orig; }
             }));
 
             document.querySelectorAll('.reject-row').forEach(b=>b.addEventListener('click', async (ev)=>{ 
-                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Xác nhận từ chối người thắng?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Rejecting...';
+                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Reject this winner?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Rejecting...';
                 try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/reject-winner`); btn.innerText = 'Rejected'; btn.classList.remove('btn-danger'); btn.classList.add('btn-outline'); }catch(e){ const msg = e && e.message ? e.message : String(e); if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; } alert('Failed to reject: '+msg); btn.disabled=false; btn.innerText=orig; }
             }));
 
             document.querySelectorAll('.publish-row').forEach(b=>b.addEventListener('click', async (ev)=>{ 
-                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Xuất bản tác phẩm này lên gallery công cộng?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Publishing...';
+                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Publish this work to the public gallery?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Publishing...';
                 try{ const resp = await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/publish`); btn.innerText = 'Published'; btn.classList.remove('btn-outline'); btn.classList.add('btn'); if(resp && resp.exhibit_id) alert('Published to gallery (exhibit #'+resp.exhibit_id+')'); if(typeof loadAndRender === 'function') setTimeout(loadAndRender,300);}catch(e){ const msg = e && e.message ? e.message : String(e); if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; } alert('Failed to publish: '+msg); btn.disabled=false; btn.innerText=orig; }
             }));
 
             document.querySelectorAll('.archive-row').forEach(b=>b.addEventListener('click', async (ev)=>{
-                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Chuyển tác phẩm này vào kho lưu trữ (Archive)?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Archiving...';
+                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Move this work to the archive?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Archiving...';
                 try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/archive`); btn.innerText = 'Archived'; btn.classList.remove('btn-secondary'); btn.classList.add('btn-outline'); if(typeof loadAndRender === 'function') setTimeout(loadAndRender,300);}catch(e){ const msg = e && e.message ? e.message : String(e); if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; } alert('Failed to archive: '+msg); btn.disabled=false; btn.innerText=orig; }
             }));
         }
@@ -254,6 +260,30 @@
                 renderLeaderboardTable(leaderboard);
             }catch(e){
                 alert(e.message||e);
+            }
+        }
+
+        async function loadContestRounds() {
+            const contestSelect = document.getElementById('contest-select');
+            const roundSelect = document.getElementById('round-id-input');
+            try {
+                const response = await window.apiClient.get('/organizer/contests');
+                const contests = response.contests || [];
+                contestSelect.innerHTML = contests.length
+                    ? contests.map((contest) => `<option value="${escapeHtml(contest.id)}">#${escapeHtml(contest.id)} - ${escapeHtml(contest.title)}</option>`).join('')
+                    : '<option value="">No contests</option>';
+                function renderRounds() {
+                    const contest = contests.find((item) => String(item.id) === String(contestSelect.value));
+                    const rounds = contest ? (contest.rounds || []) : [];
+                    roundSelect.innerHTML = rounds.length
+                        ? rounds.map((round) => `<option value="${escapeHtml(round.id)}">Round ${escapeHtml(round.round_number || '?')} - ${escapeHtml(round.title)}</option>`).join('')
+                        : '<option value="">No rounds</option>';
+                }
+                contestSelect.addEventListener('change', renderRounds);
+                renderRounds();
+            } catch (error) {
+                contestSelect.innerHTML = '<option value="">Unable to load contests</option>';
+                roundSelect.innerHTML = '<option value="">No rounds</option>';
             }
         }
 
@@ -295,7 +325,12 @@
             window.open(`/api/certificates/${encodeURIComponent(identifier)}/download`, '_blank', 'noopener');
         });
 
-        // auto-load if round_id present in URL
-        (function(){ const qs = new URLSearchParams(window.location.search); const r = qs.get('round_id'); if(r){ document.getElementById('round-id-input').value = r; loadAndRender(); }})();
+        loadContestRounds().then(() => {
+            const roundId = new URLSearchParams(window.location.search).get('round_id');
+            if (roundId) {
+                document.getElementById('round-id-input').value = roundId;
+                loadAndRender();
+            }
+        });
     </script>
 </html>

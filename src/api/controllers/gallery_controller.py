@@ -234,6 +234,7 @@ def get_public_gallery():
                         "published",
                         "approved",
                         "winner",
+                        "winner_approved",
                         "active",
                     ]
                 )
@@ -535,7 +536,9 @@ def get_gallery_filters():
                 == SubmissionModel.id,
             )
             .filter(
-                SubmissionModel.status == "winner"
+                SubmissionModel.status.in_([
+                    "published", "approved", "winner", "winner_approved", "active"
+                ])
             )
             .filter(
                 SubmissionFilmMetadataModel.film_stock.isnot(
@@ -572,7 +575,9 @@ def get_gallery_filters():
                 == SubmissionModel.id,
             )
             .filter(
-                SubmissionModel.status == "winner"
+                SubmissionModel.status.in_([
+                    "published", "approved", "winner", "winner_approved", "active"
+                ])
             )
             .filter(
                 SubmissionFilmMetadataModel.camera_body.isnot(
@@ -615,7 +620,9 @@ def get_gallery_filters():
                 == RoundModel.id,
             )
             .filter(
-                SubmissionModel.status == "winner"
+                SubmissionModel.status.in_([
+                    "published", "approved", "winner", "winner_approved", "active"
+                ])
             )
             .all()
         )
@@ -646,7 +653,9 @@ def get_gallery_filters():
                 )
             )
             .filter(
-                SubmissionModel.status == "winner"
+                SubmissionModel.status.in_([
+                    "published", "approved", "winner", "winner_approved", "active"
+                ])
             )
             .all()
         )
@@ -742,7 +751,9 @@ def get_public_submission_detail(submission_id):
                 SubmissionModel.id == submission_id
             )
             .filter(
-                SubmissionModel.status == "winner"
+                SubmissionModel.status.in_([
+                    "published", "approved", "winner", "winner_approved", "active"
+                ])
             )
             .first()
         )
