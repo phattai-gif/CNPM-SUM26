@@ -514,11 +514,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (filtered.length === 0) {
                 this.portfolioEmpty.style.display = 'block';
                 if (this.searchQuery || this.currentFilter !== 'all') {
-                    this.emptyTitle.textContent = 'Không tìm thấy tác phẩm';
-                    this.emptySubtitle.textContent = 'Không có tác phẩm nào phù hợp với bộ lọc hoặc từ khóa tìm kiếm của bạn.';
+                    this.emptyTitle.textContent = 'No works found';
+                    this.emptySubtitle.textContent = 'No works match your filters or search query.';
                 } else {
-                    this.emptyTitle.textContent = 'Chưa có tác phẩm nào trong portfolio';
-                    this.emptySubtitle.textContent = 'Hãy gửi bài dự thi đầu tiên của bạn để trưng bày tác phẩm nghệ thuật tại đây.';
+                    this.emptyTitle.textContent = 'No works in your portfolio yet';
+                    this.emptySubtitle.textContent = 'Submit your first entry to showcase your work here.';
                 }
                 return;
             }
@@ -546,14 +546,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 mediaHtml = `
                     <img src="${this.escapeHtml(imageSrc)}" alt="${this.escapeHtml(sub.title || 'Portfolio Item')}" class="portfolio-card-img" loading="lazy">
                     <div class="card-media-overlay">
-                        <span class="btn-preview-quick">🔍 Xem nhanh</span>
+                        <span class="btn-preview-quick">🔍 Quick View</span>
                     </div>
                 `;
             } else {
                 mediaHtml = `
                     <div class="no-img-placeholder">
                         <span>📷</span>
-                        <p>${isDraft ? 'Bản nháp chưa tải ảnh' : 'Không có ảnh'}</p>
+                        <p>${isDraft ? 'Draft image not uploaded' : 'No image'}</p>
                     </div>
                 `;
             }
@@ -570,17 +570,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Tags for film and gear if available
             let gearTagsHtml = '';
             if (sub.round_title || sub.round_number) {
-                gearTagsHtml += `<span class="film-gear-tag">🎯 ${this.escapeHtml(sub.round_title || ('Vòng ' + sub.round_number))}</span>`;
+                gearTagsHtml += `<span class="film-gear-tag">🎯 ${this.escapeHtml(sub.round_title || ('Round ' + sub.round_number))}</span>`;
             }
             if (sub.ai_flag) {
                 const riskLevel = sub.ai_flag.risk_level || 'safe';
                 if (riskLevel === 'safe') {
-                    gearTagsHtml += `<span class="film-gear-tag" style="color:var(--accent-emerald);">🛡️ Phim gốc</span>`;
+                    gearTagsHtml += `<span class="film-gear-tag" style="color:var(--accent-emerald);">🛡️ Original Film</span>`;
                 }
             }
 
             card.innerHTML = `
-                <div class="portfolio-card-media" title="Nhấn để xem chi tiết ảnh">
+                <div class="portfolio-card-media" title="Click to view image details">
                     ${mediaHtml}
                     <div class="card-top-badges">
                         <span class="status-badge ${this.escapeHtml(statusClass)}">${this.escapeHtml(statusLabel)}</span>
@@ -589,8 +589,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="portfolio-card-content">
                     <span class="portfolio-card-contest">${this.escapeHtml(sub.contest_title || 'Analog Film Contest')}</span>
-                    <h3 class="portfolio-card-title">${this.escapeHtml(sub.title || 'Chưa đặt tiêu đề')}</h3>
-                    <p class="portfolio-card-story">${this.escapeHtml(sub.story_description || 'Không có mô tả kèm theo.')}</p>
+                    <h3 class="portfolio-card-title">${this.escapeHtml(sub.title || 'Untitled')}</h3>
+                    <p class="portfolio-card-story">${this.escapeHtml(sub.story_description || 'No description provided.')}</p>
                     
                     <div class="portfolio-card-tags">
                         ${gearTagsHtml}
@@ -600,9 +600,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="portfolio-card-date">${formattedDate}</span>
                         <div class="portfolio-card-links">
                             ${isDraft ? `
-                                <a href="/submit?draft_id=${sub.id}" class="btn-card-view" style="color:var(--accent-amber); margin-right:8px;">Sửa Draft</a>
+                                <a href="/submit?draft_id=${sub.id}" class="btn-card-view" style="color:var(--accent-amber); margin-right:8px;">Edit Draft</a>
                             ` : ''}
-                            <a href="/my-submissions/${sub.id}" class="btn-card-view">Xem chi tiết →</a>
+                            <a href="/my-submissions/${sub.id}" class="btn-card-view">View Details →</a>
                         </div>
                     </div>
                 </div>
@@ -620,9 +620,9 @@ document.addEventListener('DOMContentLoaded', () => {
         openLightbox(sub) {
             const imageSrc = sub.image_hd_url || sub.thumbnail_url || '';
             this.lightboxImg.src = imageSrc;
-            this.lightboxTitle.textContent = sub.title || 'Tác Phẩm Nhiếp Ảnh';
-            this.lightboxContestTag.textContent = sub.contest_title || 'Cuộc Thi Analog Film';
-            this.lightboxStory.textContent = sub.story_description || 'Không có câu chuyện tác phẩm kèm theo.';
+            this.lightboxTitle.textContent = sub.title || 'Photography Work';
+            this.lightboxContestTag.textContent = sub.contest_title || 'Analog Film Contest';
+            this.lightboxStory.textContent = sub.story_description || 'No work story provided.';
 
             // Status & Score badges
             this.lightboxStatusBadge.className = `status-badge ${sub.status || 'submitted'}`;
@@ -636,9 +636,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Fill Film Metadata
-            this.lightboxFilmStock.textContent = sub.film_stock || 'Chưa cập nhật';
+            this.lightboxFilmStock.textContent = sub.film_stock || 'Not provided';
             this.lightboxFilmIso.textContent = sub.film_iso || '--';
-            this.lightboxCamera.textContent = sub.camera_body || 'Chưa cập nhật';
+            this.lightboxCamera.textContent = sub.camera_body || 'Not provided';
             this.lightboxLens.textContent = sub.lens || '--';
             this.lightboxLab.textContent = sub.lab_name || '--';
             this.lightboxLocation.textContent = sub.taken_at_location || '--';
@@ -657,21 +657,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         getStatusLabel(status) {
             switch (status) {
-                case 'draft': return 'Bản Nháp';
-                case 'submitted': return 'Đã Nộp';
-                case 'under_review': return 'Đang Chấm';
-                case 'graded': return 'Đã Có Điểm';
-                case 'approved': return 'Đã Phê Duyệt';
-                case 'rejected': return 'Bị Từ Chối';
-                default: return status || 'Đã Nộp';
+                case 'draft': return 'Draft';
+                case 'submitted': return 'Submitted';
+                case 'under_review': return 'Under Review';
+                case 'graded': return 'Graded';
+                case 'approved': return 'Approved';
+                case 'rejected': return 'Rejected';
+                default: return status || 'Submitted';
             }
         }
 
         formatDate(isoString) {
-            if (!isoString) return 'Chưa ghi nhận';
+            if (!isoString) return 'Not recorded';
             try {
                 const date = new Date(isoString);
-                return date.toLocaleDateString('vi-VN', {
+                return date.toLocaleDateString('en-US', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'

@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kết quả cuộc thi - Leaderboard</title>
+    <title>Contest Results - Leaderboard</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="/static/admin.css">
 </head>
 <body>
     {% include '_nav.html' %}
     <div class="page-shell">
-        <h1 class="mb-3">Kết quả cuộc thi</h1>
-        <p class="text-muted">Bảng xếp hạng cuối cùng và các tác phẩm đạt giải.</p>
+        <h1 class="mb-3">Contest Results</h1>
+        <p class="text-muted">Final rankings and award-winning works.</p>
 
         <section class="leaderboard">
             <h3>Leaderboard</h3>
@@ -20,10 +20,10 @@
                 <div>
                     <label for="round-id-input" class="text-muted">Round ID:</label>
                     <input id="round-id-input" type="number" class="round-input" />
-                    <button id="load-leaderboard-btn" class="btn" style="margin-left:8px;">Tải bảng xếp hạng</button>
+                    <button id="load-leaderboard-btn" class="btn" style="margin-left:8px;">Load Leaderboard</button>
                 </div>
                 <div>
-                    <button id="show-exhibits-btn" class="btn btn-outline">Xem Gallery đã xuất bản</button>
+                    <button id="show-exhibits-btn" class="btn btn-outline">View Published Gallery</button>
                 </div>
             </div>
 
@@ -35,16 +35,16 @@
                 <table id="leaderboard-table" class="table">
                     <thead>
                                 <tr>
-                                    <th>Hạng</th>
-                                    <th>Tác giả</th>
-                                    <th>Tên bài</th>
+                                    <th>Rank</th>
+                                    <th>Author</th>
+                                    <th>Title</th>
                                     <th>Award</th>
                                     <th class="text-end">Tổng điểm</th>
-                                    <th>Hành động</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                     <tbody id="leaderboard-body">
-                        <tr><td colspan="6" class="empty-state">Chưa có dữ liệu. Vui lòng nhập `round_id` và bấm "Tải bảng xếp hạng".</td></tr>
+                        <tr><td colspan="6" class="empty-state">No data. Enter `round_id` and click "Load Leaderboard".</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -64,7 +64,7 @@
             const container = document.getElementById('winners-section');
             container.innerHTML = '';
             const list = leaderboard || [];
-            if(!list.length){ container.innerHTML = '<p class="empty-state">Không có người thắng.</p>'; return; }
+            if(!list.length){ container.innerHTML = '<p class="empty-state">No winners found.</p>'; return; }
 
             // Group by award_title (fallback to 'Overall')
             const groups = {};
@@ -95,7 +95,7 @@
                             <div class="rank-badge rank-${rank}">${rank}</div>
                             <div>
                                 <div style="font-weight:700; font-size:1rem;">#${escapeHtml(item.submission_id)} - ${escapeHtml(item.title||item.submission_title||'Untitled')}</div>
-                                <div class="muted">Tác giả: ${escapeHtml(item.author||item.user_id||'-')} | Điểm: ${escapeHtml(item.final_score||item.total_score||'-')}</div>
+                                <div class="muted">Author: ${escapeHtml(item.author||item.user_id||'-')} | Score: ${escapeHtml(item.final_score||item.total_score||'-')}</div>
                             </div>
                         </div>
                         <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
@@ -115,7 +115,7 @@
             container.querySelectorAll('.approve-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
                 const btn = ev.currentTarget;
                 const id = btn.dataset.id;
-                if(!confirm('Xác nhận phê duyệt người thắng?')) return;
+                if(!confirm('Approve this winner?')) return;
                 btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Approving...';
                     try{
                     await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/approve-winner`);
@@ -125,7 +125,7 @@
                 }catch(e){
                     const msg = e && e.message ? e.message : String(e);
                     if(msg.toLowerCase().includes('permission')){
-                        alert('Bạn cần đăng nhập với quyền organizer/admin. Chuyển tới trang đăng nhập.');
+                        alert('Organizer/admin access is required. Redirecting to login.');
                         window.location.href = '/auth/login';
                         return;
                     }
@@ -137,7 +137,7 @@
             container.querySelectorAll('.reject-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
                 const btn = ev.currentTarget;
                 const id = btn.dataset.id;
-                if(!confirm('Xác nhận từ chối người thắng?')) return;
+                if(!confirm('Reject this winner?')) return;
                 btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Rejecting...';
                     try{
                     await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/reject-winner`);
@@ -154,7 +154,7 @@
             container.querySelectorAll('.publish-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
                 const btn = ev.currentTarget;
                 const id = btn.dataset.id;
-                if(!confirm('Xuất bản tác phẩm này lên gallery công cộng?')) return;
+                if(!confirm('Publish this work to the public gallery?')) return;
                 btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Publishing...';
                     try{
                     const resp = await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/publish`);
@@ -173,7 +173,7 @@
             container.querySelectorAll('.archive-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
                 const btn = ev.currentTarget;
                 const id = btn.dataset.id;
-                if(!confirm('Chuyển tác phẩm này vào kho lưu trữ (Archive)?')) return;
+                if(!confirm('Move this work to the archive?')) return;
                 btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Archiving...';
                 try{
                     const resp = await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/archive`);
@@ -235,7 +235,7 @@
 
         async function loadAndRender(){
             const roundId = document.getElementById('round-id-input').value || new URLSearchParams(window.location.search).get('round_id');
-            if(!roundId){ alert('Vui lòng nhập round_id'); return; }
+            if(!roundId){ alert('Please enter round_id.'); return; }
             try{
                 const data = await fetchLeaderboard(roundId);
                 const leaderboard = data && data.leaderboard ? data.leaderboard : (data.results || []);
@@ -256,7 +256,7 @@
                     return `<div class="winner" style="display:block;">${img}<div>Exhibit #${e.id} - submission ${e.submission_id}</div><div class="muted">Published: ${e.published_at || ''}</div></div>`
                 }).join('');
                 const container = document.getElementById('winners-section');
-                container.innerHTML = html || '<p class="empty-state">Chưa có gallery nào được xuất bản.</p>';
+                container.innerHTML = html || '<p class="empty-state">No published gallery works found.</p>';
             }catch(e){ alert(e.message||e); }
         });
 

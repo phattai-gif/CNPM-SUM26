@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         init() {
             this.setupUser();
             if (!this.submissionId) {
-                this.showError('Không tìm thấy mã bài dự thi trong đường dẫn.');
+                this.showError('The submission ID was not found in the URL.');
                 return;
             }
             this.fetchDetail();
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const session = window.AuthSession ? window.AuthSession.getSession() : {};
                 if (!session.token) {
-                    this.showError('Bạn cần đăng nhập để xem chi tiết bài dự thi.');
+                    this.showError('You must log in to view submission details.');
                     return;
                 }
 
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.renderData(data);
             } catch (error) {
                 console.error('Failed to fetch submission detail:', error);
-                this.showError(error.message || 'Không thể tải chi tiết bài thi.');
+                this.showError(error.message || 'Unable to load submission details.');
             } finally {
                 this.loadingState.style.display = 'none';
             }
@@ -146,10 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (file.width_px && file.height_px) {
                 this.specDimensions.textContent = `${file.width_px} × ${file.height_px} px`;
             } else {
-                this.specDimensions.textContent = 'Chưa phân giải';
+                this.specDimensions.textContent = 'Not available';
             }
-            this.specFileSize.textContent = file.file_size_bytes ? this.formatFileSize(file.file_size_bytes) : 'Chưa ghi nhận';
-            this.specFileHash.textContent = file.file_hash || 'Không có mã SHA-256';
+            this.specFileSize.textContent = file.file_size_bytes ? this.formatFileSize(file.file_size_bytes) : 'Not recorded';
+            this.specFileHash.textContent = file.file_hash || 'No SHA-256 hash';
 
             // Header info
             const contest = data.contest || {};
@@ -157,22 +157,22 @@ document.addEventListener('DOMContentLoaded', () => {
             this.detailContestBadge.textContent = contest.title || 'Analog Photography Contest';
             this.detailStatusBadge.textContent = this.getStatusLabel(data.status);
             this.detailStatusBadge.className = `status-badge-lg ${data.status || 'submitted'}`;
-            this.detailTitle.textContent = data.title || 'Chưa đặt tiêu đề';
-            this.detailRoundName.textContent = round.title || `Vòng #${data.round_id || 1}`;
+            this.detailTitle.textContent = data.title || 'Untitled';
+            this.detailRoundName.textContent = round.title || `Round #${data.round_id || 1}`;
             this.detailSubmittedDate.textContent = this.formatDate(data.submitted_at || data.created_at);
             this.detailSubmissionId.textContent = `#${data.id}`;
-            this.detailStory.textContent = data.story_description || 'Tác giả không để lại mô tả hoặc câu chuyện cho tác phẩm này.';
+            this.detailStory.textContent = data.story_description || 'The author did not provide a description or story.';
 
             // Metadata
             const meta = data.film_metadata || {};
-            this.metaFilmStock.textContent = meta.film_stock || 'Chưa cập nhật';
-            this.metaFilmIso.textContent = meta.film_iso ? `ISO ${meta.film_iso}` : 'Chưa cập nhật';
-            this.metaCamera.textContent = meta.camera_body || 'Chưa cập nhật';
-            this.metaLens.textContent = meta.lens || 'Chưa cập nhật';
-            this.metaLab.textContent = meta.lab_name || 'Chưa cập nhật';
-            this.metaScanner.textContent = meta.scanner_info || 'Chưa cập nhật';
-            this.metaProcess.textContent = meta.development_process || 'C-41 (Mặc định)';
-            this.metaLocation.textContent = meta.taken_at_location || 'Chưa cập nhật';
+            this.metaFilmStock.textContent = meta.film_stock || 'Not provided';
+            this.metaFilmIso.textContent = meta.film_iso ? `ISO ${meta.film_iso}` : 'Not provided';
+            this.metaCamera.textContent = meta.camera_body || 'Not provided';
+            this.metaLens.textContent = meta.lens || 'Not provided';
+            this.metaLab.textContent = meta.lab_name || 'Not provided';
+            this.metaScanner.textContent = meta.scanner_info || 'Not provided';
+            this.metaProcess.textContent = meta.development_process || 'C-41 (Default)';
+            this.metaLocation.textContent = meta.taken_at_location || 'Not provided';
 
             // Scores & Feedbacks
             this.renderScoresAndFeedbacks(data);
@@ -197,8 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.scoresContent.innerHTML = `
                     <div class="waiting-score-box">
                         <span>⏳</span>
-                        <h4>Đang trong quá trình thẩm định</h4>
-                        <p>Tác phẩm đang được Hội đồng Giám khảo đánh giá. Điểm số và nhận xét chi tiết sẽ hiển thị tại đây ngay sau khi vòng chấm điểm kết thúc.</p>
+                        <h4>Under Review</h4>
+                        <p>This work is being evaluated by the judges. Scores and detailed feedback will appear here after judging ends.</p>
                     </div>
                 `;
                 return;
@@ -212,16 +212,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <table class="criteria-table">
                         <thead>
                             <tr>
-                                <th>Tiêu Chí Chấm Thi</th>
-                                <th>Trọng Số</th>
-                                <th>Điểm Số</th>
-                                <th>Nhận Xét Của Giám Khảo</th>
+                                <th>Criterion</th>
+                                <th>Weight</th>
+                                <th>Score</th>
+                                <th>Judge Feedback</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${scores.map(s => `
                                 <tr>
-                                    <td><strong>${this.escapeHtml(s.criteria_name || 'Tiêu chí')}</strong></td>
+                                    <td><strong>${this.escapeHtml(s.criteria_name || 'Criterion')}</strong></td>
                                     <td>${(s.weight || 1.0) * 100}%</td>
                                     <td class="criteria-score-val">${Number(s.score_value || 0).toFixed(1)} / ${s.max_score || 100}</td>
                                     <td>${this.escapeHtml(s.comment || '—')}</td>
@@ -236,9 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (feedbacks.length > 0) {
                 html += feedbacks.map(fb => `
                     <div class="feedback-card">
-                        <h4>💬 Nhận xét tổng quan từ Ban Giám Khảo</h4>
+                        <h4>💬 Overall Judge Feedback</h4>
                         <p>${this.escapeHtml(fb.summary_feedback || fb.general_comment || '')}</p>
-                        ${fb.final_recommendation ? `<p style="margin-top:6px; color:var(--accent-cyan); font-weight:600;">✨ Khuyến nghị: ${this.escapeHtml(fb.final_recommendation)}</p>` : ''}
+                          ${fb.final_recommendation ? `<p style="margin-top:6px; color:var(--accent-cyan); font-weight:600;">✨ Recommendation: ${this.escapeHtml(fb.final_recommendation)}</p>` : ''}
                     </div>
                 `).join('');
             }
@@ -275,20 +275,20 @@ document.addEventListener('DOMContentLoaded', () => {
             let explanation = '';
 
             if (status === 'pending') {
-                badgeHtml = `<span class="ai-status-tag" style="background:rgba(100,116,139,0.2); color:var(--text-secondary);">⏳ Đang xử lý AI (Pending)...</span>`;
-                explanation = 'Hệ thống đang tiến hành trích xuất EXIF và kiểm tra. Quá trình xử lý không làm gián đoạn việc nộp bài của bạn.';
+                badgeHtml = `<span class="ai-status-tag" style="background:rgba(100,116,139,0.2); color:var(--text-secondary);">⏳ AI Processing (Pending)...</span>`;
+                explanation = 'The system is extracting EXIF data and running checks. Processing does not interrupt your submission.';
             } else if (status === 'failed') {
-                badgeHtml = `<span class="ai-status-tag" style="background:rgba(220,38,38,0.15); color:#f87171;">❌ Xử lý thất bại (Failed)</span>`;
-                explanation = 'Có lỗi trong quá trình kiểm tra tự động. Giám khảo sẽ kiểm tra thủ công.';
+                badgeHtml = `<span class="ai-status-tag" style="background:rgba(220,38,38,0.15); color:#f87171;">❌ Processing Failed</span>`;
+                explanation = 'The automated check failed. A judge will review the work manually.';
             } else if (riskLevel === 'safe' || aiScore < 30) {
-                badgeHtml = `<span class="ai-status-tag safe">✓ An toàn • Phim Thật (Completed)</span>`;
-                explanation = 'Tác phẩm được trích xuất thông số máy ảnh & phim analog hoàn toàn hợp lệ. Không phát hiện dấu hiệu tạo sinh nhân tạo.';
+                badgeHtml = `<span class="ai-status-tag safe">✓ Safe • Film Authenticity Confirmed</span>`;
+                explanation = 'Camera and analog film metadata are valid. No signs of synthetic generation were detected.';
             } else if (riskLevel === 'high' || riskLevel === 'high_risk' || aiScore >= 70) {
-                badgeHtml = `<span class="ai-status-tag high">⚠️ Cảnh báo AI (Nguy cơ cao - Completed)</span>`;
-                explanation = aiFlag.ai_message || 'Hệ thống phát hiện metadata khai báo bất thường hoặc dấu hiệu cần kiểm tra thủ công.';
+                badgeHtml = `<span class="ai-status-tag high">⚠️ AI Alert (High Risk)</span>`;
+                explanation = aiFlag.ai_message || 'The system detected unusual metadata or signs requiring manual review.';
             } else {
-                badgeHtml = `<span class="ai-status-tag" style="background:rgba(245,158,11,0.15); color:var(--accent-amber);">🔍 Cần Giám Khảo Thẩm Định (Completed)</span>`;
-                explanation = 'Tác phẩm có một số thông số ảnh cần được Ban Giám Khảo kiểm tra thủ công thêm.';
+                badgeHtml = `<span class="ai-status-tag" style="background:rgba(245,158,11,0.15); color:var(--accent-amber);">🔍 Manual Judge Review Required</span>`;
+                explanation = 'Some image metadata requires additional manual judge review.';
             }
 
             this.aiReportContent.innerHTML = `
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p style="font-size:0.875rem; color:var(--text-secondary); line-height:1.6;">${explanation}</p>
                     </div>
                     <div style="text-align:right; flex-shrink:0;">
-                        <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; display:block;">Độ rủi ro AI</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; display:block;">AI Risk Level</span>
                         <strong style="font-size:1.4rem; color:#ffffff; font-family:'Space Grotesk',sans-serif;">${status === 'pending' || status === 'failed' ? '-' : Number(aiScore).toFixed(0) + '%'}</strong>
                     </div>
                 </div>
@@ -307,18 +307,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         getStatusLabel(status) {
             switch (status) {
-                case 'draft': return 'Bản Nháp (Draft)';
-                case 'submitted': return 'Đã Nộp Chính Thức';
-                case 'under_review': return 'Đang Chấm Thi';
-                case 'graded': return 'Đã Chấm Điểm';
-                case 'rejected': return 'Bị Từ Chối';
-                case 'flagged': return 'Cần Xem Xét';
-                default: return status || 'Đã Nộp';
+                case 'draft': return 'Draft';
+                case 'submitted': return 'Submitted';
+                case 'under_review': return 'Under Review';
+                case 'graded': return 'Graded';
+                case 'rejected': return 'Rejected';
+                case 'flagged': return 'Needs Review';
+                default: return status || 'Submitted';
             }
         }
 
         formatDate(isoString) {
-            if (!isoString) return 'Chưa ghi nhận';
+            if (!isoString) return 'Not recorded';
             try {
                 const date = new Date(isoString);
                 return date.toLocaleString('vi-VN', {
