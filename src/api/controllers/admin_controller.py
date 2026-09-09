@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, jsonify, request
 from api.controllers.response_utils import safe_jsonify
 
 from api.role_required import role_required

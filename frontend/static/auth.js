@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ROLE_REDIRECTS = {
     participant: '/contests',
     organizer: '/organizer/dashboard',
-    judge: '/judge/review',
+    judge: '/judge',
     admin: '/admin/dashboard'
   };
 
