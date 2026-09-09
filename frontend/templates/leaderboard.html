@@ -49,6 +49,17 @@
                 </table>
             </div>
         </section>
+
+        <section class="leaderboard" style="margin-top:24px;">
+            <h3>Winner Certificate</h3>
+            <p class="text-muted">Enter an approved submission or certificate identifier to view or download the winner certificate.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <input id="certificate-id-input" type="text" class="round-input" placeholder="Certificate ID">
+                <button id="view-certificate-btn" class="btn btn-outline">View Certificate</button>
+                <button id="download-certificate-btn" class="btn">Download PDF</button>
+            </div>
+            <pre id="certificate-result" style="display:none;margin-top:14px;white-space:pre-wrap;"></pre>
+        </section>
     </div>
 </body>
     <script src="/static/api_client.js"></script>
@@ -258,6 +269,30 @@
                 const container = document.getElementById('winners-section');
                 container.innerHTML = html || '<p class="empty-state">No published gallery works found.</p>';
             }catch(e){ alert(e.message||e); }
+        });
+
+        function certificateIdentifier() {
+            return document.getElementById('certificate-id-input').value.trim();
+        }
+
+        document.getElementById('view-certificate-btn').addEventListener('click', async () => {
+            const identifier = certificateIdentifier();
+            if (!identifier) { alert('Please enter a certificate ID.'); return; }
+            try {
+                const response = await fetch(`/api/certificates/${encodeURIComponent(identifier)}`);
+                const payload = await response.json();
+                const result = document.getElementById('certificate-result');
+                result.style.display = 'block';
+                result.textContent = JSON.stringify(payload, null, 2);
+            } catch (error) {
+                alert(error.message || 'Unable to load certificate.');
+            }
+        });
+
+        document.getElementById('download-certificate-btn').addEventListener('click', () => {
+            const identifier = certificateIdentifier();
+            if (!identifier) { alert('Please enter a certificate ID.'); return; }
+            window.open(`/api/certificates/${encodeURIComponent(identifier)}/download`, '_blank', 'noopener');
         });
 
         // auto-load if round_id present in URL

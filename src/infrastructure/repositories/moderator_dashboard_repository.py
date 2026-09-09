@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import os
 
-from sqlalchemy import distinct, func, select
+from sqlalchemy import distinct, func, or_, select
 
 from infrastructure.databases.factory_database import FactoryDatabase as db_factory
 from infrastructure.models.app import (
@@ -125,7 +125,17 @@ class ModeratorDashboardRepository:
             .filter(SubmissionModel.status.in_(['submitted', 'flagged']))
         )
         if status:
-            query = query.filter(SubmissionModel.status == status)
+            if status == 'flagged':
+                # AI review flags are stored on AIFlagModel while the
+                # submission can remain in its normal submitted state.
+                query = query.filter(
+                    or_(
+                        SubmissionModel.status == 'flagged',
+                        AIFlagModel.status.in_(['pending', 'flagged']),
+                    )
+                )
+            else:
+                query = query.filter(SubmissionModel.status == status)
         if ai_risk:
             query = query.filter(AIFlagModel.risk_level == ai_risk)
 
