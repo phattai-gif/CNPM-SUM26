@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, jsonify, request
 from api.controllers.response_utils import safe_jsonify
 
 from api.role_required import role_required
@@ -85,6 +85,185 @@ def change_status(user_id):
         return jsonify({'message': str(exc)}), 400
     except Exception as exc:
         return jsonify({'message': 'Unable to update user status', 'error': str(exc)}), 500
+
+
+@admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
+@role_required('admin')
+def delete_user(user_id):
+    try:
+        success = admin_user_service.delete_user(
+            request.user['user_id'], user_id
+        )
+        if not success:
+            return jsonify({'message': 'User not found'}), 404
+        return safe_jsonify({'message': 'User deleted successfully', 'user_id': user_id}, status=200)
+    except ValueError as exc:
+        return jsonify({'message': str(exc)}), 400
+    except Exception as exc:
+        return jsonify({'message': 'Unable to delete user', 'error': str(exc)}), 500
+
+
+@admin_bp.route('/dashboard/metrics', methods=['GET'])
+@role_required('admin')
+def get_admin_metrics():
+    try:
+        from sqlalchemy import func
+        from infrastructure.databases.factory_database import FactoryDatabase as db_factory
+        from infrastructure.models.app import (
+            UserModel, RoleModel, user_roles,
+            ContestModel, SubmissionModel, AIFlagModel
+        )
+        session = db_factory.get_database('POSTGREE').session
+
+        # 1. Total users & Locked users
+        total_users = session.query(func.count(UserModel.id)).scalar() or 0
+        locked_users = session.query(func.count(UserModel.id)).filter(UserModel.status == 'locked').scalar() or 0
+
+        # 2. Roles breakdown
+        role_rows = (
+            session.query(RoleModel.code, func.count(user_roles.c.user_id))
+            .join(user_roles, RoleModel.id == user_roles.c.role_id)
+            .group_by(RoleModel.code)
+            .all()
+        )
+        roles = {code: count for code, count in role_rows}
+        admins_count = roles.get('admin', 0)
+        organizers_count = roles.get('organizer', 0)
+        judges_count = roles.get('judge', 0)
+        participants_count = roles.get('participant', 0)
+
+        # 3. Contests stats
+        total_contests = session.query(func.count(ContestModel.id)).scalar() or 0
+        pending_contests = session.query(func.count(ContestModel.id)).filter(
+            ContestModel.status.in_(['draft', 'pending', 'under_review', 'created'])
+        ).scalar() or 0
+        active_contests = session.query(func.count(ContestModel.id)).filter(
+            ContestModel.status.in_(['active', 'ongoing', 'published', 'open'])
+        ).scalar() or 0
+
+        # 4. Submissions & AI Flags stats
+        total_submissions = session.query(func.count(SubmissionModel.id)).scalar() or 0
+        pending_submissions = session.query(func.count(SubmissionModel.id)).filter(
+            SubmissionModel.status.in_(['pending', 'submitted', 'under_review', 'draft', 'created'])
+        ).scalar() or 0
+
+        ai_flagged_count = session.query(func.count(AIFlagModel.id)).filter(
+            AIFlagModel.status.in_(['flagged', 'pending', 'open'])
+        ).scalar() or 0
+        if ai_flagged_count == 0:
+            ai_flagged_count = session.query(func.count(SubmissionModel.id)).filter(
+                SubmissionModel.status == 'flagged'
+            ).scalar() or 0
+
+        try:
+            high_severity_ai_flags = session.query(func.count(AIFlagModel.id)).filter(
+                AIFlagModel.status.in_(['flagged', 'pending', 'open']),
+                (AIFlagModel.risk_level.in_(['high', 'critical'])) | (AIFlagModel.confidence_score >= 0.75)
+            ).scalar() or 0
+        except Exception:
+            session.rollback()
+            high_severity_ai_flags = session.query(func.count(SubmissionModel.id)).filter(
+                SubmissionModel.status == 'flagged'
+            ).scalar() or 0
+
+        # 5. System Health Status Check (Database, Storage, Email Service)
+        import os, sqlalchemy
+        db_health = 'online'
+        try:
+            session.execute(sqlalchemy.text('SELECT 1'))
+        except Exception:
+            db_health = 'degraded'
+
+        storage_health = 'online'
+        uploads_path = os.path.join(os.getcwd(), 'uploads')
+        if not os.path.exists(uploads_path):
+            try:
+                os.makedirs(uploads_path, exist_ok=True)
+            except Exception:
+                storage_health = 'degraded'
+
+        email_health = 'online' if (os.environ.get('MAIL_SERVER') or os.environ.get('SMTP_SERVER')) else 'active'
+
+        system_health = {
+            'database': {'status': db_health, 'name': 'Database (PostgreSQL Supabase)'},
+            'storage': {'status': storage_health, 'name': 'Storage (Tải lên media)'},
+            'email': {'status': email_health, 'name': 'Dịch vụ Email Notification'}
+        }
+
+        # Helper to safely format datetime / string timestamps
+        def _to_iso(dt):
+            if not dt:
+                return None
+            if isinstance(dt, str):
+                return dt
+            if hasattr(dt, 'isoformat'):
+                return dt.isoformat()
+            return str(dt)
+
+        # 6. Recent system activities feed
+        activities = []
+        recent_users = session.query(UserModel).order_by(UserModel.created_at.desc()).limit(5).all()
+        for u in recent_users:
+            activities.append({
+                'id': f'user-{u.id}',
+                'type': 'user',
+                'title': f'Người dùng mới đăng ký: {u.full_name or u.username} (@{u.username})',
+                'timestamp': _to_iso(u.created_at),
+                'badge': 'TÀI KHOẢN'
+            })
+
+        recent_contests = session.query(ContestModel).order_by(ContestModel.created_at.desc()).limit(5).all()
+        for c in recent_contests:
+            activities.append({
+                'id': f'contest-{c.id}',
+                'type': 'contest',
+                'title': f'Cuộc thi mới được tạo: #{c.id} - {c.title}',
+                'timestamp': _to_iso(c.created_at),
+                'badge': 'CUỘC THI'
+            })
+
+        recent_subs = session.query(SubmissionModel).order_by(SubmissionModel.created_at.desc()).limit(5).all()
+        for s in recent_subs:
+            activities.append({
+                'id': f'sub-{s.id}',
+                'type': 'submission',
+                'title': f'Bài dự thi mới được nộp: #{s.id} - {s.title or "Untitled"}',
+                'timestamp': _to_iso(s.created_at),
+                'badge': 'BÀI THI'
+            })
+
+        activities.sort(key=lambda x: str(x['timestamp'] or ''), reverse=True)
+        recent_activities = activities[:8]
+
+        return jsonify({
+            'metrics': {
+                'total_users': total_users,
+                'locked_users': locked_users,
+                'admins_count': admins_count,
+                'organizers_count': organizers_count,
+                'judges_count': judges_count,
+                'participants_count': participants_count,
+                'total_contests': total_contests,
+                'pending_contests': pending_contests,
+                'active_contests': active_contests,
+                'total_submissions': total_submissions,
+                'pending_submissions': pending_submissions,
+                'ai_flagged_submissions': ai_flagged_count,
+                'high_severity_ai_flags': high_severity_ai_flags,
+            },
+            'system_health': system_health,
+            'recent_activities': recent_activities
+        }), 200
+    except Exception as exc:
+        return jsonify({'message': 'Unable to fetch metrics', 'error': str(exc)}), 500
+
+
+@admin_bp.route('/dashboard', methods=['GET'])
+@role_required('admin')
+def admin_dashboard():
+    """Render dedicated Admin Dashboard HTML page."""
+    from flask import render_template
+    return render_template('admin_dashboard.html')
 
 
 # -------------------------------------------------------------------------
@@ -277,4 +456,5 @@ def send_system_notification():
         session.commit()
         return jsonify({'message': f'Đã gửi thông báo hệ thống đến {created_count} người dùng'}), 201
     except Exception as exc:
-        return jsonify({'message': 'Lỗi khi gửi thông báo hệ thống', 'error': str(exc)}), 500
+        return jsonify({'message': 'Lỗi khi gửi thông báo hệ thống', 'error': str(exc)}), 500
+    

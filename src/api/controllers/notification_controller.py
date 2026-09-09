@@ -7,12 +7,37 @@ notification_bp = Blueprint('notification', __name__, url_prefix='/notifications
 notification_service = NotificationService(NotificationRepository())
 
 
+def _current_user_id():
+  user = getattr(request, 'user', None)
+  return user.get('user_id') if isinstance(user, dict) else None
+
+
 @notification_bp.route('', methods=['GET'])
 @token_required
 def get_notifications():
-    user_id = request.user.get('user_id')
+    """
+    Get all notifications for the current user
+    ---
+    get:
+      summary: Get user notifications (unread and read)
+      tags:
+        - Notifications
+      security:
+        - Bearer: []
+      parameters:
+        - in: query
+          name: unread_only
+          schema:
+            type: boolean
+          description: Filter only unread notifications
+      responses:
+        200:
+          description: List of notifications
+        401:
+          description: Unauthorized
+    """
     unread_only = request.args.get('unread_only', 'false').lower() == 'true'
-    notifications = notification_service.get_user_notifications(user_id, unread_only=unread_only)
+    notifications = notification_service.get_user_notifications(_current_user_id(), unread_only=unread_only)
     
     return jsonify({
         'count': len(notifications),
@@ -34,9 +59,29 @@ def get_notifications():
 @notification_bp.route('/<int:notification_id>', methods=['GET'])
 @token_required
 def get_notification(notification_id):
-    user_id = request.user.get('user_id')
+    """
+    Get a specific notification
+    ---
+    get:
+      summary: Retrieve a single notification by ID
+      tags:
+        - Notifications
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: notification_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Notification details
+        404:
+          description: Notification not found
+    """
     notification = notification_service.repository.get_by_id(notification_id)
-    if not notification or notification.user_id != user_id:
+    if not notification or notification.user_id != _current_user_id():
         return jsonify({'message': 'Notification not found'}), 404
     
     return jsonify({
@@ -53,9 +98,29 @@ def get_notification(notification_id):
 @notification_bp.route('/<int:notification_id>/mark-read', methods=['POST'])
 @token_required
 def mark_notification_read(notification_id):
-    user_id = request.user.get('user_id')
+    """
+    Mark a notification as read
+    ---
+    post:
+      summary: Mark notification as read
+      tags:
+        - Notifications
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: notification_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Notification marked as read
+        404:
+          description: Notification not found
+    """
     notification = notification_service.repository.get_by_id(notification_id)
-    if not notification or notification.user_id != user_id:
+    if not notification or notification.user_id != _current_user_id():
         return jsonify({'message': 'Notification not found'}), 404
     
     updated = notification_service.mark_notification_read(notification_id)

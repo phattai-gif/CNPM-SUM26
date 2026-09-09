@@ -32,7 +32,7 @@ def patch_controller_attr(attr_name, value):
                 mod.submission_service = SubmissionService(submission_repo=value)
 
 
-def generate_token(secret_key, user_id=1, username='testuser', role='organizer'):
+def generate_token(secret_key, user_id=1, username='testuser', role='participant'):
     payload = {
         'user_id': user_id,
         'username': username,
@@ -60,7 +60,7 @@ def create_sample_image(width=200, height=150, color=(255, 0, 0), format_name="J
 def test_get_submission_details_success():
     app = create_app()
     client = app.test_client()
-    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'))
+    token = generate_token(app.config.get('SECRET_KEY', 'a_default_secret_key'), user_id=5, role='organizer')
 
     mock_submission = MockObject(
         id=123,

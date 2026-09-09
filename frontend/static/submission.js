@@ -718,7 +718,7 @@ class SubmissionForm {
 
         // Add duplicate detection result
         if (duplicateWarning) {
-            const similarity = Math.round((duplicateWarning.similarity_score || 0) * 100);
+            const similarity = Math.round(duplicateWarning.similarity_score || 0);
             successText += `<br><br><strong>🔍 Duplicate Check:</strong><br>Similarity: ${similarity}%${duplicateWarning.is_duplicate ? ' ⚠️ (Possible duplicate)' : ' ✓ (Unique)'}`;
         }
 

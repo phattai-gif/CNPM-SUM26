@@ -119,14 +119,9 @@ def register_routes(app):
     # Admin dashboard route aliases
     try:
         app.add_url_rule(
-            "/admin/dashboard",
-            "admin_dashboard_page",
-            lambda: redirect("/organizer/dashboard"),
-        )
-        app.add_url_rule(
             "/admin",
             "admin_root_page",
-            lambda: redirect("/organizer/dashboard"),
+            lambda: redirect("/admin/dashboard"),
         )
     except Exception:
         pass
@@ -810,6 +805,7 @@ def register_routes(app):
             "/<path:path>",
             "spa_fallback",
             spa_fallback,
+            methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
         )
     except Exception:
         pass

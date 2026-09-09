@@ -15,8 +15,12 @@ function requireDashboardSession() {
     return null;
   }
   const role = String(session.role || (session.user && session.user.role) || '').toLowerCase();
-  if (role !== 'organizer' && role !== 'admin') {
-    window.location.href = '/contests';
+  if (role !== 'organizer') {
+    if (role === 'admin') {
+      window.location.href = '/admin/dashboard';
+    } else {
+      window.location.href = '/contests';
+    }
     return null;
   }
   return session;

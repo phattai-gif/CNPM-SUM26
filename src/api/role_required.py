@@ -1,5 +1,5 @@
-﻿from functools import wraps
-from flask import request, jsonify, current_app, redirect, flash
+from functools import wraps
+from flask import request, jsonify, current_app, redirect, flash, session
 import jwt
 from sqlalchemy import select
 
@@ -26,11 +26,17 @@ def _unauthorized_response(message, redirect_path='/auth/login'):
 def _forbidden_response(message, allowed_roles):
     if _prefers_html_response():
         flash(message, 'warning')
+        user_role = str((getattr(request, 'user', {}) or {}).get('role', '')).lower()
+        if user_role == 'admin':
+            return redirect('/admin/dashboard')
+        elif user_role == 'organizer':
+            return redirect('/organizer/dashboard')
         return redirect('/contests')
     return jsonify({
         'message': message,
         'required_roles': list(allowed_roles)
     }), 403
+
 
 
 def _extract_bearer_token():
@@ -47,35 +53,57 @@ def _extract_bearer_token():
     if alt_header:
         return alt_header
 
+    cookie_token = request.cookies.get('token') or request.cookies.get('access_token')
+    if cookie_token:
+        return cookie_token.strip()
+
+    session_token = session.get('token') or session.get('access_token')
+    if session_token:
+        return session_token.strip()
+
     return None
 
 
 def token_required(f):
-    """Decorator kiá»ƒm tra JWT Token há»£p lá»‡"""
+    """Decorator kiểm tra JWT Token hợp lệ"""
     @wraps(f)
     def decorated(*args, **kwargs):
         token = _extract_bearer_token()
 
         if not token:
-            return _unauthorized_response('Bạn cần đăng nhập để truy cập trang này.')
+            user_session = session.get('user')
+            if isinstance(user_session, dict) and user_session.get('user_id'):
+                request.user = {
+                    'user_id': user_session.get('user_id'),
+                    'username': user_session.get('username'),
+                    'role': user_session.get('role', 'participant')
+                }
+            elif session.get('user_id'):
+                request.user = {
+                    'user_id': session.get('user_id'),
+                    'username': session.get('username'),
+                    'role': session.get('role', 'participant')
+                }
+            else:
+                return _unauthorized_response('Bạn cần đăng nhập để truy cập trang này.')
+        else:
+            try:
+                secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
+                payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+                request.user = {
+                    'user_id': payload.get('user_id'),
+                    'username': payload.get('username'),
+                    'role': payload.get('role', 'participant')
+                }
 
-        try:
-            secret_key = current_app.config.get('SECRET_KEY') or 'a_default_secret_key'
-            payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-            request.user = {
-                'user_id': payload.get('user_id'),
-                'username': payload.get('username'),
-                'role': payload.get('role', 'participant')
-            }
-
-            session = db_factory.get_database('POSTGREE').session
-            user = session.query(UserModel).filter_by(id=request.user['user_id']).first()
-            if user and user.status != 'active':
-                return _unauthorized_response('Tài khoản đã bị khóa hoặc không còn tồn tại.')
-        except jwt.ExpiredSignatureError:
-            return _unauthorized_response('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
-        except jwt.InvalidTokenError:
-            return _unauthorized_response('Token xác thực không hợp lệ. Vui lòng đăng nhập lại.')
+                db_session = db_factory.get_database('POSTGREE').session
+                user = db_session.query(UserModel).filter_by(id=request.user['user_id']).first()
+                if user and user.status != 'active':
+                    return _unauthorized_response('Tài khoản đã bị khóa hoặc không còn tồn tại.')
+            except jwt.ExpiredSignatureError:
+                return _unauthorized_response('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+            except jwt.InvalidTokenError:
+                return _unauthorized_response('Token xác thực không hợp lệ. Vui lòng đăng nhập lại.')
 
         return f(*args, **kwargs)
 

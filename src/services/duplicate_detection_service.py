@@ -1,3 +1,4 @@
+import hashlib
 import os
 
 from PIL import Image
@@ -110,6 +111,29 @@ class DuplicateDetectionService:
 
         from infrastructure.models.app.app_submission_file_model import SubmissionFileModel
 
+        exact_hash = hashlib.sha256(new_image_bytes).hexdigest()
+        exact_match = (
+            session.query(SubmissionFileModel)
+            .filter(SubmissionFileModel.file_hash == exact_hash)
+        )
+        if exclude_submission_id is not None:
+            exact_match = exact_match.filter(
+                SubmissionFileModel.submission_id != exclude_submission_id
+            )
+        exact_file = exact_match.first()
+        if exact_file:
+            return {
+                "similarity_score": 100.0,
+                "is_duplicate": True,
+                "phash": str(phash1),
+                "ahash": str(ahash1),
+                "matched_submission_id": exact_file.submission_id,
+                "matched_image_hd_url": exact_file.image_hd_url,
+                "match_type": "exact_sha256",
+                "phash_distance": 0,
+                "ahash_distance": 0,
+            }
+
         query = session.query(SubmissionFileModel)
         if exclude_submission_id is not None:
             query = query.filter(SubmissionFileModel.submission_id != exclude_submission_id)
@@ -176,12 +200,19 @@ class DuplicateDetectionService:
 
             file_is_duplicate = bool(phash_distance <= 18 or ahash_distance <= 12)
 
+            if file_is_duplicate:
+                is_duplicate = True
+                if matched_file is None or similarity > highest_similarity:
+                    matched_file = ext_file
+                    min_phash_distance = int(phash_distance)
+                    min_ahash_distance = int(ahash_distance)
+
             if similarity > highest_similarity:
                 highest_similarity = similarity
-                is_duplicate = is_duplicate or file_is_duplicate
-                matched_file = ext_file
-                min_phash_distance = int(phash_distance)
-                min_ahash_distance = int(ahash_distance)
+                if not matched_file or not file_is_duplicate:
+                    matched_file = ext_file
+                    min_phash_distance = int(phash_distance)
+                    min_ahash_distance = int(ahash_distance)
 
         result = {
             "similarity_score": highest_similarity,

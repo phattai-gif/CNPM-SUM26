@@ -5,7 +5,6 @@ import jwt
 import pytest
 
 os.environ["TESTING"] = "True"
-os.environ["POSTGREE_DATABASE_URL"] = "sqlite:///:memory:"
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
@@ -41,11 +40,19 @@ def db_session(app):
         Base.metadata.create_all(db.engine)
     except Exception:
         pass
+    db.session.expire_on_commit = False
     return db.session
 
 
+from flask import current_app
+
+
 def create_jwt_token(user_id, username="user", role="participant"):
-    secret_key = Config.SECRET_KEY or "dev-secret-key-change-me-in-production-32chars"
+    try:
+        secret_key = current_app.config.get("SECRET_KEY") if current_app else None
+    except Exception:
+        secret_key = None
+    secret_key = secret_key or getattr(Config, "SECRET_KEY", None) or "dev-secret-key-change-me-in-production-32chars"
     payload = {"user_id": user_id, "username": username, "role": role}
     token = jwt.encode(payload, secret_key, algorithm="HS256")
     if isinstance(token, bytes):
@@ -56,12 +63,13 @@ def create_jwt_token(user_id, username="user", role="participant"):
 @pytest.fixture
 def vote_test_data(db_session):
     """Create test data for voting: organizer, participants, contest, round, and winner submissions."""
-    db_session.query(VoteModel).delete()
-    db_session.query(DigitalArchiveExhibitModel).delete()
-    db_session.query(SubmissionModel).delete()
-    db_session.query(RoundModel).delete()
-    db_session.query(ContestModel).delete()
-    db_session.query(UserModel).delete()
+    db_session.rollback()
+    db_session.query(VoteModel).delete(synchronize_session=False)
+    db_session.query(DigitalArchiveExhibitModel).delete(synchronize_session=False)
+    db_session.query(SubmissionModel).delete(synchronize_session=False)
+    db_session.query(RoundModel).delete(synchronize_session=False)
+    db_session.query(ContestModel).delete(synchronize_session=False)
+    db_session.query(UserModel).delete(synchronize_session=False)
     db_session.commit()
 
     # Create users
@@ -69,35 +77,35 @@ def vote_test_data(db_session):
         username="organizer_vote_test",
         email="organizer_vote@example.com",
         password_hash="hashed_pw",
-        full_name="Organizer",
+        full_name="Organizer User",
         status="active",
     )
     voter1 = UserModel(
-        username="voter1",
+        username="voter1_test",
         email="voter1@example.com",
         password_hash="hashed_pw",
-        full_name="Voter 1",
+        full_name="Voter One",
         status="active",
     )
     voter2 = UserModel(
-        username="voter2",
+        username="voter2_test",
         email="voter2@example.com",
         password_hash="hashed_pw",
-        full_name="Voter 2",
+        full_name="Voter Two",
         status="active",
     )
     photographer1 = UserModel(
-        username="photographer1",
+        username="photo1_test",
         email="photo1@example.com",
         password_hash="hashed_pw",
-        full_name="Photographer 1",
+        full_name="Photographer One",
         status="active",
     )
     photographer2 = UserModel(
-        username="photographer2",
+        username="photo2_test",
         email="photo2@example.com",
         password_hash="hashed_pw",
-        full_name="Photographer 2",
+        full_name="Photographer Two",
         status="active",
     )
     db_session.add_all([organizer, voter1, voter2, photographer1, photographer2])
@@ -105,9 +113,9 @@ def vote_test_data(db_session):
 
     # Create contest and round
     contest = ContestModel(
-        title="Voting Test Contest",
-        slug="voting-test-contest",
-        description="Contest for voting tests",
+        title="Vote Test Contest",
+        slug="vote-test-contest",
+        description="Contest for vote testing",
         created_by=organizer.id,
         status="active",
     )
@@ -142,6 +150,10 @@ def vote_test_data(db_session):
     )
     db_session.add_all([winner_submission, non_winner_submission])
     db_session.commit()
+
+    from sqlalchemy.orm import make_transient
+    for obj in [organizer, voter1, voter2, photographer1, photographer2, contest, round_obj, winner_submission, non_winner_submission]:
+        make_transient(obj)
 
     return {
         "organizer": organizer,

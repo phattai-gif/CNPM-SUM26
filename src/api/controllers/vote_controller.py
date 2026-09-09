@@ -9,116 +9,90 @@ vote_bp = Blueprint('vote', __name__, url_prefix='/api/votes')
 vote_service = VoteService()
 
 
-@vote_bp.route('/<int:submission_id>', methods=['POST'])
+@vote_bp.route('/<int:submission_id>', methods=['POST', 'DELETE'])
 @token_required
-def vote_submission(submission_id):
+def vote_or_unvote_submission(submission_id):
     """
-    User votes on a public submission.
-    
-    POST /api/votes/<submission_id>
-    
-    Returns:
-        201: Vote created successfully
-        400: Validation error (submission not public, already voted)
-        401: Unauthorized
-        404: Submission not found
-        500: Server error
+    POST  /api/votes/<submission_id> - User votes on a public submission.
+    DELETE /api/votes/<submission_id> - User removes their vote.
     """
     user_id = request.user.get('user_id')
-    
+
     if not user_id:
         return jsonify({'message': 'User ID not found'}), 401
-    
-    vote_dict, error = vote_service.vote_submission(user_id, submission_id)
-    
-    if error == "submission_not_found":
-        return jsonify({
-            'success': False,
-            'message': 'Submission not found',
-            'error': error
-        }), 404
-    
-    if error == "submission_not_public":
-        return jsonify({
-            'success': False,
-            'message': 'Only public (approved) submissions can be voted on',
-            'error': error
-        }), 400
-    
-    if error == "already_voted":
-        return jsonify({
-            'success': False,
-            'message': 'You have already voted on this submission',
-            'error': error
-        }), 400
-    
-    if error == "database_error":
-        return jsonify({
-            'success': False,
-            'message': 'Database error occurred',
-            'error': error
-        }), 500
-    
-    if vote_dict is None:
-        return jsonify({
-            'success': False,
-            'message': 'Failed to create vote',
-            'error': error or 'unknown_error'
-        }), 500
-    
-    return jsonify({
-        'success': True,
-        'message': 'Vote recorded successfully',
-        'vote': vote_dict
-    }), 201
 
+    if request.method == 'POST':
+        vote_dict, error = vote_service.vote_submission(user_id, submission_id)
 
-@vote_bp.route('/<int:submission_id>', methods=['DELETE'])
-@token_required
-def unvote_submission(submission_id):
-    """
-    User removes their vote from a submission.
-    
-    DELETE /api/votes/<submission_id>
-    
-    Returns:
-        200: Vote removed successfully
-        401: Unauthorized
-        404: Vote not found
-        500: Server error
-    """
-    user_id = request.user.get('user_id')
-    
-    if not user_id:
-        return jsonify({'message': 'User ID not found'}), 401
-    
-    success, error = vote_service.unvote_submission(user_id, submission_id)
-    
-    if not success:
-        if error == "vote_not_found":
+        if error == "submission_not_found":
             return jsonify({
                 'success': False,
-                'message': 'You have not voted on this submission',
+                'message': 'Submission not found',
                 'error': error
             }), 404
-        
+
+        if error == "submission_not_public":
+            return jsonify({
+                'success': False,
+                'message': 'Only public (approved) submissions can be voted on',
+                'error': error
+            }), 400
+
+        if error == "already_voted":
+            return jsonify({
+                'success': False,
+                'message': 'You have already voted on this submission',
+                'error': error
+            }), 400
+
         if error == "database_error":
             return jsonify({
                 'success': False,
                 'message': 'Database error occurred',
                 'error': error
             }), 500
-        
+
+        if vote_dict is None:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to create vote',
+                'error': error or 'unknown_error'
+            }), 500
+
         return jsonify({
-            'success': False,
-            'message': 'Failed to remove vote',
-            'error': error or 'unknown_error'
-        }), 500
-    
-    return jsonify({
-        'success': True,
-        'message': 'Vote removed successfully'
-    }), 200
+            'success': True,
+            'message': 'Vote recorded successfully',
+            'vote': vote_dict
+        }), 201
+
+    else:  # DELETE
+        success, error = vote_service.unvote_submission(user_id, submission_id)
+
+        if not success:
+            if error == "vote_not_found":
+                return jsonify({
+                    'success': False,
+                    'message': 'You have not voted on this submission',
+                    'error': error
+                }), 404
+
+            if error == "database_error":
+                return jsonify({
+                    'success': False,
+                    'message': 'Database error occurred',
+                    'error': error
+                }), 500
+
+            return jsonify({
+                'success': False,
+                'message': 'Failed to remove vote',
+                'error': error or 'unknown_error'
+            }), 500
+
+        return jsonify({
+            'success': True,
+            'message': 'Vote removed successfully'
+        }), 200
 
 
 @vote_bp.route('/<int:submission_id>/count', methods=['GET'])

@@ -74,8 +74,15 @@ class AbstractDatabase(ABC):
     def close_sessions(self):
         """Close sessions created through this database instance."""
         for session in list(self._sessions):
-            session.close()
+            try:
+                if session.in_transaction():
+                    session.rollback()
+                session.close()
+            except Exception:
+                # Avoid masking the original request/test exception
+                pass
 
     @abstractmethod
     def init_database(self, app):
         pass
+    

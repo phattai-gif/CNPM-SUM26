@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app, render_template
+from flask import Blueprint, request, jsonify, current_app, render_template, session, redirect
 from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -327,9 +327,12 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    user = auth_service.login(username, password)
-    if not user:
-        return jsonify({'message': 'Invalid username or password'}), 401
+    try:
+        user = auth_service.login(username, password)
+        if not user:
+            return jsonify({'message': 'Tên đăng nhập hoặc mật khẩu không chính xác.'}), 401
+    except ValueError as exc:
+        return jsonify({'message': str(exc)}), 403
 
     # Táº¡o JWT Payload chá»©a thÃ´ng tin User ID, Username vÃ  Role
     payload = {
@@ -366,6 +369,17 @@ def login_page():
 @auth_bp.route('/register', methods=['GET'])
 def register_page():
     return render_template('register.html')
+
+
+@auth_bp.route('/logout', methods=['POST', 'GET'])
+def logout():
+    session.clear()
+    resp = jsonify({'message': 'Logged out successfully'})
+    resp.delete_cookie('token', path='/')
+    resp.delete_cookie('access_token', path='/')
+    if request.method == 'GET' or (request.accept_mimetypes.best_match(['text/html', 'application/json']) == 'text/html'):
+        return redirect('/auth/login')
+    return resp, 200
 
 
 @auth_bp.route('/submit', methods=['GET'])

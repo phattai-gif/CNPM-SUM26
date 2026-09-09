@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
             this.finalScoreVal = document.getElementById('finalScoreVal');
             this.scoresContent = document.getElementById('scoresContent');
             this.aiReportContent = document.getElementById('aiReportContent');
+            this.aiPollTimer = null;
+            this.aiPollAttempts = 0;
             
             this.userNameEl = document.getElementById('userName');
             this.userAvatarEl = document.getElementById('userAvatar');
@@ -247,8 +249,27 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAIReport(data) {
             const aiFlag = data.ai_flag || {};
             const riskLevel = aiFlag.risk_level || 'safe';
-            const aiScore = aiFlag.confidence_score !== undefined && aiFlag.confidence_score !== null ? aiFlag.confidence_score : 0;
-            const status = aiFlag.status || 'completed';
+            const aiScore = aiFlag.confidence_score !== undefined && aiFlag.confidence_score !== null
+                ? aiFlag.confidence_score
+                : (aiFlag.ai_score !== undefined && aiFlag.ai_score !== null ? aiFlag.ai_score : 0);
+            let status = aiFlag.status || (data.status === 'submitted' ? 'pending' : 'completed');
+
+            if (status === 'pending') {
+                if (this.aiPollAttempts >= 12) {
+                    status = 'failed';
+                } else {
+                    this.aiPollAttempts += 1;
+                    if (this.aiPollTimer) window.clearTimeout(this.aiPollTimer);
+                    this.aiPollTimer = window.setTimeout(() => {
+                        this.aiPollTimer = null;
+                        this.fetchDetail();
+                    }, 2500);
+                }
+            } else if (this.aiPollTimer) {
+                window.clearTimeout(this.aiPollTimer);
+                this.aiPollTimer = null;
+                this.aiPollAttempts = 0;
+            }
 
             let badgeHtml = '';
             let explanation = '';
@@ -264,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 explanation = 'Tác phẩm được trích xuất thông số máy ảnh & phim analog hoàn toàn hợp lệ. Không phát hiện dấu hiệu tạo sinh nhân tạo.';
             } else if (riskLevel === 'high' || riskLevel === 'high_risk' || aiScore >= 70) {
                 badgeHtml = `<span class="ai-status-tag high">⚠️ Cảnh báo AI (Nguy cơ cao - Completed)</span>`;
-                explanation = 'Hệ thống phát hiện ảnh thiếu dữ liệu metadata EXIF chuẩn của máy phim hoặc có cấu trúc điểm ảnh nghi vấn tạo bằng AI.';
+                explanation = aiFlag.ai_message || 'Hệ thống phát hiện metadata khai báo bất thường hoặc dấu hiệu cần kiểm tra thủ công.';
             } else {
                 badgeHtml = `<span class="ai-status-tag" style="background:rgba(245,158,11,0.15); color:var(--accent-amber);">🔍 Cần Giám Khảo Thẩm Định (Completed)</span>`;
                 explanation = 'Tác phẩm có một số thông số ảnh cần được Ban Giám Khảo kiểm tra thủ công thêm.';
