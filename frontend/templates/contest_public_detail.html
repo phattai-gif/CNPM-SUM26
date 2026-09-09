@@ -230,7 +230,7 @@
     <div class="card-custom p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 class="fw-bold m-0 text-light-gray">Bài dự thi đã nộp</h4>
+          <h4 class="fw-bold m-0 text-light-gray">Submitted Entries</h4>
           <small class="text-muted">Danh sách các sản phẩm đã tham gia trong cuộc thi này</small>
         </div>
         <button id="btnOpenModal" class="btn btn-primary px-3 py-2 fw-semibold rounded-3">
@@ -334,7 +334,7 @@
                     <i class="bi ${externalUrl ? (isDrive ? 'bi-google-drive' : 'bi-box-arrow-up-right') : 'bi-eye'} me-1"></i>
                     ${buttonLabel}
                   </a>`
-            : '<button type="button" class="btn btn-outline-secondary btn-sm w-100 fw-medium" disabled>Chưa có liên kết sản phẩm</button>';
+            : '<button type="button" class="btn btn-outline-secondary btn-sm w-100 fw-medium" disabled>No Product Link</button>';
 
           return `
             <div class="col-md-6 col-lg-4">

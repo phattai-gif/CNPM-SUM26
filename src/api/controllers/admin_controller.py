@@ -290,10 +290,11 @@ def list_all_contests():
 
 @admin_bp.route('/contests/<int:contest_id>/status', methods=['PATCH'])
 @admin_bp.route('/contests/<int:contest_id>/approve', methods=['POST'])
+@admin_bp.route('/contests/<int:contest_id>/reject', methods=['POST'])
 @admin_bp.route('/contests/<int:contest_id>/suspend', methods=['POST'])
 @role_required('admin')
 def update_contest_status(contest_id):
-    """Admin: Suspend/approve contest."""
+    """Admin: Approve, reject, suspend, or update a contest status."""
     try:
         from infrastructure.databases.factory_database import FactoryDatabase as db_factory
         from infrastructure.models.app import ContestModel
@@ -306,12 +307,34 @@ def update_contest_status(contest_id):
         payload = request.get_json(silent=True) or {}
         if 'approve' in path:
             new_status = 'published'
+        elif 'reject' in path:
+            new_status = 'rejected'
         elif 'suspend' in path:
             new_status = 'suspended'
         else:
             new_status = payload.get('status') or 'suspended'
 
+        if new_status not in {'published', 'rejected', 'suspended', 'draft', 'pending'}:
+            return jsonify({'message': 'Trạng thái cuộc thi không hợp lệ'}), 400
+        if new_status == 'rejected' and not str(payload.get('reason') or '').strip():
+            return jsonify({'message': 'Vui lòng nhập lý do từ chối cuộc thi'}), 400
+
+        previous_status = contest.status
         contest.status = new_status
+
+        from infrastructure.models.app import AuditLogModel
+        audit = AuditLogModel(
+            user_id=(getattr(request, 'user', {}) or {}).get('user_id'),
+            action=f'contest_{new_status}',
+            entity_name='contest',
+            entity_id=contest.id,
+            old_value={'status': previous_status},
+            new_value={
+                'status': new_status,
+                'reason': payload.get('reason') if new_status == 'rejected' else None,
+            },
+        )
+        session.add(audit)
         session.commit()
         session.refresh(contest)
 

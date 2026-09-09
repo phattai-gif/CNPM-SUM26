@@ -202,7 +202,7 @@ function renderPagination(current, total, count) {
   const prevBtn = document.createElement('button');
   prevBtn.className = 'page-btn';
   prevBtn.disabled = current <= 1;
-  prevBtn.innerHTML = '<i class="bi bi-chevron-left"></i> Truớc';
+  prevBtn.innerHTML = '<i class="bi bi-chevron-left"></i> Previous';
   prevBtn.onclick = () => loadGallery(current - 1);
   container.appendChild(prevBtn);
 
@@ -226,7 +226,7 @@ function renderPagination(current, total, count) {
   const nextBtn = document.createElement('button');
   nextBtn.className = 'page-btn';
   nextBtn.disabled = current >= total;
-  nextBtn.innerHTML = 'Sau <i class="bi bi-chevron-right"></i>';
+  nextBtn.innerHTML = 'Next <i class="bi bi-chevron-right"></i>';
   nextBtn.onclick = () => loadGallery(current + 1);
   container.appendChild(nextBtn);
 }

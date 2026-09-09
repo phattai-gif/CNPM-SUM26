@@ -267,10 +267,10 @@
                 <td>
                   <div class="action-group">
                     <button class="btn btn-outline btn-sm toggle-status-btn" data-user-id="${escapeHtml(u.id)}" data-current-status="${escapeHtml(u.status)}" ${isSelf ? 'disabled' : ''}>
-                      ${u.status === 'locked' ? 'Mở Khóa' : 'Khóa'}
+                      ${u.status === 'locked' ? 'Unlock' : 'Lock'}
                     </button>
                     <button class="btn btn-danger btn-sm delete-user-btn" data-user-id="${escapeHtml(u.id)}" data-username="${escapeHtml(u.username)}" ${isSelf ? 'disabled' : ''}>
-                      Xóa
+                      Delete
                     </button>
                   </div>
                 </td>
@@ -354,8 +354,8 @@
     container.innerHTML = `
       <span>Trang ${page} / ${pages} (Tổng số: ${total} tài khoản)</span>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-outline btn-sm" id="prevPageBtn" ${page <= 1 ? 'disabled' : ''}>&laquo; Trang trước</button>
-        <button class="btn btn-outline btn-sm" id="nextPageBtn" ${page >= pages ? 'disabled' : ''}>Trang sau &raquo;</button>
+        <button class="btn btn-outline btn-sm" id="prevPageBtn" ${page <= 1 ? 'disabled' : ''}>&laquo; Previous</button>
+        <button class="btn btn-outline btn-sm" id="nextPageBtn" ${page >= pages ? 'disabled' : ''}>Next &raquo;</button>
       </div>
     `;
 
@@ -437,12 +437,17 @@
                   <div class="action-group">
                     ${st !== 'published' && st !== 'active' ? `
                       <button class="btn btn-outline btn-sm approve-contest-btn" data-contest-id="${escapeHtml(c.id)}">
-                        ✅ Duyệt / Xuất Bản
+                        ✅ Approve / Publish
+                      </button>
+                    ` : ''}
+                    ${st !== 'rejected' && st !== 'published' ? `
+                      <button class="btn btn-danger btn-sm reject-contest-btn" data-contest-id="${escapeHtml(c.id)}">
+                        ❌ Reject
                       </button>
                     ` : ''}
                     ${st !== 'suspended' ? `
                       <button class="btn btn-danger btn-sm suspend-contest-btn" data-contest-id="${escapeHtml(c.id)}">
-                        ⛔ Đình Chỉ
+                        ⛔ Suspend
                       </button>
                     ` : ''}
                   </div>
@@ -480,6 +485,23 @@
           await loadAdminMetrics();
         } catch (err) {
           showToast(err.message || 'Không thể đình chỉ cuộc thi', true);
+        }
+      });
+    });
+
+    container.querySelectorAll('.reject-contest-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = Number(btn.dataset.contestId);
+        const reason = window.prompt('Nhập lý do từ chối cuộc thi:');
+        if (!reason || !reason.trim()) return;
+        try {
+          await window.apiClient.post(`/admin/contests/${id}/reject`, { reason: reason.trim() });
+          showToast(`Đã từ chối cuộc thi #${id}`);
+          await loadContests();
+          await loadAdminMetrics();
+          await loadAuditLogs();
+        } catch (err) {
+          showToast(err.message || 'Không thể từ chối cuộc thi', true);
         }
       });
     });
@@ -542,12 +564,38 @@
                   ${escapeHtml(JSON.stringify(r.raw_details || {}))}
                 </td>
                 <td>${escapeHtml(formatTimestamp(r.created_at))}</td>
+                <td>
+                  <div class="action-group">
+                    <button class="btn btn-sm approve-submission-btn" data-submission-id="${escapeHtml(r.submission_id)}">✅ Approve</button>
+                    <button class="btn btn-danger btn-sm reject-submission-btn" data-submission-id="${escapeHtml(r.submission_id)}">❌ Reject</button>
+                    <button class="btn btn-outline btn-sm dismiss-flag-btn" data-submission-id="${escapeHtml(r.submission_id)}">Dismiss Flag</button>
+                  </div>
+                </td>
               </tr>
             `;
           }).join('')}
         </tbody>
       </table>
     `;
+
+    const moderate = async (button, action, promptText) => {
+      const submissionId = Number(button.dataset.submissionId);
+      const reviewNotes = promptText ? window.prompt(promptText) : '';
+      if (promptText && (!reviewNotes || !reviewNotes.trim())) return;
+      try {
+        await window.apiClient.post(`/moderator/submissions/${submissionId}/${action}`, {
+          review_notes: reviewNotes || undefined,
+        });
+        showToast('Đã cập nhật trạng thái submission');
+        await loadAiReports();
+        await loadAdminMetrics();
+      } catch (err) {
+        showToast(err.message || 'Không thể cập nhật submission', true);
+      }
+    };
+    container.querySelectorAll('.approve-submission-btn').forEach(btn => btn.addEventListener('click', () => moderate(btn, 'approve')));
+    container.querySelectorAll('.reject-submission-btn').forEach(btn => btn.addEventListener('click', () => moderate(btn, 'reject', 'Nhập lý do từ chối submission:')));
+    container.querySelectorAll('.dismiss-flag-btn').forEach(btn => btn.addEventListener('click', () => moderate(btn, 'dismiss-flag')));
   }
 
   // --- TAB 4: Audit Logs ---
@@ -768,5 +816,7 @@
     bindEvents();
     loadAdminMetrics();
     loadUsers(1);
+    loadContests();
+    loadAiReports();
   });
 })();

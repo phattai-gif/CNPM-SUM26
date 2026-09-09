@@ -36,7 +36,7 @@
                         <div class="hero-header-top">
                             <div class="user-identity">
                                 <div class="identity-name-row">
-                                    <h1 class="user-fullname" id="profileFullName">Đang tải hồ sơ...</h1>
+                                    <h1 class="user-fullname" id="profileFullName">Loading Profile...</h1>
                                     <span class="role-pill" id="profileRolePill">Participant</span>
                                 </div>
                                 <div class="user-handle-row">
@@ -154,7 +154,7 @@
                 <!-- Empty Portfolio State -->
                 <div class="empty-portfolio-state" id="portfolioEmpty" style="display: none;">
                     <div class="empty-art-icon">🎞️</div>
-                    <h3 id="emptyTitle">Chưa có tác phẩm nào trong portfolio</h3>
+                    <h3 id="emptyTitle">No Works in Portfolio</h3>
                     <p id="emptySubtitle">Hãy gửi bài dự thi hoặc cập nhật bài thi đầu tiên của bạn để trưng bày tác phẩm nghệ thuật tại đây.</p>
                     <a href="/submit" class="btn-primary-action" id="btnEmptySubmit">
                         <span>+</span> Nộp Tác Phẩm Ngay
@@ -171,19 +171,19 @@
             <section class="tab-content-panel" id="panelAbout" style="display: none;">
                 <div class="settings-card-layout">
                     <div class="settings-card-header">
-                        <h2>Chỉnh Sửa Hồ Sơ Cá Nhân</h2>
+                        <h2>Edit Profile</h2>
                         <p>Cập nhật thông tin công khai, giới thiệu bản thân và phong cách chụp ảnh phim của bạn.</p>
                     </div>
 
                     <form id="profileEditForm" class="settings-form">
                         <div class="form-row form-row-2col">
                             <div class="form-group">
-                                <label for="inputFullName">Họ và Tên Hiển Thị</label>
+                                <label for="inputFullName">Display Name</label>
                                 <input type="text" id="inputFullName" class="form-input" placeholder="Ví dụ: Nguyễn Văn A" required>
                                 <span class="form-hint">Tên sẽ xuất hiện trên bài dự thi và chứng nhận tác phẩm.</span>
                             </div>
                             <div class="form-group">
-                                <label for="inputUsername">Tên Người Dùng (Username)</label>
+                                <label for="inputUsername">Username</label>
                                 <input type="text" id="inputUsername" class="form-input" disabled>
                                 <span class="form-hint">Username là định danh tài khoản cố định.</span>
                             </div>
@@ -191,19 +191,19 @@
 
                         <div class="form-row form-row-2col">
                             <div class="form-group">
-                                <label for="inputEmail">Địa Chỉ Email</label>
+                                <label for="inputEmail">Email Address</label>
                                 <input type="email" id="inputEmail" class="form-input" disabled>
                                 <span class="form-hint">Dùng để nhận thông báo chấm giải và xác thực tài khoản.</span>
                             </div>
                             <div class="form-group">
-                                <label for="inputRole">Vai Trò Hệ Thống</label>
+                                <label for="inputRole">System Role</label>
                                 <input type="text" id="inputRole" class="form-input" disabled>
                                 <span class="form-hint">Cấp độ tài khoản (Participant, Judge, Organizer, Admin).</span>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="inputAvatarUrl">Đường Dẫn Ảnh Đại Diện (Avatar URL)</label>
+                            <label for="inputAvatarUrl">Avatar URL</label>
                             <div class="avatar-input-group">
                                 <input type="url" id="inputAvatarUrl" class="form-input" placeholder="https://example.com/avatar.jpg">
                                 <div class="avatar-preview-mini" id="avatarPreviewMini">
@@ -215,7 +215,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="inputBio">Tiểu Sử & Giới Thiệu (Bio)</label>
+                            <label for="inputBio">Biography</label>
                             <textarea id="inputBio" class="form-textarea" rows="4" placeholder="Chia sẻ về đam mê nhiếp ảnh analog, dòng phim yêu thích (Kodak Portra, Cinestill, Ilford), máy ảnh thường dùng (Leica, Canon, Nikon)..."></textarea>
                             <span class="form-hint">Tối đa 500 ký tự.</span>
                         </div>
@@ -225,7 +225,7 @@
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                                 Lưu Thay Đổi Hồ Sơ
                             </button>
-                            <button type="button" class="btn-cancel-settings" id="btnResetForm">Đặt Lại</button>
+                            <button type="button" class="btn-cancel-settings" id="btnResetForm">Reset</button>
                         </div>
                     </form>
                 </div>
@@ -237,7 +237,7 @@
     <div class="portfolio-lightbox-modal" id="portfolioLightbox" style="display: none;">
         <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
         <div class="lightbox-dialog">
-            <button type="button" class="lightbox-close-btn" id="lightboxCloseBtn" title="Đóng">&times;</button>
+            <button type="button" class="lightbox-close-btn" id="lightboxCloseBtn" title="Close">&times;</button>
             <div class="lightbox-body">
                 <div class="lightbox-image-viewer">
                     <img src="" alt="Submission Preview" id="lightboxImg" class="lightbox-img">
@@ -245,7 +245,7 @@
                 <div class="lightbox-details-panel">
                     <div class="lightbox-header">
                         <span class="lightbox-contest-tag" id="lightboxContestTag">Analog Contest</span>
-                        <h2 class="lightbox-title" id="lightboxTitle">Tên Tác Phẩm</h2>
+                        <h2 class="lightbox-title" id="lightboxTitle">Work Title</h2>
                         <div class="lightbox-badges-row" id="lightboxBadgesRow">
                             <span class="status-badge" id="lightboxStatusBadge">Đã Nộp</span>
                             <span class="score-badge" id="lightboxScoreBadge" style="display: none;">★ 90.0</span>
@@ -253,12 +253,12 @@
                     </div>
 
                     <div class="lightbox-story-box">
-                        <h4>Câu chuyện tác phẩm</h4>
+                        <h4>Work Story</h4>
                         <p id="lightboxStory">Không có mô tả kèm theo.</p>
                     </div>
 
                     <div class="lightbox-meta-table">
-                        <h4>Thông số kỹ thuật phim</h4>
+                        <h4>Film Specifications</h4>
                         <div class="meta-data-grid">
                             <div class="meta-item">
                                 <span class="meta-label">Film Stock:</span>
@@ -288,7 +288,7 @@
                     </div>
 
                     <div class="lightbox-footer">
-                        <a href="#" class="btn-lightbox-full" id="lightboxFullLink">Xem Trang Chi Tiết →</a>
+                        <a href="#" class="btn-lightbox-full" id="lightboxFullLink">View Details →</a>
                     </div>
                 </div>
             </div>
@@ -299,13 +299,13 @@
     <div class="profile-modal-overlay" id="editProfileModal" style="display: none;">
         <div class="modal-card">
             <div class="modal-header">
-                <h3>Chỉnh Sửa Hồ Sơ</h3>
+                <h3>Edit Profile</h3>
                 <button type="button" class="modal-close" id="modalCloseBtn">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="quickEditProfileForm">
                     <div class="form-group">
-                        <label for="modalFullName">Họ và tên</label>
+                        <label for="modalFullName">Full Name</label>
                         <input type="text" id="modalFullName" class="form-input" required>
                     </div>
                     <div class="form-group">
@@ -313,12 +313,12 @@
                         <input type="url" id="modalAvatarUrl" class="form-input" placeholder="https://...">
                     </div>
                     <div class="form-group">
-                        <label for="modalBio">Tiểu sử (Bio)</label>
+                        <label for="modalBio">Biography</label>
                         <textarea id="modalBio" class="form-textarea" rows="3" placeholder="Giới thiệu bản thân..."></textarea>
                     </div>
                     <div class="modal-actions">
-                        <button type="button" class="btn-modal-cancel" id="modalCancelBtn">Hủy</button>
-                        <button type="submit" class="btn-modal-save" id="modalSaveBtn">Lưu Hồ Sơ</button>
+                        <button type="button" class="btn-modal-cancel" id="modalCancelBtn">Cancel</button>
+                        <button type="submit" class="btn-modal-save" id="modalSaveBtn">Save Profile</button>
                     </div>
                 </form>
             </div>

@@ -477,18 +477,18 @@ def create_contest():
 
     errors = contest_create_schema.validate(data)
     if errors:
-        return jsonify({'message': 'Dá»¯ liá»‡u khÃ´ng há»£p lá»‡', 'errors': errors}), 400
+        return jsonify({'message': 'Dữ liệu không hợp lệ', 'errors': errors}), 400
 
     try:
         contest = contest_service.create_contest(data, user_id=user_id)
         return safe_jsonify({
-            'message': 'Táº¡o cuá»™c thi thÃ nh cÃ´ng',
+            'message': 'Tạo cuộc thi thành công',
             'contest': _serialize_model(contest) or {}
         }, status=201)
     except ValueError as ve:
         return safe_jsonify({'message': str(ve)}, status=400)
     except Exception as e:
-        return safe_jsonify({'message': 'Lá»—i khi táº¡o cuá»™c thi', 'error': str(e)}, status=500)
+        return safe_jsonify({'message': 'Lỗi khi tạo cuộc thi', 'error': str(e)}, status=500)
 
 
 @contest_bp.route('/contests', methods=['GET'])
@@ -523,7 +523,7 @@ def list_contests():
             contests_out.append(cdict)
 
         return safe_jsonify({
-            'message': 'Láº¥y danh sÃ¡ch cuá»™c thi thÃ nh cÃ´ng',
+            'message': 'Lấy danh sách cuộc thi thành công',
             'contests': contests_out
         }, status=200)
     except Exception:
@@ -543,7 +543,7 @@ def get_contest(contest_id):
 
     contest = contest_service.get_contest(contest_id)
     if not contest:
-        return jsonify({'message': 'KhÃ´ng tÃ¬m tháº¥y cuá»™c thi'}), 404
+        return jsonify({'message': 'Không tìm thấy cuộc thi'}), 404
 
     try:
         owner_id = int(contest.created_by)
@@ -555,10 +555,10 @@ def get_contest(contest_id):
         actor_id = user_id
 
     if user_role != 'admin' and owner_id != actor_id:
-        return jsonify({'message': 'Báº¡n khÃ´ng cÃ³ quyá»n xem cuá»™c thi nÃ y'}), 403
+        return jsonify({'message': 'Bạn không có quyền xem cuộc thi này'}), 403
 
     return safe_jsonify({
-        'message': 'Láº¥y thÃ´ng tin cuá»™c thi thÃ nh cÃ´ng',
+            'message': 'Lấy thông tin cuộc thi thành công',
         'contest': _serialize_model(contest) or {}
     }, status=200)
 
@@ -574,12 +574,12 @@ def update_contest(contest_id):
 
     errors = contest_update_schema.validate(data)
     if errors:
-        return jsonify({'message': 'Dá»¯ liá»‡u khÃ´ng há»£p lá»‡', 'errors': errors}), 400
+        return jsonify({'message': 'Dữ liệu không hợp lệ', 'errors': errors}), 400
 
     try:
         contest = contest_service.update_contest(contest_id, data, user_id=user_id, user_role=user_role)
         return safe_jsonify({
-            'message': 'Cáº­p nháº­t cuá»™c thi thÃ nh cÃ´ng',
+            'message': 'Cập nhật cuộc thi thành công',
             'contest': _serialize_model(contest) or {}
         }, status=200)
     except ValueError as ve:
@@ -587,7 +587,7 @@ def update_contest(contest_id):
     except PermissionError as pe:
         return safe_jsonify({'message': str(pe)}, status=403)
     except Exception as e:
-        return safe_jsonify({'message': 'Lá»—i khi cáº­p nháº­t cuá»™c thi', 'error': str(e)}, status=500)
+        return safe_jsonify({'message': 'Lỗi khi cập nhật cuộc thi', 'error': str(e)}, status=500)
 
 
 @contest_bp.route('/contests/<int:contest_id>', methods=['DELETE'])
@@ -599,13 +599,13 @@ def delete_contest(contest_id):
 
     try:
         contest_service.delete_contest(contest_id, user_id=user_id, user_role=user_role)
-        return jsonify({'message': 'XÃ³a cuá»™c thi thÃ nh cÃ´ng'}), 200
+        return jsonify({'message': 'Xóa cuộc thi thành công'}), 200
     except ValueError as ve:
         return jsonify({'message': str(ve)}), 404
     except PermissionError as pe:
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi xÃ³a cuá»™c thi', 'error': str(e)}), 500
+        return jsonify({'message': 'Lỗi khi xóa cuộc thi', 'error': str(e)}), 500
 
 
 # -------------------------------------------------------------------------
@@ -626,7 +626,7 @@ def list_contest_categories(contest_id):
     except PermissionError as pe:
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi láº¥y danh má»¥c', 'error': str(e)}), 500
+        return jsonify({'message': 'Lỗi khi lấy danh mục', 'error': str(e)}), 500
 
 
 @contest_bp.route('/contests/<int:contest_id>/categories', methods=['POST'])
@@ -646,7 +646,7 @@ def create_contest_category(contest_id):
     except PermissionError as pe:
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi táº¡o danh má»¥c', 'error': str(e)}), 500
+        return jsonify({'message': 'Lỗi khi tạo danh mục', 'error': str(e)}), 500
 
 
 @contest_bp.route('/contests/<int:contest_id>/categories/<int:category_id>', methods=['PUT'])
@@ -666,7 +666,7 @@ def update_contest_category(contest_id, category_id):
     except PermissionError as pe:
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi cáº­p nháº­t danh má»¥c', 'error': str(e)}), 500
+        return jsonify({'message': 'Lỗi khi cập nhật danh mục', 'error': str(e)}), 500
 
 
 @contest_bp.route('/contests/<int:contest_id>/categories/<int:category_id>', methods=['DELETE'])
@@ -685,7 +685,7 @@ def delete_contest_category(contest_id, category_id):
     except PermissionError as pe:
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi xÃ³a danh má»¥c', 'error': str(e)}), 500
+        return jsonify({'message': 'Lỗi khi xóa danh mục', 'error': str(e)}), 500
 
 
 @contest_bp.route('/contests/<int:contest_id>/awards', methods=['GET'])
@@ -702,7 +702,7 @@ def list_contest_awards(contest_id):
     except PermissionError as pe:
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi láº¥y giáº£i thÆ°á»Ÿng', 'error': str(e)}), 500
+        return jsonify({'message': 'Lỗi khi lấy giải thưởng', 'error': str(e)}), 500
 
 
 @contest_bp.route('/contests/<int:contest_id>/awards', methods=['POST'])
@@ -722,7 +722,7 @@ def create_contest_award(contest_id):
     except PermissionError as pe:
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi táº¡o giáº£i thÆ°á»Ÿng', 'error': str(e)}), 500
+        return jsonify({'message': 'Lỗi khi tạo giải thưởng', 'error': str(e)}), 500
 
 
 @contest_bp.route('/contests/<int:contest_id>/awards/<int:award_id>', methods=['PUT'])
@@ -742,7 +742,7 @@ def update_contest_award(contest_id, award_id):
     except PermissionError as pe:
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi cáº­p nháº­t giáº£i thÆ°á»Ÿng', 'error': str(e)}), 500
+        return jsonify({'message': 'Lỗi khi cập nhật giải thưởng', 'error': str(e)}), 500
 
 
 @contest_bp.route('/contests/<int:contest_id>/awards/<int:award_id>', methods=['DELETE'])
@@ -761,7 +761,7 @@ def delete_contest_award(contest_id, award_id):
     except PermissionError as pe:
         return jsonify({'message': str(pe)}), 403
     except Exception as e:
-        return jsonify({'message': 'Lá»—i khi xÃ³a giáº£i thÆ°á»Ÿng', 'error': str(e)}), 500
+        return jsonify({'message': 'Lỗi khi xóa giải thưởng', 'error': str(e)}), 500
 
 
 # -------------------------------------------------------------------------
@@ -1025,12 +1025,44 @@ def decide_winner(contest_id, round_id, submission_id):
             return jsonify({'success': False, 'message': 'Submission not found'}), 404
         if error == 'submission_not_in_round':
             return jsonify({'success': False, 'message': 'Submission does not belong to this round'}), 400
+        if error == 'round_not_finalized':
+            return jsonify({'success': False, 'message': 'Round must be finalized before approving winners'}), 400
         if error:
             return jsonify({'success': False, 'message': f'Unable to update winner status: {error}'}), 400
 
+        _record_round_audit(
+            action=f'winner_{decision}',
+            round_id=round_id,
+            contest_id=contest_id,
+            submission_id=submission_id,
+            payload={'decision': decision, 'reason': reason, 'award_title': award_title},
+        )
         return jsonify(result), 200
     except Exception as e:
         return jsonify({'success': False, 'message': 'System error while processing winner decision', 'error': str(e)}), 500
+
+
+def _record_round_audit(action, round_id, contest_id=None, submission_id=None, payload=None):
+    """Persist sensitive round actions without failing the primary action on audit errors."""
+    session = None
+    try:
+        from infrastructure.databases.factory_database import FactoryDatabase as db_factory
+        from infrastructure.models.app import AuditLogModel
+
+        session = db_factory.get_database('POSTGREE').session
+        user = getattr(request, 'user', {}) or {}
+        session.add(AuditLogModel(
+            user_id=user.get('user_id'),
+            action=action,
+            entity_name='round',
+            entity_id=round_id,
+            old_value={'contest_id': contest_id, 'submission_id': submission_id},
+            new_value=payload or {},
+        ))
+        session.commit()
+    except Exception:
+        if session is not None:
+            session.rollback()
 
 
 @contest_bp.route('/rounds/<int:round_id>/finalize', methods=['POST'])
@@ -1048,6 +1080,12 @@ def finalize_round(round_id, contest_id=None):
         if error:
             return jsonify({'message': f'Lá»—i chá»‘t Ä‘iá»ƒm: {error}'}), 400
 
+        _record_round_audit(
+            action='round_finalize',
+            round_id=round_id,
+            contest_id=contest_id,
+            payload={'status': 'FINALIZED'},
+        )
         return jsonify(data), 200
     except Exception as e:
         return jsonify({'message': 'Lá»—i há»‡ thá»‘ng khi chá»‘t Ä‘iá»ƒm vÃ²ng thi', 'error': str(e)}), 500

@@ -248,39 +248,39 @@
   <div class="auth-container">
     <div class="auth-card">
       <p class="eyebrow">ANALOG CONTEST</p>
-      <h1>Tạo tài khoản mới</h1>
+      <h1>Create an Account</h1>
       <form id="registerForm" novalidate>
-        <label for="username">Tên đăng nhập</label>
+        <label for="username">Username</label>
         <input id="username" name="username" type="text" required autocomplete="username" placeholder="Chọn tên đăng nhập">
 
         <label for="email">Email</label>
         <input id="email" name="email" type="email" required autocomplete="email" placeholder="name@example.com">
 
-        <label for="full_name">Họ và tên</label>
+        <label for="full_name">Full Name</label>
         <input id="full_name" name="full_name" type="text" autocomplete="name" placeholder="Nhập họ và tên của bạn">
 
-        <label for="role">Vai trò</label>
+        <label for="role">Role</label>
         <select id="role" name="role">
-          <option value="participant">Người tham gia cuộc thi (Participant)</option>
-          <option value="organizer">Ban Tổ Chức (Organizer)</option>
-          <option value="judge">Ban Giám Khảo (Judge)</option>
-          <option value="admin">Quản trị viên (Admin)</option>
+          <option value="participant">Participant</option>
+          <option value="organizer">Organizer</option>
+          <option value="judge">Judge</option>
+          <option value="admin">Admin</option>
         </select>
         <p class="auth-radio-hint">Chọn vai trò đăng ký. Lựa chọn Organizer/Admin sẽ tạo tài khoản quản lý.</p>
 
-        <label for="password">Mật khẩu</label>
+        <label for="password">Password</label>
         <div style="position: relative; display: flex; align-items: center; width: 100%;">
           <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Tạo mật khẩu" style="padding-right: 44px;">
           <button type="button" id="togglePasswordBtn" title="Hiện/Ẩn mật khẩu" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
         </div>
 
-        <label for="passwordconfirm">Xác nhận mật khẩu</label>
+        <label for="passwordconfirm">Confirm Password</label>
         <div style="position: relative; display: flex; align-items: center; width: 100%;">
           <input id="passwordconfirm" name="passwordconfirm" type="password" required autocomplete="new-password" placeholder="Nhập lại mật khẩu" style="padding-right: 44px;">
           <button type="button" id="togglePasswordConfirmBtn" title="Hiện/Ẩn mật khẩu" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
         </div>
 
-        <button type="submit">Đăng ký</button>
+        <button type="submit">Sign Up</button>
       </form>
       <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -301,7 +301,7 @@
       </script>
 
       <div id="message" class="message"></div>
-      <p class="secondary-text">Đã có tài khoản? <a href="{{ url_for('auth.login_page') }}">Đăng nhập tại đây</a></p>
+      <p class="secondary-text">Already have an account? <a href="{{ url_for('auth.login_page') }}">Log In</a></p>
     </div>
   </div>
   <script src="{{ url_for('static', filename='api_client.js') }}"></script>

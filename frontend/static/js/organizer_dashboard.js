@@ -191,7 +191,7 @@ function renderRoundOptions() {
   if (!contest || !(contest.rounds || []).length) {
     dashboardState.selectedRoundId = '';
     select.innerHTML = '<option value="">Contest chưa có round</option>';
-    if (summary) summary.textContent = 'Contest này chưa có round để phân công judge.';
+    if (summary) summary.textContent = 'This contest has no rounds available for judge assignment.';
     renderAssignments([]);
     return;
   }
@@ -209,7 +209,7 @@ function renderRoundOptions() {
 
   const selectedRound = getSelectedRound();
   if (summary && selectedRound) {
-    summary.textContent = `Đang phân công cho Round ${selectedRound.round_number || '-'} của contest #${contest.id}.`;
+    summary.textContent = `Assigning judges to Round ${selectedRound.round_number || '-'} of Contest #${contest.id}.`;
   }
 }
 
@@ -218,7 +218,7 @@ function renderAvailableJudges() {
   if (!container) return;
 
   if (!dashboardState.judges.length) {
-    container.innerHTML = '<p class="empty-state">Không có judge khả dụng.</p>';
+    container.innerHTML = '<p class="empty-state">No judges available.</p>';
     return;
   }
 
@@ -253,7 +253,7 @@ function renderAssignments(assignments) {
 
   dashboardState.assignments = assignments || [];
   if (!dashboardState.assignments.length) {
-    container.innerHTML = '<p class="empty-state">Round này chưa có judge nào được gán.</p>';
+    container.innerHTML = '<p class="empty-state">No judges assigned to this round.</p>';
     renderAvailableJudges();
     return;
   }
@@ -306,7 +306,7 @@ function renderFlaggedSubmissions(items) {
   dashboardState.flaggedSubmissions = Array.isArray(items) ? items : [];
 
   if (!dashboardState.flaggedSubmissions.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Không có submission bị flag trong contest hiện tại.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No flagged submissions in this contest.</td></tr>';
     return;
   }
 
@@ -385,7 +385,7 @@ async function openAiReport(submissionId) {
   if (!drawer || !summaryNode || !rawNode) return;
 
   try {
-    summaryNode.textContent = 'Đang tải AI report...';
+    summaryNode.textContent = 'Loading AI report...';
     rawNode.textContent = '{}';
     drawer.classList.add('active');
 
@@ -588,7 +588,7 @@ async function initDashboard() {
   } catch (error) {
     console.error(error);
     if (errEl) {
-      errEl.textContent = 'Không thể tải dữ liệu. Vui lòng thử lại.';
+      errEl.textContent = 'Unable to load data. Please try again.';
     }
     showToast(error.message || 'Không thể tải dashboard', true);
   }

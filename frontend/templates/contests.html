@@ -117,7 +117,7 @@
 <body>
   {% include '_nav.html' %}
   <div class="container" style="padding-top:18px">
-    <h1>Danh sách cuộc thi</h1>
+    <h1>Contest List</h1>
     <p class="text-muted">Các cuộc thi đang mở cho người tham gia.</p>
     <div id="contestsList" class="row g-3"></div>
   </div>
@@ -136,7 +136,7 @@
         payload.contests.forEach(c => {
           const col = document.createElement('div'); col.className='col-12 col-md-6';
           const card = document.createElement('div'); card.className='card';
-          card.innerHTML = `<div class="card-body"><h5 class="card-title">${c.title}</h5><p class="card-text text-muted">${c.description || ''}</p><div><a class="btn btn-primary" href="/contest/${c.id}">Xem chi tiết</a></div></div>`;
+          card.innerHTML = `<div class="card-body"><h5 class="card-title">${c.title}</h5><p class="card-text text-muted">${c.description || ''}</p><div><a class="btn btn-primary" href="/contest/${c.id}">View Details</a></div></div>`;
           col.appendChild(card); list.appendChild(col);
         });
       }catch(e){

@@ -331,7 +331,7 @@
       <!-- System Health Panel -->
       <div class="panel" style="margin-bottom: 28px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
-          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">🖥️ Trạng Thái Trục Hệ Thống (System Health)</h2>
+          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">🖥️ System Health</h2>
           <span style="color: #6b7f94; font-size: 0.85rem;">Kiểm tra Database, File Storage & Email</span>
         </div>
         <div id="systemHealthContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
@@ -342,7 +342,7 @@
       <!-- Recent System Activities Panel -->
       <div class="panel" style="margin-bottom: 28px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
-          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">⚡ Hoạt Động Hệ Thống Gần Đây</h2>
+          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">⚡ Recent System Activity</h2>
           <span style="color: #6b7f94; font-size: 0.85rem;">Nhật ký sự kiện thời gian thực</span>
         </div>
         <div id="recentActivitiesContainer">
@@ -352,7 +352,7 @@
 
       <div class="panel">
         <div style="margin-bottom: 20px;">
-          <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Quản Lý Tài Khoản Hệ Thống</h2>
+          <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">User Management</h2>
           <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Tìm kiếm, thay đổi vai trò (Role), khóa/mở khóa tài khoản hoặc xóa tài khoản người dùng.</p>
         </div>
 
@@ -360,20 +360,20 @@
           <input type="text" id="searchInput" class="field-input" style="flex: 1; min-width: 220px;" placeholder="Tìm theo Username, Email, Họ tên...">
           
           <select id="roleFilter" class="field-input">
-            <option value="">Tất cả vai trò</option>
-            <option value="participant">Participant (Thí sinh)</option>
-            <option value="judge">Judge (Ban giám khảo)</option>
-            <option value="organizer">Organizer (Ban tổ chức)</option>
-            <option value="admin">Admin (Quản trị viên)</option>
+            <option value="">All Roles</option>
+            <option value="participant">Participant</option>
+            <option value="judge">Judge</option>
+            <option value="organizer">Organizer</option>
+            <option value="admin">Admin</option>
           </select>
 
           <select id="statusFilter" class="field-input">
-            <option value="">Tất cả trạng thái</option>
-            <option value="active">Active (Hoạt động)</option>
-            <option value="locked">Locked (Bị khóa)</option>
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="locked">Locked</option>
           </select>
 
-          <button id="btnRefreshUsers" class="btn btn-outline">Làm mới</button>
+          <button id="btnRefreshUsers" class="btn btn-outline">Refresh</button>
         </div>
 
         <div id="usersListContainer">
@@ -381,6 +381,39 @@
         </div>
 
         <div id="paginationContainer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; color: #8899aa;"></div>
+      </div>
+
+      <div class="panel" style="margin-top: 28px;">
+        <div class="toolbar" style="justify-content: space-between;">
+          <div>
+            <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Contest Review</h2>
+            <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Duyệt, từ chối kèm lý do hoặc đình chỉ cuộc thi.</p>
+          </div>
+          <button id="btnRefreshContests" class="btn btn-outline">Refresh</button>
+        </div>
+        <div class="toolbar">
+          <input type="text" id="contestSearchInput" class="field-input" placeholder="Tìm theo tên hoặc ID..."></input>
+          <select id="contestStatusFilter" class="field-input">
+            <option value="">All Statuses</option>
+            <option value="draft">Draft</option>
+            <option value="pending">Pending</option>
+            <option value="published">Published</option>
+            <option value="rejected">Rejected</option>
+            <option value="suspended">Suspended</option>
+          </select>
+        </div>
+        <div id="contestsListContainer"><p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải danh sách cuộc thi...</p></div>
+      </div>
+
+      <div class="panel" style="margin-top: 28px;">
+        <div class="toolbar" style="justify-content: space-between;">
+          <div>
+            <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Review Submission AI Flagged</h2>
+            <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Xem báo cáo AI và xử lý submission nghi ngờ vi phạm.</p>
+          </div>
+          <button id="btnRefreshAiReports" class="btn btn-outline">Refresh</button>
+        </div>
+        <div id="aiReportsListContainer"><p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải báo cáo AI...</p></div>
       </div>
     </div>
 
