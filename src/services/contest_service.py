@@ -457,6 +457,9 @@ class ContestService:
                     weight=self._coerce_float(c.get('weight'), 1.0, minimum=0.0)
                 ))
 
+        contest_status = str(getattr(contest, 'status', '') or '').strip().lower()
+        default_round_status = 'ongoing' if contest_status in {'published', 'active'} else 'upcoming'
+
         round_obj = Round(
             contest_id=contest_id,
             round_number=self._coerce_int(data.get('round_number'), len(contest.rounds) + 1, minimum=1),
@@ -465,7 +468,7 @@ class ContestService:
             start_date=start_date,
             end_date=end_date,
             weight=self._coerce_float(data.get('weight'), 1.0, minimum=0.0),
-            status=self._normalize_round_status(data.get('status', 'upcoming')),
+            status=self._normalize_round_status(data.get('status', default_round_status)),
             criteria=initial_criteria
         )
         return self.repository.create_round(round_obj)

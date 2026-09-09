@@ -345,7 +345,7 @@
     <div class="page-shell">
       <div class="panel">
         <h1>Contest Configuration Manager</h1>
-        <p class="subtitle" id="modeText">Tạo hoặc chỉnh sửa contest, round, criteria trực tiếp trên giao diện.</p>
+        <p class="subtitle" id="modeText">Create or edit contests, rounds, and criteria directly in the interface.</p>
 
         <form id="contestForm" method="post" action="/organizer/create-contest">
           <div>
@@ -390,12 +390,12 @@
           </div>
 
           <div class="inline-actions">
-            <button type="button" id="saveContestBtn" class="btn-success">Lưu thông tin Contest</button>
+            <button type="button" id="saveContestBtn" class="btn-success">Save Contest</button>
           </div>
 
           <hr />
           <h3 style="margin:0;">Rounds and Criteria</h3>
-          <p class="muted" style="margin:0;">Thêm, sửa, xóa từng Round/Criteria gọi API trực tiếp.</p>
+          <p class="muted" style="margin:0;">Add, edit, or delete rounds and criteria through the API.</p>
           <div id="roundsContainer"></div>
           <div class="inline-actions">
             <button type="button" id="addRoundBtn" class="btn-secondary">Add Round</button>
@@ -403,53 +403,53 @@
           </div>
 
           <hr />
-          <h3 style="margin:0;">Categories (Danh mục)</h3>
-          <p class="muted" style="margin:0;">Quản lý danh mục theo contest_id bằng API thêm/sửa/xóa.</p>
+          <h3 style="margin:0;">Categories</h3>
+          <p class="muted" style="margin:0;">Manage categories for the contest through the API.</p>
           <div class="config-card">
             <div class="section-grid">
               <div>
-                <label>Tên danh mục</label>
+                <label>Category Name</label>
                 <input type="text" id="categoryNameInput" placeholder="Ví dụ: Portrait" />
               </div>
               <div>
-                <label>Mô tả danh mục</label>
-                <input type="text" id="categoryDescInput" placeholder="Mô tả ngắn" />
+                <label>Category Description</label>
+                <input type="text" id="categoryDescInput" placeholder="Short description" />
               </div>
             </div>
             <div class="inline-actions" style="margin-top:10px;">
-              <button type="button" id="addCategoryBtn" class="btn-success">Thêm Category</button>
+              <button type="button" id="addCategoryBtn" class="btn-success">Add Category</button>
             </div>
             <div id="categoryList" class="config-list"></div>
           </div>
 
           <hr />
-          <h3 style="margin:0;">Awards / Prizes (Giải thưởng)</h3>
-          <p class="muted" style="margin:0;">Quản lý giải thưởng theo contest_id bằng API thêm/sửa/xóa.</p>
+          <h3 style="margin:0;">Awards / Prizes</h3>
+          <p class="muted" style="margin:0;">Manage contest awards through the API.</p>
           <div class="config-card">
             <div class="section-grid" style="grid-template-columns:1fr 1fr 0.7fr 0.7fr;">
               <div>
-                <label>Tên giải thưởng</label>
+                <label>Award Name</label>
                 <input type="text" id="awardTitleInput" placeholder="Ví dụ: Best Portrait" />
               </div>
               <div>
-                <label>Giá trị giải thưởng</label>
+                <label>Prize Value</label>
                 <input type="text" id="awardPrizeInput" placeholder="Ví dụ: 10,000,000 VND" />
               </div>
               <div>
-                <label>Thứ hạng</label>
+                <label>Rank</label>
                 <input type="number" id="awardRankInput" min="1" placeholder="1" />
               </div>
               <div>
-                <label>Số lượng</label>
+                <label>Quantity</label>
                 <input type="number" id="awardQuantityInput" min="1" value="1" placeholder="1" />
               </div>
             </div>
             <div style="margin-top:8px;">
-              <label>Mô tả giải thưởng</label>
-              <input type="text" id="awardDescInput" placeholder="Mô tả ngắn" />
+              <label>Award Description</label>
+              <input type="text" id="awardDescInput" placeholder="Short description" />
             </div>
             <div class="inline-actions" style="margin-top:10px;">
-              <button type="button" id="addAwardBtn" class="btn-success">Thêm Award</button>
+              <button type="button" id="addAwardBtn" class="btn-success">Add Award</button>
             </div>
             <div id="awardList" class="config-list"></div>
           </div>
@@ -457,7 +457,7 @@
           <div class="inline-actions">
             <button type="submit" id="submitBtn" class="btn-primary">Save All Changes</button>
             <button type="button" id="publishBtn" class="btn-success" style="display:none;">Publish Contest</button>
-            <button type="button" id="deleteContestBtn" class="btn-danger" style="display:none;">Xóa Contest</button>
+            <button type="button" id="deleteContestBtn" class="btn-danger" style="display:none;">Delete Contest</button>
           </div>
         </form>
       </div>
@@ -465,11 +465,11 @@
 
     <div id="confirmModal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(2,6,23,0.7);backdrop-filter:blur(6px);z-index:1200;">
       <div style="background:#111a26;border:1px solid #1e2a3a;border-radius:12px;padding:20px;max-width:480px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-        <h3 style="margin:0 0 8px;color:#f0f4f8;">Xác nhận xuất bản</h3>
-        <p style="margin:0 0 16px;color:#99abb8;">Bạn có chắc muốn xuất bản cuộc thi này?</p>
+        <h3 style="margin:0 0 8px;color:#f0f4f8;">Confirm Publication</h3>
+        <p style="margin:0 0 16px;color:#99abb8;">Are you sure you want to publish this contest?</p>
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
-          <button id="confirmCancel" class="btn-secondary" style="background:transparent;color:#99abb8;border:1px solid #1e2a3a;padding:8px 16px;border-radius:8px;cursor:pointer;">Hủy</button>
-          <button id="confirmPublish" class="btn-success" style="background:#f5a623;color:#080c14;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;">Xác nhận</button>
+          <button id="confirmCancel" class="btn-secondary" style="background:transparent;color:#99abb8;border:1px solid #1e2a3a;padding:8px 16px;border-radius:8px;cursor:pointer;">Cancel</button>
+          <button id="confirmPublish" class="btn-success" style="background:#f5a623;color:#080c14;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;">Confirm</button>
         </div>
       </div>
     </div>
@@ -529,10 +529,10 @@
           const payload = getContestPayload();
           // require a title at minimum
           if (!payload.title) {
-            throw new Error('Vui lòng nhập tiêu đề contest trước khi thêm category/award.');
+              throw new Error('Enter a contest title before adding a category or award.');
           }
 
-          setButtonLoading(saveContestBtn, true, 'Đang tạo contest...');
+              setButtonLoading(saveContestBtn, true, 'Creating contest...');
           try {
             const resp = await window.apiClient.post('/organizer/contests', payload);
             // expect created contest id in resp.contest.id or resp.id
@@ -548,7 +548,7 @@
               // refresh categories/awards now that contest exists
               await refreshCategoryAwardData();
             } else {
-              throw new Error('Không nhận được contest_id từ server sau khi tạo.');
+              throw new Error('The server did not return a contest_id.');
             }
           } finally {
             setButtonLoading(saveContestBtn, false, 'Lưu thông tin Contest');
@@ -575,7 +575,7 @@
         function hasSession() {
           const session = window.AuthSession.getSession();
           if (!session.token) {
-            showToast('Bạn cần đăng nhập để thực hiện thao tác', 2400, true);
+            showToast('You must log in to perform this action.', 2400, true);
             setTimeout(() => {
               window.location.href = '/auth/login';
             }, 600);
@@ -596,9 +596,9 @@
 
         function setEditModeText() {
           if (activeContestId) {
-            modeText.textContent = `Đang chỉnh sửa cuộc thi #${activeContestId}`;
+            modeText.textContent = `Editing contest #${activeContestId}`;
           } else {
-            modeText.textContent = 'Tạo hoặc chỉnh sửa contest, round, criteria trực tiếp trên giao diện.';
+            modeText.textContent = 'Create or edit contests, rounds, and criteria directly in the interface.';
           }
         }
 
@@ -606,13 +606,13 @@
           if (!contestId) return;
           if (!hasSession()) return;
           const prevModeText = modeText && modeText.textContent;
-          if (modeText) modeText.textContent = 'Đang tải thông tin cuộc thi...';
-          if (saveContestBtn) setButtonLoading(saveContestBtn, true, 'Đang tải...');
+          if (modeText) modeText.textContent = 'Loading contest details...';
+          if (saveContestBtn) setButtonLoading(saveContestBtn, true, 'Loading...');
           try {
             const resp = await window.apiClient.get(`/organizer/contests/${encodeURIComponent(contestId)}`);
             const contest = resp && (resp.contest || resp) || null;
             if (!contest) {
-              throw new Error('Không tìm thấy contest');
+              throw new Error('Contest not found.');
             }
 
             // fill basic fields
@@ -647,7 +647,7 @@
             await refreshCategoryAwardData();
           } catch (err) {
             console.error('Failed to load contest details', err);
-            const msg = (err && err.message) ? err.message : 'Không thể tải dữ liệu contest';
+            const msg = (err && err.message) ? err.message : 'Unable to load contest data.';
             showToast(msg, 3500, true);
             // if unauthorized, redirect to login
             if (/401|403|permission|login/i.test(msg)) {
@@ -663,7 +663,7 @@
           if (!categoryList) return;
 
           if (!categoriesState.length) {
-            categoryList.innerHTML = '<div class="muted">Chưa có category nào.</div>';
+            categoryList.innerHTML = '<div class="muted">No categories yet.</div>';
             return;
           }
 
@@ -671,7 +671,7 @@
             return `
               <div class="config-item">
                 <div class="config-item-title">${escapeHtml(item.name || 'Unnamed')}</div>
-                <div class="config-item-meta">${escapeHtml(item.description || 'Không có mô tả')}</div>
+                <div class="config-item-meta">${escapeHtml(item.description || 'No description')}</div>
                 <div class="inline-actions" style="margin-top:8px;">
                   <button type="button" class="btn-secondary edit-category" data-id="${escapeHtml(item.id)}">Sửa</button>
                   <button type="button" class="btn-danger delete-category" data-id="${escapeHtml(item.id)}">Xóa</button>
@@ -706,7 +706,7 @@
           if (!awardList) return;
 
           if (!awardsState.length) {
-            awardList.innerHTML = '<div class="muted">Chưa có award nào.</div>';
+            awardList.innerHTML = '<div class="muted">No awards yet.</div>';
             return;
           }
 
@@ -715,7 +715,7 @@
               <div class="config-item">
                 <div class="config-item-title">#${escapeHtml(item.rank)} · ${escapeHtml(item.title || 'Untitled')}</div>
                 <div class="config-item-meta">Prize: ${escapeHtml(item.prize || 'N/A')} · Quantity: ${escapeHtml(item.quantity || 1)}</div>
-                <div class="config-item-meta">${escapeHtml(item.description || 'Không có mô tả')}</div>
+                <div class="config-item-meta">${escapeHtml(item.description || 'No description')}</div>
                 <div class="inline-actions" style="margin-top:8px;">
                   <button type="button" class="btn-secondary edit-award" data-id="${escapeHtml(item.id)}">Sửa</button>
                   <button type="button" class="btn-danger delete-award" data-id="${escapeHtml(item.id)}">Xóa</button>
@@ -929,8 +929,8 @@
               <input name="round_${idx}_number" placeholder="Round number" />
               <input name="round_${idx}_weight" placeholder="Round weight" />
               <select name="round_${idx}_status">
-                <option value="upcoming">upcoming</option>
                 <option value="ongoing">ongoing</option>
+                <option value="upcoming">upcoming</option>
                 <option value="completed">completed</option>
               </select>
             </div>
@@ -957,7 +957,7 @@
             el.querySelector(`[name="round_${idx}_title"]`).value = data.title || '';
             el.querySelector(`[name="round_${idx}_number"]`).value = data.round_number != null ? data.round_number : '';
             el.querySelector(`[name="round_${idx}_weight"]`).value = data.weight != null ? data.weight : '';
-            el.querySelector(`[name="round_${idx}_status"]`).value = data.status || 'upcoming';
+            el.querySelector(`[name="round_${idx}_status"]`).value = data.status || 'ongoing';
             el.querySelector(`[name="round_${idx}_start"]`).value = data.start_date || '';
             el.querySelector(`[name="round_${idx}_end"]`).value = data.end_date || '';
             el.querySelector(`[name="round_${idx}_desc"]`).value = data.description || '';
@@ -1129,7 +1129,8 @@
                     `/organizer/contests/${activeContestId}/rounds`,
                     defaultRound
                   );
-                  if (roundResponse?.round) addRound(roundResponse.round);
+                  const savedRound = roundResponse && (roundResponse.round || roundResponse);
+                  if (savedRound && savedRound.id) addRound(savedRound);
                 }
                 await refreshCategoryAwardData();
                 showToast('Tạo contest thành công');

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bài Dự Thi Của Tôi - Analog Film Photography Contest</title>
+    <title>My Submissions - Analog Film Photography Contest</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -378,13 +378,13 @@
             <header class="portfolio-header">
                 <div class="header-left">
                     <div class="badge-tag">Participant Portfolio</div>
-                    <h1 class="page-title">Bài Dự Thi Của Tôi</h1>
-                    <p class="page-desc">Quản lý các tác phẩm nhiếp ảnh phim analog của bạn, theo dõi kết quả thẩm định, nhận xét của ban giám khảo và kiểm tra tính xác thực.</p>
+                    <h1 class="page-title">My Submissions</h1>
+                    <p class="page-desc">Manage your analog film works, track review results, read judge feedback, and check authenticity.</p>
                 </div>
                 <div class="header-right">
                     <a href="/submit" class="btn-primary-action" id="btnMySubmissionsSubmit">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                        Nộp Tác Phẩm Mới
+                        Submit New Work
                     </a>
                 </div>
             </header>
@@ -395,28 +395,28 @@
                     <div class="stat-icon icon-total">📁</div>
                     <div class="stat-details">
                         <span class="stat-number" id="statTotal">0</span>
-                        <span class="stat-label">Tổng bài thi</span>
+                            <span class="stat-label">Total submissions</span>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon icon-submitted">🚀</div>
                     <div class="stat-details">
                         <span class="stat-number" id="statSubmitted">0</span>
-                        <span class="stat-label">Đã nộp chính thức</span>
+                            <span class="stat-label">Submitted</span>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon icon-draft">📝</div>
                     <div class="stat-details">
                         <span class="stat-number" id="statDraft">0</span>
-                        <span class="stat-label">Bản nháp (Draft)</span>
+                            <span class="stat-label">Drafts</span>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon icon-graded">🏆</div>
                     <div class="stat-details">
                         <span class="stat-number" id="statGraded">0</span>
-                        <span class="stat-label">Đã có điểm</span>
+                            <span class="stat-label">Graded</span>
                     </div>
                 </div>
             </section>
@@ -424,30 +424,30 @@
             <!-- Filter & Search Toolbar -->
             <section class="toolbar-section">
                 <div class="filter-tabs" id="filterTabs">
-                    <button class="filter-tab active" data-filter="all">Tất Cả (<span id="countAll">0</span>)</button>
-                    <button class="filter-tab" data-filter="submitted">Đã Nộp (<span id="countSubmitted">0</span>)</button>
-                    <button class="filter-tab" data-filter="draft">Bản Nháp (<span id="countDraft">0</span>)</button>
-                    <button class="filter-tab" data-filter="graded">Đã Chấm Điểm (<span id="countGraded">0</span>)</button>
+                        <button class="filter-tab active" data-filter="all">All (<span id="countAll">0</span>)</button>
+                        <button class="filter-tab" data-filter="submitted">Submitted (<span id="countSubmitted">0</span>)</button>
+                        <button class="filter-tab" data-filter="draft">Drafts (<span id="countDraft">0</span>)</button>
+                        <button class="filter-tab" data-filter="graded">Graded (<span id="countGraded">0</span>)</button>
                 </div>
                 <div class="search-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="searchInput" placeholder="Tìm theo tiêu đề, cuộc thi...">
+                        <input type="text" id="searchInput" placeholder="Search by title or contest...">
                 </div>
             </section>
 
             <!-- Loading State -->
             <div class="loading-state" id="loadingState">
                 <div class="spinner"></div>
-                <p>Đang tải dữ liệu bài dự thi từ cơ sở dữ liệu...</p>
+                        <p>Loading submissions from the database...</p>
             </div>
 
             <!-- Empty State -->
             <div class="empty-state" id="emptyState" style="display: none;">
                 <div class="empty-icon">🎞️</div>
-                <h3>Chưa có bài dự thi nào</h3>
-                <p id="emptyMessage">Bạn chưa nộp hoặc lưu bản nháp tác phẩm nào. Hãy tham gia cuộc thi ngay hôm nay!</p>
+                        <h3>No submissions yet</h3>
+                        <p id="emptyMessage">You have not submitted or saved a draft. Join a contest today!</p>
                 <a href="/submit" class="btn-primary-action" id="btnEmptySubmissionsSubmit">
-                    <span>+</span> Nộp Bài Thi Đầu Tiên
+                        <span>+</span> Submit Your First Work
                 </a>
             </div>
 
