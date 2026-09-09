@@ -129,6 +129,7 @@
 
         if (organizerLink) {
           organizerLink.href = role === 'admin' ? '/admin/dashboard' : '/organizer/dashboard';
+          organizerLink.textContent = role === 'admin' ? 'Dashboard Admin' : (role === 'organizer' ? 'Dashboard Organizer' : 'Quản lý');
         }
 
         // Show organizer/admin link only for logged-in users with organizer/admin role
@@ -140,7 +141,7 @@
         setHidden(registerLink, isLoggedIn);
         setHidden(usernameLabel, !isLoggedIn);
         setHidden(logoutButton, !isLoggedIn);
-        setHidden(notificationsButton, !(isLoggedIn && canManage));
+        setHidden(notificationsButton, !(isLoggedIn && isManager));
 
         if (isLoggedIn && usernameLabel) {
           usernameLabel.textContent = displayNameFromUser(session.user);

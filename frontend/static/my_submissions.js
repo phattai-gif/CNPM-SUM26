@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const canManage = role === 'organizer' || role === 'admin';
 
             if (this.brandHomeLink) {
-                this.brandHomeLink.href = canManage ? '/organizer/dashboard' : '/contests';
+                this.brandHomeLink.href = role === 'admin' ? '/admin/dashboard' : (role === 'organizer' ? '/organizer/dashboard' : '/contests');
             }
 
             if (canManage) {

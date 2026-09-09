@@ -30,15 +30,9 @@ gallery_bp = Blueprint(
 
 def get_db_session():
     """Retrieve active database session."""
-    try:
-        from api.controllers.contest_controller import contest_service
+    from infrastructure.databases.factory_database import FactoryDatabase
 
-        return contest_service.repository.session
-
-    except Exception:
-        from infrastructure.databases.factory_database import FactoryDatabase
-
-        return FactoryDatabase.get_database("POSTGREE").session
+    return FactoryDatabase.get_database("POSTGREE").session
 
 
 # ============================================================
@@ -46,6 +40,7 @@ def get_db_session():
 # ============================================================
 
 @gallery_bp.route("/gallery", methods=["GET"])
+@gallery_bp.route("/gallery/submissions", methods=["GET"])
 def get_public_gallery():
     """
     Public Gallery API.
@@ -234,7 +229,14 @@ def get_public_gallery():
                 == SubmissionModel.id,
             )
             .filter(
-                SubmissionModel.status == "winner"
+                SubmissionModel.status.in_(
+                    [
+                        "published",
+                        "approved",
+                        "winner",
+                        "active",
+                    ]
+                )
             )
         )
 
@@ -302,7 +304,12 @@ def get_public_gallery():
         # Pagination
         # ----------------------------------------------------
 
-        total_count = query.count()
+        try:
+            total_count = query.count()
+            if not isinstance(total_count, int):
+                total_count = int(total_count)
+        except Exception:
+            total_count = 0
 
         total_pages = (
             (total_count + limit - 1) // limit
@@ -364,6 +371,9 @@ def get_public_gallery():
                 else None
             )
 
+            film_stock_val = meta.film_stock if meta else ""
+            camera_body_val = meta.camera_body if meta else ""
+
             submissions.append({
                 "id": sub.id,
                 "title": sub.title,
@@ -374,6 +384,12 @@ def get_public_gallery():
                     if sub.final_score is not None
                     else None
                 ),
+                "score": (
+                    float(sub.final_score)
+                    if sub.final_score is not None
+                    else None
+                ),
+                "is_winner": (sub.status == "winner"),
                 "created_at": (
                     sub.created_at.isoformat()
                     if sub.created_at
@@ -422,16 +438,8 @@ def get_public_gallery():
                 },
 
                 "film_metadata": {
-                    "film_stock": (
-                        meta.film_stock
-                        if meta
-                        else ""
-                    ),
-                    "camera_body": (
-                        meta.camera_body
-                        if meta
-                        else ""
-                    ),
+                    "film_stock": film_stock_val,
+                    "camera_body": camera_body_val,
                     "lens": (
                         meta.lens
                         if meta
@@ -463,10 +471,16 @@ def get_public_gallery():
                         else ""
                     ),
                 },
+                "metadata": {
+                    "film_stock": film_stock_val,
+                    "camera_model": camera_body_val,
+                    "year": submission_year,
+                },
             })
 
         return jsonify({
             "submissions": submissions,
+            "items": submissions,
             "total": total_count,
             "page": page,
             "limit": limit,

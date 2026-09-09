@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const ROLE_REDIRECTS = {
     participant: '/contests',
     organizer: '/organizer/dashboard',
-    judge: '/judge/1',
-    admin: '/organizer/dashboard'
+    judge: '/judge/review',
+    admin: '/admin/dashboard'
   };
 
   const setFormLoading = (form, isLoading, label) => {
@@ -74,8 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const redirectToRole = async (role) => {
-    // Open user profile page directly after login/register as requested
-    window.location.href = '/profile';
+    const userRole = String(role || '').toLowerCase();
+    const targetPath = ROLE_REDIRECTS[userRole] || '/contests';
+    window.location.href = targetPath;
   };
 
   const requestJson = async (url, payload) => {

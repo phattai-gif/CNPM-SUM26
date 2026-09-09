@@ -68,8 +68,14 @@
 
       if (accessToken) {
         storageSet(STORAGE_KEYS.TOKEN, accessToken);
+        try {
+          document.cookie = `token=${accessToken}; path=/; SameSite=Lax`;
+        } catch (e) {}
       } else {
         storageRemove(STORAGE_KEYS.TOKEN);
+        try {
+          document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        } catch (e) {}
       }
 
       if (currentUser) {
@@ -129,10 +135,17 @@
 
     clearSession() {
       Object.values(STORAGE_KEYS).forEach((key) => storageRemove(key));
+      try {
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      } catch (e) {}
     },
 
     logout() {
       this.clearSession();
+      try {
+        fetch('/auth/logout', { method: 'POST' }).catch(() => {});
+      } catch (e) {}
       if (window.location.pathname !== '/auth/login') {
         window.location.href = '/auth/login';
       }

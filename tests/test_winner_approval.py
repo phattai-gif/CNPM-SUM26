@@ -5,7 +5,6 @@ import jwt
 import pytest
 
 os.environ["TESTING"] = "True"
-os.environ["POSTGREE_DATABASE_URL"] = "sqlite:///:memory:"
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
@@ -34,6 +33,7 @@ def db_session(app):
         Base.metadata.create_all(db.engine)
     except Exception:
         pass
+    db.session.expire_on_commit = False
     return db.session
 
 
@@ -48,11 +48,12 @@ def create_jwt_token(user_id, username="organizer", role="organizer"):
 
 @pytest.fixture
 def organizer_contest_data(db_session):
-    db_session.query(DigitalArchiveExhibitModel).delete()
-    db_session.query(SubmissionModel).delete()
-    db_session.query(RoundModel).delete()
-    db_session.query(ContestModel).delete()
-    db_session.query(UserModel).delete()
+    db_session.rollback()
+    db_session.query(DigitalArchiveExhibitModel).delete(synchronize_session=False)
+    db_session.query(SubmissionModel).delete(synchronize_session=False)
+    db_session.query(RoundModel).delete(synchronize_session=False)
+    db_session.query(ContestModel).delete(synchronize_session=False)
+    db_session.query(UserModel).delete(synchronize_session=False)
     db_session.commit()
 
     organizer = UserModel(
@@ -111,6 +112,10 @@ def organizer_contest_data(db_session):
     )
     db_session.add_all([first_place, second_place])
     db_session.commit()
+
+    from sqlalchemy.orm import make_transient
+    for obj in [organizer, participant, contest, round_obj, first_place, second_place]:
+        make_transient(obj)
 
     return {
         "organizer": organizer,

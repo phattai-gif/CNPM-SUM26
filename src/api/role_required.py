@@ -26,11 +26,17 @@ def _unauthorized_response(message, redirect_path='/auth/login'):
 def _forbidden_response(message, allowed_roles):
     if _prefers_html_response():
         flash(message, 'warning')
+        user_role = str((getattr(request, 'user', {}) or {}).get('role', '')).lower()
+        if user_role == 'admin':
+            return redirect('/admin/dashboard')
+        elif user_role == 'organizer':
+            return redirect('/organizer/dashboard')
         return redirect('/contests')
     return jsonify({
         'message': message,
         'required_roles': list(allowed_roles)
     }), 403
+
 
 
 def _extract_bearer_token():
