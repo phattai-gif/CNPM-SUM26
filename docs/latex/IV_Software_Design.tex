@@ -1,0 +1,203 @@
+% --- Chapter IV: Software Design Description ---
+\newpage
+
+\section*{IV. Software Design Description}
+\addcontentsline{toc}{section}{IV. Software Design Description}
+\setcounter{section}{4}
+
+% Number subsections in this chapter as 1, 2, ... (consistent with Chapter III)
+\renewcommand{\thesubsection}{\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+\setcounter{subsection}{0}
+
+\subsection{System Design}
+\label{subsec:system-design}
+
+\subsubsection{System Architecture}
+\label{subsubsec:system-architecture}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Frontend:} The user interface is built using standard Web technologies (HTML/CSS, JS).
+    \item \textbf{Backend:} Built with Flask (Python) following a RESTful API architecture. It uses SQLAlchemy as the ORM for database operations and implements Dependency Injection (via the dependency-injector library) for robust service management.
+    \item \textbf{Database:} Uses PostgreSQL as the primary relational database system.
+    \item \textbf{Third-party / Libraries:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item \textbf{Cloudinary:} Cloud storage solution for managing image uploads.
+        \item \textbf{Pillow:} Python Imaging Library used for internal image processing.
+        \item \textbf{PyJWT \& Google-Auth:} Handles secure Authentication and Authorization.
+        \item \textbf{APScheduler:} Manages and schedules background tasks (e.g., automated scoring, opening/closing contest rounds).
+        \item \textbf{Flasgger / Swagger:} Automatically generates and serves interactive API documentation.
+    \end{itemize}
+\end{itemize}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/System Architecture}}
+\end{center}
+
+\subsubsection{Package Diagram}
+\label{subsubsec:package-diagram}
+
+\paragraph*{1.2.1 Backend}\leavevmode\\[-0.5em]
+\label{par:backend-package-diagram}
+\addcontentsline{toc}{paragraph}{\protect\numberline{1.2.1}Backend}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/Backend PD}}
+\end{center}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.08\textwidth}|>{\raggedright\arraybackslash}p{0.28\textwidth}|>{\raggedright\arraybackslash}p{0.56\textwidth}|}
+\hline
+\multicolumn{1}{|>{\centering\arraybackslash}p{0.08\textwidth}|}{\textbf{No.}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.28\textwidth}|}{\textbf{Package}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.56\textwidth}|}{\textbf{Description}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|>{\centering\arraybackslash}p{0.08\textwidth}|}{\textbf{No.}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.28\textwidth}|}{\textbf{Package}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.56\textwidth}|}{\textbf{Description}} \\
+\hline
+\endhead
+1 & src/domain/models & Contains domain models representing the core business data and entities of the film photography contest system. \\
+\hline
+2 & src/domain/interfaces & Defines interfaces and contracts used by other layers, especially for data access and application services. \\
+\hline
+3 & src/domain/constants & Contains system-wide constants used throughout the application. \\
+\hline
+4 & src/domain/enums & Defines enumeration values for contest, submission, judging, user roles, and other system states. \\
+\hline
+5 & src/domain/exceptions & Contains custom exception definitions used for handling domain and application errors. \\
+\hline
+6 & src/infrastructure/database & Provides database connection and configuration for storing and retrieving system data. \\
+\hline
+7 & src/infrastructure/models & Contains infrastructure-level data models used for database persistence and data mapping. \\
+\hline
+8 & src/infrastructure/repositories & Implements repository interfaces and provides data access operations for users, contests, submissions, judging, scores, and other data. \\
+\hline
+9 & src/infrastructure/storage & Handles storage operations for uploaded film photographs and other digital assets. \\
+\hline
+10 & src/services & Contains application services implementing the main business logic, including authentication, contest management, registration, submission, review, judging, scoring, notifications, and archive management. \\
+\hline
+11 & src/api/controllers & Handles incoming HTTP requests and delegates business operations to the application services. \\
+\hline
+12 & src/api/middleware & Provides request-processing middleware such as authentication, authorization, validation, and error handling. \\
+\hline
+13 & src/api/routes & Defines API routes and maps HTTP endpoints to the corresponding controllers. \\
+\hline
+14 & src/api/requests-responses & Defines request and response data structures used for communication between the client and backend API. \\
+\hline
+15 & src/api/swagger & Provides API documentation and testing information for the backend endpoints using Swagger/OpenAPI. \\
+\hline
+\end{longtable}
+
+\paragraph*{1.2.2 Frontend}\leavevmode\\[-0.5em]
+\label{par:frontend-package-diagram}
+\addcontentsline{toc}{paragraph}{\protect\numberline{1.2.2}Frontend}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/Frontend PD}}
+\end{center}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.08\textwidth}|>{\raggedright\arraybackslash}p{0.28\textwidth}|>{\raggedright\arraybackslash}p{0.56\textwidth}|}
+\hline
+\multicolumn{1}{|>{\centering\arraybackslash}p{0.08\textwidth}|}{\textbf{No.}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.28\textwidth}|}{\textbf{Package}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.56\textwidth}|}{\textbf{Description}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|>{\centering\arraybackslash}p{0.08\textwidth}|}{\textbf{No.}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.28\textwidth}|}{\textbf{Package}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.56\textwidth}|}{\textbf{Description}} \\
+\hline
+\endhead
+1 & src/app & Next.js App Router directory, organized by role-based modules (admin, organizer, judge, participant) plus public pages and API routes. \\
+\hline
+2 & src/app/admin & Protected routes for Administrators to manage users, roles, permissions, and monitor platform activities. \\
+\hline
+3 & src/app/organizer & Routes for Organizers to create/configure contests, manage categories and criteria, verify submissions, assign judges, publish results. \\
+\hline
+4 & src/app/judge & Blind-judging portal routes for Judges to review assigned submissions, score by criteria, and leave feedback. \\
+\hline
+5 & src/app/participant & Routes for participants to manage profile, register for contests, submit photographs, and track submission status. \\
+\hline
+6 & src/app/(public) & Public-facing pages: landing page, digital archive/gallery, about, authentication (login/register). \\
+\hline
+7 & src/app/api & Server-side API routes for auth callbacks, file/image uploads, and webhook handling. \\
+\hline
+8 & src/components/ui & Atomic base UI components: Button, Input, Modal, Toast, Dialog. \\
+\hline
+9 & src/components/layout & Structural layout components: Navbar, Sidebar, Footer, Header. \\
+\hline
+10 & src/components/auth & Forms and layouts for authentication flows: login, register, forgot password. \\
+\hline
+11 & src/components/domain & Domain-specific UI: submission upload forms, judging panels, archive gallery cards, notification widgets. \\
+\hline
+12 & src/contexts & Global state via React Context API: Authentication, Theme, Notification contexts. \\
+\hline
+13 & src/hooks & Custom React hooks: useAuth, useForm, useSubmissionStatus. \\
+\hline
+14 & src/services & HTTP client instances and API endpoint methods for backend communication (authService, contestService, submissionService). \\
+\hline
+15 & src/types & TypeScript interfaces and types for API responses, entity models, and component props. \\
+\hline
+16 & src/utils & Helper functions: date formatting, file/image validation, EXIF metadata parsing helpers. \\
+\hline
+17 & src/config & Application configuration: API base endpoints, authentication settings, environment variable mapping. \\
+\hline
+18 & src/styles & Tailwind CSS configuration and global CSS definitions. \\
+\hline
+19 & src/constants & Application-wide constants: route paths, contest status codes, judging criteria labels. \\
+\hline
+20 & src/lib & Third-party library configurations: Zod validation schemas, image upload helpers. \\
+\hline
+\end{longtable}
+
+\subsection{Database Design}
+\label{subsec:database-design}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/Database}}
+\end{center}
+
+\clearpage
+\subsubsection{Users Table}
+\label{subsubsec:users-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Unique identifier for the user & yes & yes & PK \\
+\hline
+username & VARCHAR(50) & User login name & yes & yes & \\
+\hline
+email & VARCHAR(255) & User email address & yes & yes & \\
+\hline
+password\_hash & VARCHAR(255) & Hashed user password & no & yes & \\
+\hline
+full\_name & VARCHAR(100) & User full name & no & no & \\
+\hline
+avatar\_url & VARCHAR(512) & User profile image URL & no & no & \\
+\hline
+bio & TEXT & User profile description & no & no & \\
+\hline
+status & VARCHAR(20) & User account status & no & yes & \\
+\hline
+email\_verified & BOOLEAN & Email verification status & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Account creation time & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Last modification time & no & no & \\
+\hline
+\end{longtable}
