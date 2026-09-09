@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Dashboard - Quản Lý Hệ Thống</title>
+    <title>Admin Dashboard - System Management</title>
     <link rel="stylesheet" href="/static/auth.css">
     <link rel="stylesheet" href="/static/admin.css">
     <style>
@@ -270,52 +270,52 @@
     <div class="page-shell">
       <div class="page-header">
         <h1>Admin Dashboard</h1>
-        <span class="role-badge role-admin">Bảng Quản Trị Hệ Thống</span>
+        <span class="role-badge role-admin">System Administration</span>
       </div>
 
       <div class="admin-stats-grid">
         <div class="stat-card">
-          <div class="stat-label">👥 Tổng Người Dùng</div>
+          <div class="stat-label">👥 Total Users</div>
           <div class="stat-value" id="statTotalUsers">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">🛡️ Quản Trị (Admin)</div>
+          <div class="stat-label">🛡️ Administrators</div>
           <div class="stat-value" id="statAdmins">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">🏢 Ban Tổ Chức</div>
+          <div class="stat-label">🏢 Organizers</div>
           <div class="stat-value" id="statOrganizers">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">⚖️ Giám Khảo (Judge)</div>
+          <div class="stat-label">⚖️ Judges</div>
           <div class="stat-value" id="statJudges">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">🎨 Thí Sinh (Participant)</div>
+          <div class="stat-label">🎨 Participants</div>
           <div class="stat-value" id="statParticipants">—</div>
         </div>
         <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
-          <div class="stat-label" style="color: #f87171;">🔒 Tài Khoản Bị Khóa</div>
+          <div class="stat-label" style="color: #f87171;">🔒 Locked Accounts</div>
           <div class="stat-value" style="color: #ef4444;" id="statLockedUsers">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">🏆 Tổng Cuộc Thi</div>
+          <div class="stat-label">🏆 Total Contests</div>
           <div class="stat-value" id="statTotalContests">—</div>
         </div>
         <div class="stat-card" style="border-color: rgba(59, 130, 246, 0.3);">
-          <div class="stat-label" style="color: #60a5fa;">🔥 Contest Đang Hoạt Động</div>
+          <div class="stat-label" style="color: #60a5fa;">🔥 Active Contests</div>
           <div class="stat-value" style="color: #3b82f6;" id="statActiveContests">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">⏳ Contest Chờ Duyệt</div>
+          <div class="stat-label">⏳ Pending Contests</div>
           <div class="stat-value" id="statPendingContests">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">📥 Tổng Bài Dự Thi</div>
+          <div class="stat-label">📥 Total Submissions</div>
           <div class="stat-value" id="statTotalSubmissions">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">📋 Submission Chờ Duyệt</div>
+          <div class="stat-label">📋 Pending Submissions</div>
           <div class="stat-value" id="statPendingSubmissions">—</div>
         </div>
         <div class="stat-card" style="border-color: rgba(245, 158, 11, 0.3);">
@@ -323,7 +323,7 @@
           <div class="stat-value" style="color: #f59e0b;" id="statAiFlaggedSubmissions">—</div>
         </div>
         <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
-          <div class="stat-label" style="color: #f87171;">🚨 AI Flag Mức Cao Chưa Xử Lý</div>
+          <div class="stat-label" style="color: #f87171;">🚨 Unresolved High-Risk AI Flags</div>
           <div class="stat-value" style="color: #ef4444;" id="statHighSeverityAiFlags">—</div>
         </div>
       </div>
@@ -331,53 +331,88 @@
       <!-- System Health Panel -->
       <div class="panel" style="margin-bottom: 28px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
-          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">🖥️ Trạng Thái Trục Hệ Thống (System Health)</h2>
-          <span style="color: #6b7f94; font-size: 0.85rem;">Kiểm tra Database, File Storage & Email</span>
+          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">🖥️ System Health</h2>
+          <span style="color: #6b7f94; font-size: 0.85rem;">Database, file storage, and email checks</span>
         </div>
         <div id="systemHealthContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
-          <p style="color: #6b7f94; text-align: center; grid-column: 1 / -1; padding: 14px;">Đang kiểm tra trạng thái dịch vụ...</p>
+          <p style="color: #6b7f94; text-align: center; grid-column: 1 / -1; padding: 14px;">Checking service status...</p>
         </div>
       </div>
 
       <!-- Recent System Activities Panel -->
       <div class="panel" style="margin-bottom: 28px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
-          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">⚡ Hoạt Động Hệ Thống Gần Đây</h2>
-          <span style="color: #6b7f94; font-size: 0.85rem;">Nhật ký sự kiện thời gian thực</span>
+          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">⚡ Recent System Activity</h2>
+          <span style="color: #6b7f94; font-size: 0.85rem;">Real-time event log</span>
         </div>
         <div id="recentActivitiesContainer">
-          <p style="color: #6b7f94; text-align: center; padding: 20px;">Đang tải hoạt động hệ thống...</p>
+          <p style="color: #6b7f94; text-align: center; padding: 20px;">Loading system activity...</p>
         </div>
       </div>
 
+      <div class="admin-tabs-nav" aria-label="Evidence and administration panels">
+        <button type="button" class="admin-tab-btn" data-tab="tab-ai">AI Reports</button>
+        <button type="button" class="admin-tab-btn" data-tab="tab-audit">Audit Logs</button>
+      </div>
+
+      <section id="tab-ai" class="admin-tab-content panel" style="margin-bottom: 28px;">
+        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
+          <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">AI Reports</h2>
+          <button id="btnRefreshAiReports" class="btn btn-outline">Refresh</button>
+        </div>
+        <div id="aiReportsListContainer">
+          <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load AI reports.</p>
+        </div>
+      </section>
+
+      <section id="tab-audit" class="admin-tab-content panel" style="margin-bottom: 28px;">
+        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
+          <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">Audit Logs</h2>
+          <button id="btnRefreshAuditLogs" class="btn btn-outline">Refresh</button>
+        </div>
+        <div id="auditLogsListContainer">
+          <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load audit logs.</p>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-bottom: 28px;">
+        <h2 style="margin:0 0 8px;color:#f0f4f8;font-size:1.3rem;">System Notification</h2>
+        <p style="margin:0 0 16px;color:#8899aa;">Send a notification to organizer and moderator accounts.</p>
+        <form id="systemNotificationForm" style="display:grid;gap:10px;max-width:720px;">
+          <input id="notifTitle" class="field-input" type="text" placeholder="Notification title" required>
+          <textarea id="notifBody" class="field-input" rows="3" placeholder="Notification message" required></textarea>
+          <button type="submit" class="btn" style="width:max-content;">Send Notification</button>
+        </form>
+      </section>
+
       <div class="panel">
         <div style="margin-bottom: 20px;">
-          <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Quản Lý Tài Khoản Hệ Thống</h2>
-          <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Tìm kiếm, thay đổi vai trò (Role), khóa/mở khóa tài khoản hoặc xóa tài khoản người dùng.</p>
+          <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">System Account Management</h2>
+          <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Search, change roles, lock or unlock accounts, or delete users.</p>
         </div>
 
         <div class="toolbar">
-          <input type="text" id="searchInput" class="field-input" style="flex: 1; min-width: 220px;" placeholder="Tìm theo Username, Email, Họ tên...">
+          <input type="text" id="searchInput" class="field-input" style="flex: 1; min-width: 220px;" placeholder="Search by username, email, or name...">
           
           <select id="roleFilter" class="field-input">
-            <option value="">Tất cả vai trò</option>
-            <option value="participant">Participant (Thí sinh)</option>
-            <option value="judge">Judge (Ban giám khảo)</option>
-            <option value="organizer">Organizer (Ban tổ chức)</option>
-            <option value="admin">Admin (Quản trị viên)</option>
+            <option value="">All Roles</option>
+            <option value="participant">Participant</option>
+            <option value="judge">Judge</option>
+            <option value="organizer">Organizer</option>
+            <option value="admin">Administrator</option>
           </select>
 
           <select id="statusFilter" class="field-input">
-            <option value="">Tất cả trạng thái</option>
-            <option value="active">Active (Hoạt động)</option>
-            <option value="locked">Locked (Bị khóa)</option>
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="locked">Locked</option>
           </select>
 
-          <button id="btnRefreshUsers" class="btn btn-outline">Làm mới</button>
+          <button id="btnRefreshUsers" class="btn btn-outline">Refresh</button>
         </div>
 
         <div id="usersListContainer">
-          <p style="color: #6b7f94; text-align: center; padding: 30px;">Đang tải danh sách người dùng...</p>
+          <p style="color: #6b7f94; text-align: center; padding: 30px;">Loading users...</p>
         </div>
 
         <div id="paginationContainer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; color: #8899aa;"></div>
