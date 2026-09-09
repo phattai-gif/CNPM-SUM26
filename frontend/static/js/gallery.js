@@ -160,7 +160,7 @@ function renderGalleryGrid(items) {
 
     card.innerHTML = `
       <div class="card-img-wrap">
-        <img src="${thumbnailSrc}" alt="${escapeHtml(item.title)}" loading="lazy" onerror="this.src='/static/images/placeholder.jpg'"
+        <img src="${thumbnailSrc}" alt="${escapeHtml(item.title)}" loading="lazy" onerror="this.src='/static/images/placeholder.jpg'">
         <div class="card-overlay">
           ${filmBadge}
           ${cameraBadge}

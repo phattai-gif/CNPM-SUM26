@@ -379,7 +379,7 @@
 
   <div class="gallery-hero">
     <div class="container">
-      <h1><i class="bi bi-camera-reels me-2" style="color: var(--accent);"></i>Triển Lãm Nhiếp Ảnh Phim</h1>
+      <h1><i class="bi bi-camera-reels me-2" style="color: var(--accent);"></i>Film Photography Gallery</h1>
       <p>Khám phá bộ sưu tập những tác phẩm ảnh phim tuyệt đẹp từ các cuộc thi. Lọc theo phim stock, máy ảnh, năm và cuộc thi.</p>
     </div>
   </div>
@@ -390,9 +390,9 @@
       <form id="galleryFilterForm" class="row g-3" onsubmit="event.preventDefault(); applyFilters();">
         <!-- Search Keyword -->
         <div class="col-12 col-md-4">
-          <label class="form-label text-muted small fw-bold"><i class="bi bi-search me-1"></i>Từ khóa</label>
+          <label class="form-label text-muted small fw-bold"><i class="bi bi-search me-1"></i>Search</label>
           <div class="input-group">
-            <input type="text" id="filterSearch" class="form-control filter-control" placeholder="Tìm theo tiêu đề, tác giả..." onkeyup="debounceSearch()">
+            <input type="text" id="filterSearch" class="form-control filter-control" placeholder="Search by title or author..." onkeyup="debounceSearch()">
             <button class="btn btn-accent" type="button" onclick="applyFilters()"><i class="bi bi-search"></i></button>
           </div>
         </div>
@@ -401,31 +401,31 @@
         <div class="col-6 col-md-2">
           <label class="form-label text-muted small fw-bold"><i class="bi bi-film me-1"></i>Film Stock</label>
           <select id="filterFilmStock" class="form-select filter-control" onchange="applyFilters()">
-            <option value="">Tất cả Film</option>
+            <option value="">All Film Stocks</option>
           </select>
         </div>
 
         <!-- Camera -->
         <div class="col-6 col-md-2">
-          <label class="form-label text-muted small fw-bold"><i class="bi bi-camera me-1"></i>Máy ảnh</label>
+          <label class="form-label text-muted small fw-bold"><i class="bi bi-camera me-1"></i>Camera</label>
           <select id="filterCamera" class="form-select filter-control" onchange="applyFilters()">
-            <option value="">Tất cả Máy ảnh</option>
+            <option value="">All Cameras</option>
           </select>
         </div>
 
         <!-- Contest -->
         <div class="col-6 col-md-2">
-          <label class="form-label text-muted small fw-bold"><i class="bi bi-trophy me-1"></i>Cuộc thi</label>
+          <label class="form-label text-muted small fw-bold"><i class="bi bi-trophy me-1"></i>Contest</label>
           <select id="filterContest" class="form-select filter-control" onchange="applyFilters()">
-            <option value="">Tất cả Cuộc thi</option>
+            <option value="">All Contests</option>
           </select>
         </div>
 
         <!-- Year -->
         <div class="col-6 col-md-2">
-          <label class="form-label text-muted small fw-bold"><i class="bi bi-calendar-event me-1"></i>Năm</label>
+          <label class="form-label text-muted small fw-bold"><i class="bi bi-calendar-event me-1"></i>Year</label>
           <select id="filterYear" class="form-select filter-control" onchange="applyFilters()">
-            <option value="">Tất cả Năm</option>
+            <option value="">All Years</option>
           </select>
         </div>
       </form>
@@ -433,10 +433,10 @@
       <!-- Active Filter Tags & Reset -->
       <div class="d-flex align-items-center justify-content-between mt-3 pt-2 border-top border-secondary border-opacity-25">
         <div id="activeFiltersSummary" class="small text-muted">
-          Đang hiển thị các tác phẩm công khai
+          Showing public works
         </div>
         <button type="button" class="btn-reset btn-sm" onclick="resetFilters()">
-          <i class="bi bi-arrow-counterclockwise me-1"></i>Xóa bộ lọc
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Clear filters
         </button>
       </div>
     </div>
