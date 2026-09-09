@@ -1924,3 +1924,155 @@ BR-59 & Failed database operations must be rolled back. \\
 BR-60 & Internal database errors must not be exposed in API responses. \\
 \hline
 \end{longtable}
+
+\subsubsection{Common Requirements}
+\label{subsubsec:common-requirements}
+
+\textbf{Authentication and Authorization:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Role-Based Access Control (RBAC) must be strictly enforced across all API endpoints and UI routes to ensure users only access capabilities assigned to their specific roles (Participant, Organizer, Judge, and Admin).
+    \item Blind judging workflows must enforce identity anonymity, hiding participant details from judges during evaluation rounds.
+\end{itemize}
+
+\vspace{0.5em}
+\textbf{Data Privacy and Media Integrity:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item The system must ensure secure handling of participant entries, personal profile details, and judging scores.
+    \item Original film photo binaries and EXIF/film metadata must be stored securely and protected against unauthorized modification or deletion.
+\end{itemize}
+
+\vspace{0.5em}
+\textbf{Scalability:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item The architecture must scale efficiently to accommodate surges in concurrent photo submissions, high-resolution image uploads, public gallery traffic, and background AI/pHash processing tasks without system degradation.
+\end{itemize}
+
+\subsubsection{Application Messages List}
+\label{subsubsec:application-messages-list}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\raggedright\arraybackslash}p{0.20\textwidth}|>{\raggedright\arraybackslash}p{0.50\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Message Code}} & \multicolumn{1}{c|}{\textbf{Message Type}} & \multicolumn{1}{c|}{\textbf{Context}} & \multicolumn{1}{c|}{\textbf{Content}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|c|}{\textbf{Message Code}} & \multicolumn{1}{c|}{\textbf{Message Type}} & \multicolumn{1}{c|}{\textbf{Context}} & \multicolumn{1}{c|}{\textbf{Content}} \\
+\hline
+\endhead
+MSG01 & Error & Login & ``Invalid username or password. Please try again.'' \\
+\hline
+MSG02 & Success & Login & ``Login successful. Redirecting you to your workspace.'' \\
+\hline
+MSG03 & Error & Registration & ``This username or email is already registered.'' \\
+\hline
+MSG04 & Success & Registration & ``Your account has been created successfully.'' \\
+\hline
+MSG05 & Error & Authentication & ``Your session has expired. Please log in again.'' \\
+\hline
+MSG06 & Error & Authorization & ``Access denied. You do not have permission to perform this action.'' \\
+\hline
+MSG07 & Success & Profile Management & ``Your profile information has been updated successfully.'' \\
+\hline
+MSG08 & Error & Profile Management & ``Unable to update your profile. Please check the submitted information.'' \\
+\hline
+MSG09 & Success & Contest Creation & ``The contest has been created successfully.'' \\
+\hline
+MSG10 & Success & Contest Configuration & ``Contest, round and judging criteria settings have been updated successfully.'' \\
+\hline
+MSG11 & Error & Contest Configuration & ``The contest configuration is invalid or incomplete.'' \\
+\hline
+MSG12 & Success & Contest Status Management & ``The contest status has been updated successfully.'' \\
+\hline
+MSG13 & Error & Contest Management & ``Contest not found or you do not have permission to manage it.'' \\
+\hline
+MSG14 & Success & Judge Assignment & ``Judge assignment has been completed successfully.'' \\
+\hline
+MSG15 & Error & Judge Assignment & ``The selected judge cannot be assigned to this contest round.'' \\
+\hline
+MSG16 & Error & Submission Upload & ``Failed to upload your submission files. Please check your connection and try again.'' \\
+\hline
+MSG17 & Error & File Validation & ``Invalid file type or file size. Please upload a supported image file.'' \\
+\hline
+MSG18 & Error & Submission Metadata & ``Required film metadata is missing or invalid. Please complete all required fields.'' \\
+\hline
+MSG19 & Success & Submission Draft & ``Your submission draft has been saved successfully.'' \\
+\hline
+MSG20 & Success & Submission Finalization & ``Your film submission has been submitted successfully and is pending review.'' \\
+\hline
+MSG21 & Error & Submission Finalization & ``Unable to submit your entry. Please complete all required information and files.'' \\
+\hline
+MSG22 & Info & AI Processing & ``AI authenticity and duplicate detection are being processed.'' \\
+\hline
+MSG23 & Warning & AI Verification & ``This submission requires manual review because a metadata mismatch or authenticity issue was detected.'' \\
+\hline
+MSG24 & Warning & Duplicate Detection & ``This image has a high similarity to another submission and has been flagged for review.'' \\
+\hline
+MSG25 & Success & Judge Scoring & ``The score and feedback have been saved successfully.'' \\
+\hline
+MSG26 & Success & Judge Finalization & ``Your evaluation has been finalized successfully.'' \\
+\hline
+MSG27 & Error & Judge Scoring & ``Unable to save the score. Please enter valid scores for all judging criteria.'' \\
+\hline
+MSG28 & Error & Judge Assignment & ``You are not assigned to review this submission.'' \\
+\hline
+MSG29 & Success & Contest Result & ``The contest results have been finalized successfully.'' \\
+\hline
+MSG30 & Error & Contest Result & ``The results cannot be finalized while some required evaluations are incomplete.'' \\
+\hline
+MSG31 & Success & Voting & ``Your vote has been recorded successfully.'' \\
+\hline
+MSG32 & Error & Voting & ``You have already voted for this submission.'' \\
+\hline
+MSG33 & Error & Voting & ``Only approved public submissions can receive votes.'' \\
+\hline
+MSG34 & Success & Admin User Management & ``The user role has been updated successfully.'' \\
+\hline
+MSG35 & Success & Admin User Management & ``The user account status has been updated successfully.'' \\
+\hline
+MSG36 & Success & Admin User Management & ``The user account has been deleted successfully.'' \\
+\hline
+MSG37 & Success & Admin Notification & ``The system notification has been sent successfully.'' \\
+\hline
+MSG38 & Success & Certificate Generation & ``The winner certificate has been generated successfully.'' \\
+\hline
+MSG39 & Error & Certificate Generation & ``The certificate cannot be generated because the winner has not been approved.'' \\
+\hline
+MSG40 & Error & General System Error & ``An unexpected error occurred. Please try again later.'' \\
+\hline
+\end{longtable}
+
+\subsubsection{Other Requirements}
+\label{subsubsec:other-requirements}
+
+\textbf{Audit Logging and Security}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item The system shall log important events such as role changes, contest updates, judge assignments, score finalization and AI review decisions.
+    \item Passwords, JWT secrets, database credentials and private API keys must not appear in API responses or production logs.
+    \item Detailed system errors must only be stored in protected server logs.
+\end{itemize}
+
+\vspace{0.5em}
+\textbf{Background Processing}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Contest and round status updates are handled by the application scheduler.
+    \item AI metadata analysis and authenticity checking can run in background threads after submission.
+    \item Duplicate detection should be processed asynchronously for large files or high submission volume.
+\end{itemize}
+
+\vspace{0.5em}
+\textbf{Database Consistency}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Submission, uploaded files and film metadata must be saved in one database transaction.
+    \item If any database operation fails, all related database changes must be rolled back.
+    \item External file uploads and AI processing failures must be handled separately to avoid incomplete or corrupted submission records.
+\end{itemize}
+
+\vspace{0.5em}
+\textbf{Error Handling}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item The API shall return consistent HTTP status codes and structured error messages.
+    \item Production responses must not expose stack traces, database errors or internal file paths.
+\end{itemize}
