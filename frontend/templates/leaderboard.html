@@ -1,336 +1,231 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Contest Results - Leaderboard</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="/static/admin.css">
+    <title>Contest Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/admin.css">
+    <style>
+        body {
+            background: #080c14;
+            color: #e8edf2;
+            font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+        }
+
+        .page-shell {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 36px 20px 48px;
+        }
+
+        .page-title {
+            font-size: clamp(2.5rem, 4vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin: 0 0 18px;
+            color: #f4f7fa;
+        }
+
+        .section-label {
+            margin: 14px 0 22px;
+            color: #7e8fa4;
+            font-size: 1.02rem;
+        }
+
+        .winner-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .winner-card {
+            background: #111a26;
+            border: 1px solid #1e2a3a;
+            border-radius: 18px;
+            padding: 14px;
+            box-shadow: 0 14px 28px rgba(0,0,0,0.28);
+        }
+
+        .winner-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .winner-rank {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5a623;
+            color: #111a26;
+            font-weight: 800;
+            font-size: 0.92rem;
+        }
+
+        .winner-card h3 {
+            margin: 0;
+            color: #f0f4f8;
+            font-size: 1.02rem;
+            font-weight: 700;
+        }
+
+        .winner-card p {
+            margin: 4px 0 0;
+            color: #aab8c7;
+            font-size: 0.92rem;
+        }
+
+        .winner-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .winner-meta {
+            margin-top: 12px;
+            color: #b2c0cc;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .winner-meta strong {
+            color: #f0f4f8;
+        }
+
+        .leaderboard-panel {
+            background: #111a26;
+            border-radius: 18px;
+            border: 1px solid #1e2a3a;
+            padding: 20px 18px 8px;
+            box-shadow: 0 12px 26px rgba(0,0,0,0.22);
+            margin-top: 28px;
+        }
+
+        .leaderboard-panel h2 {
+            margin: 0 0 20px;
+            color: #f0f4f8;
+            font-size: clamp(1.8rem, 2vw, 2.4rem);
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+
+        .leaderboard-table thead th {
+            text-align: left;
+            color: #adbad0;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 12px 14px;
+            border-bottom: 1px solid #243241;
+        }
+
+        .leaderboard-table tbody td {
+            color: #edf3f9;
+            padding: 14px;
+            border-bottom: 1px solid #243241;
+        }
+
+        .leaderboard-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .leaderboard-table tbody td:first-child {
+            color: #f5a623;
+            font-weight: 700;
+        }
+
+        .score {
+            color: #f5a623;
+            font-weight: 700;
+        }
+
+        @media (max-width: 920px) {
+            .winner-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     {% include '_nav.html' %}
     <div class="page-shell">
-        <h1 class="mb-3">Contest Results</h1>
-        <p class="text-muted">Final rankings and award-winning works.</p>
+        <h1 class="page-title">Contest Results</h1>
+        <div class="section-label">Final rankings and award-winning works.</div>
 
-        <section class="leaderboard">
-            <h3>Leaderboard</h3>
+        <div class="winner-grid">
+            {% if winners %}
+                {% for item in winners %}
+                    <article class="winner-card">
+                        <div class="winner-top">
+                            <span class="winner-rank">{{ item.rank }}</span>
+                            <div>
+                                <h3>{{ item.author }}</h3>
+                                <p>{{ item.title }}</p>
+                            </div>
+                        </div>
 
-            <div style="display:flex; gap:18px; margin-bottom:16px; align-items:center; justify-content:space-between;">
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <label for="contest-select" class="text-muted">Contest:</label>
-                    <select id="contest-select" class="round-input">
-                        <option value="">Loading contests...</option>
-                    </select>
-                    <label for="round-id-input" class="text-muted">Round:</label>
-                    <select id="round-id-input" class="round-input">
-                        <option value="">Select a round</option>
-                    </select>
-                    <button id="load-leaderboard-btn" class="btn" style="margin-left:8px;">Load Leaderboard</button>
-                </div>
-                <div>
-                    <button id="show-exhibits-btn" class="btn btn-outline">View Published Gallery</button>
-                </div>
-            </div>
+                        {% if item.image_url %}
+                            <img class="winner-image" src="{{ item.image_url }}" alt="{{ item.title }}">
+                        {% endif %}
 
-            <div id="winners-section" class="winners" aria-live="polite">
-                <!-- Winners will be rendered here -->
-            </div>
+                        <div class="winner-meta">
+                            {% if item.camera %}<div><strong>Camera:</strong> {{ item.camera }}</div>{% endif %}
+                            {% if item.film_stock %}<div><strong>Film stock:</strong> {{ item.film_stock }}</div>{% endif %}
+                            <div><strong>Total score:</strong> <span class="score">{{ item.score }}</span></div>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <article class="winner-card">
+                    <div class="winner-top">
+                        <span class="winner-rank">1</span>
+                        <div>
+                            <h3>Loading</h3>
+                            <p>Waiting for results...</p>
+                        </div>
+                    </div>
+                </article>
+            {% endif %}
+        </div>
 
-            <div id="leaderboard-table-wrap" class="table-responsive leaderboard">
-                <table id="leaderboard-table" class="table">
-                    <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Author</th>
-                                    <th>Title</th>
-                                    <th>Award</th>
-                                    <th class="text-end">Total Score</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                    <tbody id="leaderboard-body">
-                        <tr><td colspan="6" class="empty-state">No data. Enter `round_id` and click "Load Leaderboard".</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section class="leaderboard" style="margin-top:24px;">
-            <h3>Winner Certificate</h3>
-            <p class="text-muted">Enter an approved submission or certificate identifier to view or download the winner certificate.</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                <input id="certificate-id-input" type="text" class="round-input" placeholder="Certificate ID">
-                <button id="view-certificate-btn" class="btn btn-outline">View Certificate</button>
-                <button id="download-certificate-btn" class="btn">Download PDF</button>
-            </div>
-            <pre id="certificate-result" style="display:none;margin-top:14px;white-space:pre-wrap;"></pre>
+        <section class="leaderboard-panel">
+            <h2>Leaderboard</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Author</th>
+                        <th>Title</th>
+                        <th>Total Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in leaderboard %}
+                        <tr>
+                            <td>{{ item.rank }}</td>
+                            <td>{{ item.author }}</td>
+                            <td>{{ item.title }}</td>
+                            <td class="score">{{ item.score }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </section>
     </div>
 </body>
-    <script src="/static/api_client.js"></script>
-    <script>
-        function escapeHtml(s){return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");}
-
-        async function fetchLeaderboard(roundId){
-            if(!roundId) throw new Error('roundId required');
-            return await window.apiClient.get(`/organizer/rounds/${encodeURIComponent(roundId)}/leaderboard`);
-        }
-
-        function renderWinners(leaderboard){
-            const container = document.getElementById('winners-section');
-            container.innerHTML = '';
-            const list = leaderboard || [];
-            if(!list.length){ container.innerHTML = '<p class="empty-state">No winners found.</p>'; return; }
-
-            // Group by award_title (fallback to 'Overall')
-            const groups = {};
-            list.forEach(item => {
-                const award = (item.award_title || item.award || item.award_name || 'Overall');
-                groups[award] = groups[award] || [];
-                groups[award].push(item);
-            });
-
-            Object.keys(groups).forEach(awardName => {
-                const group = groups[awardName];
-                // sort by rank
-                group.sort((a,b)=> (a.rank||0) - (b.rank||0));
-
-                const header = document.createElement('div');
-                header.style.margin = '6px 0 8px';
-                header.innerHTML = `<strong style="font-size:0.95rem;">${escapeHtml(awardName)}</strong>`;
-                container.appendChild(header);
-
-                const top = group.slice(0,3);
-                const wrapper = document.createElement('div'); wrapper.className = 'winners';
-
-                top.forEach((item, idx)=>{
-                    const rank = item.rank || (idx+1);
-                    const div = document.createElement('div'); div.className='winner';
-                    div.innerHTML = `
-                        <div style="display:flex;gap:12px;align-items:center;">
-                            <div class="rank-badge rank-${rank}">${rank}</div>
-                            <div>
-                                <div style="font-weight:700; font-size:1rem;">#${escapeHtml(item.submission_id)} - ${escapeHtml(item.title||item.submission_title||'Untitled')}</div>
-                                <div class="muted">Author: ${escapeHtml(item.author||item.user_id||'-')} | Score: ${escapeHtml(item.final_score||item.total_score||'-')}</div>
-                            </div>
-                        </div>
-                        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="btn btn-success btn-sm approve-winner" data-id="${escapeHtml(item.submission_id)}">Approve</button>
-                            <button class="btn btn-danger btn-sm reject-winner" data-id="${escapeHtml(item.submission_id)}">Reject</button>
-                            <button class="btn btn-outline btn-sm publish-winner" data-id="${escapeHtml(item.submission_id)}">Publish to Gallery</button>
-                            <button class="btn btn-secondary btn-sm archive-winner" data-id="${escapeHtml(item.submission_id)}">Archive</button>
-                        </div>
-                    `;
-                    wrapper.appendChild(div);
-                });
-
-                container.appendChild(wrapper);
-            });
-
-            // attach handlers (single delegated approach)
-            container.querySelectorAll('.approve-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
-                const btn = ev.currentTarget;
-                const id = btn.dataset.id;
-                if(!confirm('Approve this winner?')) return;
-                btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Approving...';
-                    try{
-                    await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/approve-winner`);
-                    btn.innerText = 'Approved'; btn.classList.remove('btn-success'); btn.classList.add('btn-outline');
-                    // refresh leaderboard
-                    if(typeof loadAndRender === 'function') setTimeout(loadAndRender, 300);
-                }catch(e){
-                    const msg = e && e.message ? e.message : String(e);
-                    if(msg.toLowerCase().includes('permission')){
-                        alert('Organizer/admin access is required. Redirecting to login.');
-                        window.location.href = '/auth/login';
-                        return;
-                    }
-                    alert('Failed to approve: ' + msg);
-                    btn.disabled = false; btn.innerText = orig;
-                }
-            }));
-
-            container.querySelectorAll('.reject-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
-                const btn = ev.currentTarget;
-                const id = btn.dataset.id;
-                if(!confirm('Reject this winner?')) return;
-                btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Rejecting...';
-                    try{
-                    await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/reject-winner`);
-                    btn.innerText = 'Rejected'; btn.classList.remove('btn-danger'); btn.classList.add('btn-outline');
-                    if(typeof loadAndRender === 'function') setTimeout(loadAndRender, 300);
-                }catch(e){
-                    const msg = e && e.message ? e.message : String(e);
-                    if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; }
-                    alert('Failed to reject: ' + msg);
-                    btn.disabled = false; btn.innerText = orig;
-                }
-            }));
-
-            container.querySelectorAll('.publish-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
-                const btn = ev.currentTarget;
-                const id = btn.dataset.id;
-                if(!confirm('Publish this work to the public gallery?')) return;
-                btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Publishing...';
-                    try{
-                    const resp = await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/publish`);
-                    btn.innerText = 'Published'; btn.classList.remove('btn-outline'); btn.classList.add('btn');
-                    // Optionally show exhibit id
-                    if(resp && resp.exhibit_id) alert('Published to gallery (exhibit #' + resp.exhibit_id + ')');
-                    if(typeof loadAndRender === 'function') setTimeout(loadAndRender, 300);
-                }catch(e){
-                    const msg = e && e.message ? e.message : String(e);
-                    if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; }
-                    alert('Failed to publish: ' + msg);
-                    btn.disabled = false; btn.innerText = orig;
-                }
-            }));
-
-            container.querySelectorAll('.archive-winner').forEach(b=>b.addEventListener('click', async (ev)=>{
-                const btn = ev.currentTarget;
-                const id = btn.dataset.id;
-                if(!confirm('Move this work to the archive?')) return;
-                btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Archiving...';
-                try{
-                    const resp = await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/archive`);
-                    btn.innerText = 'Archived'; btn.classList.remove('btn-secondary'); btn.classList.add('btn-outline');
-                    if(typeof loadAndRender === 'function') setTimeout(loadAndRender, 300);
-                }catch(e){
-                    const msg = e && e.message ? e.message : String(e);
-                    if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; }
-                    alert('Failed to archive: ' + msg);
-                    btn.disabled = false; btn.innerText = orig;
-                }
-            }));
-        }
-
-        function renderLeaderboardTable(leaderboard){
-            const body = document.getElementById('leaderboard-body');
-            if(!leaderboard || !leaderboard.length){ body.innerHTML = '<tr><td colspan="6" class="empty-state">No data.</td></tr>'; return; }
-            body.innerHTML = leaderboard.map(item=>{
-                const title = escapeHtml(item.title||item.submission_title||'Untitled');
-                const author = escapeHtml(item.author||item.user_id||'-');
-                const score = escapeHtml(item.final_score||item.total_score||'-');
-                const award = escapeHtml(item.award_title || item.award || '-');
-                return `<tr>
-                    <td>${escapeHtml(item.rank)}</td>
-                    <td>${author}</td>
-                    <td>${title}</td>
-                    <td>${award}</td>
-                    <td class="text-end">${score}</td>
-                    <td>
-                        <button class="btn btn-success btn-sm approve-row" data-id="${escapeHtml(item.submission_id)}">Approve</button>
-                        <button class="btn btn-danger btn-sm reject-row" data-id="${escapeHtml(item.submission_id)}">Reject</button>
-                        <button class="btn btn-outline btn-sm publish-row" data-id="${escapeHtml(item.submission_id)}">Publish</button>
-                        <button class="btn btn-secondary btn-sm archive-row" data-id="${escapeHtml(item.submission_id)}">Archive</button>
-                    </td>
-                </tr>`;
-            }).join('');
-
-            // attach handlers with confirmation + error handling
-            document.querySelectorAll('.approve-row').forEach(b=>b.addEventListener('click', async (ev)=>{ 
-                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Approve this winner?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Approving...';
-                try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/approve-winner`); btn.innerText = 'Approved'; btn.classList.remove('btn-success'); btn.classList.add('btn-outline'); }catch(e){ const msg = e && e.message ? e.message : String(e); if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; } alert('Failed to approve: '+msg); btn.disabled=false; btn.innerText=orig; }
-            }));
-
-            document.querySelectorAll('.reject-row').forEach(b=>b.addEventListener('click', async (ev)=>{ 
-                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Reject this winner?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Rejecting...';
-                try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/reject-winner`); btn.innerText = 'Rejected'; btn.classList.remove('btn-danger'); btn.classList.add('btn-outline'); }catch(e){ const msg = e && e.message ? e.message : String(e); if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; } alert('Failed to reject: '+msg); btn.disabled=false; btn.innerText=orig; }
-            }));
-
-            document.querySelectorAll('.publish-row').forEach(b=>b.addEventListener('click', async (ev)=>{ 
-                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Publish this work to the public gallery?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Publishing...';
-                try{ const resp = await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/publish`); btn.innerText = 'Published'; btn.classList.remove('btn-outline'); btn.classList.add('btn'); if(resp && resp.exhibit_id) alert('Published to gallery (exhibit #'+resp.exhibit_id+')'); if(typeof loadAndRender === 'function') setTimeout(loadAndRender,300);}catch(e){ const msg = e && e.message ? e.message : String(e); if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; } alert('Failed to publish: '+msg); btn.disabled=false; btn.innerText=orig; }
-            }));
-
-            document.querySelectorAll('.archive-row').forEach(b=>b.addEventListener('click', async (ev)=>{
-                const btn = ev.currentTarget; const id = btn.dataset.id; if(!confirm('Move this work to the archive?')) return; btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Archiving...';
-                try{ await window.apiClient.post(`/organizer/submissions/${encodeURIComponent(id)}/archive`); btn.innerText = 'Archived'; btn.classList.remove('btn-secondary'); btn.classList.add('btn-outline'); if(typeof loadAndRender === 'function') setTimeout(loadAndRender,300);}catch(e){ const msg = e && e.message ? e.message : String(e); if(msg.toLowerCase().includes('permission')){ window.location.href = '/auth/login'; return; } alert('Failed to archive: '+msg); btn.disabled=false; btn.innerText=orig; }
-            }));
-        }
-
-        async function loadAndRender(){
-            const roundId = document.getElementById('round-id-input').value || new URLSearchParams(window.location.search).get('round_id');
-            if(!roundId){ alert('Please enter round_id.'); return; }
-            try{
-                const data = await fetchLeaderboard(roundId);
-                const leaderboard = data && data.leaderboard ? data.leaderboard : (data.results || []);
-                renderWinners(leaderboard);
-                renderLeaderboardTable(leaderboard);
-            }catch(e){
-                alert(e.message||e);
-            }
-        }
-
-        async function loadContestRounds() {
-            const contestSelect = document.getElementById('contest-select');
-            const roundSelect = document.getElementById('round-id-input');
-            try {
-                const response = await window.apiClient.get('/organizer/contests');
-                const contests = response.contests || [];
-                contestSelect.innerHTML = contests.length
-                    ? contests.map((contest) => `<option value="${escapeHtml(contest.id)}">#${escapeHtml(contest.id)} - ${escapeHtml(contest.title)}</option>`).join('')
-                    : '<option value="">No contests</option>';
-                function renderRounds() {
-                    const contest = contests.find((item) => String(item.id) === String(contestSelect.value));
-                    const rounds = contest ? (contest.rounds || []) : [];
-                    roundSelect.innerHTML = rounds.length
-                        ? rounds.map((round) => `<option value="${escapeHtml(round.id)}">Round ${escapeHtml(round.round_number || '?')} - ${escapeHtml(round.title)}</option>`).join('')
-                        : '<option value="">No rounds</option>';
-                }
-                contestSelect.addEventListener('change', renderRounds);
-                renderRounds();
-            } catch (error) {
-                contestSelect.innerHTML = '<option value="">Unable to load contests</option>';
-                roundSelect.innerHTML = '<option value="">No rounds</option>';
-            }
-        }
-
-        document.getElementById('load-leaderboard-btn').addEventListener('click', loadAndRender);
-        document.getElementById('show-exhibits-btn').addEventListener('click', async ()=>{
-            try{
-                const resp = await window.apiClient.get('/organizer/exhibits');
-                const list = resp.exhibits || [];
-                const html = list.map(e=>{
-                    const img = e.image_url ? `<img src="${escapeHtml(e.image_url)}" style="max-width:160px;display:block;margin-bottom:6px;border-radius:6px;"/>` : '';
-                    return `<div class="winner" style="display:block;">${img}<div>Exhibit #${e.id} - submission ${e.submission_id}</div><div class="muted">Published: ${e.published_at || ''}</div></div>`
-                }).join('');
-                const container = document.getElementById('winners-section');
-                container.innerHTML = html || '<p class="empty-state">No published gallery works found.</p>';
-            }catch(e){ alert(e.message||e); }
-        });
-
-        function certificateIdentifier() {
-            return document.getElementById('certificate-id-input').value.trim();
-        }
-
-        document.getElementById('view-certificate-btn').addEventListener('click', async () => {
-            const identifier = certificateIdentifier();
-            if (!identifier) { alert('Please enter a certificate ID.'); return; }
-            try {
-                const response = await fetch(`/api/certificates/${encodeURIComponent(identifier)}`);
-                const payload = await response.json();
-                const result = document.getElementById('certificate-result');
-                result.style.display = 'block';
-                result.textContent = JSON.stringify(payload, null, 2);
-            } catch (error) {
-                alert(error.message || 'Unable to load certificate.');
-            }
-        });
-
-        document.getElementById('download-certificate-btn').addEventListener('click', () => {
-            const identifier = certificateIdentifier();
-            if (!identifier) { alert('Please enter a certificate ID.'); return; }
-            window.open(`/api/certificates/${encodeURIComponent(identifier)}/download`, '_blank', 'noopener');
-        });
-
-        loadContestRounds().then(() => {
-            const roundId = new URLSearchParams(window.location.search).get('round_id');
-            if (roundId) {
-                document.getElementById('round-id-input').value = roundId;
-                loadAndRender();
-            }
-        });
-    </script>
 </html>
