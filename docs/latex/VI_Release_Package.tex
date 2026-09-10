@@ -1,0 +1,284 @@
+% --- Chapter VI: Release Package & User Guides ---
+\newpage
+
+\section*{VI. Release Package \& User Guides}
+\addcontentsline{toc}{section}{VI. Release Package \& User Guides}
+\setcounter{section}{6}
+
+% Number subsections in this chapter as 1, 2, ... (consistent with Chapters III and IV)
+\renewcommand{\thesubsection}{\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+\setcounter{subsection}{0}
+
+\subsection{Deliverable Package}
+\label{subsec:deliverable-package}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.08\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|>{\raggedright\arraybackslash}p{0.52\textwidth}|}
+\hline
+\textbf{No.} & \textbf{Deliverable Item} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{No.} & \textbf{Deliverable Item} & \textbf{Description} \\
+\hline
+\endhead
+1 & Schedule/Task Tracking & Project tasks and development progress are managed by the team. \\
+\hline
+2 & Project Backlog & A list of project requirements, tasks, and issues used to manage the development process. \\
+\hline
+3 & Source Codes & Complete source code including Backend, Frontend, and Tests. GitHub Repository: \url{https://github.com/phattai-gif/CNPM-SUM26} \\
+\hline
+4 & Database Script(s) & Database migration, initialization, and seed scripts used to create the database schema and demo data. \\
+\hline
+5 & Final Report Document & A document describing the project's analysis, design, implementation, and testing results. \\
+\hline
+6 & Test Cases Document & A document containing test cases used to verify the implemented system features. \\
+\hline
+7 & Slide & A presentation containing project overview, requirements, architecture, technologies, and main system functions. \\
+\hline
+\end{longtable}
+\normalsize
+
+\subsection{Installation Guides}
+\label{subsec:installation-guides}
+
+\subsubsection{Web Application -- System Requirements}
+\label{subsubsec:system-requirements}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.25\textwidth}|>{\raggedright\arraybackslash}p{0.29\textwidth}|>{\raggedright\arraybackslash}p{0.31\textwidth}|}
+\hline
+\textbf{Component} & \textbf{Minimum} & \textbf{Recommended} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Component} & \textbf{Minimum} & \textbf{Recommended} \\
+\hline
+\endhead
+CPU & Intel\textregistered{} Core\texttrademark{} i5-12450H & Intel\textregistered{} Core\texttrademark{} i5-12450H or higher \\
+\hline
+Memory & 8GB RAM & 16GB RAM or more \\
+\hline
+Storage Space & 256GB SSD & 512GB SSD or more \\
+\hline
+Network & 10 Mbps & 100 Mbps or higher \\
+\hline
+Operating System & Windows 10/11 & Windows 11 \\
+\hline
+Web Browser & Google Chrome / Microsoft Edge & Latest stable version \\
+\hline
+\end{longtable}
+\normalsize
+
+\subsubsection{Installation Instruction}
+\label{subsubsec:installation-instruction}
+
+\paragraph*{2.2.1 Backend}
+\addcontentsline{toc}{paragraph}{\protect\numberline{2.2.1}Backend}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Step 1:} Download \& Install Visual Studio Code: Visual Studio Code.
+    \item \textbf{Step 2:} Download \& Install Git: Git.
+    \item \textbf{Step 3:} Download \& Install Python: Python.
+    \item \textbf{Step 4:} Download \& Install PostgreSQL: PostgreSQL.
+    \item \textbf{Step 5:} Navigate to the folder where you want to install the project and open the terminal.
+    \item \textbf{Step 6:} Clone the project repository:
+\end{itemize}
+\begin{quote}\ttfamily
+ git clone https://github.com/phattai-gif/CNPM-SUM26.git
+\end{quote}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Step 7:} Navigate to the project folder:
+\end{itemize}
+\begin{quote}\ttfamily
+ cd CNPM-SUM26
+\end{quote}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Step 8:} Create and activate the Python virtual environment:
+\end{itemize}
+\begin{quote}\ttfamily
+ python -m venv .venv\\
+ .venv\textbackslash{}Scripts\textbackslash{}activate
+\end{quote}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Step 9:} Install the required packages:
+\end{itemize}
+\begin{quote}\ttfamily
+ pip install -r requirements.txt
+\end{quote}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Step 10:} Configure the database connection in the \texttt{.env} file according to the project configuration.
+    \item \textbf{Step 11:} Initialize the database and demo data:
+\end{itemize}
+\begin{quote}\ttfamily
+ python src/scripts/db.py init
+\end{quote}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Step 12:} Run the backend application:
+\end{itemize}
+\begin{quote}\ttfamily
+ python src/app.py
+\end{quote}
+
+\paragraph*{2.2.2 Frontend}
+\addcontentsline{toc}{paragraph}{\protect\numberline{2.2.2}Frontend}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Step 1:} Open the project using Visual Studio Code.
+    \item \textbf{Step 2:} Navigate to the frontend directory:
+\end{itemize}
+\begin{quote}\ttfamily
+ cd frontend
+\end{quote}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Step 3:} Configure the API address in \texttt{static/api\_client.js}.
+    \item \textbf{Step 4:} Start the backend application.
+    \item \textbf{Step 5:} Open the web application using the configured local address in a web browser.
+\end{itemize}
+
+\subsection{User Manual}
+\label{subsec:user-manual}
+
+\subsubsection{Overview}
+\label{subsubsec:user-manual-overview}
+
+\textbf{User:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Authentication:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Register account
+        \item Login
+        \item Logout
+        \item Forgot password
+        \item Reset password
+        \item Verify email
+        \item Google authentication
+    \end{itemize}
+    \item \textbf{Profile Management:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item View profile
+        \item Update profile
+        \item Manage portfolio
+    \end{itemize}
+    \item \textbf{Contest:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item View contests
+        \item View contest details
+        \item View leaderboard and results
+    \end{itemize}
+    \item \textbf{Submission:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Create submission
+        \item Save submission draft
+        \item Upload submission files
+        \item View submission
+        \item View submission details
+    \end{itemize}
+    \item \textbf{Voting:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item View public gallery
+        \item View gallery details
+        \item Vote for submissions
+    \end{itemize}
+\end{itemize}
+
+\textbf{Organizer:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Contest Management:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Create contest
+        \item Manage contest
+        \item Configure contest settings
+        \item Manage categories and awards
+        \item Finalize contest rounds
+    \end{itemize}
+    \item \textbf{Submission Management:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item View submissions
+        \item Review submissions
+    \end{itemize}
+    \item \textbf{Judge Management:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Assign judges
+        \item Manage judging activities
+    \end{itemize}
+    \item \textbf{Scoring:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Manage submission scores
+        \item View scoring results
+    \end{itemize}
+    \item \textbf{Results:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Manage contest results
+        \item Approve winners
+    \end{itemize}
+\end{itemize}
+
+\textbf{Judge:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Judging:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item View assigned submissions
+        \item Review submissions
+        \item Grade submissions
+        \item Submit scores
+        \item View judging results
+    \end{itemize}
+\end{itemize}
+
+\textbf{Moderator:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Moderation:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item View moderator dashboard
+        \item Review submissions
+        \item Review AI detection results
+        \item Handle AI warnings
+        \item Review duplicate submissions
+    \end{itemize}
+\end{itemize}
+
+\textbf{Administrator:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{User Management:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item View users
+        \item Create user
+        \item Update user
+        \item Delete user
+    \end{itemize}
+    \item \textbf{System Management:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Manage user roles
+        \item Manage system functions
+    \end{itemize}
+\end{itemize}
+
+\textbf{Supporting Functions:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{AI Detection:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Process submissions
+        \item View AI detection results
+    \end{itemize}
+    \item \textbf{Duplicate Detection:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Check duplicate submissions
+        \item View duplicate detection results
+    \end{itemize}
+    \item \textbf{Certificate:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Generate certificate
+    \end{itemize}
+    \item \textbf{Notification:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item Receive system notifications
+    \end{itemize}
+\end{itemize}
