@@ -277,7 +277,9 @@
         const data = await response.json();
         if (!response.ok) throw new Error(data.message || 'Unable to vote.');
         document.getElementById('voteButtonText').textContent = 'Voted';
-        document.getElementById('voteCount').textContent = String(data.vote_count || data.count || 0);
+        const countResponse = await fetch(`/api/votes/${encodeURIComponent(submissionId)}/count`);
+        const countData = await countResponse.json();
+        document.getElementById('voteCount').textContent = String(countData.vote_count || 0);
       } catch (error) {
         alert(error.message || 'Unable to vote.');
       }

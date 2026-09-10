@@ -1,6 +1,6 @@
 ﻿"""Contest ORM model."""
 
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, JSON, String, Text
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy import text as sa_text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -12,7 +12,7 @@ class ContestModel(Base):
     __tablename__ = "contests"
     __table_args__ = {"schema": "app", "extend_existing": True}
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger().with_variant(Integer, 'sqlite'), primary_key=True, autoincrement=True)
     title = Column(String(255), nullable=False)
     slug = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)

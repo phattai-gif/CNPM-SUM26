@@ -39,7 +39,13 @@ class VoteService:
         if submission is None:
             return None, "submission_not_found"
 
-        if submission.status != "winner":
+        if submission.status not in {
+            "published",
+            "approved",
+            "winner",
+            "winner_approved",
+            "active",
+        }:
             return None, "submission_not_public"
 
         # Check if user has already voted

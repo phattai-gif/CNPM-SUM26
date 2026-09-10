@@ -16,10 +16,10 @@ def submission_review(submission_id):
     """
     submission = {
         'id': submission_id,
-        'title': 'BÃ i máº«u: BÃ¬nh minh trÃªn phá»‘ cá»•',
-        'author': 'Nguyá»…n VÄƒn A',
+        'title': 'Bài mẫu: Bình minh trên phố cổ',
+        'author': 'Nguyễn Văn A',
         'submitted_at': '2026-08-14 09:00',
-        'content': 'ÄÃ¢y lÃ  ná»™i dung bÃ i dá»± thi máº«u. Ná»™i dung mÃ´ táº£ Ã½ tÆ°á»Ÿng vÃ  ká»¹ thuáº­t.',
+        'content': 'Đây là nội dung bài dự thi mẫu. Nội dung mô tả ý tưởng và kỹ thuật.',
         'attachments': ['answer.pdf'],
         'flagged': True,
         'image_url': None,

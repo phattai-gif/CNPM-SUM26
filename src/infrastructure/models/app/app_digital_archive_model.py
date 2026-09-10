@@ -13,7 +13,7 @@ class DigitalArchiveExhibitModel(Base):
         {"schema": "app", "extend_existing": True},
     )
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger().with_variant(Integer, 'sqlite'), primary_key=True, autoincrement=True)
     contest_id = Column(BigInteger, ForeignKey("app.contests.id", ondelete="CASCADE"), nullable=False)
     submission_id = Column(BigInteger, ForeignKey("app.submissions.id", ondelete="CASCADE"), nullable=False)
     award_title = Column(String(100), nullable=True)

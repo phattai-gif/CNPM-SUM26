@@ -565,9 +565,14 @@
             <!-- Error State -->
             <div class="error-state" id="errorState" style="display: none;">
                 <div class="error-icon">⚠️</div>
+
+                <h3 id="errorTitle">Submission Not Found</h3>
+                <p id="errorMessage">Bài dự thi không tồn tại hoặc bạn không có quyền truy cập.</p>
+                <a href="/my-submissions" class="btn-primary-action">Back to Submissions</a>
                 <h3 id="errorTitle">Submission not found</h3>
                 <p id="errorMessage">This submission does not exist or you do not have access.</p>
                 <a href="/my-submissions" class="btn-primary-action">Back to submissions</a>
+
             </div>
 
             <!-- Detail Content (Populated by JS) -->
@@ -578,8 +583,13 @@
                     <div class="draft-banner-content">
                         <span class="draft-icon">📝</span>
                         <div>
+
+                            <h4>This work is currently a Draft</h4>
+                            <p>Tác phẩm này chưa được gửi chấm điểm chính thức. Bạn có thể bổ sung thông tin hoặc nộp ngay.</p>
+
                             <h4>This work is a Draft</h4>
                             <p>This work has not been officially submitted for judging. Add information or submit it now.</p>
+
                         </div>
                     </div>
                     <div class="draft-banner-actions">
@@ -642,7 +652,11 @@
                                 <div class="contest-badge" id="detailContestBadge">Analog Contest</div>
                                 <div class="status-badge-lg" id="detailStatusBadge">Submitted</div>
                             </div>
+
+                            <h1 class="submission-title" id="detailTitle">Work Title</h1>
+
                             <h1 class="submission-title" id="detailTitle">Work title</h1>
+
                             <div class="meta-row">
                                 <span class="meta-item">📍 <strong id="detailRoundName">Round 1</strong></span>
                                 <span class="meta-item">📅 Submitted: <strong id="detailSubmittedDate">-</strong></span>

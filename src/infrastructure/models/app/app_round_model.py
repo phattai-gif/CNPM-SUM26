@@ -11,7 +11,7 @@ class RoundModel(Base):
     __tablename__ = "rounds"
     __table_args__ = {"schema": "app", "extend_existing": True}
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger().with_variant(Integer, 'sqlite'), primary_key=True, autoincrement=True)
     contest_id = Column(BigInteger, ForeignKey("app.contests.id", ondelete="CASCADE"), nullable=False)
     round_number = Column(Integer, nullable=False, default=1)
     title = Column(String(255), nullable=False)

@@ -321,6 +321,8 @@ class ScoreService:
             return None, "round_not_found"
         if getattr(round_obj, "contest_id", None) != contest_id:
             return None, "round_not_in_contest"
+        if str(getattr(round_obj, "status", "")).lower() not in {"finalized", "completed"}:
+            return None, "round_not_finalized"
 
         submission = self.submission_repo.get_by_id(submission_id)
         if submission is None:
@@ -406,7 +408,7 @@ class ScoreService:
 
     def finalize_round(self, round_id: int):
         """
-        Chá»‘t Ä‘iá»ƒm vÃ²ng thi.
+        Chốt điểm vòng thi.
 
         Quy trÃ¬nh:
         1. Kiá»ƒm tra vÃ²ng thi tá»“n táº¡i.

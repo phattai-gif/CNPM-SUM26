@@ -111,7 +111,7 @@ def token_required(f):
 
 
 def role_required(*allowed_roles):
-    """Decorator kiá»ƒm tra JWT Token vÃ  xÃ¡c thá»±c Vai trÃ² (Role) cá»§a ngÆ°á»i dÃ¹ng"""
+    """Decorator kiểm tra JWT Token và xác thực vai trò (Role) của người dùng."""
     def decorator(f):
         @wraps(f)
         @token_required
