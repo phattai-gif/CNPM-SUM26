@@ -147,7 +147,7 @@
         setHidden(registerLink, isLoggedIn);
         setHidden(usernameLabel, !isLoggedIn);
         setHidden(logoutButton, !isLoggedIn);
-        setHidden(notificationsButton, !(isLoggedIn && isManager));
+        setHidden(notificationsButton, !isLoggedIn);
 
         if (isLoggedIn && usernameLabel) {
           usernameLabel.textContent = displayNameFromUser(session.user);
