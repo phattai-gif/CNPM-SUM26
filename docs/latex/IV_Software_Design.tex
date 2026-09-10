@@ -968,3 +968,145 @@ ip\_address & VARCHAR(45) & IP address of the action & no & yes & \\
 created\_at & TIMESTAMPTZ & Time the log entry was created & no & yes & \\
 \hline
 \end{longtable}
+
+\vspace{1em}
+\subsection{Contest Management}
+\label{subsec:contest-management}
+
+\vspace{0.6em}
+\subsubsection{Authentication}
+\label{subsubsec:design-authentication}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.1 Register}
+\label{par:register}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.1}Register}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.1.1 Class Diagram}
+\label{subpar:class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.55\textwidth]{{images/class 3.1.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.1.2 Sequence Diagram}
+\label{subpar:sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.1.1.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.2 Login}
+\label{par:design-login}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.2}Login}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.2.1 Class Diagram}
+\label{subpar:login-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.75\textwidth]{{images/cla 3.1.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.2.2 Sequence Diagram}
+\label{subpar:login-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.1.2.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.3 JWT Authentication and Role Authorization}
+\label{par:jwt-auth-role-authorization}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.3}JWT Authentication and Role Authorization}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.3.1 Class Diagram}
+\label{subpar:jwt-auth-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.3.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.99\textwidth]{{images/cla 3.1.3.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.3.2 Sequence Diagram}
+\label{subpar:jwt-auth-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.3.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.1.3.2}}
+\end{center}
+
+\vspace{1em}
+\subsubsection{User and Role Management}
+\label{subsubsec:design-user-role-management}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.1 View and Update User Profile}
+\label{par:design-view-update-user-profile}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.2.1}View and Update User Profile}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.1.1 Class Diagram}
+\label{subpar:view-update-user-profile-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.75\textwidth]{{images/cla 3.2.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.1.2 Sequence Diagram}
+\label{subpar:view-update-user-profile-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.2.1.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.2 Admin Manage Users}
+\label{par:design-admin-manage-users}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.2.2}Admin Manage Users}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.2.1 Class Diagram}
+\label{subpar:admin-manage-users-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.65\textwidth]{{images/cla 3.2.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.2.2 Sequence Diagram}
+\label{subpar:admin-manage-users-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.2.2.2}}
+\end{center}
+
+
+
+
+
