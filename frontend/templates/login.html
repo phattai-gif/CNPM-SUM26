@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,185 +9,86 @@
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
   <style>
-    /* ===== DARK MODE OVERRIDES ===== */
     body {
       background: #080c14 !important;
       color: #e8edf2 !important;
       min-height: 100vh;
-      font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
-    }
-
-    .auth-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: calc(100vh - 80px);
-      padding: 20px;
+      font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
     }
 
     .auth-card {
-      background: #111a26;
-      border: 1px solid #1e2a3a;
-      border-radius: 20px;
-      padding: 40px 36px;
+      padding: 34px 30px;
       max-width: 420px;
-      width: 100%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      transition: all 0.3s ease;
-    }
-    .auth-card:hover {
-      border-color: #f5a623;
-      box-shadow: 0 20px 60px rgba(245, 166, 35, 0.06);
-    }
-
-    .auth-card .eyebrow {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #f5a623;
-      font-weight: 600;
-      margin: 0 0 4px;
     }
 
     .auth-card h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: #f0f4f8;
-      margin: 0 0 24px;
+      margin-bottom: 16px;
     }
 
     .auth-card form {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
 
-    .auth-card label {
-      font-weight: 600;
-      color: #99abb8;
-      font-size: 0.9rem;
-      margin-bottom: 2px;
-    }
-
-    .auth-card input {
+    .password-field {
+      position: relative;
       width: 100%;
-      padding: 12px 14px;
-      border: 2px solid #1e2a3a;
-      border-radius: 12px;
-      font-size: 1rem;
-      background: #0d1622;
-      color: #e8edf2;
-      transition: all 0.3s ease;
     }
 
-    .auth-card input:focus {
-      border-color: #f5a623;
-      box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
-      outline: none;
-      background: #0d1622;
-      color: #e8edf2;
+    .password-field input {
+      padding-right: 48px;
     }
 
-    .auth-card input::placeholder {
-      color: #6b7f94;
-    }
-
-    .auth-card button {
-      width: 100%;
-      padding: 12px;
-      background: #f5a623;
-      color: #080c14;
-      border: none;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 700;
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: auto !important;
+      min-width: 0 !important;
+      height: auto !important;
+      padding: 6px 8px !important;
+      margin: 0 !important;
+      border: none !important;
+      border-radius: 8px !important;
+      background: transparent !important;
+      color: #8899aa !important;
+      box-shadow: none !important;
       cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 4px;
+      font-size: 1.1rem;
+      line-height: 1;
+      z-index: 2;
     }
 
-    .auth-card button:hover {
-      background: #e0960a;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
+    .password-toggle:hover {
+      background: rgba(245, 166, 35, 0.08) !important;
+      color: #f5a623 !important;
     }
 
-    .auth-card button:active {
-      transform: translateY(0);
+    .utility-row {
+      text-align: right;
+      margin-top: 2px;
+      margin-bottom: 4px;
     }
 
-    .auth-card .message {
-      margin-top: 16px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    .auth-card .message.error {
-      display: block;
-      background: rgba(220, 38, 38, 0.12);
-      color: #f87171;
-      border: 1px solid rgba(220, 38, 38, 0.25);
-    }
-
-    .auth-card .message.success {
-      display: block;
-      background: rgba(245, 166, 35, 0.12);
-      color: #f5a623;
-      border: 1px solid rgba(245, 166, 35, 0.25);
-    }
-
-    .auth-card .secondary-text {
-      margin-top: 20px;
-      text-align: center;
-      color: #8899aa;
-      font-size: 0.9rem;
-    }
-
-    .auth-card .secondary-text a {
+    .utility-row a {
       color: #f5a623;
       text-decoration: none;
-      font-weight: 600;
-      transition: all 0.2s ease;
+      font-size: 0.9rem;
     }
 
-    .auth-card .secondary-text a:hover {
-      color: #e0960a;
+    .utility-row a:hover {
       text-decoration: underline;
     }
 
-    /* ===== SCROLLBAR ===== */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0d1622;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #f5a623;
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #e0960a;
+    .auth-card .secondary-text {
+      text-align: center;
+      margin-top: 10px;
     }
 
-    /* ===== RESPONSIVE ===== */
-    @media (max-width: 480px) {
-      .auth-card {
-        padding: 28px 20px;
-      }
-      .auth-card h1 {
-        font-size: 1.3rem;
-      }
-      .auth-card input {
-        padding: 10px 12px;
-        font-size: 0.9rem;
-      }
-      .auth-card button {
-        padding: 10px;
-        font-size: 0.9rem;
-      }
+    .auth-card .secondary-text + .secondary-text {
+      margin-top: 6px;
     }
   </style>
 </head>
@@ -197,48 +98,36 @@
     <div class="auth-card">
       <p class="eyebrow">ANALOG CONTEST</p>
       <h1>Log In</h1>
+
       <form id="loginForm" novalidate>
-        <label for="username">Username</label>
-
-        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Nhập tên đăng nhập">
-
-        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Enter your username">
-
-
-        <label for="password">Password</label>
-        <div style="position: relative; display: flex; align-items: center; width: 100%;">
-          <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Enter your password" style="padding-right: 44px;">
-          <button type="button" id="togglePasswordBtn" title="Show/Hide password" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
+        <div>
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" required autocomplete="username" placeholder="Enter your username">
         </div>
 
-        <p style="margin-top: 6px; text-align: right; font-size: 0.9rem;"><a href="{{ url_for('auth.forgot_password_page') }}" style="color: var(--primary); text-decoration: none;">Forgot Password?</a></p>
+        <div>
+          <label for="password">Password</label>
+          <div class="password-field">
+            <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Enter your password">
+            <button type="button" id="togglePasswordBtn" class="password-toggle" title="Show/Hide password" aria-label="Show or hide password">👁️</button>
+          </div>
+        </div>
 
-        <p style="margin-top: 6px; text-align: right; font-size: 0.9rem;"><a href="{{ url_for('auth.forgot_password_page') }}" style="color: var(--primary); text-decoration: none;">Forgot password?</a></p>
-
+        <div class="utility-row">
+          <a href="{{ url_for('auth.forgot_password_page') }}">Forgot Password?</a>
+        </div>
 
         <button type="submit">Log In</button>
       </form>
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const toggleBtn = document.getElementById('togglePasswordBtn');
-          const passInput = document.getElementById('password');
-          if (toggleBtn && passInput) {
-            toggleBtn.addEventListener('click', function() {
-              const isPass = passInput.type === 'password';
-              passInput.type = isPass ? 'text' : 'password';
-              toggleBtn.textContent = isPass ? '🙈' : '👁️';
-            });
-          }
-        });
-      </script>
 
       <div class="auth-separator">
         <span>Or continue with</span>
       </div>
+
       <div id="googleBtnContainer" class="google-btn-wrapper">
         <div id="googleBtn" class="google-btn-container"></div>
         <button id="customGoogleBtn" type="button" class="btn-google-custom">
-          <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24">
+          <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
             <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.62z"/>
@@ -251,16 +140,27 @@
       <div id="message" class="message"></div>
 
       <p class="secondary-text">No account yet? <a href="{{ url_for('auth.register_page') }}">Create an Account</a></p>
-      <p class="secondary-text" style="margin-top: 8px;">Already registered? <a href="{{ url_for('auth.verify_email_page') }}">Verify Email</a></p>
-
-      <p class="secondary-text">New here? <a href="{{ url_for('auth.register_page') }}">Create an account</a></p>
-      <p class="secondary-text" style="margin-top: 8px;">Already registered? <a href="{{ url_for('auth.verify_email_page') }}">Verify your email</a></p>
-
+      <p class="secondary-text">Already registered? <a href="{{ url_for('auth.verify_email_page') }}">Verify Email</a></p>
     </div>
   </div>
+
   <script>
     window.google_client_id = "{{ config.GOOGLE_CLIENT_ID or google_client_id or '' }}";
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const toggleBtn = document.getElementById('togglePasswordBtn');
+      const passInput = document.getElementById('password');
+
+      if (toggleBtn && passInput) {
+        toggleBtn.addEventListener('click', function() {
+          const isPassword = passInput.type === 'password';
+          passInput.type = isPassword ? 'text' : 'password';
+          toggleBtn.textContent = isPassword ? '🙈' : '👁️';
+        });
+      }
+    });
   </script>
+
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="{{ url_for('static', filename='api_client.js') }}"></script>
   <script src="{{ url_for('static', filename='auth.js') }}"></script>

@@ -1,184 +1,229 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Contest Results - Leaderboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Contest Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/admin.css">
     <style>
         body {
-            background: #080c14 !important;
-            padding: 24px;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-            color: #e8edf2 !important;
-            min-height: 100vh;
+            background: #080c14;
+            color: #e8edf2;
+            font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
         }
 
-        .container {
-            max-width: 1200px;
+        .page-shell {
+            max-width: 1180px;
             margin: 0 auto;
+            padding: 36px 20px 48px;
         }
 
-        h1 {
-            color: #f0f4f8 !important;
-            font-weight: 700;
-            margin-bottom: 8px;
+        .page-title {
+            font-size: clamp(2.5rem, 4vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin: 0 0 18px;
+            color: #f4f7fa;
         }
 
-        .text-muted {
-            color: #8899aa !important;
+        .section-label {
+            margin: 14px 0 22px;
+            color: #7e8fa4;
+            font-size: 1.02rem;
         }
 
-        /* ===== WINNERS SECTION ===== */
-        .winners {
+        .winner-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .winner-card {
+            background: #111a26;
+            border: 1px solid #1e2a3a;
+            border-radius: 18px;
+            padding: 14px;
+            box-shadow: 0 14px 28px rgba(0,0,0,0.28);
+        }
+
+        .winner-top {
             display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
-        .winner {
-            background: #111a26 !important;
-            border: 1px solid #1e2a3a !important;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            flex: 1;
-            min-width: 280px;
-            color: #f0f4f8 !important;
-        }
-
-        .rank-badge {
-            width: 36px;
-            height: 36px;
+        .winner-rank {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
+            background: #f5a623;
+            color: #111a26;
+            font-weight: 800;
+            font-size: 0.92rem;
+        }
+
+        .winner-card h3 {
+            margin: 0;
+            color: #f0f4f8;
+            font-size: 1.02rem;
             font-weight: 700;
-            flex-shrink: 0;
-        }
-        .rank-1 { background: #f5a623 !important; color: #080c14 !important; }
-        .rank-2 { background: #9ca3af !important; color: #080c14 !important; }
-        .rank-3 { background: #cd7f32 !important; color: #fff !important; }
-
-        /* ===== LEADERBOARD TABLE ===== */
-        .leaderboard {
-            background: #111a26 !important;
-            border: 1px solid #1e2a3a !important;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
-        .leaderboard h3 {
-            color: #f0f4f8 !important;
-            font-weight: 600;
-            margin: 0 0 16px;
+        .winner-card p {
+            margin: 4px 0 0;
+            color: #aab8c7;
+            font-size: 0.92rem;
         }
 
-        .table {
-            border-collapse: collapse;
-            background: #111a26 !important;
+        .winner-image {
             width: 100%;
-            margin-bottom: 0;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-top: 10px;
+            display: block;
         }
 
-        .table thead th {
-            background: #0d1622 !important;
-            color: #f5a623 !important;
-            font-weight: 700;
+        .winner-meta {
+            margin-top: 12px;
+            color: #b2c0cc;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .winner-meta strong {
+            color: #f0f4f8;
+        }
+
+        .leaderboard-panel {
+            background: #111a26;
+            border-radius: 18px;
+            border: 1px solid #1e2a3a;
+            padding: 20px 18px 8px;
+            box-shadow: 0 12px 26px rgba(0,0,0,0.22);
+            margin-top: 28px;
+        }
+
+        .leaderboard-panel h2 {
+            margin: 0 0 20px;
+            color: #f0f4f8;
+            font-size: clamp(1.8rem, 2vw, 2.4rem);
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table thead th {
+            text-align: left;
+            color: #adbad0;
+            font-size: 0.78rem;
             text-transform: uppercase;
-            font-size: 0.8rem;
-            border-bottom: 2px solid #1e2a3a !important;
-            padding: 14px 16px !important;
+            letter-spacing: 0.08em;
+            padding: 12px 14px;
+            border-bottom: 1px solid #243241;
         }
 
-        .table tbody tr {
-            background: #111a26 !important;
-            border-bottom: 1px solid #1e2a3a !important;
+        .leaderboard-table tbody td {
+            color: #edf3f9;
+            padding: 14px;
+            border-bottom: 1px solid #243241;
         }
 
-        /* Ép toàn bộ chữ trong bảng hiển thị màu trắng sáng rõ nét, tuyệt đối không bị mờ */
-        .table tbody td {
-            color: #f0f4f8 !important;
-            padding: 14px 16px !important;
-            background: #111a26 !important;
+        .leaderboard-table tbody tr:last-child td {
+            border-bottom: none;
         }
 
-        .table tbody td:first-child {
+        .leaderboard-table tbody td:first-child {
+            color: #f5a623;
             font-weight: 700;
-            color: #f5a623 !important;
         }
 
-        .text-end {
-            text-align: right;
+        .score {
+            color: #f5a623;
+            font-weight: 700;
+        }
+
+        @media (max-width: 920px) {
+            .winner-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     {% include '_nav.html' %}
-    <div class="container">
-        <h1 class="mb-3">Contest Results</h1>
-<<<<<<< HEAD
-        <p class="text-muted">Bảng xếp hạng cuối cùng và các tác phẩm đạt giải.</p>
-=======
-        <p class="text-muted">Final rankings and award-winning works.</p>
->>>>>>> origin/main
+    <div class="page-shell">
+        <h1 class="page-title">Contest Results</h1>
+        <div class="section-label">Final rankings and award-winning works.</div>
 
-        <!-- PHẦN HIỂN THỊ TOP 3 (CÓ ĐỦ ẢNH, MÁY ẢNH, LOẠI PHIM, ĐIỂM) -->
-        <div class="winners">
-            {% for item in winners %}
-            <div class="winner">
-                <div class="d-flex align-items-center gap-3 mb-2">
-                    <span class="rank-badge rank-{{ item.rank }}">{{ item.rank }}</span>
-                    <div>
-                        <h6 class="mb-0 text-white fw-bold">{{ item.author }}</h6>
-                        <small class="text-muted">{{ item.title }}</small>
+        <div class="winner-grid">
+            {% if winners %}
+                {% for item in winners %}
+                    <article class="winner-card">
+                        <div class="winner-top">
+                            <span class="winner-rank">{{ item.rank }}</span>
+                            <div>
+                                <h3>{{ item.author }}</h3>
+                                <p>{{ item.title }}</p>
+                            </div>
+                        </div>
+
+                        {% if item.image_url %}
+                            <img class="winner-image" src="{{ item.image_url }}" alt="{{ item.title }}">
+                        {% endif %}
+
+                        <div class="winner-meta">
+                            {% if item.camera %}<div><strong>Camera:</strong> {{ item.camera }}</div>{% endif %}
+                            {% if item.film_stock %}<div><strong>Film stock:</strong> {{ item.film_stock }}</div>{% endif %}
+                            <div><strong>Total score:</strong> <span class="score">{{ item.score }}</span></div>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <article class="winner-card">
+                    <div class="winner-top">
+                        <span class="winner-rank">1</span>
+                        <div>
+                            <h3>Loading</h3>
+                            <p>Waiting for results...</p>
+                        </div>
                     </div>
-                </div>
-                
-                {% if item.image_url %}
-                <div style="height: 160px; border-radius: 8px; overflow: hidden; background: #080c14; margin-top: 10px; margin-bottom: 12px;">
-                    <img src="{{ item.image_url }}" alt="{{ item.title }}" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-                {% endif %}
-
-                <div style="font-size: 0.85rem; color: #b0c4de; line-height: 1.5;">
-                    {% if item.camera %}<div>Camera: <span class="text-white">{{ item.camera }}</span></div>{% endif %}
-                    {% if item.film_stock %}<div>Film stock: <span class="text-white">{{ item.film_stock }}</span></div>{% endif %}
-                    <div>Total score: <span style="color: #f5a623; font-weight: 700;">{{ item.score }}</span></div>
-                </div>
-            </div>
-            {% endfor %}
+                </article>
+            {% endif %}
         </div>
 
-        <!-- BẢNG XẾP HẠNG CHI TIẾT -->
-        <section class="leaderboard">
-            <h3>Leaderboard</h3>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Author</th>
-                            <th>Title</th>
-                            <th class="text-end">Total Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in leaderboard %}
+        <section class="leaderboard-panel">
+            <h2>Leaderboard</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Author</th>
+                        <th>Title</th>
+                        <th>Total Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in leaderboard %}
                         <tr>
                             <td>{{ item.rank }}</td>
                             <td>{{ item.author }}</td>
                             <td>{{ item.title }}</td>
-                            <td class="text-end" style="color: #f5a623; font-weight: 700;">{{ item.score }}</td>
+                            <td class="score">{{ item.score }}</td>
                         </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                    {% endfor %}
+                </tbody>
+            </table>
         </section>
     </div>
 </body>
