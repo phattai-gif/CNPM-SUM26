@@ -200,10 +200,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.btnShareProfile.addEventListener('click', () => {
                     if (navigator.clipboard) {
                         navigator.clipboard.writeText(window.location.href)
-                            .then(() => this.showToast('Đã sao chép liên kết hồ sơ vào bộ nhớ tạm!', 'success'))
-                            .catch(() => this.showToast('Không thể sao chép liên kết.', 'error'));
+                            .then(() => this.showToast('Profile link copied to clipboard!', 'success'))
+                            .catch(() => this.showToast('Unable to copy profile link.', 'error'));
                     } else {
-                        this.showToast('Liên kết: ' + window.location.href, 'info');
+                        this.showToast('Profile link: ' + window.location.href, 'info');
                     }
                 });
             }
@@ -251,12 +251,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         renderUserHeader(user) {
-            const displayName = user.full_name || user.username || 'Nhiếp Ảnh Gia';
+            const displayName = user.full_name || user.username || 'Photographer';
             const username = user.username ? `@${user.username}` : '@photographer';
-            const email = user.email || 'Chưa cập nhật email';
+            const email = user.email || 'No email provided';
             const rawRole = (user.role || 'participant').toLowerCase();
             const roleDisplay = rawRole === 'organizer' ? 'ORGANIZER' : rawRole === 'admin' ? 'ADMINISTRATOR' : (user.role || 'Participant').toUpperCase();
-            const bio = user.bio || 'Chưa cập nhật tiểu sử nghệ sĩ. Hãy bấm "Chỉnh Sửa Hồ Sơ" để giới thiệu bản thân và chia sẻ niềm đam mê ảnh phim analog!';
+            const bio = user.bio || 'No artist biography yet. Click "Edit Profile" to introduce yourself and share your passion for analog film photography!';
             const initial = displayName.charAt(0).toUpperCase();
 
             this.profileFullName.textContent = displayName;
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnDash.href = rawRole === 'admin' ? '/admin/dashboard' : '/organizer/dashboard';
                 btnDash.innerHTML = `
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    ${rawRole === 'admin' ? 'Dashboard Admin' : 'Dashboard Quản Lý'}
+                    ${rawRole === 'admin' ? 'Admin Dashboard' : 'Organizer Dashboard'}
                 `;
             }
 
@@ -292,9 +292,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (user.created_at) {
                 const joinDate = new Date(user.created_at);
-                this.profileJoinedDate.textContent = `Thành viên từ ${joinDate.getFullYear()}`;
+                this.profileJoinedDate.textContent = `Member since ${joinDate.getFullYear()}`;
             } else {
-                this.profileJoinedDate.textContent = 'Thành viên 2026';
+                this.profileJoinedDate.textContent = 'Member since 2026';
             }
 
             // Render Avatar
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!fullName) {
-                this.showToast('Vui lòng nhập họ và tên hiển thị.', 'error');
+                this.showToast('Please enter your display name.', 'error');
                 return;
             }
 
@@ -398,27 +398,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 this.closeEditModal();
-                this.showToast('Cập nhật thông tin hồ sơ thành công!', 'success');
+                this.showToast('Profile updated successfully!', 'success');
             } catch (error) {
                 console.error('Failed to update profile:', error);
-                this.showToast(error.message || 'Không thể cập nhật hồ sơ. Vui lòng thử lại.', 'error');
+                this.showToast(error.message || 'Unable to update profile. Please try again.', 'error');
             }
         }
 
         renderGuestState() {
-            this.profileFullName.textContent = 'Khách truy cập';
+            this.profileFullName.textContent = 'Guest User';
             this.profileUsername.textContent = '@guest';
-            this.profileEmail.textContent = 'Chưa đăng nhập';
+            this.profileEmail.textContent = 'Not logged in';
             this.profileRolePill.textContent = 'GUEST';
-            this.profileBioText.innerHTML = 'Vui lòng <a href="/auth/login" style="color:var(--accent-amber); font-weight:700;">Đăng Nhập</a> để quản lý hồ sơ và tác phẩm nhiếp ảnh cá nhân.';
+            this.profileBioText.innerHTML = 'Please <a href="/auth/login" style="color:var(--accent-amber); font-weight:700;">Log In</a> to manage your profile and portfolio.';
             this.statTotalPhotos.textContent = '0';
             this.statApprovedPhotos.textContent = '0';
             this.statHighScore.textContent = '--';
             this.statContestsJoined.textContent = '0';
             this.portfolioLoading.style.display = 'none';
             this.portfolioEmpty.style.display = 'block';
-            this.emptyTitle.textContent = 'Bạn chưa đăng nhập';
-            this.emptySubtitle.textContent = 'Đăng nhập hoặc đăng ký tài khoản để khám phá tính năng quản lý hồ sơ nghệ sĩ và tác phẩm nhiếp ảnh phim analog.';
+            this.emptyTitle.textContent = 'You are not logged in';
+            this.emptySubtitle.textContent = 'Log in or create an account to explore artist portfolio management and analog film competitions.';
         }
 
         async loadUserPortfolio() {
@@ -442,8 +442,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Failed to load user submissions for portfolio:', error);
                 this.portfolioLoading.style.display = 'none';
                 this.portfolioEmpty.style.display = 'block';
-                this.emptyTitle.textContent = 'Chưa thể tải tác phẩm';
-                this.emptySubtitle.textContent = 'Không thể kết nối đến thư viện ảnh. Vui lòng kiểm tra lại kết nối mạng.';
+                this.emptyTitle.textContent = 'Unable to load portfolio';
+                this.emptySubtitle.textContent = 'Could not retrieve your submissions. Please check your internet connection.';
             } finally {
                 this.portfolioLoading.style.display = 'none';
             }

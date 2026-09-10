@@ -210,9 +210,9 @@
     } catch (error) {
       console.error(error);
       if (container) {
-        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Lỗi khi tải danh sách: ${escapeHtml(error.message)}</p>`;
+        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Error loading users: ${escapeHtml(error.message)}</p>`;
       }
-      showToast(error.message || 'Không thể tải danh sách người dùng', true);
+      showToast(error.message || 'Unable to load user accounts', true);
     }
   }
 
@@ -221,7 +221,7 @@
     if (!container) return;
 
     if (!state.users.length) {
-      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Không tìm thấy tài khoản người dùng nào.</p>';
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">No user accounts found.</p>';
       return;
     }
 
@@ -233,11 +233,11 @@
         <thead>
           <tr>
             <th>ID</th>
-            <th>Người Dùng</th>
+            <th>User</th>
             <th>Email</th>
-            <th>Vai Trò</th>
-            <th>Trạng Thái</th>
-            <th>Hành Động</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -255,10 +255,10 @@
                 <td>${escapeHtml(u.email || '-')}</td>
                 <td>
                   <select class="field-input role-select btn-sm" data-user-id="${escapeHtml(u.id)}" ${isSelf ? 'disabled' : ''}>
-                    <option value="participant" ${u.role === 'participant' ? 'selected' : ''}>Participant (Thí sinh)</option>
-                    <option value="judge" ${u.role === 'judge' ? 'selected' : ''}>Judge (Giám khảo)</option>
-                    <option value="organizer" ${u.role === 'organizer' ? 'selected' : ''}>Organizer (Ban tổ chức)</option>
-                    <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin (Quản trị viên)</option>
+                    <option value="participant" ${u.role === 'participant' ? 'selected' : ''}>Participant</option>
+                    <option value="judge" ${u.role === 'judge' ? 'selected' : ''}>Judge</option>
+                    <option value="organizer" ${u.role === 'organizer' ? 'selected' : ''}>Organizer</option>
+                    <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrator</option>
                   </select>
                 </td>
                 <td>
@@ -295,11 +295,11 @@
         const newRole = select.value;
         try {
           await window.apiClient.patch(`/admin/users/${userId}/role`, { role: newRole });
-          showToast(`Đã thay đổi vai trò tài khoản #${userId} thành ${newRole.toUpperCase()}`);
+          showToast(`Changed role for user #${userId} to ${newRole.toUpperCase()}`);
           await loadUsers(state.pagination.page);
           await loadAdminMetrics();
         } catch (error) {
-          showToast(error.message || 'Không thể đổi vai trò', true);
+          showToast(error.message || 'Unable to update user role', true);
           await loadUsers(state.pagination.page);
         }
       });
@@ -312,11 +312,11 @@
         const newStatus = currentStatus === 'locked' ? 'active' : 'locked';
         try {
           await window.apiClient.patch(`/admin/users/${userId}/status`, { status: newStatus });
-          showToast(`Đã ${newStatus === 'locked' ? 'khóa' : 'mở khóa'} tài khoản #${userId}`);
+          showToast(`Account #${userId} is now ${newStatus.toUpperCase()}`);
           await loadUsers(state.pagination.page);
           await loadAdminMetrics();
         } catch (error) {
-          showToast(error.message || 'Không thể cập nhật trạng thái', true);
+          showToast(error.message || 'Unable to update account status', true);
         }
       });
     });
@@ -325,17 +325,17 @@
       btn.addEventListener('click', async () => {
         const userId = Number(btn.dataset.userId);
         const username = btn.dataset.username;
-        if (!confirm(`Bạn có chắc chắn muốn XÓA vĩnh viễn tài khoản "${username}" (#${userId})? Hành động này không thể hoàn tác.`)) {
+        if (!confirm(`Are you sure you want to permanently delete account "${username}" (#${userId})? This action cannot be undone.`)) {
           return;
         }
 
         try {
           await window.apiClient.delete(`/admin/users/${userId}`);
-          showToast(`Đã xóa thành công tài khoản "${username}" (#${userId})`);
+          showToast(`Deleted user "${username}" (#${userId}) successfully`);
           await loadUsers(state.pagination.page);
           await loadAdminMetrics();
         } catch (error) {
-          showToast(error.message || 'Không thể xóa tài khoản', true);
+          showToast(error.message || 'Unable to delete user account', true);
         }
       });
     });
@@ -347,12 +347,12 @@
 
     const { page, pages, total } = state.pagination;
     if (pages <= 1) {
-      container.innerHTML = `<span>Tổng số: ${total} tài khoản</span>`;
+      container.innerHTML = `<span>Total: ${total} accounts</span>`;
       return;
     }
 
     container.innerHTML = `
-      <span>Trang ${page} / ${pages} (Tổng số: ${total} tài khoản)</span>
+      <span>Page ${page} of ${pages} (Total: ${total} accounts)</span>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-outline btn-sm" id="prevPageBtn" ${page <= 1 ? 'disabled' : ''}>&laquo; Previous</button>
         <button class="btn btn-outline btn-sm" id="nextPageBtn" ${page >= pages ? 'disabled' : ''}>Next &raquo;</button>
@@ -370,7 +370,7 @@
     if (!requireAdminSession()) return;
     const container = document.getElementById('contestsListContainer');
     if (container) {
-      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải danh sách cuộc thi...</p>';
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Loading contests...</p>';
     }
 
     try {
@@ -380,7 +380,7 @@
     } catch (error) {
       console.error(error);
       if (container) {
-        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Lỗi khi tải cuộc thi: ${escapeHtml(error.message)}</p>`;
+        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Error loading contests: ${escapeHtml(error.message)}</p>`;
       }
     }
   }
@@ -399,7 +399,7 @@
     }
 
     if (!filtered.length) {
-      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Không tìm thấy cuộc thi nào phù hợp.</p>';
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">No contests found matching criteria.</p>';
       return;
     }
 
@@ -408,10 +408,10 @@
         <thead>
           <tr>
             <th>ID</th>
-            <th>Tên Cuộc Thi</th>
-            <th>Ban Tổ Chức (Organizer)</th>
-            <th>Trạng Thái</th>
-            <th>Hành Động Quản Trị</th>
+            <th>Contest Title</th>
+            <th>Organizer</th>
+            <th>Status</th>
+            <th>Admin Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -419,9 +419,9 @@
             const st = (c.status || 'draft').toLowerCase();
             let stBadge = `<span class="status-badge status-active">${escapeHtml(st.toUpperCase())}</span>`;
             if (st === 'suspended') {
-              stBadge = `<span class="status-badge status-locked">ĐÌNH CHỈ</span>`;
+              stBadge = `<span class="status-badge status-locked">SUSPENDED</span>`;
             } else if (st === 'draft' || st === 'pending') {
-              stBadge = `<span class="status-badge" style="background:rgba(245,166,35,0.18);color:#f5a623;">CHỜ DUYỆT</span>`;
+              stBadge = `<span class="status-badge" style="background:rgba(245,166,35,0.18);color:#f5a623;">PENDING</span>`;
             }
 
             return `
@@ -429,7 +429,7 @@
                 <td>#${escapeHtml(c.id)}</td>
                 <td>
                   <div class="user-meta-name">${escapeHtml(c.title)}</div>
-                  <div class="user-meta-sub">${escapeHtml(c.description || 'Không có mô tả')}</div>
+                  <div class="user-meta-sub">${escapeHtml(c.description || 'No description')}</div>
                 </td>
                 <td>ID: #${escapeHtml(c.organizer_id || '-')}</td>
                 <td>${stBadge}</td>
@@ -465,11 +465,11 @@
         const id = Number(btn.dataset.contestId);
         try {
           await window.apiClient.post(`/admin/contests/${id}/approve`);
-          showToast(`Đã xuất bản / phê duyệt cuộc thi #${id}`);
+          showToast(`Contest #${id} approved and published`);
           await loadContests();
           await loadAdminMetrics();
         } catch (err) {
-          showToast(err.message || 'Không thể duyệt cuộc thi', true);
+          showToast(err.message || 'Unable to approve contest', true);
         }
       });
     });
@@ -477,14 +477,14 @@
     container.querySelectorAll('.suspend-contest-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = Number(btn.dataset.contestId);
-        if (!confirm(`Bạn có chắc muốn ĐÌNH CHỈ cuộc thi #${id}?`)) return;
+        if (!confirm(`Are you sure you want to SUSPEND contest #${id}?`)) return;
         try {
           await window.apiClient.post(`/admin/contests/${id}/suspend`);
-          showToast(`Đã đình chỉ cuộc thi #${id}`);
+          showToast(`Contest #${id} suspended`);
           await loadContests();
           await loadAdminMetrics();
         } catch (err) {
-          showToast(err.message || 'Không thể đình chỉ cuộc thi', true);
+          showToast(err.message || 'Unable to suspend contest', true);
         }
       });
     });
@@ -492,16 +492,16 @@
     container.querySelectorAll('.reject-contest-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = Number(btn.dataset.contestId);
-        const reason = window.prompt('Nhập lý do từ chối cuộc thi:');
+        const reason = window.prompt('Enter rejection reason:');
         if (!reason || !reason.trim()) return;
         try {
           await window.apiClient.post(`/admin/contests/${id}/reject`, { reason: reason.trim() });
-          showToast(`Đã từ chối cuộc thi #${id}`);
+          showToast(`Contest #${id} rejected`);
           await loadContests();
           await loadAdminMetrics();
           await loadAuditLogs();
         } catch (err) {
-          showToast(err.message || 'Không thể từ chối cuộc thi', true);
+          showToast(err.message || 'Unable to reject contest', true);
         }
       });
     });
@@ -512,7 +512,7 @@
     if (!requireAdminSession()) return;
     const container = document.getElementById('aiReportsListContainer');
     if (container) {
-      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải báo cáo kiểm tra AI...</p>';
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Loading AI inspection reports...</p>';
     }
 
     try {
@@ -522,7 +522,7 @@
     } catch (error) {
       console.error(error);
       if (container) {
-        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Lỗi khi tải báo cáo AI: ${escapeHtml(error.message)}</p>`;
+        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Error loading AI reports: ${escapeHtml(error.message)}</p>`;
       }
     }
   }
@@ -532,7 +532,7 @@
     if (!container) return;
 
     if (!state.aiReports.length) {
-      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Chưa có báo cáo vi phạm AI nào trong hệ thống.</p>';
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">No AI flag reports in the system.</p>';
       return;
     }
 
@@ -540,12 +540,13 @@
       <table>
         <thead>
           <tr>
-            <th>ID Report</th>
-            <th>ID Bài Thi (Submission)</th>
-            <th>Model AI Phân Tích</th>
-            <th>Độ Tin Cậy AI (Confidence)</th>
-            <th>Chi Tiết Kết Quả</th>
-            <th>Thời Gian</th>
+            <th>Report ID</th>
+            <th>Submission ID</th>
+            <th>AI Model</th>
+            <th>Confidence</th>
+            <th>Details</th>
+            <th>Timestamp</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -586,15 +587,15 @@
         await window.apiClient.post(`/moderator/submissions/${submissionId}/${action}`, {
           review_notes: reviewNotes || undefined,
         });
-        showToast('Đã cập nhật trạng thái submission');
+        showToast('Submission status updated');
         await loadAiReports();
         await loadAdminMetrics();
       } catch (err) {
-        showToast(err.message || 'Không thể cập nhật submission', true);
+        showToast(err.message || 'Unable to update submission', true);
       }
     };
     container.querySelectorAll('.approve-submission-btn').forEach(btn => btn.addEventListener('click', () => moderate(btn, 'approve')));
-    container.querySelectorAll('.reject-submission-btn').forEach(btn => btn.addEventListener('click', () => moderate(btn, 'reject', 'Nhập lý do từ chối submission:')));
+    container.querySelectorAll('.reject-submission-btn').forEach(btn => btn.addEventListener('click', () => moderate(btn, 'reject', 'Enter rejection reason:')));
     container.querySelectorAll('.dismiss-flag-btn').forEach(btn => btn.addEventListener('click', () => moderate(btn, 'dismiss-flag')));
   }
 
@@ -603,7 +604,7 @@
     if (!requireAdminSession()) return;
     const container = document.getElementById('auditLogsListContainer');
     if (container) {
-      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải nhật ký audit log...</p>';
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Loading audit logs...</p>';
     }
 
     try {
@@ -613,7 +614,7 @@
     } catch (error) {
       console.error(error);
       if (container) {
-        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Lỗi khi tải audit log: ${escapeHtml(error.message)}</p>`;
+        container.innerHTML = `<p style="color:#f87171;text-align:center;padding:30px;">Error loading audit logs: ${escapeHtml(error.message)}</p>`;
       }
     }
   }
@@ -623,7 +624,7 @@
     if (!container) return;
 
     if (!state.auditLogs.length) {
-      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">Chưa có dữ liệu nhật ký hệ thống nào.</p>';
+      container.innerHTML = '<p style="color:#6b7f94;text-align:center;padding:30px;">No system audit logs recorded.</p>';
       return;
     }
 
@@ -631,11 +632,11 @@
       <table>
         <thead>
           <tr>
-            <th>ID Log</th>
-            <th>Tài Khoản Thực Hiện</th>
-            <th>Hành Động (Action)</th>
-            <th>Đối Tượng (Entity)</th>
-            <th>Thời Gian</th>
+            <th>Log ID</th>
+            <th>Actor</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Timestamp</th>
           </tr>
         </thead>
         <tbody>
@@ -653,7 +654,7 @@
     `;
   }
 
-  // --- TAB 5 & 6 Event Handlers ---
+  // --- Notification Form Handler ---
   function bindSettingsForm() {
     const form = document.getElementById('systemSettingsForm');
     if (!form) return;
@@ -670,9 +671,9 @@
 
       try {
         await window.apiClient.put('/admin/settings', payload);
-        showToast('Đã cập nhật cấu hình hệ thống thành công');
+        showToast('System configuration saved successfully');
       } catch (err) {
-        showToast(err.message || 'Lỗi khi lưu cấu hình hệ thống', true);
+        showToast(err.message || 'Error saving configuration', true);
       }
     });
   }
@@ -687,16 +688,16 @@
       const body = document.getElementById('notifBody').value.trim();
 
       if (!title || !body) {
-        showToast('Vui lòng điền đầy đủ tiêu đề và nội dung thông báo', true);
+        showToast('Please enter both title and message body', true);
         return;
       }
 
       try {
         const response = await window.apiClient.post('/admin/notifications/system', { title, body });
-        showToast(response.message || 'Đã gửi thông báo hệ thống thành công!');
+        showToast(response.message || 'Broadcast notification sent successfully!');
         form.reset();
       } catch (err) {
-        showToast(err.message || 'Không thể gửi thông báo hệ thống', true);
+        showToast(err.message || 'Unable to send broadcast notification', true);
       }
     });
   }
@@ -761,7 +762,7 @@
       refreshBtn.addEventListener('click', () => {
         loadUsers(state.pagination.page);
         loadAdminMetrics();
-        showToast('Đã làm mới danh sách người dùng & thống kê');
+        showToast('User list and metrics refreshed');
       });
     }
 
@@ -787,7 +788,7 @@
     if (btnRefreshContests) {
       btnRefreshContests.addEventListener('click', () => {
         loadContests();
-        showToast('Đã làm mới danh sách cuộc thi');
+        showToast('Contests refreshed');
       });
     }
 
@@ -795,7 +796,7 @@
     if (btnRefreshAiReports) {
       btnRefreshAiReports.addEventListener('click', () => {
         loadAiReports();
-        showToast('Đã làm mới báo cáo AI');
+        showToast('AI reports refreshed');
       });
     }
 
@@ -803,7 +804,7 @@
     if (btnRefreshAuditLogs) {
       btnRefreshAuditLogs.addEventListener('click', () => {
         loadAuditLogs();
-        showToast('Đã làm mới nhật ký audit log');
+        showToast('Audit logs refreshed');
       });
     }
 

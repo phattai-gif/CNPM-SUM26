@@ -1,0 +1,1112 @@
+% --- Chapter IV: Software Design Description ---
+\newpage
+
+\section*{IV. Software Design Description}
+\addcontentsline{toc}{section}{IV. Software Design Description}
+\setcounter{section}{4}
+
+% Number subsections in this chapter as 1, 2, ... (consistent with Chapter III)
+\renewcommand{\thesubsection}{\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+\setcounter{subsection}{0}
+
+\subsection{System Design}
+\label{subsec:system-design}
+
+\subsubsection{System Architecture}
+\label{subsubsec:system-architecture}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Frontend:} The user interface is built using standard Web technologies (HTML/CSS, JS).
+    \item \textbf{Backend:} Built with Flask (Python) following a RESTful API architecture. It uses SQLAlchemy as the ORM for database operations and implements Dependency Injection (via the dependency-injector library) for robust service management.
+    \item \textbf{Database:} Uses PostgreSQL as the primary relational database system.
+    \item \textbf{Third-party / Libraries:}
+    \begin{itemize}[leftmargin=1.5em, nosep]
+        \item \textbf{Cloudinary:} Cloud storage solution for managing image uploads.
+        \item \textbf{Pillow:} Python Imaging Library used for internal image processing.
+        \item \textbf{PyJWT \& Google-Auth:} Handles secure Authentication and Authorization.
+        \item \textbf{APScheduler:} Manages and schedules background tasks (e.g., automated scoring, opening/closing contest rounds).
+        \item \textbf{Flasgger / Swagger:} Automatically generates and serves interactive API documentation.
+    \end{itemize}
+\end{itemize}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/System Architecture}}
+\end{center}
+
+\subsubsection{Package Diagram}
+\label{subsubsec:package-diagram}
+
+\paragraph*{1.2.1 Backend}\leavevmode\\[-0.5em]
+\label{par:backend-package-diagram}
+\addcontentsline{toc}{paragraph}{\protect\numberline{1.2.1}Backend}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/Backend PD}}
+\end{center}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.08\textwidth}|>{\raggedright\arraybackslash}p{0.28\textwidth}|>{\raggedright\arraybackslash}p{0.56\textwidth}|}
+\hline
+\multicolumn{1}{|>{\centering\arraybackslash}p{0.08\textwidth}|}{\textbf{No.}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.28\textwidth}|}{\textbf{Package}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.56\textwidth}|}{\textbf{Description}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|>{\centering\arraybackslash}p{0.08\textwidth}|}{\textbf{No.}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.28\textwidth}|}{\textbf{Package}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.56\textwidth}|}{\textbf{Description}} \\
+\hline
+\endhead
+1 & src/domain/models & Contains domain models representing the core business data and entities of the film photography contest system. \\
+\hline
+2 & src/domain/interfaces & Defines interfaces and contracts used by other layers, especially for data access and application services. \\
+\hline
+3 & src/domain/constants & Contains system-wide constants used throughout the application. \\
+\hline
+4 & src/domain/enums & Defines enumeration values for contest, submission, judging, user roles, and other system states. \\
+\hline
+5 & src/domain/exceptions & Contains custom exception definitions used for handling domain and application errors. \\
+\hline
+6 & src/infrastructure/database & Provides database connection and configuration for storing and retrieving system data. \\
+\hline
+7 & src/infrastructure/models & Contains infrastructure-level data models used for database persistence and data mapping. \\
+\hline
+8 & src/infrastructure/repositories & Implements repository interfaces and provides data access operations for users, contests, submissions, judging, scores, and other data. \\
+\hline
+9 & src/infrastructure/storage & Handles storage operations for uploaded film photographs and other digital assets. \\
+\hline
+10 & src/services & Contains application services implementing the main business logic, including authentication, contest management, registration, submission, review, judging, scoring, notifications, and archive management. \\
+\hline
+11 & src/api/controllers & Handles incoming HTTP requests and delegates business operations to the application services. \\
+\hline
+12 & src/api/middleware & Provides request-processing middleware such as authentication, authorization, validation, and error handling. \\
+\hline
+13 & src/api/routes & Defines API routes and maps HTTP endpoints to the corresponding controllers. \\
+\hline
+14 & src/api/requests-responses & Defines request and response data structures used for communication between the client and backend API. \\
+\hline
+15 & src/api/swagger & Provides API documentation and testing information for the backend endpoints using Swagger/OpenAPI. \\
+\hline
+\end{longtable}
+
+\paragraph*{1.2.2 Frontend}\leavevmode\\[-0.5em]
+\label{par:frontend-package-diagram}
+\addcontentsline{toc}{paragraph}{\protect\numberline{1.2.2}Frontend}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/Frontend PD}}
+\end{center}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.08\textwidth}|>{\raggedright\arraybackslash}p{0.28\textwidth}|>{\raggedright\arraybackslash}p{0.56\textwidth}|}
+\hline
+\multicolumn{1}{|>{\centering\arraybackslash}p{0.08\textwidth}|}{\textbf{No.}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.28\textwidth}|}{\textbf{Package}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.56\textwidth}|}{\textbf{Description}} \\
+\hline
+\endfirsthead
+\multicolumn{1}{|>{\centering\arraybackslash}p{0.08\textwidth}|}{\textbf{No.}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.28\textwidth}|}{\textbf{Package}} & \multicolumn{1}{>{\centering\arraybackslash}p{0.56\textwidth}|}{\textbf{Description}} \\
+\hline
+\endhead
+1 & src/app & Next.js App Router directory, organized by role-based modules (admin, organizer, judge, participant) plus public pages and API routes. \\
+\hline
+2 & src/app/admin & Protected routes for Administrators to manage users, roles, permissions, and monitor platform activities. \\
+\hline
+3 & src/app/organizer & Routes for Organizers to create/configure contests, manage categories and criteria, verify submissions, assign judges, publish results. \\
+\hline
+4 & src/app/judge & Blind-judging portal routes for Judges to review assigned submissions, score by criteria, and leave feedback. \\
+\hline
+5 & src/app/participant & Routes for participants to manage profile, register for contests, submit photographs, and track submission status. \\
+\hline
+6 & src/app/(public) & Public-facing pages: landing page, digital archive/gallery, about, authentication (login/register). \\
+\hline
+7 & src/app/api & Server-side API routes for auth callbacks, file/image uploads, and webhook handling. \\
+\hline
+8 & src/components/ui & Atomic base UI components: Button, Input, Modal, Toast, Dialog. \\
+\hline
+9 & src/components/layout & Structural layout components: Navbar, Sidebar, Footer, Header. \\
+\hline
+10 & src/components/auth & Forms and layouts for authentication flows: login, register, forgot password. \\
+\hline
+11 & src/components/domain & Domain-specific UI: submission upload forms, judging panels, archive gallery cards, notification widgets. \\
+\hline
+12 & src/contexts & Global state via React Context API: Authentication, Theme, Notification contexts. \\
+\hline
+13 & src/hooks & Custom React hooks: useAuth, useForm, useSubmissionStatus. \\
+\hline
+14 & src/services & HTTP client instances and API endpoint methods for backend communication (authService, contestService, submissionService). \\
+\hline
+15 & src/types & TypeScript interfaces and types for API responses, entity models, and component props. \\
+\hline
+16 & src/utils & Helper functions: date formatting, file/image validation, EXIF metadata parsing helpers. \\
+\hline
+17 & src/config & Application configuration: API base endpoints, authentication settings, environment variable mapping. \\
+\hline
+18 & src/styles & Tailwind CSS configuration and global CSS definitions. \\
+\hline
+19 & src/constants & Application-wide constants: route paths, contest status codes, judging criteria labels. \\
+\hline
+20 & src/lib & Third-party library configurations: Zod validation schemas, image upload helpers. \\
+\hline
+\end{longtable}
+
+\subsection{Database Design}
+\label{subsec:database-design}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/Database}}
+\end{center}
+
+\vspace{1em}
+\subsubsection{Users Table}
+\label{subsubsec:users-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Unique identifier for the user & yes & yes & PK \\
+\hline
+username & VARCHAR(50) & User login name & yes & yes & \\
+\hline
+email & VARCHAR(255) & User email address & yes & yes & \\
+\hline
+password\_hash & VARCHAR(255) & Hashed user password & no & yes & \\
+\hline
+full\_name & VARCHAR(100) & User full name & no & no & \\
+\hline
+avatar\_url & VARCHAR(512) & User profile image URL & no & no & \\
+\hline
+bio & TEXT & User profile description & no & no & \\
+\hline
+status & VARCHAR(20) & User account status & no & yes & \\
+\hline
+email\_verified & BOOLEAN & Email verification status & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Account creation time & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Last modification time & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Roles Table}
+\label{subsubsec:roles-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Unique identifier for the role & yes & yes & PK \\
+\hline
+code & VARCHAR(50) & Unique code identifying the role & yes & yes & \\
+\hline
+name & VARCHAR(100) & Role name & no & yes & \\
+\hline
+description & VARCHAR(255) & Role description & no & no & \\
+\hline
+created\_at & TIMESTAMPTZ & Role creation timestamp & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{User Roles Table}
+\label{subsubsec:user-roles-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+user\_id & BIGINT & Reference to the assigned user & no & yes & PK, FK \\
+\hline
+role\_id & BIGINT & Reference to the assigned role & no & yes & PK, FK \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Permissions Table}
+\label{subsubsec:permissions-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Unique identifier for the permission & yes & yes & PK \\
+\hline
+code & VARCHAR(100) & Unique code identifying the permission & yes & yes & \\
+\hline
+name & VARCHAR(100) & Permission name & no & yes & \\
+\hline
+module & VARCHAR(50) & System module associated with the permission & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Permission creation timestamp & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Role Permissions Table}
+\label{subsubsec:role-permissions-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+role\_id & BIGINT & Reference to the role & no & yes & PK, FK \\
+\hline
+permission\_id & BIGINT & Reference to the permission & no & yes & PK, FK \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Contests Table}
+\label{subsubsec:contests-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Unique identifier for the contest & yes & yes & PK \\
+\hline
+title & VARCHAR(255) & Contest title & no & yes & \\
+\hline
+slug & VARCHAR(255) & Unique URL identifier for the contest & yes & yes & \\
+\hline
+description & TEXT & Contest description & no & no & \\
+\hline
+rules & TEXT & Contest rules and regulations & no & no & \\
+\hline
+banner\_url & VARCHAR(512) & URL of the contest banner image & no & no & \\
+\hline
+categories\_json & JSONB & Contest categories stored in JSON format & no & yes & \\
+\hline
+awards\_json & JSONB & Contest awards stored in JSON format & no & yes & \\
+\hline
+created\_by & BIGINT & User who created the contest & no & yes & FK \\
+\hline
+status & VARCHAR(20) & Current status of the contest & no & yes & \\
+\hline
+start\_date & TIMESTAMPTZ & Contest start date and time & no & no & \\
+\hline
+end\_date & TIMESTAMPTZ & Contest end date and time & no & no & \\
+\hline
+created\_at & TIMESTAMPTZ & Contest creation timestamp & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Last modification timestamp & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Contest Announcements Table}
+\label{subsubsec:contest-announcements-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Announcement ID & yes & yes & PK \\
+\hline
+contest\_id & BIGINT & Associated contest ID & no & yes & FK \\
+\hline
+title & VARCHAR(255) & Announcement title & no & yes & \\
+\hline
+content & TEXT & Announcement content & no & yes & \\
+\hline
+created\_by & BIGINT & Creator ID (Admin/Organizer) & no & yes & FK \\
+\hline
+created\_at & TIMESTAMPTZ & Creation timestamp & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Last update timestamp & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Contest Settings Table}
+\label{subsubsec:contest-settings-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Contest setting ID & yes & yes & PK \\
+\hline
+contest\_id & BIGINT & Associated contest ID & yes & yes & FK \\
+\hline
+allow\_public\_vote & BOOLEAN & Allows public voting & no & yes & \\
+\hline
+allow\_submission & BOOLEAN & Allows new submissions & no & yes & \\
+\hline
+max\_submission\_per\_user & INT & Maximum submissions per user & no & yes & \\
+\hline
+scoring\_mode & VARCHAR(50) & Scoring mode (e.g., weighted) & no & yes & \\
+\hline
+judges\_visible & BOOLEAN & Makes judge identities visible & no & yes & \\
+\hline
+announcement\_enabled & BOOLEAN & Enables contest announcements & no & yes & \\
+\hline
+ai\_duplicate\_threshold & FLOAT & AI threshold for duplicate detection & no & yes & \\
+\hline
+ai\_risk\_threshold & FLOAT & AI threshold for metadata risk & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Creation timestamp & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Last update timestamp & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Rounds Table}
+\label{subsubsec:rounds-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Round ID & yes & yes & PK \\
+\hline
+contest\_id & BIGINT & Associated contest ID & no & yes & FK \\
+\hline
+round\_number & INT & Sequence number of the round & no & yes & \\
+\hline
+title & VARCHAR(255) & Round title & no & yes & \\
+\hline
+description & TEXT & Detailed description of the round & no & no & \\
+\hline
+start\_date & TIMESTAMPTZ & Round start date & no & no & \\
+\hline
+end\_date & TIMESTAMPTZ & Round end date & no & no & \\
+\hline
+weight & NUMERIC(5,2) & Score weight for the round & no & no & \\
+\hline
+status & VARCHAR(20) & Current status (upcoming, ongoing...) & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Creation timestamp & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Last update timestamp & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Criteria Table}
+\label{subsubsec:criteria-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Criteria ID & yes & yes & PK \\
+\hline
+round\_id & BIGINT & Associated round ID & no & yes & FK \\
+\hline
+name & VARCHAR(255) & Name of the scoring criteria & no & yes & \\
+\hline
+description & TEXT & Detailed criteria description & no & no & \\
+\hline
+max\_score & NUMERIC(5,2) & Maximum possible score & no & yes & \\
+\hline
+weight & NUMERIC(5,2) & Weight multiplier for this criteria & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Creation timestamp & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Last update timestamp & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Submissions Table}
+\label{subsubsec:submissions-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.21\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & Submission ID & yes & yes & PK \\
+\hline
+round\_id & BIGINT & Associated round ID & no & yes & FK \\
+\hline
+user\_id & BIGINT & Submitting user ID & no & yes & FK \\
+\hline
+title & VARCHAR(255) & Submission/Artwork title & no & yes & \\
+\hline
+story\_description & TEXT & Artwork background story/description & no & no & \\
+\hline
+status & VARCHAR(20) & Submission status (draft, submitted...) & no & yes & \\
+\hline
+final\_score & NUMERIC(5,2) & Final calculated score & no & no & \\
+\hline
+submitted\_at & TIMESTAMPTZ & Submission timestamp & no & no & \\
+\hline
+created\_at & TIMESTAMPTZ & Creation timestamp & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Last update timestamp & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Submission Files Table}
+\label{subsubsec:submission-files-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+id & BIGINT & File ID & yes & yes & PK \\
+\hline
+submission\_id & BIGINT & Associated submission ID & no & yes & FK \\
+\hline
+image\_hd\_url & VARCHAR(512) & High-resolution image URL & no & yes & \\
+\hline
+thumbnail\_url & VARCHAR(512) & Thumbnail image URL & no & no & \\
+\hline
+width\_px & INT & Image width in pixels & no & no & \\
+\hline
+height\_px & INT & Image height in pixels & no & no & \\
+\hline
+file\_size\_bytes & BIGINT & File size in bytes & no & no & \\
+\hline
+file\_hash & VARCHAR(64) & File hash for integrity checking & no & yes & \\
+\hline
+phash & VARCHAR(64) & Perceptual hash for duplicate detection & no & no & \\
+\hline
+ahash & VARCHAR(64) & Average hash for duplicate detection & no & no & \\
+\hline
+file\_type & VARCHAR(50) & Category/Type of file (e.g., main\_image) & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Creation timestamp & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Last update timestamp & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Submission Film Metadata Table}
+\label{subsubsec:submission-film-metadata-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.21\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+metadata\_id & UUID & Unique identifier of film metadata & yes & yes & PK \\
+\hline
+submission\_id & UUID & Submission associated with this metadata & yes & yes & FK \\
+\hline
+film\_brand & VARCHAR(100) & Brand/manufacturer of the film & no & no & \\
+\hline
+film\_stock & VARCHAR(150) & Specific film stock/type used & no & no & \\
+\hline
+iso & INT & Film ISO/ASA rating & no & no & \\
+\hline
+camera & VARCHAR(150) & Camera body used to capture the photograph & no & no & \\
+\hline
+lens & VARCHAR(150) & Lens used to capture the photograph & no & no & \\
+\hline
+film\_format & VARCHAR(50) & Film format, e.g. 35mm, 120 & no & no & \\
+\hline
+frame\_number & VARCHAR(50) & Frame number on the film roll & no & no & \\
+\hline
+shooting\_location & VARCHAR(255) & Location where the photograph was taken & no & no & \\
+\hline
+developing\_lab & VARCHAR(150) & Laboratory used for film development & no & no & \\
+\hline
+scanning\_specifications & TEXT & Scanning process and specifications & no & no & \\
+\hline
+negative\_reference & VARCHAR(500) & Reference/path to negative image & no & no & \\
+\hline
+contact\_sheet\_reference & VARCHAR(500) & Reference/path to contact sheet & no & no & \\
+\hline
+created\_at & TIMESTAMPTZ & Time metadata was created & no & yes & \\
+\hline
+updated\_at & TIMESTAMPTZ & Time metadata was last updated & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Submission Reviews Table}
+\label{subsubsec:submission-reviews-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.20\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+review\_id & UUID & Unique identifier of a review & yes & yes & PK \\
+\hline
+submission\_id & UUID & Submission being reviewed & no & yes & FK \\
+\hline
+judge\_id & UUID & Judge who performs the review & no & yes & FK \\
+\hline
+round\_id & UUID & Judging round in which the review is performed & no & yes & FK \\
+\hline
+review\_status & VARCHAR(30) & Status of the review & no & yes & \\
+\hline
+overall\_comment & TEXT & Overall comment about the submitted photograph & no & no & \\
+\hline
+review\_note & TEXT & Internal note from the judge & no & no & \\
+\hline
+submitted\_at & TIMESTAMPTZ & Time when the review was submitted & no & no & \\
+\hline
+updated\_at & TIMESTAMPTZ & Time when the review was last updated & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Judge Assignments Table}
+\label{subsubsec:judge-assignments-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.20\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+assignment\_id & UUID & Unique identifier of judge assignment & yes & yes & PK \\
+\hline
+judge\_id & UUID & Judge assigned to the contest/round & no & yes & FK \\
+\hline
+contest\_id & UUID & Contest for which the judge is assigned & no & yes & FK \\
+\hline
+round\_id & UUID & Judging round associated with the assignment & no & yes & FK \\
+\hline
+category\_id & UUID & Contest category assigned to the judge & no & no & FK \\
+\hline
+assignment\_status & VARCHAR(30) & Current status of assignment & no & yes & \\
+\hline
+assigned\_at & TIMESTAMPTZ & Time when the judge was assigned & no & yes & \\
+\hline
+completed\_at & TIMESTAMPTZ & Time when the judge completed the assignment & no & no & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Scores Table}
+\label{subsubsec:scores-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.20\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+score\_id & UUID & Unique identifier of a score record & yes & yes & PK \\
+\hline
+review\_id & UUID & Review associated with the score & no & yes & FK \\
+\hline
+submission\_id & UUID & Submission being scored & no & yes & FK \\
+\hline
+judge\_id & UUID & Judge giving the score & no & yes & FK \\
+\hline
+criterion\_id & UUID & Judging criterion being evaluated & no & yes & FK \\
+\hline
+score & DECIMAL(5,2) & Score given for the criterion & no & yes & \\
+\hline
+max\_score & DECIMAL(5,2) & Maximum possible score for the criterion & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Time when the score was created & no & yes & \\
+\hline
+updated\_at & TIMESTAMPTZ & Time when the score was updated & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Score Feedbacks Table}
+\label{subsubsec:score-feedbacks-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+feedback\_id & UUID & Unique identifier of feedback & yes & yes & PK \\
+\hline
+score\_id & UUID & Score associated with this feedback & no & yes & FK \\
+\hline
+submission\_id & UUID & Submission receiving feedback & no & yes & FK \\
+\hline
+judge\_id & UUID & Judge providing the feedback & no & yes & FK \\
+\hline
+feedback & TEXT & Detailed feedback/comment about the score & no & yes & \\
+\hline
+feedback\_type & VARCHAR(30) & Type of feedback & no & no & \\
+\hline
+is\_visible\_to\_participant & BOOLEAN & Indicates whether participant can view the feedback & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Time when feedback was created & no & yes & \\
+\hline
+\newpage
+updated\_at & TIMESTAMPTZ & Time when feedback was updated & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{AI Flags Table}
+\label{subsubsec:ai-flags-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+flag\_id & UUID & Unique identifier of the flag & yes & yes & PK \\
+\hline
+submission\_id & UUID & Submission being flagged & no & yes & FK \\
+\hline
+flag\_type & ENUM & Type of flag (DUPLICATE, AI\_GENERATED, EXIF\_MISMATCH, OTHER) & no & yes & \\
+\hline
+confidence\_score & DECIMAL(5,2) & AI confidence score for the flag (0-100) & no & yes & \\
+\hline
+description & TEXT & Detailed explanation of why the submission was flagged & no & yes & \\
+\hline
+status & ENUM & Review status (PENDING, REVIEWED, CONFIRMED, DISMISSED) & no & yes & \\
+\hline
+reviewed\_by & UUID & Organizer who reviewed the flag & no & yes & FK \\
+\hline
+reviewed\_at & TIMESTAMPTZ & Time the flag was reviewed & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Time the flag was created & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{AI Analysis Reports Table}
+\label{subsubsec:ai-analysis-reports-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+report\_id & UUID & Unique identifier of the report & yes & yes & PK \\
+\hline
+submission\_id & UUID & Submission being analyzed & no & yes & FK \\
+\hline
+analysis\_type & ENUM & Type of analysis (DUPLICATE\_CHECK, AI\_DETECTION, METADATA\_CHECK) & no & yes & \\
+\hline
+model\_version & VARCHAR(50) & Version of the AI model used & no & yes & \\
+\hline
+result\_summary & JSONB & Detailed analysis result data & no & yes & \\
+\hline
+processing\_status & ENUM & Processing status (PENDING, PROCESSING, COMPLETED, FAILED) & no & yes & \\
+\hline
+generated\_at & TIMESTAMPTZ & Time the report was generated & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Submission AI Tags Table}
+\label{subsubsec:submission-ai-tags-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+tag\_id & UUID & Unique identifier of the tag & yes & yes & PK \\
+\hline
+submission\_id & UUID & Submission being tagged & no & yes & FK \\
+\hline
+tag\_name & VARCHAR(100) & Keyword generated by AI (e.g., ``black and white'', ``portrait'') & no & yes & \\
+\hline
+category & VARCHAR(100) & Tag category (e.g., Genre, Subject, Technique) & no & yes & \\
+\hline
+confidence\_score & DECIMAL(5,2) & Confidence score of the generated tag & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Time the tag was created & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Digital Archive Exhibits Table}
+\label{subsubsec:digital-archive-exhibits-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+exhibit\_id & UUID & Unique identifier of the exhibit & yes & yes & PK \\
+\hline
+submission\_id & UUID & Award-winning submission being archived & no & yes & FK \\
+\hline
+contest\_id & UUID & Contest the exhibit belongs to & no & yes & FK \\
+\hline
+award\_title & VARCHAR(150) & Title of the award received & no & yes & \\
+\hline
+exhibit\_description & TEXT & Description for exhibition/archive display & no & yes & \\
+\hline
+is\_public & BOOLEAN & Whether the exhibit is publicly visible & no & yes & \\
+\hline
+published\_at & TIMESTAMPTZ & Time the exhibit was published & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Notifications Table}
+\label{subsubsec:notifications-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+notification\_id & UUID & Unique identifier of the notification & yes & yes & PK \\
+\hline
+user\_id & UUID & User receiving the notification & no & yes & FK \\
+\hline
+title & VARCHAR(150) & Title of the notification & no & yes & \\
+\hline
+message & TEXT & Content of the notification & no & yes & \\
+\hline
+type & ENUM & Notification type (SUBMISSION, JUDGING, RESULT, SYSTEM) & no & yes & \\
+\hline
+is\_read & BOOLEAN & Whether the notification has been read & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Time the notification was sent & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsubsection{Audit Logs Table}
+\label{subsubsec:audit-logs-table}
+
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|>{\centering\arraybackslash}p{0.10\textwidth}|}
+\hline
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endfirsthead
+\textbf{Field Name} & \textbf{Type} & \textbf{Description} & \textbf{Unique} & \textbf{Not null} & \textbf{PK,FK} \\
+\hline
+\endhead
+log\_id & UUID & Unique identifier of the log entry & yes & yes & PK \\
+\hline
+user\_id & UUID & User who performed the action & no & yes & FK \\
+\hline
+action & VARCHAR(100) & Action performed (CREATE, UPDATE, DELETE, LOGIN, etc.) & no & yes & \\
+\hline
+entity\_type & VARCHAR(100) & Type of entity affected (e.g., Submission, Contest) & no & yes & \\
+\hline
+entity\_id & UUID & ID of the affected entity & no & yes & \\
+\hline
+old\_value & JSONB & Value before the change & no & yes & \\
+\hline
+new\_value & JSONB & Value after the change & no & yes & \\
+\hline
+ip\_address & VARCHAR(45) & IP address of the action & no & yes & \\
+\hline
+created\_at & TIMESTAMPTZ & Time the log entry was created & no & yes & \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\subsection{Contest Management}
+\label{subsec:contest-management}
+
+\vspace{0.6em}
+\subsubsection{Authentication}
+\label{subsubsec:design-authentication}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.1 Register}
+\label{par:register}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.1}Register}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.1.1 Class Diagram}
+\label{subpar:class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.55\textwidth]{{images/class 3.1.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.1.2 Sequence Diagram}
+\label{subpar:sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.1.1.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.2 Login}
+\label{par:design-login}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.2}Login}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.2.1 Class Diagram}
+\label{subpar:login-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.75\textwidth]{{images/cla 3.1.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.2.2 Sequence Diagram}
+\label{subpar:login-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.1.2.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.3 JWT Authentication and Role Authorization}
+\label{par:jwt-auth-role-authorization}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.1.3}JWT Authentication and Role Authorization}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.3.1 Class Diagram}
+\label{subpar:jwt-auth-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.3.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.99\textwidth]{{images/cla 3.1.3.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.1.3.2 Sequence Diagram}
+\label{subpar:jwt-auth-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.1.3.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.1.3.2}}
+\end{center}
+
+\vspace{1em}
+\subsubsection{User and Role Management}
+\label{subsubsec:design-user-role-management}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.1 View and Update User Profile}
+\label{par:design-view-update-user-profile}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.2.1}View and Update User Profile}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.1.1 Class Diagram}
+\label{subpar:view-update-user-profile-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.75\textwidth]{{images/cla 3.2.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.1.2 Sequence Diagram}
+\label{subpar:view-update-user-profile-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.2.1.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.2 Admin Manage Users}
+\label{par:design-admin-manage-users}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.2.2}Admin Manage Users}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.2.1 Class Diagram}
+\label{subpar:admin-manage-users-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.65\textwidth]{{images/cla 3.2.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.2.2 Sequence Diagram}
+\label{subpar:admin-manage-users-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.2.2.2}}
+\end{center}
+
+
+
+
+
