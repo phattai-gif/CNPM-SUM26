@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,7 +28,7 @@
                         <div class="profile-avatar-container" id="profileAvatarContainer">
                             <img src="" alt="Avatar" class="profile-avatar-img" id="profileAvatarImg" style="display: none;">
                             <div class="profile-avatar-initial" id="profileAvatarInitial">👤</div>
-                            <div class="avatar-badge" id="avatarBadge" title="Nhiếp ảnh gia xác thực">✓</div>
+                            <div class="avatar-badge" id="avatarBadge" title="Verified Photographer">✓</div>
                         </div>
                     </div>
 
@@ -36,11 +36,7 @@
                         <div class="hero-header-top">
                             <div class="user-identity">
                                 <div class="identity-name-row">
-
                                     <h1 class="user-fullname" id="profileFullName">Loading Profile...</h1>
-
-                                    <h1 class="user-fullname" id="profileFullName">Loading profile...</h1>
-
                                     <span class="role-pill" id="profileRolePill">Participant</span>
                                 </div>
                                 <div class="user-handle-row">
@@ -55,7 +51,7 @@
                             <div class="hero-action-buttons">
                                 <a href="/organizer/dashboard" class="btn-action btn-organizer-dash" id="btnOrganizerDashboard" style="display: none;">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                                    Management Dashboard
+                                    Organizer Dashboard
                                 </a>
                                 <button type="button" class="btn-action btn-edit-profile" id="btnOpenEditModal">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -84,28 +80,28 @@
                         <div class="stat-icon-wrap icon-photos">📷</div>
                         <div class="stat-info">
                             <span class="stat-value" id="statTotalPhotos">0</span>
-                            <span class="stat-name">Total works</span>
+                            <span class="stat-name">Total Works</span>
                         </div>
                     </div>
                     <div class="profile-stat-box">
                         <div class="stat-icon-wrap icon-approved">🌟</div>
                         <div class="stat-info">
                             <span class="stat-value" id="statApprovedPhotos">0</span>
-                            <span class="stat-name">Public works</span>
+                            <span class="stat-name">Public Works</span>
                         </div>
                     </div>
                     <div class="profile-stat-box">
                         <div class="stat-icon-wrap icon-score">🏆</div>
                         <div class="stat-info">
                             <span class="stat-value" id="statHighScore">--</span>
-                            <span class="stat-name">Highest score</span>
+                            <span class="stat-name">Highest Score</span>
                         </div>
                     </div>
                     <div class="profile-stat-box">
                         <div class="stat-icon-wrap icon-contests">🎞️</div>
                         <div class="stat-info">
                             <span class="stat-value" id="statContestsJoined">0</span>
-                            <span class="stat-name">Contests joined</span>
+                            <span class="stat-name">Contests Joined</span>
                         </div>
                     </div>
                 </div>
@@ -159,9 +155,6 @@
                 <div class="empty-portfolio-state" id="portfolioEmpty" style="display: none;">
                     <div class="empty-art-icon">🎞️</div>
 
-                    <h3 id="emptyTitle">No Works in Portfolio</h3>
-                    <p id="emptySubtitle">Hãy gửi bài dự thi hoặc cập nhật bài thi đầu tiên của bạn để trưng bày tác phẩm nghệ thuật tại đây.</p>
-
                     <h3 id="emptyTitle">No works in your portfolio yet</h3>
                     <p id="emptySubtitle">Submit your first entry to showcase your work here.</p>
 
@@ -180,26 +173,16 @@
             <section class="tab-content-panel" id="panelAbout" style="display: none;">
                 <div class="settings-card-layout">
                     <div class="settings-card-header">
-
-                        <h2>Edit Profile</h2>
-                        <p>Cập nhật thông tin công khai, giới thiệu bản thân và phong cách chụp ảnh phim của bạn.</p>
-
                         <h2>Edit Personal Profile</h2>
                         <p>Update your public information, biography, and film photography style.</p>
-
                     </div>
 
                     <form id="profileEditForm" class="settings-form">
                         <div class="form-row form-row-2col">
                             <div class="form-group">
                                 <label for="inputFullName">Display Name</label>
-
-                                <input type="text" id="inputFullName" class="form-input" placeholder="Ví dụ: Nguyễn Văn A" required>
-                                <span class="form-hint">Tên sẽ xuất hiện trên bài dự thi và chứng nhận tác phẩm.</span>
-
                                 <input type="text" id="inputFullName" class="form-input" placeholder="For example: Alex Smith" required>
                                 <span class="form-hint">Your name appears on submissions and certificates.</span>
-
                             </div>
                             <div class="form-group">
                                 <label for="inputUsername">Username</label>
@@ -212,7 +195,7 @@
                             <div class="form-group">
                                 <label for="inputEmail">Email Address</label>
                                 <input type="email" id="inputEmail" class="form-input" disabled>
-                                <span class="form-hint">Used for judging notifications and account verification.</span>
+                                <span class="form-hint">Used for notifications and account verification.</span>
                             </div>
                             <div class="form-group">
                                 <label for="inputRole">System Role</label>
@@ -230,19 +213,19 @@
                                     <span id="avatarMiniInitial">👤</span>
                                 </div>
                             </div>
-                            <span class="form-hint">Nhập liên kết ảnh trực tiếp (.jpg, .png, .webp) hoặc để trống để dùng avatar mặc định.</span>
+                            <span class="form-hint">Enter direct image link (.jpg, .png, .webp) or leave empty for default avatar.</span>
                         </div>
 
                         <div class="form-group">
                             <label for="inputBio">Biography</label>
-                            <textarea id="inputBio" class="form-textarea" rows="4" placeholder="Chia sẻ về đam mê nhiếp ảnh analog, dòng phim yêu thích (Kodak Portra, Cinestill, Ilford), máy ảnh thường dùng (Leica, Canon, Nikon)..."></textarea>
-                            <span class="form-hint">Tối đa 500 ký tự.</span>
+                            <textarea id="inputBio" class="form-textarea" rows="4" placeholder="Share your passion for analog photography, favorite film stocks (Kodak Portra, Cinestill, Ilford), camera bodies (Leica, Canon, Nikon)..."></textarea>
+                            <span class="form-hint">Maximum 500 characters.</span>
                         </div>
 
                         <div class="form-actions-row">
                             <button type="submit" class="btn-save-settings" id="btnSaveProfile">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                                Lưu Thay Đổi Hồ Sơ
+                                Save Changes
                             </button>
                             <button type="button" class="btn-cancel-settings" id="btnResetForm">Reset</button>
                         </div>
@@ -266,14 +249,14 @@
                         <span class="lightbox-contest-tag" id="lightboxContestTag">Analog Contest</span>
                         <h2 class="lightbox-title" id="lightboxTitle">Work Title</h2>
                         <div class="lightbox-badges-row" id="lightboxBadgesRow">
-                            <span class="status-badge" id="lightboxStatusBadge">Đã Nộp</span>
+                            <span class="status-badge" id="lightboxStatusBadge">Submitted</span>
                             <span class="score-badge" id="lightboxScoreBadge" style="display: none;">★ 90.0</span>
                         </div>
                     </div>
 
                     <div class="lightbox-story-box">
                         <h4>Work Story</h4>
-                        <p id="lightboxStory">Không có mô tả kèm theo.</p>
+                        <p id="lightboxStory">No description provided.</p>
                     </div>
 
                     <div class="lightbox-meta-table">
@@ -288,19 +271,19 @@
                                 <span class="meta-val" id="lightboxFilmIso">--</span>
                             </div>
                             <div class="meta-item">
-                                <span class="meta-label">Máy ảnh (Body):</span>
+                                <span class="meta-label">Camera Body:</span>
                                 <span class="meta-val" id="lightboxCamera">--</span>
                             </div>
                             <div class="meta-item">
-                                <span class="meta-label">Ống kính (Lens):</span>
+                                <span class="meta-label">Lens:</span>
                                 <span class="meta-val" id="lightboxLens">--</span>
                             </div>
                             <div class="meta-item">
-                                <span class="meta-label">Lab tráng:</span>
+                                <span class="meta-label">Film Lab:</span>
                                 <span class="meta-val" id="lightboxLab">--</span>
                             </div>
                             <div class="meta-item">
-                                <span class="meta-label">Địa điểm chụp:</span>
+                                <span class="meta-label">Location:</span>
                                 <span class="meta-val" id="lightboxLocation">--</span>
                             </div>
                         </div>
@@ -333,7 +316,7 @@
                     </div>
                     <div class="form-group">
                         <label for="modalBio">Biography</label>
-                        <textarea id="modalBio" class="form-textarea" rows="3" placeholder="Giới thiệu bản thân..."></textarea>
+                        <textarea id="modalBio" class="form-textarea" rows="3" placeholder="Tell us about yourself..."></textarea>
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn-modal-cancel" id="modalCancelBtn">Cancel</button>

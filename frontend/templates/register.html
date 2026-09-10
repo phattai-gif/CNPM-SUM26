@@ -1,20 +1,20 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Đăng ký tài khoản</title>
+  <title>Create an Account - Analog Contest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
   <style>
-    /* ===== DARK MODE OVERRIDES ===== */
+    /* ===== DARK MODE STYLING ===== */
     body {
       background: #080c14 !important;
       color: #e8edf2 !important;
       min-height: 100vh;
-      font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     }
 
     .auth-container {
@@ -22,22 +22,22 @@
       align-items: center;
       justify-content: center;
       min-height: calc(100vh - 80px);
-      padding: 20px;
+      padding: 30px 20px;
     }
 
     .auth-card {
       background: #111a26;
       border: 1px solid #1e2a3a;
       border-radius: 20px;
-      padding: 40px 36px;
-      max-width: 420px;
+      padding: 36px 32px;
+      max-width: 440px;
       width: 100%;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       transition: all 0.3s ease;
     }
     .auth-card:hover {
       border-color: #f5a623;
-      box-shadow: 0 20px 60px rgba(245, 166, 35, 0.06);
+      box-shadow: 0 20px 60px rgba(245, 166, 35, 0.08);
     }
 
     .auth-card .eyebrow {
@@ -46,14 +46,14 @@
       letter-spacing: 0.08em;
       color: #f5a623;
       font-weight: 600;
-      margin: 0 0 4px;
+      margin: 0 0 6px;
     }
 
     .auth-card h1 {
       font-size: 1.6rem;
       font-weight: 700;
       color: #f0f4f8;
-      margin: 0 0 24px;
+      margin: 0 0 22px;
     }
 
     .auth-card form {
@@ -65,26 +65,39 @@
     .auth-card label {
       font-weight: 600;
       color: #99abb8;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       margin-bottom: 2px;
     }
 
     .auth-card input[type="text"],
     .auth-card input[type="email"],
-    .auth-card input[type="password"] {
+    .auth-card input[type="password"],
+    .auth-card select {
       width: 100%;
-      padding: 12px 14px;
+      padding: 11px 14px;
       border: 2px solid #1e2a3a;
       border-radius: 12px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       background: #0d1622;
       color: #e8edf2;
       transition: all 0.3s ease;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    .auth-card select {
+      cursor: pointer;
+    }
+
+    .auth-card select option {
+      background: #111a26;
+      color: #e8edf2;
     }
 
     .auth-card input[type="text"]:focus,
     .auth-card input[type="email"]:focus,
-    .auth-card input[type="password"]:focus {
+    .auth-card input[type="password"]:focus,
+    .auth-card select:focus {
       border-color: #f5a623;
       box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
       outline: none;
@@ -92,46 +105,20 @@
       color: #e8edf2;
     }
 
-    .auth-card input[type="text"]::placeholder,
-    .auth-card input[type="email"]::placeholder,
-    .auth-card input[type="password"]::placeholder {
+    .auth-card input::placeholder {
+      color: #5d6f83;
+    }
+
+    .field-hint {
+      font-size: 0.78rem;
       color: #6b7f94;
-    }
-
-    /* ===== RADIO BUTTONS ===== */
-    .auth-card input[type="radio"] {
-      accent-color: #f5a623;
-      width: 16px;
-      height: 16px;
-      margin-right: 6px;
-      cursor: pointer;
-    }
-
-    .auth-card input[type="radio"] + label {
-      color: #e8edf2;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    .auth-card div[style*="margin-bottom:12px"] {
-      display: flex;
-      gap: 20px;
-      padding: 6px 0;
-      flex-wrap: wrap;
-    }
-
-    .auth-card div[style*="margin-bottom:12px"] label {
-      color: #e8edf2;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      margin-top: -8px;
     }
 
     /* ===== BUTTON ===== */
-    .auth-card button {
+    .auth-card button[type="submit"] {
       width: 100%;
-      padding: 12px;
+      padding: 13px;
       background: #f5a623;
       color: #080c14;
       border: none;
@@ -140,16 +127,17 @@
       font-weight: 700;
       cursor: pointer;
       transition: all 0.3s ease;
-      margin-top: 4px;
+      margin-top: 6px;
+      font-family: inherit;
     }
 
-    .auth-card button:hover {
+    .auth-card button[type="submit"]:hover {
       background: #e0960a;
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
     }
 
-    .auth-card button:active {
+    .auth-card button[type="submit"]:active {
       transform: translateY(0);
     }
 
@@ -203,42 +191,12 @@
       text-decoration: underline;
     }
 
-    /* ===== SCROLLBAR ===== */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0d1622;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #f5a623;
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #e0960a;
-    }
-
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 480px) {
       .auth-card {
-        padding: 28px 20px;
+        padding: 24px 18px;
       }
       .auth-card h1 {
-        font-size: 1.3rem;
-      }
-      .auth-card input[type="text"],
-      .auth-card input[type="email"],
-      .auth-card input[type="password"] {
-        padding: 10px 12px;
-        font-size: 0.9rem;
-      }
-      .auth-card button {
-        padding: 10px;
-        font-size: 0.9rem;
-      }
-      .auth-card div[style*="margin-bottom:12px"] {
-        flex-direction: column;
-        gap: 8px;
+        font-size: 1.35rem;
       }
     }
   </style>
@@ -250,56 +208,50 @@
       <p class="eyebrow">ANALOG CONTEST</p>
       <h1>Create an Account</h1>
       <form id="registerForm" novalidate>
-        <label for="username">Username</label>
-
-        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Chọn tên đăng nhập">
-
-        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Choose a username">
-
-
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" required autocomplete="email" placeholder="name@example.com">
-
-        <label for="full_name">Full Name</label>
-       <input id="full_name" name="full_name" type="text" autocomplete="name" placeholder="Nhập họ và tên của bạn">
-
-        <label for="role">Role</label>
-        <select id="role" name="role">
-          <option value="participant">Participant</option>
-          <option value="organizer">Organizer</option>
-          <option value="judge">Judge</option>
-          <option value="admin">Admin</option>
-
-        <input id="full_name" name="full_name" type="text" autocomplete="name" placeholder="Enter your full name">
-
-        <label for="role">Role</label>
-        <select id="role" name="role">
-          <option value="participant">Contest Participant</option>
-          <option value="organizer">Organizer</option>
-          <option value="judge">Judge</option>
-          <option value="admin">Administrator</option>
-
-        </select>
-        <p class="auth-radio-hint">Choose a registration role. Organizer/Admin accounts include management access.</p>
-
-        <label for="password">Password</label>
-        <div style="position: relative; display: flex; align-items: center; width: 100%;">
-          <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Create a password" style="padding-right: 44px;">
-          <button type="button" id="togglePasswordBtn" title="Show/Hide password" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
+        <div>
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" required autocomplete="username" placeholder="Choose a username">
         </div>
 
-        <label for="passwordconfirm">Confirm Password</label>
-        <div style="position: relative; display: flex; align-items: center; width: 100%;">
-          <input id="passwordconfirm" name="passwordconfirm" type="password" required autocomplete="new-password" placeholder="Enter your password again" style="padding-right: 44px;">
-          <button type="button" id="togglePasswordConfirmBtn" title="Show/Hide password" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
+        <div>
+          <label for="email">Email Address</label>
+          <input id="email" name="email" type="email" required autocomplete="email" placeholder="name@example.com">
         </div>
 
+        <div>
+          <label for="full_name">Full Name</label>
+          <input id="full_name" name="full_name" type="text" autocomplete="name" placeholder="Enter your full name">
+        </div>
 
-        <button type="submit">Sign Up</button>
+        <div>
+          <label for="role">Account Role</label>
+          <select id="role" name="role">
+            <option value="participant">Participant (Submit works & compete)</option>
+            <option value="organizer">Organizer (Create & manage contests)</option>
+            <option value="judge">Judge (Evaluate submissions)</option>
+            <option value="admin">Administrator (System management)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="password">Password</label>
+          <div style="position: relative; display: flex; align-items: center; width: 100%;">
+            <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Create a strong password" style="padding-right: 44px;">
+            <button type="button" id="togglePasswordBtn" title="Show/Hide password" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
+          </div>
+        </div>
+
+        <div>
+          <label for="passwordconfirm">Confirm Password</label>
+          <div style="position: relative; display: flex; align-items: center; width: 100%;">
+            <input id="passwordconfirm" name="passwordconfirm" type="password" required autocomplete="new-password" placeholder="Re-enter your password" style="padding-right: 44px;">
+            <button type="button" id="togglePasswordConfirmBtn" title="Show/Hide password" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
+          </div>
+        </div>
 
         <button type="submit">Create Account</button>
-
       </form>
+
       <script>
         document.addEventListener('DOMContentLoaded', function() {
           function setupToggle(btnId, inputId) {
@@ -321,9 +273,6 @@
       <div id="message" class="message"></div>
 
       <p class="secondary-text">Already have an account? <a href="{{ url_for('auth.login_page') }}">Log In</a></p>
-
-      <p class="secondary-text">Already have an account? <a href="{{ url_for('auth.login_page') }}">Log in here</a></p>
-
     </div>
   </div>
   <script src="{{ url_for('static', filename='api_client.js') }}"></script>
