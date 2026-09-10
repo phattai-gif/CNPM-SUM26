@@ -406,15 +406,15 @@
       <div id="dashboard" class="panel" data-organizer-id="{{ organizer_id }}" data-api-token="{{ api_token }}">
         <div id="overview">
           <div>
-            <div>Cuộc Thi Quản Lý</div>
+            <div>Managed Contests</div>
             <div id="overview-contests">—</div>
           </div>
           <div>
-            <div>Tổng Bài Dự Thi</div>
+            <div>Total Submissions</div>
             <div id="overview-submissions">—</div>
           </div>
           <div>
-            <div>Giám Khảo Hệ Thống</div>
+            <div>System Judges</div>
             <div id="overview-judges">—</div>
           </div>
         </div>
@@ -454,7 +454,7 @@
           <section class="manager-card manager-stack" aria-labelledby="judge-assignment-title">
             <div>
               <h2 id="judge-assignment-title">Assign Judges by Round</h2>
-              <p class="muted">Chọn cuộc thi, round và gán một hoặc nhiều judge trực tiếp từ dashboard.</p>
+              <p class="muted">Select a contest and round to assign one or more judges directly from the dashboard.</p>
             </div>
 
             <div>
@@ -472,7 +472,7 @@
               <button id="refresh-judge-manager-btn" class="btn btn-outline">Refresh</button>
             </div>
 
-            <div id="judge-manager-summary" class="muted">Chưa chọn round.</div>
+            <div id="judge-manager-summary" class="muted">No round selected.</div>
           </section>
 
           <section class="manager-stack">
@@ -480,11 +480,11 @@
               <div class="judge-card-top">
                 <div>
                   <h3>Available Judges</h3>
-                  <p class="muted" style="margin:0;">Hiển thị workload hiện tại của từng judge.</p>
+                  <p class="muted" style="margin:0;">Shows current workload and availability of each judge.</p>
                 </div>
               </div>
               <div id="available-judges" class="judge-list">
-                <p class="empty-state">Đang tải judge...</p>
+                <p class="empty-state">Loading judges...</p>
               </div>
             </div>
 
@@ -492,11 +492,11 @@
               <div class="judge-card-top">
                 <div>
                   <h3>Judges Assigned to Round</h3>
-                  <p class="muted" style="margin:0;">Có thể gỡ assignment ngay tại đây.</p>
+                  <p class="muted" style="margin:0;">You can remove assignments directly from here.</p>
                 </div>
               </div>
               <div id="round-assignments" class="assignment-list">
-                <p class="empty-state">Chọn round để xem assignment.</p>
+                <p class="empty-state">Select a round to view assignments.</p>
               </div>
             </div>
           </section>
