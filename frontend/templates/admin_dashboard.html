@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -332,11 +332,7 @@
       <div class="panel" style="margin-bottom: 28px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
           <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">🖥️ System Health</h2>
-<<<<<<< HEAD
-          <span style="color: #6b7f94; font-size: 0.85rem;">Kiểm tra Database, File Storage & Email</span>
-=======
           <span style="color: #6b7f94; font-size: 0.85rem;">Database, file storage, and email checks</span>
->>>>>>> origin/main
         </div>
         <div id="systemHealthContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
           <p style="color: #6b7f94; text-align: center; grid-column: 1 / -1; padding: 14px;">Checking service status...</p>
@@ -347,11 +343,7 @@
       <div class="panel" style="margin-bottom: 28px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
           <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">⚡ Recent System Activity</h2>
-
-          <span style="color: #6b7f94; font-size: 0.85rem;">Nhật ký sự kiện thời gian thực</span>
-
           <span style="color: #6b7f94; font-size: 0.85rem;">Real-time event log</span>
-
         </div>
         <div id="recentActivitiesContainer">
           <p style="color: #6b7f94; text-align: center; padding: 20px;">Loading system activity...</p>
@@ -359,49 +351,17 @@
       </div>
 
       <div class="admin-tabs-nav" aria-label="Evidence and administration panels">
+        <button type="button" class="admin-tab-btn active" data-tab="tab-users">User Accounts</button>
+        <button type="button" class="admin-tab-btn" data-tab="tab-contests">Contest Review</button>
         <button type="button" class="admin-tab-btn" data-tab="tab-ai">AI Reports</button>
         <button type="button" class="admin-tab-btn" data-tab="tab-audit">Audit Logs</button>
       </div>
 
-      <section id="tab-ai" class="admin-tab-content panel" style="margin-bottom: 28px;">
-        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
-          <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">AI Reports</h2>
-          <button id="btnRefreshAiReports" class="btn btn-outline">Refresh</button>
-        </div>
-        <div id="aiReportsListContainer">
-          <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load AI reports.</p>
-        </div>
-      </section>
-
-      <section id="tab-audit" class="admin-tab-content panel" style="margin-bottom: 28px;">
-        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
-          <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">Audit Logs</h2>
-          <button id="btnRefreshAuditLogs" class="btn btn-outline">Refresh</button>
-        </div>
-        <div id="auditLogsListContainer">
-          <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load audit logs.</p>
-        </div>
-      </section>
-
-      <section class="panel" style="margin-bottom: 28px;">
-        <h2 style="margin:0 0 8px;color:#f0f4f8;font-size:1.3rem;">System Notification</h2>
-        <p style="margin:0 0 16px;color:#8899aa;">Send a notification to organizer and moderator accounts.</p>
-        <form id="systemNotificationForm" style="display:grid;gap:10px;max-width:720px;">
-          <input id="notifTitle" class="field-input" type="text" placeholder="Notification title" required>
-          <textarea id="notifBody" class="field-input" rows="3" placeholder="Notification message" required></textarea>
-          <button type="submit" class="btn" style="width:max-content;">Send Notification</button>
-        </form>
-      </section>
-
-      <div class="panel">
+      <!-- Tab: User Accounts -->
+      <section id="tab-users" class="admin-tab-content active panel" style="margin-bottom: 28px;">
         <div style="margin-bottom: 20px;">
-
-          <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">User Management</h2>
-          <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Tìm kiếm, thay đổi vai trò (Role), khóa/mở khóa tài khoản hoặc xóa tài khoản người dùng.</p>
-
           <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">System Account Management</h2>
           <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Search, change roles, lock or unlock accounts, or delete users.</p>
-
         </div>
 
         <div class="toolbar">
@@ -412,11 +372,7 @@
             <option value="participant">Participant</option>
             <option value="judge">Judge</option>
             <option value="organizer">Organizer</option>
-
-            <option value="admin">Admin</option>
-
             <option value="admin">Administrator</option>
-
           </select>
 
           <select id="statusFilter" class="field-input">
@@ -433,18 +389,19 @@
         </div>
 
         <div id="paginationContainer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; color: #8899aa;"></div>
-      </div>
+      </section>
 
-      <div class="panel" style="margin-top: 28px;">
+      <!-- Tab: Contest Review -->
+      <section id="tab-contests" class="admin-tab-content panel" style="margin-bottom: 28px;">
         <div class="toolbar" style="justify-content: space-between;">
           <div>
             <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Contest Review</h2>
-            <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Duyệt, từ chối kèm lý do hoặc đình chỉ cuộc thi.</p>
+            <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Approve, reject with feedback, or suspend contests.</p>
           </div>
           <button id="btnRefreshContests" class="btn btn-outline">Refresh</button>
         </div>
         <div class="toolbar">
-          <input type="text" id="contestSearchInput" class="field-input" placeholder="Tìm theo tên hoặc ID..."></input>
+          <input type="text" id="contestSearchInput" class="field-input" placeholder="Search by name or ID..."></input>
           <select id="contestStatusFilter" class="field-input">
             <option value="">All Statuses</option>
             <option value="draft">Draft</option>
@@ -454,19 +411,44 @@
             <option value="suspended">Suspended</option>
           </select>
         </div>
-        <div id="contestsListContainer"><p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải danh sách cuộc thi...</p></div>
-      </div>
+        <div id="contestsListContainer"><p style="color:#6b7f94;text-align:center;padding:30px;">Loading contests...</p></div>
+      </section>
 
-      <div class="panel" style="margin-top: 28px;">
-        <div class="toolbar" style="justify-content: space-between;">
+      <!-- Tab: AI Reports -->
+      <section id="tab-ai" class="admin-tab-content panel" style="margin-bottom: 28px;">
+        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
           <div>
-            <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Review Submission AI Flagged</h2>
-            <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Xem báo cáo AI và xử lý submission nghi ngờ vi phạm.</p>
+            <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">Review AI-Flagged Submissions</h2>
+            <p style="margin:4px 0 0;color:#8899aa;font-size:0.92rem;">Inspect AI detection reports and take moderation actions.</p>
           </div>
           <button id="btnRefreshAiReports" class="btn btn-outline">Refresh</button>
         </div>
-        <div id="aiReportsListContainer"><p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải báo cáo AI...</p></div>
-      </div>
+        <div id="aiReportsListContainer">
+          <p style="color:#6b7f94;text-align:center;padding:30px;">Loading AI reports...</p>
+        </div>
+      </section>
+
+      <!-- Tab: Audit Logs -->
+      <section id="tab-audit" class="admin-tab-content panel" style="margin-bottom: 28px;">
+        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
+          <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">Audit Logs</h2>
+          <button id="btnRefreshAuditLogs" class="btn btn-outline">Refresh</button>
+        </div>
+        <div id="auditLogsListContainer">
+          <p style="color:#6b7f94;text-align:center;padding:30px;">Loading audit logs...</p>
+        </div>
+      </section>
+
+      <!-- System Notification -->
+      <section class="panel" style="margin-bottom: 28px;">
+        <h2 style="margin:0 0 8px;color:#f0f4f8;font-size:1.3rem;">System Broadcast Notification</h2>
+        <p style="margin:0 0 16px;color:#8899aa;">Send a notification alert to organizer and moderator accounts.</p>
+        <form id="systemNotificationForm" style="display:grid;gap:10px;max-width:720px;">
+          <input id="notifTitle" class="field-input" type="text" placeholder="Notification title" required>
+          <textarea id="notifBody" class="field-input" rows="3" placeholder="Notification message" required></textarea>
+          <button type="submit" class="btn" style="width:max-content;">Send Notification</button>
+        </form>
+      </section>
     </div>
 
     <div id="admin-toast" class="toast" aria-live="polite"></div>

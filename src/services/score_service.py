@@ -367,6 +367,7 @@ class ScoreService:
                 "decision": "approve",
                 "submission": {
                     "id": submission.id,
+                    "user_id": getattr(submission, "user_id", None),
                     "status": submission.status,
                     "final_score": float(submission.final_score) if submission.final_score is not None else None,
                     "title": submission.title,
