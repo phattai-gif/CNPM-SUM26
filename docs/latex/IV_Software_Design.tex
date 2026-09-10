@@ -970,8 +970,8 @@ created\_at & TIMESTAMPTZ & Time the log entry was created & no & yes & \\
 \end{longtable}
 
 \vspace{1em}
-\subsection{Contest Management}
-\label{subsec:contest-management}
+\subsection{Detailed Design}
+\label{subsec:detailed-design}
 
 \vspace{0.6em}
 \subsubsection{Authentication}
@@ -1106,7 +1106,705 @@ created\_at & TIMESTAMPTZ & Time the log entry was created & no & yes & \\
     \includegraphics[width=0.85\textwidth]{{images/se 3.2.2.2}}
 \end{center}
 
+\vspace{0.8em}
+\par\noindent\textbf{3.2.3 Manage Roles and Permission}
+\label{par:design-manage-roles-permission}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.2.3}Manage Roles and Permission}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.3.1 Class Diagram}
+\label{subpar:manage-roles-permission-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.3.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.65\textwidth]{{images/cla 3.2.3.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.2.3.2 Sequence Diagram}
+\label{subpar:manage-roles-permission-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.2.3.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.2.3.2}}
+\end{center}
+
+\vspace{1em}
+\subsubsection{Contest Management}
+\label{subsubsec:design-contest-management}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.3.1 Create and Update Contest}
+\label{par:design-create-update-contest}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.3.1}Create and Update Contest}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.3.1.1 Class Diagram}
+\label{subpar:create-update-contest-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.3.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.65\textwidth]{{images/cla 3.3.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.3.1.2 Sequence Diagram}
+\label{subpar:create-update-contest-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.3.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.3.1.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.3.2 Configure Contest Settings}
+\label{par:design-configure-contest-settings}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.3.2}Configure Contest Settings}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.3.2.1 Class Diagram}
+\label{subpar:configure-contest-settings-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.3.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.65\textwidth]{{images/cla 3.3.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.3.2.2 Sequence Diagram}
+\label{subpar:configure-contest-settings-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.3.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \label{subpar:configure-contest-settings-sequence-diagram-img}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.3.2.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.3.3 Manage Contest Announcements}
+\label{par:design-manage-contest-announcements}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.3.3}Manage Contest Announcements}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.3.3.1 Class Diagram}
+\label{subpar:manage-contest-announcements-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.3.3.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.65\textwidth]{{images/cla 3.3.3.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.3.3.2 Sequence Diagram}
+\label{subpar:manage-contest-announcements-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.3.3.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.3.3.2}}
+\end{center}
+
+\vspace{1em}
+\subsubsection{Round and Judging Criteria Management}
+\label{subsubsec:design-round-judging-criteria-management}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.4.1 Create and Configure Round}
+\label{par:design-create-configure-round}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.4.1}Create and Configure Round}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.4.1.1 Class Diagram}
+\label{subpar:create-configure-round-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.4.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.45\textwidth]{{images/cla 3.4.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.4.1.2 Sequence Diagram}
+\label{subpar:create-configure-round-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.4.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.4.1.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.4.2 Configure Scoring Criteria}
+\label{par:design-configure-scoring-criteria}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.4.2}Configure Scoring Criteria}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.4.2.1 Class Diagram}
+\label{subpar:configure-scoring-criteria-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.4.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.45\textwidth]{{images/cla 3.4.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.4.2.2 Sequence Diagram}
+\label{subpar:configure-scoring-criteria-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.4.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.4.2.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.4.3 Automatic Round Status Transition}
+\label{par:design-automatic-round-status-transition}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.4.3}Automatic Round Status Transition}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.4.3.1 Class Diagram}
+\label{subpar:automatic-round-status-transition-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.4.3.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.45\textwidth]{{images/cla 3.4.3.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.4.3.2 Sequence Diagram}
+\label{subpar:automatic-round-status-transition-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.4.3.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.4.3.2}}
+\end{center}
+
+\vspace{1em}
+\subsubsection{Submission Management}
+\label{subsubsec:design-submission-management}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.1 Create Submission Draft}
+\label{par:design-create-submission-draft}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.5.1}Create Submission Draft}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.1.1 Class Diagram}
+\label{subpar:create-submission-draft-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.5.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.45\textwidth]{{images/cla 3.5.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.1.2 Sequence Diagram}
+\label{subpar:create-submission-draft-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.5.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.5.1.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.2 Upload Submission Files}
+\label{par:design-upload-submission-files}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.5.2}Upload Submission Files}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.2.1 Class Diagram}
+\label{subpar:upload-submission-files-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.5.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.75\textwidth]{{images/cla 3.5.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.2.2 Sequence Diagram}
+\label{subpar:upload-submission-files-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.5.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.5.2.2}}
+\end{center}
 
 
+\vspace{0.8em}
+\par\noindent\textbf{3.5.3 Enter Film Metadata}
+\label{par:design-enter-film-metadata}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.5.3}Enter Film Metadata}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.3.1 Class Diagram}
+\label{subpar:enter-film-metadata-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.5.3.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.55\textwidth]{{images/cla 3.5.3.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.3.2 Sequence Diagram}
+\label{subpar:enter-film-metadata-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.5.3.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.5.3.2}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.4 Submit and View Submission}
+\label{par:design-submit-and-view-submission}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.5.4}Submit and View Submission}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.4.1 Class Diagram}
+\label{subpar:submit-and-view-submission-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.5.4.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.55\textwidth]{{images/cla 3.5.4.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.5.4.2 Sequence Diagram}
+\label{subpar:submit-and-view-submission-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.5.4.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.5.4.2}}
+\end{center}
 
 
+\vspace{1em}
+\subsubsection{Submission Review}
+\label{subsubsec:design-submission-review}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.6.1 Review Submission}
+\label{par:design-review-submission}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.6.1}Review Submission}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.6.1.1 Class Diagram}
+\label{subpar:review-submission-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.6.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.65\textwidth]{{images/cla 3.6.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.6.1.2 Sequence Diagram}
+\label{subpar:review-submission-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.6.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.6.1.2}}
+\end{center}
+
+
+\vspace{0.8em}
+\par\noindent\textbf{3.6.2 Approve or Reject Submission}
+\label{par:design-approve-or-reject-submission}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.6.2}Approve or Reject Submission}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.6.2.1 Class Diagram}
+\label{subpar:approve-or-reject-submission-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.6.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.65\textwidth]{{images/cla 3.6.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.6.2.2 Sequence Diagram}
+\label{subpar:approve-or-reject-submission-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.6.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.6.2.2}}
+\end{center}
+
+
+\vspace{1em}
+\subsubsection{Judge Assignment and Blind Judging}
+\label{subsubsec:design-judge-assignment-and-blind-judging}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.7.1 Assign Judges to Rounds or Submissions}
+\label{par:design-assign-judges-to-rounds-or-submissions}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.7.1}Assign Judges to Rounds or Submissions}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.7.1.1 Class Diagram}
+\label{subpar:assign-judges-to-rounds-or-submissions-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.7.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/cla 3.7.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.7.1.2 Sequence Diagram}
+\label{subpar:assign-judges-to-rounds-or-submissions-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.7.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.7.1.2}}
+\end{center}
+
+
+\vspace{0.8em}
+\par\noindent\textbf{3.7.2 Display Blind Judging Portal}
+\label{par:design-display-blind-judging-portal}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.7.2}Display Blind Judging Portal}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.7.2.1 Class Diagram}
+\label{subpar:display-blind-judging-portal-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.7.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/cla 3.7.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.7.2.2 Sequence Diagram}
+\label{subpar:display-blind-judging-portal-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.7.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.7.2.2}}
+\end{center}
+
+
+\vspace{1em}
+\subsubsection{Scoring and Feedback}
+\label{subsubsec:design-scoring-and-feedback}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.8.1 Score Submission by Criteria}
+\label{par:design-score-submission-by-criteria}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.8.1}Score Submission by Criteria}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.8.1.1 Class Diagram}
+\label{subpar:score-submission-by-criteria-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.8.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.80\textwidth]{{images/cla 3.8.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.8.1.2 Sequence Diagram}
+\label{subpar:score-submission-by-criteria-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.8.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.8.1.2}}
+\end{center}
+
+
+\vspace{0.8em}
+\par\noindent\textbf{3.8.2 Save Feedback and Finalize Score}
+\label{par:design-save-feedback-and-finalize-score}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.8.2}Save Feedback and Finalize Score}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.8.2.1 Class Diagram}
+\label{subpar:save-feedback-and-finalize-score-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.8.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/cla 3.8.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.8.2.2 Sequence Diagram}
+\label{subpar:save-feedback-and-finalize-score-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.8.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.8.2.2}}
+\end{center}
+
+
+\vspace{0.8em}
+\par\noindent\textbf{3.8.3 Calculate Final Score and Leaderboard}
+\label{par:design-calculate-final-score-and-leaderboard}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.8.3}Calculate Final Score and Leaderboard}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.8.3.1 Class Diagram}
+\label{subpar:calculate-final-score-and-leaderboard-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.8.3.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/cla 3.8.3.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.8.3.2 Sequence Diagram}
+\label{subpar:calculate-final-score-and-leaderboard-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.8.3.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.8.3.2}}
+\end{center}
+
+
+\vspace{1em}
+\subsubsection{AI Anti-cheat Processing}
+\label{subsubsec:design-anti-cheat-processing}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.1 Extract EXIF Metadata}
+\label{par:design-extract-exif-metadata}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.9.1}Extract EXIF Metadata}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.1.1 Class Diagram}
+\label{subpar:extract-exif-metadata-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.9.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.80\textwidth]{{images/cla 3.9.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.1.2 Sequence Diagram}
+\label{subpar:extract-exif-metadata-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.9.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.9.1.2}}
+\end{center}
+
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.2 Compare EXIF with Declared Metadata}
+\label{par:design-compare-exif-with-declared-metadata}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.9.2}Compare EXIF with Declared Metadata}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.2.1 Class Diagram}
+\label{subpar:compare-exif-with-declared-metadata-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.9.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/cla 3.9.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.2.2 Sequence Diagram}
+\label{subpar:compare-exif-with-declared-metadata-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.9.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.9.2.2}}
+\end{center}
+
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.3 Detect Duplicate Images Using pHash}
+\label{par:design-detect-duplicate-images-using-phash}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.9.3}Detect Duplicate Images Using pHash}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.3.1 Class Diagram}
+\label{subpar:detect-duplicate-images-using-phash-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.9.3.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/cla 3.9.3.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.3.2 Sequence Diagram}
+\label{subpar:detect-duplicate-images-using-phash-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.9.3.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{{images/se 3.9.3.2}}
+\end{center}
+
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.4 Create and Review AI Flags}
+\label{par:design-create-and-review-ai-flags}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.9.4}Create and Review AI Flags}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.4.1 Class Diagram}
+\label{subpar:create-and-review-ai-flags-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.9.4.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.60\textwidth]{{images/cla 3.9.4.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.9.4.2 Sequence Diagram}
+\label{subpar:create-and-review-ai-flags-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.9.4.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.9.4.2}}
+\end{center}
+
+
+\vspace{1em}
+\subsubsection{Digital Archive and Gallery}
+\label{subsubsec:design-digital-archive-and-gallery}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.10.1 Publish Winning Submission}
+\label{par:design-publish-winning-submission}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.10.1}Publish Winning Submission}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.10.1.1 Class Diagram}
+\label{subpar:publish-winning-submission-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.10.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.80\textwidth]{{images/cla 3.10.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.10.1.2 Sequence Diagram}
+\label{subpar:publish-winning-submission-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.10.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.90\textwidth]{{images/se 3.10.1.2}}
+\end{center}
+
+
+\vspace{0.8em}
+\par\noindent\textbf{3.10.2 Display Public Gallery}
+\label{par:design-display-public-gallery}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.10.2}Display Public Gallery}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.10.2.1 Class Diagram}
+\label{subpar:display-public-gallery-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.10.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.60\textwidth]{{images/cla 3.10.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.10.2.2 Sequence Diagram}
+\label{subpar:display-public-gallery-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.10.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.90\textwidth]{{images/se 3.10.2.2}}
+\end{center}
+
+
+\vspace{1em}
+\subsubsection{Notification and Audit Log}
+\label{subsubsec:design-notification-and-audit-log}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.11.1 Send System Notification}
+\label{par:design-send-system-notification}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.11.1}Send System Notification}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.11.1.1 Class Diagram}
+\label{subpar:send-system-notification-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.11.1.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.80\textwidth]{{images/cla 3.11.1.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.11.1.2 Sequence Diagram}
+\label{subpar:send-system-notification-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.11.1.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.11.1.2}}
+\end{center}
+
+
+\vspace{0.8em}
+\par\noindent\textbf{3.11.2 Record Audit Log}
+\label{par:design-record-audit-log}
+\addcontentsline{toc}{paragraph}{\protect\numberline{3.11.2}Record Audit Log}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.11.2.1 Class Diagram}
+\label{subpar:record-audit-log-class-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.11.2.1}Class Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.60\textwidth]{{images/cla 3.11.2.1}}
+\end{center}
+
+\vspace{0.8em}
+\par\noindent\textbf{3.11.2.2 Sequence Diagram}
+\label{subpar:record-audit-log-sequence-diagram}
+\addcontentsline{toc}{subparagraph}{\protect\numberline{3.11.2.2}Sequence Diagram}
+
+\par\vspace{0.5em}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{{images/se 3.11.2.2}}
+\end{center}
