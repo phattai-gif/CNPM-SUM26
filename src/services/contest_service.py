@@ -1,4 +1,5 @@
 ﻿import re
+from uuid import uuid4
 from datetime import datetime
 from typing import List, Optional
 try:
@@ -15,8 +16,7 @@ class ContestService:
 
     def _generate_slug(self, title: str) -> str:
         base_slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
-        timestamp = int(datetime.utcnow().timestamp())
-        return f"{base_slug}-{timestamp}"
+        return f"{base_slug}-{uuid4().hex[:12]}"
 
     def _parse_datetime(self, val):
         if isinstance(val, datetime):
