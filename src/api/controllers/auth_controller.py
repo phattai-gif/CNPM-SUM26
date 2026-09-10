@@ -530,9 +530,6 @@ def get_active_contests():
             'active',
             'ongoing',
             'open',
-            'published',
-            'submission_open',
-            'upcoming',
         }
 
         session = contest_service.repository.session
@@ -567,7 +564,7 @@ def get_active_contests():
             rounds = []
             for round_obj in round_models:
                 round_status = str(getattr(round_obj, 'status', '') or '').lower()
-                if round_status and round_status not in allowed_round_statuses:
+                if round_status not in allowed_round_statuses:
                     continue
 
                 rounds.append({
