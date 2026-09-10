@@ -746,9 +746,12 @@ class SubmissionForm {
      * View submission details
      */
     viewSubmission() {
-        if (this.currentSubmissionId) {
-            window.location.href = `/submissions/${this.currentSubmissionId}`;
+        const submissionId = this.currentSubmissionId || new URLSearchParams(window.location.search).get('submission_id');
+        if (submissionId) {
+            window.location.href = `/my-submissions/${submissionId}`;
+            return;
         }
+        window.location.href = '/results';
     }
 
     /**
