@@ -195,9 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (filtered.length === 0) {
                 this.emptyState.style.display = 'block';
                 if (this.searchQuery || this.currentFilter !== 'all') {
-                    this.emptyMessage.textContent = 'Không tìm thấy bài thi nào phù hợp với bộ lọc hiện tại.';
+                    this.emptyMessage.textContent = 'No submissions match the current filters.';
                 } else {
-                    this.emptyMessage.textContent = 'Bạn chưa nộp hoặc lưu bản nháp tác phẩm nào. Hãy tham gia cuộc thi ngay hôm nay!';
+                    this.emptyMessage.textContent = 'You have not submitted or saved any drafts yet.';
                 }
                 return;
             }

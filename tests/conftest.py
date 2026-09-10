@@ -7,7 +7,7 @@ import pytest
 # Insert src directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
-DB_FILE = Path(tempfile.gettempdir()) / "cnpm_test_suite.db"
+DB_FILE = Path(tempfile.gettempdir()) / f"cnpm_test_suite_{os.getpid()}.db"
 TEST_DB_URL = f"sqlite:///{DB_FILE.as_posix()}"
 
 os.environ["TESTING"] = "True"
@@ -20,6 +20,7 @@ from sqlalchemy.orm import close_all_sessions
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_suite_db():
+    # Dispose cached connections before initializing this process-isolated database.
     FactoryDatabase.reset()
     db = FactoryDatabase.get_database("POSTGREE")
     try:
@@ -30,9 +31,5 @@ def setup_test_suite_db():
     try:
         close_all_sessions()
         db.engine.dispose()
-    except Exception:
-        pass
-    try:
-        DB_FILE.unlink(missing_ok=True)
     except Exception:
         pass

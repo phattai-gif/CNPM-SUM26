@@ -251,12 +251,25 @@
       <h1>Create an Account</h1>
       <form id="registerForm" novalidate>
         <label for="username">Username</label>
+
+        <input id="username" name="username" type="text" required autocomplete="username" placeholder="Chọn tên đăng nhập">
+
         <input id="username" name="username" type="text" required autocomplete="username" placeholder="Choose a username">
+
 
         <label for="email">Email</label>
         <input id="email" name="email" type="email" required autocomplete="email" placeholder="name@example.com">
 
         <label for="full_name">Full Name</label>
+       <input id="full_name" name="full_name" type="text" autocomplete="name" placeholder="Nhập họ và tên của bạn">
+
+        <label for="role">Role</label>
+        <select id="role" name="role">
+          <option value="participant">Participant</option>
+          <option value="organizer">Organizer</option>
+          <option value="judge">Judge</option>
+          <option value="admin">Admin</option>
+
         <input id="full_name" name="full_name" type="text" autocomplete="name" placeholder="Enter your full name">
 
         <label for="role">Role</label>
@@ -265,6 +278,7 @@
           <option value="organizer">Organizer</option>
           <option value="judge">Judge</option>
           <option value="admin">Administrator</option>
+
         </select>
         <p class="auth-radio-hint">Choose a registration role. Organizer/Admin accounts include management access.</p>
 
@@ -280,7 +294,11 @@
           <button type="button" id="togglePasswordConfirmBtn" title="Show/Hide password" style="position: absolute; right: 10px; background: transparent; border: none; color: #8899aa; cursor: pointer; font-size: 1.15rem; width: auto; padding: 4px; margin: 0;">👁️</button>
         </div>
 
+
+        <button type="submit">Sign Up</button>
+
         <button type="submit">Create Account</button>
+
       </form>
       <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -301,7 +319,11 @@
       </script>
 
       <div id="message" class="message"></div>
+
+      <p class="secondary-text">Already have an account? <a href="{{ url_for('auth.login_page') }}">Log In</a></p>
+
       <p class="secondary-text">Already have an account? <a href="{{ url_for('auth.login_page') }}">Log in here</a></p>
+
     </div>
   </div>
   <script src="{{ url_for('static', filename='api_client.js') }}"></script>

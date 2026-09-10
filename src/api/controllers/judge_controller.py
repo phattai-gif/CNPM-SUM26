@@ -199,7 +199,7 @@ def assign_judge_to_round(contest_id, round_id):
 
     if errors:
         return jsonify({
-            'message': 'Dá»¯ liá»‡u phÃ¢n cÃ´ng khÃ´ng há»£p lá»‡',
+            'message': 'Dữ liệu phân công không hợp lệ',
             'errors': errors
         }), 400
 
@@ -221,8 +221,8 @@ def assign_judge_to_round(contest_id, round_id):
 
             return safe_jsonify({
                 'message': (
-                    f'Ä Ã£ phÃ¢n cÃ´ng {len(assignments)} '
-                    'giÃ¡m kháº£o vÃ o vÃ²ng thi thÃ nh cÃ´ng'
+                    f'Đã phân công {len(assignments)} '
+                    'giám khảo vào vòng thi thành công'
                 ),
                 'assignments': _serialize_assignments(assignments)
             }, status=201)
@@ -237,7 +237,7 @@ def assign_judge_to_round(contest_id, round_id):
         )
 
         return safe_jsonify({
-            'message': 'PhÃ¢n cÃ´ng giÃ¡m kháº£o thÃ nh cÃ´ng',
+            'message': 'Phân công giám khảo thành công',
             'assignment': _serialize_assignment(assignment) or {}
         }, status=201)
 
@@ -253,7 +253,7 @@ def assign_judge_to_round(contest_id, round_id):
 
     except Exception as e:
         return jsonify({
-            'message': 'Lá»—i khi phÃ¢n cÃ´ng giÃ¡m kháº£o',
+            'message': 'Lỗi khi phân công giám khảo',
             'error': str(e)
         }), 500
 
@@ -280,8 +280,8 @@ def get_round_judges(contest_id, round_id):
 
         return safe_jsonify({
             'message': (
-                'Láº¥y danh sÃ¡ch giÃ¡m kháº£o Ä‘Æ°á»£c '
-                'phÃ¢n cÃ´ng thÃ nh cÃ´ng'
+                'Lấy danh sách giám khảo được '
+                'phân công thành công'
             ),
             'assignments': _serialize_assignments(assignments)
         }, status=200)
@@ -298,7 +298,7 @@ def get_round_judges(contest_id, round_id):
 
     except Exception as e:
         return jsonify({
-            'message': 'Lá»—i khi láº¥y danh sÃ¡ch giÃ¡m kháº£o',
+            'message': 'Lỗi khi lấy danh sách giám khảo',
             'error': str(e)
         }), 500
 
@@ -331,12 +331,12 @@ def remove_judge_from_round(contest_id, round_id, judge_id):
 
         if success:
             return jsonify({
-                'message': 'Há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o thÃ nh cÃ´ng'
+                'message': 'Hủy phân công giám khảo thành công'
             }), 200
 
         return jsonify({
             'message': (
-                'KhÃ´ng tÃ¬m tháº¥y phÃ¢n cÃ´ng giÃ¡m kháº£o Ä‘á»ƒ há»§y'
+                'Không tìm thấy phân công giám khảo để hủy'
             )
         }), 404
 
@@ -352,7 +352,7 @@ def remove_judge_from_round(contest_id, round_id, judge_id):
 
     except Exception as e:
         return jsonify({
-            'message': 'Lá»—i khi há»§y phÃ¢n cÃ´ng giÃ¡m kháº£o',
+            'message': 'Lỗi khi hủy phân công giám khảo',
             'error': str(e)
         }), 500
 
@@ -374,14 +374,14 @@ def get_my_assignments():
 
         return safe_jsonify({
             'message': (
-                'Láº¥y danh sÃ¡ch nhiá»‡m vá»¥ cháº¥m thi thÃ nh cÃ´ng'
+                'Lấy danh sách nhiệm vụ chấm thi thành công'
             ),
             'assignments': _serialize_assignments(assignments)
         }, status=200)
 
     except Exception as e:
         return jsonify({
-            'message': 'Lá»—i khi láº¥y danh sÃ¡ch nhiá»‡m vá»¥ cháº¥m thi',
+            'message': 'Lỗi khi lấy danh sách nhiệm vụ chấm thi',
             'error': str(e)
         }), 500
 

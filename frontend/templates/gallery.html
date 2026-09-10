@@ -390,7 +390,11 @@
       <form id="galleryFilterForm" class="row g-3" onsubmit="event.preventDefault(); applyFilters();">
         <!-- Search Keyword -->
         <div class="col-12 col-md-4">
+
+            <label class="form-label text-muted small fw-bold"><i class="bi bi-search me-1"></i>Keyword</label>
+
           <label class="form-label text-muted small fw-bold"><i class="bi bi-search me-1"></i>Search</label>
+
           <div class="input-group">
             <input type="text" id="filterSearch" class="form-control filter-control" placeholder="Search by title or author..." onkeyup="debounceSearch()">
             <button class="btn btn-accent" type="button" onclick="applyFilters()"><i class="bi bi-search"></i></button>
@@ -407,7 +411,11 @@
 
         <!-- Camera -->
         <div class="col-6 col-md-2">
+
+            <label class="form-label text-muted small fw-bold"><i class="bi bi-camera me-1"></i>Camera</label>
+
           <label class="form-label text-muted small fw-bold"><i class="bi bi-camera me-1"></i>Camera</label>
+
           <select id="filterCamera" class="form-select filter-control" onchange="applyFilters()">
             <option value="">All Cameras</option>
           </select>
@@ -415,7 +423,11 @@
 
         <!-- Contest -->
         <div class="col-6 col-md-2">
+
+            <label class="form-label text-muted small fw-bold"><i class="bi bi-trophy me-1"></i>Contest</label>
+
           <label class="form-label text-muted small fw-bold"><i class="bi bi-trophy me-1"></i>Contest</label>
+
           <select id="filterContest" class="form-select filter-control" onchange="applyFilters()">
             <option value="">All Contests</option>
           </select>
@@ -423,7 +435,11 @@
 
         <!-- Year -->
         <div class="col-6 col-md-2">
+
+            <label class="form-label text-muted small fw-bold"><i class="bi bi-calendar-event me-1"></i>Year</label>
+
           <label class="form-label text-muted small fw-bold"><i class="bi bi-calendar-event me-1"></i>Year</label>
+
           <select id="filterYear" class="form-select filter-control" onchange="applyFilters()">
             <option value="">All Years</option>
           </select>
@@ -454,7 +470,7 @@
     <!-- EMPTY STATE -->
     <div id="galleryEmpty" class="empty-state" style="display: none;">
       <i class="bi bi-images"></i>
-      <h4>Không tìm thấy tác phẩm nào</h4>
+          <h4>No works found</h4>
       <p>Rất tiếc, không có ảnh phù hợp với tiêu chí lọc của bạn. Hãy thử thay đổi hoặc xóa bộ lọc.</p>
       <button type="button" class="btn btn-accent mt-2" onclick="resetFilters()">
         <i class="bi bi-arrow-counterclockwise me-1"></i>Đặt lại bộ lọc
@@ -470,7 +486,7 @@
     <div class="modal-dialog modal-xl modal-dialog-centered">
       <div class="modal-content modal-content-dark">
         <div class="modal-header-dark">
-          <h5 class="modal-title fw-bold text-white mb-0" id="modalPhotoTitle">Chi tiết tác phẩm</h5>
+          <h5 class="modal-title fw-bold text-white mb-0" id="modalPhotoTitle">Work Details</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">

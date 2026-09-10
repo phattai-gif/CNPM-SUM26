@@ -2,6 +2,7 @@
   <link rel="stylesheet" href="/static/admin.css">
 
   <div class="app-nav-wrap">
+    <nav class="app-nav-left" aria-label="Điều hướng chính">
     <nav class="app-nav-left" aria-label="Main navigation">
       <a href="/contests" class="app-nav-link primary">Contests</a>
       <a href="/gallery" class="app-nav-link">Gallery</a>
@@ -9,7 +10,10 @@
       <a href="/my-submissions" id="nav-submissions-link" class="app-nav-link is-hidden">My Submissions</a>
       <a href="/judge" id="nav-judge-link" class="app-nav-link is-hidden">Judge Area</a>
       <a href="/organizer/dashboard" id="nav-organizer-link" class="app-nav-btn app-nav-btn-solid">Manage</a>
+      <button type="button" id="nav-notifications" class="app-nav-btn app-nav-btn-outline is-hidden" title="Xem cảnh báo fraud">
+
       <button type="button" id="nav-notifications" class="app-nav-btn app-nav-btn-outline is-hidden" title="View fraud alerts">
+
         🔔 <span id="nav-notification-count" class="is-hidden">0</span>
       </button>
     </nav>

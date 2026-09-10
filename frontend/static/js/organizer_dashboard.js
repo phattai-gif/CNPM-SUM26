@@ -190,6 +190,9 @@ function renderRoundOptions() {
 
   if (!contest || !(contest.rounds || []).length) {
     dashboardState.selectedRoundId = '';
+    select.innerHTML = '<option value="">Contest chưa có round</option>';
+    if (summary) summary.textContent = 'This contest has no rounds available for judge assignment.';
+
     select.innerHTML = '<option value="">Contest has no rounds</option>';
     if (summary) summary.textContent = 'This contest has no rounds for judge assignment.';
     renderAssignments([]);
@@ -209,6 +212,7 @@ function renderRoundOptions() {
 
   const selectedRound = getSelectedRound();
   if (summary && selectedRound) {
+    summary.textContent = `Assigning judges to Round ${selectedRound.round_number || '-'} of Contest #${contest.id}.`;
     summary.textContent = `Assigning judges for Round ${selectedRound.round_number || '-'} of contest #${contest.id}.`;
   }
 }
@@ -306,6 +310,7 @@ function renderFlaggedSubmissions(items) {
   dashboardState.flaggedSubmissions = Array.isArray(items) ? items : [];
 
   if (!dashboardState.flaggedSubmissions.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No flagged submissions in this contest.</td></tr>';
     tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No flagged submissions in the current contest.</td></tr>';
     return;
   }

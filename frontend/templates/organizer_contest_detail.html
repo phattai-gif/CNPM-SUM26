@@ -588,7 +588,7 @@
                 <h5 class="mb-0"><i class="bi bi-journal-check me-2"></i>Danh sách bài dự thi</h5>
                 <button id="refresh-btn" class="btn btn-sm btn-outline-primary action-btn" onclick="loadContestData({ manual: true })">
                     <span class="spinner-border spinner-border-sm me-1 d-none" id="refresh-spinner" aria-hidden="true"></span>
-                    <i class="bi bi-arrow-clockwise"></i> Làm mới
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
                 </button>
             </div>
             <div class="card-body p-0">
@@ -626,20 +626,20 @@
     <div id="submission-detail-modal" class="review-modal" role="dialog" aria-modal="true" aria-hidden="true">
         <div class="review-modal-card">
             <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">Chi tiết bài dự thi</h5>
+                <h5 class="mb-0 fw-bold">Submission Details</h5>
                 <button type="button" class="btn btn-sm btn-outline-secondary action-btn" onclick="closeSubmissionDetailModal()">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
             <div class="p-3 p-md-4">
                 <div class="mb-2 text-muted small">ID: <span id="modal-submission-id">N/A</span></div>
-                <h5 id="modal-submission-title" class="mb-3">Bài dự thi</h5>
+                <h5 id="modal-submission-title" class="mb-3">Submission</h5>
                 <div class="mb-3">
                     <span id="modal-submission-status" class="badge">submitted</span>
                 </div>
                 <div class="mb-4">
                     <div class="text-muted small mb-1">Link sản phẩm</div>
-                    <a id="modal-submission-link" href="#" target="_blank" rel="noopener noreferrer" class="text-break">Chưa có link</a>
+                    <a id="modal-submission-link" href="#" target="_blank" rel="noopener noreferrer" class="text-break">No link available</a>
                 </div>
                 <div class="mb-4">
                     <div class="text-muted small mb-2">Xem nhanh ảnh nộp</div>
@@ -655,12 +655,12 @@
                     <div id="modal-attachments" class="submission-attachments" aria-live="polite"></div>
                 </div>
                 <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-light action-btn" onclick="closeSubmissionDetailModal()">Đóng</button>
+                    <button type="button" class="btn btn-light action-btn" onclick="closeSubmissionDetailModal()">Close</button>
                     <button type="button" class="btn btn-outline-dark action-btn" id="open-hd-viewer-btn" onclick="openSubmissionHdViewerFromModal()">
                         HD Viewer
                     </button>
                     <button type="button" class="btn btn-primary action-btn" id="go-review-btn" onclick="goToReviewFromModal()">
-                        Chi tiết / Review
+                        Review Submission
                     </button>
                 </div>
             </div>

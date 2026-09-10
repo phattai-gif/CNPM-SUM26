@@ -1,6 +1,6 @@
 ﻿"""User ORM model."""
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, String, Text
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -13,7 +13,7 @@ class UserModel(Base):
     __tablename__ = "users"
     __table_args__ = {"schema": "app", "extend_existing": True}
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger().with_variant(Integer, 'sqlite'), primary_key=True, autoincrement=True)
     username = Column(String(50), nullable=False, unique=True)
     email = Column(String(255), nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)
