@@ -1,0 +1,174 @@
+% --- Chapter V: Software Testing Documentation ---
+\newpage
+
+\section*{V. Software Testing Documentation}
+\addcontentsline{toc}{section}{V. Software Testing Documentation}
+\setcounter{section}{5}
+
+% Number subsections in this chapter as 1, 2, ... (consistent with Chapters III and IV)
+\renewcommand{\thesubsection}{\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+\setcounter{subsection}{0}
+
+\subsection{Scope of Testing}
+\label{subsec:testing-scope}
+
+\subsubsection{Scope}
+\label{subsubsec:testing-scope-features}
+
+\textbf{Features to be tested:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item User authentication, authentication recovery, and Google authentication.
+    \item User profile and portfolio management.
+    \item Contest management, settings, categories, awards, and round finalization.
+    \item Submission creation, draft saving, proof files, and submission review.
+    \item Judge assignment and submission scoring.
+    \item Duplicate submission detection and AI detection.
+    \item Voting, public gallery, and winner approval.
+    \item Moderator and administrator functions.
+    \item Certificate, notification, scheduler, image processing, and storage services.
+\end{itemize}
+
+\textbf{Features not to be tested:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item External platforms or third-party services outside the project's scope.
+    \item Extremely large-scale production and stress testing.
+\end{itemize}
+
+\subsubsection{Testing Levels}
+\label{subsubsec:testing-levels}
+
+\textbf{Unit Testing:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Responsible:} Developers.
+    \item \textbf{Inputs:} Individual modules such as authentication, contest, submission, scoring, AI detection, duplicate detection, and voting.
+    \item \textbf{Focus:} Validate individual modules independently.
+    \item \textbf{Acceptance Criteria:} Modules function correctly according to requirements.
+\end{itemize}
+
+\textbf{Integration Testing:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Responsible:} Developers and QA team.
+    \item \textbf{Inputs:} Interactions between APIs, services, database components, AI detection, and duplicate detection.
+    \item \textbf{Focus:} Verify data flow and communication between system components.
+    \item \textbf{Acceptance Criteria:} Integrated components work correctly without major errors.
+\end{itemize}
+
+\textbf{System Testing:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Responsible:} QA team.
+    \item \textbf{Inputs:} Complete integrated system.
+    \item \textbf{Focus:} Validate complete workflows such as contest, submission, scoring, voting, and winner approval.
+    \item \textbf{Acceptance Criteria:} The system satisfies the defined functional requirements.
+\end{itemize}
+
+\subsubsection{Constraints and Assumptions}
+\label{subsubsec:testing-constraints-assumptions}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Testing is performed in a controlled development/test environment.
+    \item Test data is used instead of production data.
+\end{itemize}
+
+\subsection{Test Strategy}
+\label{subsec:test-strategy}
+
+\subsubsection{Testing Types}
+\label{subsubsec:testing-types}
+
+\textbf{Unit Testing:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Objective:} Verify individual modules and services.
+    \item \textbf{Technique:} White-box testing using Python automated tests with pytest.
+    \item \textbf{Completion Criteria:} Relevant unit tests pass and no critical defects remain.
+\end{itemize}
+
+\textbf{Integration Testing:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Objective:} Validate interactions between system components.
+    \item \textbf{Technique:} API and service integration testing.
+    \item \textbf{Completion Criteria:} Integrated components communicate correctly without major errors.
+\end{itemize}
+
+\textbf{System Testing:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Objective:} Verify the complete system functionality.
+    \item \textbf{Technique:} Black-box testing based on user workflows.
+    \item \textbf{Completion Criteria:} Major functional requirements are successfully verified.
+\end{itemize}
+
+\textbf{UI / End-to-End Testing:}
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Objective:} Verify important web application workflows.
+    \item \textbf{Technique:} Selenium-based browser testing.
+    \item \textbf{Completion Criteria:} Selected UI workflows execute successfully.
+\end{itemize}
+
+\subsubsection{Test Levels}
+\label{subsubsec:test-strategy-levels}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Unit Testing:} Focused on individual services such as authentication, contest, submission, scoring, AI detection, duplicate detection, and voting.
+    \item \textbf{Integration Testing:} Covers interactions between APIs, services, database components, AI detection, and duplicate detection.
+    \item \textbf{System Testing:} Covers complete contest, submission, scoring, voting, and winner approval workflows.
+    \item \textbf{UI Testing:} Covers selected browser-based workflows using Selenium.
+\end{itemize}
+
+\subsubsection{Supporting Tools}
+\label{subsubsec:supporting-tools}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Unit Testing:} pytest.
+    \item \textbf{Integration Testing:} Python API and integration tests.
+    \item \textbf{System Testing:} Automated system test modules.
+    \item \textbf{UI Testing:} Selenium.
+    \item \textbf{Database Testing:} Project database and test environment.
+\end{itemize}
+
+\subsection{Test Plan}
+\label{subsec:test-plan}
+
+\subsubsection{Human Resources}
+\label{subsubsec:test-human-resources}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Test Lead:} Oversees testing activities and test coverage.
+    \item \textbf{Test Engineers:} Perform integration, system, and UI testing.
+    \item \textbf{Developers:} Perform unit testing and fix defects.
+\end{itemize}
+
+\subsubsection{Test Environment}
+\label{subsubsec:test-environment}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Software:} Python, pytest, Selenium, project dependencies, and database.
+    \item \textbf{Hardware:} Development/test computers or servers.
+    \item \textbf{Infrastructure:} Controlled testing environment separated from production data.
+\end{itemize}
+
+\subsubsection{Test Milestones}
+\label{subsubsec:test-milestones}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Unit Testing Completion:} Phase 1.
+    \item \textbf{Integration Testing Completion:} Phase 2.
+    \item \textbf{System and UI Testing Completion:} Phase 3.
+    \item \textbf{Regression Testing and Final Report:} Phase 4.
+\end{itemize}
+
+\subsection{Test Cases}
+\label{subsec:test-cases}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item \textbf{Unit Test Cases:} Covered by the project's automated test modules for authentication, contest, submission, scoring, AI detection, duplicate detection, voting, and supporting services.
+    \item \textbf{Integration Test Cases:} Covered by integration tests for duplicate submission detection, AI detection, and related workflows.
+    \item \textbf{System/UI Test Cases:} Covered by system and Selenium tests for public gallery, submission draft, moderator functions, and winner approval.
+\end{itemize}
+
+\subsection{Test Reports}
+\label{subsec:test-reports}
+
+\begin{itemize}[leftmargin=1.5em, nosep]
+    \item Provide test execution results, pass/fail rates, defect statistics, and analysis.
+    \item Summarize test coverage, failed test cases, resolved defects, remaining defects, and recommendations for improvement.
+\end{itemize}
