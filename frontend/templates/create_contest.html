@@ -511,6 +511,7 @@
         let nextRoundIdx = 1;
         let categoriesState = [];
         let awardsState = [];
+        let isSavingContest = false;
 
         function escapeHtml(value) {
           return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
@@ -1096,9 +1097,11 @@
         }
 
         async function saveContest() {
+          if (isSavingContest) return;
           if (!hasSession()) throw new Error('Bạn cần đăng nhập để lưu contest');
           const payload = getContestPayload();
           if (!payload.title) throw new Error('Tiêu đề contest là bắt buộc');
+          isSavingContest = true;
           setButtonLoading(saveContestBtn, true, 'Đang lưu...');
           try {
             if (activeContestId) {
@@ -1139,6 +1142,7 @@
               throw new Error('Không thể tạo contest');
             }
           } finally {
+            isSavingContest = false;
             setButtonLoading(saveContestBtn, false, 'Lưu thông tin Contest');
           }
         }
@@ -1251,20 +1255,6 @@
               })();
             }
 
-            if (target.closest && target.closest('#saveContestBtn')) {
-              evt.preventDefault();
-              (async () => {
-                try {
-                  setButtonLoading(saveContestBtn, true, 'Đang lưu...');
-                  await saveContest();
-                } catch (err) {
-                  console.error('saveContest error', err);
-                  showToast(err.message || 'Lưu contest thất bại', 3000, true);
-                } finally {
-                  setButtonLoading(saveContestBtn, false, 'Lưu thông tin Contest');
-                }
-              })();
-            }
           } catch (e) {
             console.error('delegated click handler error', e);
           }
