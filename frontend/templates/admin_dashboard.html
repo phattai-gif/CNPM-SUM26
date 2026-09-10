@@ -1,477 +1,529 @@
 <!doctype html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Dashboard - System Management</title>
-    <link rel="stylesheet" href="/static/auth.css">
-    <link rel="stylesheet" href="/static/admin.css">
-    <style>
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background: #080c14;
-        color: #e8edf2;
-        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      }
 
-      .page-shell {
-        max-width: 1240px;
-        margin: 0 auto;
-        padding: 40px 20px;
-      }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard - System Management</title>
+  <link rel="stylesheet" href="/static/auth.css">
+  <link rel="stylesheet" href="/static/admin.css">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #080c14;
+      color: #e8edf2;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
 
-      .page-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-      }
+    .page-shell {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
 
-      h1 {
-        margin: 0;
-        font-size: clamp(1.8rem, 2vw, 2.4rem);
-        color: #f0f4f8;
-        font-weight: 700;
-      }
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
 
-      .admin-stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 16px;
-        margin-bottom: 28px;
-      }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 2vw, 2.4rem);
+      color: #f0f4f8;
+      font-weight: 700;
+    }
 
-      .stat-card {
-        background: #111a26;
-        border: 1px solid #1e2a3a;
-        border-radius: 16px;
-        padding: 18px 20px;
-        text-align: center;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
-      }
-      .stat-card:hover {
-        border-color: #f5a623;
-        transform: translateY(-2px);
-      }
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
 
-      .stat-label {
-        font-size: 0.88rem;
-        color: #8899aa;
-        margin-bottom: 6px;
-        font-weight: 500;
-      }
+    .stat-card {
+      background: #111a26;
+      border: 1px solid #1e2a3a;
+      border-radius: 16px;
+      padding: 18px 20px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
 
-      .stat-value {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #f5a623;
-      }
+    .stat-card:hover {
+      border-color: #f5a623;
+      transform: translateY(-2px);
+    }
 
-      .panel {
-        background: #111a26;
-        border: 1px solid #1e2a3a;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-        padding: 28px;
-      }
+    .stat-label {
+      font-size: 0.88rem;
+      color: #8899aa;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
 
-      .toolbar {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 20px;
-      }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #f5a623;
+    }
 
-      .field-input {
-        border: 2px solid #1e2a3a;
-        border-radius: 10px;
-        padding: 10px 14px;
-        font-size: 0.92rem;
-        background: #0d1622;
-        color: #e8edf2;
-        transition: all 0.3s ease;
-      }
+    .panel {
+      background: #111a26;
+      border: 1px solid #1e2a3a;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      padding: 28px;
+    }
 
-      .field-input:focus {
-        border-color: #f5a623;
-        outline: none;
-      }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+    }
 
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        border-radius: 10px;
-        padding: 10px 16px;
-        background: #f5a623;
-        color: #080c14;
-        font-weight: 700;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-      .btn:hover {
-        background: #e0960a;
-        transform: translateY(-1px);
-      }
+    .field-input {
+      border: 2px solid #1e2a3a;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.92rem;
+      background: #0d1622;
+      color: #e8edf2;
+      transition: all 0.3s ease;
+    }
 
-      .btn-outline {
-        background: transparent;
-        color: #99abb8;
-        border: 1px solid #1e2a3a;
-      }
-      .btn-outline:hover {
-        background: rgba(245,166,35,0.1);
-        color: #f5a623;
-        border-color: #f5a623;
-      }
+    .field-input:focus {
+      border-color: #f5a623;
+      outline: none;
+    }
 
-      .btn-danger {
-        background: #dc2626;
-        color: #ffffff;
-      }
-      .btn-danger:hover {
-        background: #b91c1c;
-      }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 10px;
+      padding: 10px 16px;
+      background: #f5a623;
+      color: #080c14;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
 
-      .btn-sm {
-        padding: 6px 10px;
-        font-size: 0.84rem;
-        border-radius: 8px;
-      }
+    .btn:hover {
+      background: #e0960a;
+      transform: translateY(-1px);
+    }
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
+    .btn-outline {
+      background: transparent;
+      color: #99abb8;
+      border: 1px solid #1e2a3a;
+    }
 
-      th, td {
-        padding: 14px 16px;
-        text-align: left;
-        border-bottom: 1px solid #1e2a3a;
-        color: #e8edf2;
-      }
+    .btn-outline:hover {
+      background: rgba(245, 166, 35, 0.1);
+      color: #f5a623;
+      border-color: #f5a623;
+    }
 
-      thead th {
-        background: #0d1622;
-        color: #99abb8;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
+    .btn-danger {
+      background: #dc2626;
+      color: #ffffff;
+    }
 
-      tbody tr:hover {
-        background: rgba(245, 166, 35, 0.04);
-      }
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
 
-      .role-badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-      .role-admin { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-      .role-organizer { background: rgba(245, 166, 35, 0.18); color: #f5a623; border: 1px solid rgba(245, 166, 35, 0.3); }
-      .role-judge { background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
-      .role-participant { background: rgba(59, 130, 246, 0.18); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.84rem;
+      border-radius: 8px;
+    }
 
-      .status-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 600;
-      }
-      .status-active { background: rgba(34, 197, 94, 0.18); color: #4ade80; }
-      .status-locked { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
 
-      .user-meta-name {
-        font-weight: 700;
-        color: #f0f4f8;
-      }
-      .user-meta-sub {
-        font-size: 0.85rem;
-        color: #6b7f94;
-      }
+    th,
+    td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #1e2a3a;
+      color: #e8edf2;
+    }
 
-      .action-group {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
+    thead th {
+      background: #0d1622;
+      color: #99abb8;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
 
-      .toast {
-        position: fixed;
-        right: 20px;
-        bottom: 20px;
-        z-index: 1200;
-        min-width: 260px;
-        max-width: 360px;
-        border-radius: 12px;
-        padding: 12px 14px;
-        color: #080c14;
-        background: #f5a623;
-        box-shadow: 0 10px 28px rgba(245, 166, 35, 0.3);
-        display: none;
-        font-weight: 600;
-      }
+    tbody tr:hover {
+      background: rgba(245, 166, 35, 0.04);
+    }
 
-      .admin-tabs-nav {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        padding-bottom: 8px;
-        margin-bottom: 24px;
-        border-bottom: 2px solid #1e2a3a;
-      }
+    .role-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
 
-      .admin-tab-btn {
-        background: rgba(17, 26, 38, 0.7);
-        border: 1px solid #1e2a3a;
-        color: #8899aa;
-        padding: 12px 18px;
-        border-radius: 12px 12px 0 0;
-        font-weight: 600;
-        font-size: 0.92rem;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: all 0.25s ease;
-      }
-      .admin-tab-btn:hover {
-        color: #f0f4f8;
-        background: #111a26;
-        border-color: #2a3a4e;
-      }
-      .admin-tab-btn.active {
-        color: #f5a623;
-        background: #111a26;
-        border-color: #f5a623 #f5a623 #111a26 #f5a623;
-        font-weight: 700;
-      }
+    .role-admin {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
 
-      .admin-tab-content {
-        display: none;
-      }
-      .admin-tab-content.active {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    {% include '_nav.html' %}
-    <div class="page-shell">
-      <div class="page-header">
-        <h1>Admin Dashboard</h1>
-        <span class="role-badge role-admin">System Administration</span>
+    .role-organizer {
+      background: rgba(245, 166, 35, 0.18);
+      color: #f5a623;
+      border: 1px solid rgba(245, 166, 35, 0.3);
+    }
+
+    .role-judge {
+      background: rgba(168, 85, 247, 0.18);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .role-participant {
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .status-active {
+      background: rgba(34, 197, 94, 0.18);
+      color: #4ade80;
+    }
+
+    .status-locked {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+    }
+
+    .user-meta-name {
+      font-weight: 700;
+      color: #f0f4f8;
+    }
+
+    .user-meta-sub {
+      font-size: 0.85rem;
+      color: #6b7f94;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 1200;
+      min-width: 260px;
+      max-width: 360px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #080c14;
+      background: #f5a623;
+      box-shadow: 0 10px 28px rgba(245, 166, 35, 0.3);
+      display: none;
+      font-weight: 600;
+    }
+
+    .admin-tabs-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #1e2a3a;
+    }
+
+    .admin-tab-btn {
+      background: rgba(17, 26, 38, 0.7);
+      border: 1px solid #1e2a3a;
+      color: #8899aa;
+      padding: 12px 18px;
+      border-radius: 12px 12px 0 0;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.25s ease;
+    }
+
+    .admin-tab-btn:hover {
+      color: #f0f4f8;
+      background: #111a26;
+      border-color: #2a3a4e;
+    }
+
+    .admin-tab-btn.active {
+      color: #f5a623;
+      background: #111a26;
+      border-color: #f5a623 #f5a623 #111a26 #f5a623;
+      font-weight: 700;
+    }
+
+    .admin-tab-content {
+      display: none;
+    }
+
+    .admin-tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  {% include '_nav.html' %}
+  <div class="page-shell">
+    <div class="page-header">
+      <h1>Admin Dashboard</h1>
+      <span class="role-badge role-admin">System Administration</span>
+    </div>
+
+    <div class="admin-stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">👥 Total Users</div>
+        <div class="stat-value" id="statTotalUsers">—</div>
       </div>
-
-      <div class="admin-stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">👥 Total Users</div>
-          <div class="stat-value" id="statTotalUsers">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">🛡️ Administrators</div>
-          <div class="stat-value" id="statAdmins">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">🏢 Organizers</div>
-          <div class="stat-value" id="statOrganizers">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">⚖️ Judges</div>
-          <div class="stat-value" id="statJudges">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">🎨 Participants</div>
-          <div class="stat-value" id="statParticipants">—</div>
-        </div>
-        <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
-          <div class="stat-label" style="color: #f87171;">🔒 Locked Accounts</div>
-          <div class="stat-value" style="color: #ef4444;" id="statLockedUsers">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">🏆 Total Contests</div>
-          <div class="stat-value" id="statTotalContests">—</div>
-        </div>
-        <div class="stat-card" style="border-color: rgba(59, 130, 246, 0.3);">
-          <div class="stat-label" style="color: #60a5fa;">🔥 Active Contests</div>
-          <div class="stat-value" style="color: #3b82f6;" id="statActiveContests">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">⏳ Pending Contests</div>
-          <div class="stat-value" id="statPendingContests">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">📥 Total Submissions</div>
-          <div class="stat-value" id="statTotalSubmissions">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">📋 Pending Submissions</div>
-          <div class="stat-value" id="statPendingSubmissions">—</div>
-        </div>
-        <div class="stat-card" style="border-color: rgba(245, 158, 11, 0.3);">
-          <div class="stat-label" style="color: #fbbf24;">🤖 Submission AI Flagged</div>
-          <div class="stat-value" style="color: #f59e0b;" id="statAiFlaggedSubmissions">—</div>
-        </div>
-        <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
-          <div class="stat-label" style="color: #f87171;">🚨 Unresolved High-Risk AI Flags</div>
-          <div class="stat-value" style="color: #ef4444;" id="statHighSeverityAiFlags">—</div>
-        </div>
+      <div class="stat-card">
+        <div class="stat-label">🛡️ Administrators</div>
+        <div class="stat-value" id="statAdmins">—</div>
       </div>
-
-      <!-- System Health Panel -->
-      <div class="panel" style="margin-bottom: 28px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
-          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">🖥️ System Health</h2>
-<<<<<<< HEAD
-          <span style="color: #6b7f94; font-size: 0.85rem;">Kiểm tra Database, File Storage & Email</span>
-=======
-          <span style="color: #6b7f94; font-size: 0.85rem;">Database, file storage, and email checks</span>
->>>>>>> origin/main
-        </div>
-        <div id="systemHealthContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
-          <p style="color: #6b7f94; text-align: center; grid-column: 1 / -1; padding: 14px;">Checking service status...</p>
-        </div>
+      <div class="stat-card">
+        <div class="stat-label">🏢 Organizers</div>
+        <div class="stat-value" id="statOrganizers">—</div>
       </div>
-
-      <!-- Recent System Activities Panel -->
-      <div class="panel" style="margin-bottom: 28px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
-          <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">⚡ Recent System Activity</h2>
-
-          <span style="color: #6b7f94; font-size: 0.85rem;">Nhật ký sự kiện thời gian thực</span>
-
-          <span style="color: #6b7f94; font-size: 0.85rem;">Real-time event log</span>
-
-        </div>
-        <div id="recentActivitiesContainer">
-          <p style="color: #6b7f94; text-align: center; padding: 20px;">Loading system activity...</p>
-        </div>
+      <div class="stat-card">
+        <div class="stat-label">⚖️ Judges</div>
+        <div class="stat-value" id="statJudges">—</div>
       </div>
-
-      <div class="admin-tabs-nav" aria-label="Evidence and administration panels">
-        <button type="button" class="admin-tab-btn" data-tab="tab-ai">AI Reports</button>
-        <button type="button" class="admin-tab-btn" data-tab="tab-audit">Audit Logs</button>
+      <div class="stat-card">
+        <div class="stat-label">🎨 Participants</div>
+        <div class="stat-value" id="statParticipants">—</div>
       </div>
-
-      <section id="tab-ai" class="admin-tab-content panel" style="margin-bottom: 28px;">
-        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
-          <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">AI Reports</h2>
-          <button id="btnRefreshAiReports" class="btn btn-outline">Refresh</button>
-        </div>
-        <div id="aiReportsListContainer">
-          <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load AI reports.</p>
-        </div>
-      </section>
-
-      <section id="tab-audit" class="admin-tab-content panel" style="margin-bottom: 28px;">
-        <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
-          <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">Audit Logs</h2>
-          <button id="btnRefreshAuditLogs" class="btn btn-outline">Refresh</button>
-        </div>
-        <div id="auditLogsListContainer">
-          <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load audit logs.</p>
-        </div>
-      </section>
-
-      <section class="panel" style="margin-bottom: 28px;">
-        <h2 style="margin:0 0 8px;color:#f0f4f8;font-size:1.3rem;">System Notification</h2>
-        <p style="margin:0 0 16px;color:#8899aa;">Gửi thông báo hệ thống tới tất cả người dùng (Organizers, Judges, Participants).</p>
-        <form id="systemNotificationForm" style="display:grid;gap:10px;max-width:720px;">
-          <input id="notifTitle" class="field-input" type="text" placeholder="Notification title" required>
-          <textarea id="notifBody" class="field-input" rows="3" placeholder="Notification message" required></textarea>
-          <button type="submit" class="btn" style="width:max-content;">Send Notification</button>
-        </form>
-      </section>
-
-      <div class="panel">
-        <div style="margin-bottom: 20px;">
-
-          <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">User Management</h2>
-          <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Tìm kiếm, thay đổi vai trò (Role), khóa/mở khóa tài khoản hoặc xóa tài khoản người dùng.</p>
-
-          <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">System Account Management</h2>
-          <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Search, change roles, lock or unlock accounts, or delete users.</p>
-
-        </div>
-
-        <div class="toolbar">
-          <input type="text" id="searchInput" class="field-input" style="flex: 1; min-width: 220px;" placeholder="Search by username, email, or name...">
-          
-          <select id="roleFilter" class="field-input">
-            <option value="">All Roles</option>
-            <option value="participant">Participant</option>
-            <option value="judge">Judge</option>
-            <option value="organizer">Organizer</option>
-
-            <option value="admin">Admin</option>
-
-            <option value="admin">Administrator</option>
-
-          </select>
-
-          <select id="statusFilter" class="field-input">
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="locked">Locked</option>
-          </select>
-
-          <button id="btnRefreshUsers" class="btn btn-outline">Refresh</button>
-        </div>
-
-        <div id="usersListContainer">
-          <p style="color: #6b7f94; text-align: center; padding: 30px;">Loading users...</p>
-        </div>
-
-        <div id="paginationContainer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; color: #8899aa;"></div>
+      <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+        <div class="stat-label" style="color: #f87171;">🔒 Locked Accounts</div>
+        <div class="stat-value" style="color: #ef4444;" id="statLockedUsers">—</div>
       </div>
-
-      <div class="panel" style="margin-top: 28px;">
-        <div class="toolbar" style="justify-content: space-between;">
-          <div>
-            <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Contest Review</h2>
-            <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Duyệt, từ chối kèm lý do hoặc đình chỉ cuộc thi.</p>
-          </div>
-          <button id="btnRefreshContests" class="btn btn-outline">Refresh</button>
-        </div>
-        <div class="toolbar">
-          <input type="text" id="contestSearchInput" class="field-input" placeholder="Tìm theo tên hoặc ID..."></input>
-          <select id="contestStatusFilter" class="field-input">
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="pending">Pending</option>
-            <option value="published">Published</option>
-            <option value="rejected">Rejected</option>
-            <option value="suspended">Suspended</option>
-          </select>
-        </div>
-        <div id="contestsListContainer"><p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải danh sách cuộc thi...</p></div>
+      <div class="stat-card">
+        <div class="stat-label">🏆 Total Contests</div>
+        <div class="stat-value" id="statTotalContests">—</div>
       </div>
-
-      <div class="panel" style="margin-top: 28px;">
-        <div class="toolbar" style="justify-content: space-between;">
-          <div>
-            <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Review Submission AI Flagged</h2>
-            <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Xem báo cáo AI và xử lý submission nghi ngờ vi phạm.</p>
-          </div>
-          <button id="btnRefreshAiReports" class="btn btn-outline">Refresh</button>
-        </div>
-        <div id="aiReportsListContainer"><p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải báo cáo AI...</p></div>
+      <div class="stat-card" style="border-color: rgba(59, 130, 246, 0.3);">
+        <div class="stat-label" style="color: #60a5fa;">🔥 Active Contests</div>
+        <div class="stat-value" style="color: #3b82f6;" id="statActiveContests">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">⏳ Pending Contests</div>
+        <div class="stat-value" id="statPendingContests">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">📥 Total Submissions</div>
+        <div class="stat-value" id="statTotalSubmissions">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">📋 Pending Submissions</div>
+        <div class="stat-value" id="statPendingSubmissions">—</div>
+      </div>
+      <div class="stat-card" style="border-color: rgba(245, 158, 11, 0.3);">
+        <div class="stat-label" style="color: #fbbf24;">🤖 Submission AI Flagged</div>
+        <div class="stat-value" style="color: #f59e0b;" id="statAiFlaggedSubmissions">—</div>
+      </div>
+      <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+        <div class="stat-label" style="color: #f87171;">🚨 Unresolved High-Risk AI Flags</div>
+        <div class="stat-value" style="color: #ef4444;" id="statHighSeverityAiFlags">—</div>
       </div>
     </div>
 
-    <div id="admin-toast" class="toast" aria-live="polite"></div>
+    <!-- System Health Panel -->
+    <div class="panel" style="margin-bottom: 28px;">
+      <div
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+        <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">🖥️ System Health</h2>
+        <span style="color: #6b7f94; font-size: 0.85rem;">Kiểm tra Database, File Storage & Email</span>
+        <span style="color: #6b7f94; font-size: 0.85rem;">Database, file storage, and email checks</span>
+      </div>
+      <div id="systemHealthContainer"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+        <p style="color: #6b7f94; text-align: center; grid-column: 1 / -1; padding: 14px;">Checking service status...
+        </p>
+      </div>
+    </div>
 
-    <script src="/static/api_client.js"></script>
-    <script src="/static/js/admin_dashboard.js"></script>
-  </body>
+    <!-- Recent System Activities Panel -->
+    <div class="panel" style="margin-bottom: 28px;">
+      <div
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+        <h2 style="margin: 0; color: #f0f4f8; font-size: 1.3rem;">⚡ Recent System Activity</h2>
+
+        <span style="color: #6b7f94; font-size: 0.85rem;">Nhật ký sự kiện thời gian thực</span>
+
+        <span style="color: #6b7f94; font-size: 0.85rem;">Real-time event log</span>
+
+      </div>
+      <div id="recentActivitiesContainer">
+        <p style="color: #6b7f94; text-align: center; padding: 20px;">Loading system activity...</p>
+      </div>
+    </div>
+
+    <div class="admin-tabs-nav" aria-label="Evidence and administration panels">
+      <button type="button" class="admin-tab-btn" data-tab="tab-ai">AI Reports</button>
+      <button type="button" class="admin-tab-btn" data-tab="tab-audit">Audit Logs</button>
+    </div>
+
+    <section id="tab-ai" class="admin-tab-content panel" style="margin-bottom: 28px;">
+      <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
+        <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">AI Reports</h2>
+        <button id="btnRefreshAiReports" class="btn btn-outline">Refresh</button>
+      </div>
+      <div id="aiReportsListContainer">
+        <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load AI reports.</p>
+      </div>
+    </section>
+
+    <section id="tab-audit" class="admin-tab-content panel" style="margin-bottom: 28px;">
+      <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
+        <h2 style="margin:0;color:#f0f4f8;font-size:1.3rem;">Audit Logs</h2>
+        <button id="btnRefreshAuditLogs" class="btn btn-outline">Refresh</button>
+      </div>
+      <div id="auditLogsListContainer">
+        <p style="color:#6b7f94;text-align:center;padding:30px;">Select this tab to load audit logs.</p>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-bottom: 28px;">
+      <h2 style="margin:0 0 8px;color:#f0f4f8;font-size:1.3rem;">System Notification</h2>
+      <p style="margin:0 0 16px;color:#8899aa;">Gửi thông báo hệ thống tới tất cả người dùng (Organizers, Judges,
+        Participants).</p>
+      <form id="systemNotificationForm" style="display:grid;gap:10px;max-width:720px;">
+        <input id="notifTitle" class="field-input" type="text" placeholder="Notification title" required>
+        <textarea id="notifBody" class="field-input" rows="3" placeholder="Notification message" required></textarea>
+        <button type="submit" class="btn" style="width:max-content;">Send Notification</button>
+      </form>
+    </section>
+
+    <div class="panel">
+      <div style="margin-bottom: 20px;">
+
+        <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">User Management</h2>
+        <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Tìm kiếm, thay đổi vai trò (Role), khóa/mở khóa tài
+          khoản hoặc xóa tài khoản người dùng.</p>
+
+        <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">System Account Management</h2>
+        <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Search, change roles, lock or unlock accounts, or
+          delete users.</p>
+
+      </div>
+
+      <div class="toolbar">
+        <input type="text" id="searchInput" class="field-input" style="flex: 1; min-width: 220px;"
+          placeholder="Search by username, email, or name...">
+
+        <select id="roleFilter" class="field-input">
+          <option value="">All Roles</option>
+          <option value="participant">Participant</option>
+          <option value="judge">Judge</option>
+          <option value="organizer">Organizer</option>
+
+          <option value="admin">Admin</option>
+
+          <option value="admin">Administrator</option>
+
+        </select>
+
+        <select id="statusFilter" class="field-input">
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="locked">Locked</option>
+        </select>
+
+        <button id="btnRefreshUsers" class="btn btn-outline">Refresh</button>
+      </div>
+
+      <div id="usersListContainer">
+        <p style="color: #6b7f94; text-align: center; padding: 30px;">Loading users...</p>
+      </div>
+
+      <div id="paginationContainer"
+        style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; color: #8899aa;">
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top: 28px;">
+      <div class="toolbar" style="justify-content: space-between;">
+        <div>
+          <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Contest Review</h2>
+          <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Duyệt, từ chối kèm lý do hoặc đình chỉ cuộc thi.</p>
+        </div>
+        <button id="btnRefreshContests" class="btn btn-outline">Refresh</button>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="contestSearchInput" class="field-input" placeholder="Tìm theo tên hoặc ID..."></input>
+        <select id="contestStatusFilter" class="field-input">
+          <option value="">All Statuses</option>
+          <option value="draft">Draft</option>
+          <option value="pending">Pending</option>
+          <option value="published">Published</option>
+          <option value="rejected">Rejected</option>
+          <option value="suspended">Suspended</option>
+        </select>
+      </div>
+      <div id="contestsListContainer">
+        <p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải danh sách cuộc thi...</p>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top: 28px;">
+      <div class="toolbar" style="justify-content: space-between;">
+        <div>
+          <h2 style="margin: 0 0 6px; color: #f0f4f8; font-size: 1.3rem;">Review Submission AI Flagged</h2>
+          <p style="margin: 0; color: #8899aa; font-size: 0.92rem;">Xem báo cáo AI và xử lý submission nghi ngờ vi phạm.
+          </p>
+        </div>
+        <button id="btnRefreshAiReports" class="btn btn-outline">Refresh</button>
+      </div>
+      <div id="aiReportsListContainer">
+        <p style="color:#6b7f94;text-align:center;padding:30px;">Đang tải báo cáo AI...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-toast" class="toast" aria-live="polite"></div>
+
+  <script src="/static/api_client.js"></script>
+  <script src="/static/js/admin_dashboard.js"></script>
+</body>
+
 </html>
