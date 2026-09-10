@@ -129,3 +129,31 @@ def mark_notification_read(notification_id):
         'is_read': updated.is_read,
         'message': 'Notification marked as read'
     }), 200
+
+
+@notification_bp.route('/<int:notification_id>', methods=['DELETE'])
+@token_required
+def delete_notification(notification_id):
+    notification = notification_service.repository.get_by_id(notification_id)
+    if not notification or notification.user_id != _current_user_id():
+        return jsonify({'message': 'Notification not found'}), 404
+
+    deleted = notification_service.delete_notification(notification_id)
+    if not deleted:
+        return jsonify({'message': 'Failed to delete notification'}), 400
+
+    return jsonify({'message': 'Notification deleted'}), 200
+
+
+@notification_bp.route('', methods=['DELETE'])
+@token_required
+def clear_notifications():
+    user_id = _current_user_id()
+    if not user_id:
+        return jsonify({'message': 'User information is missing'}), 401
+
+    deleted_count = notification_service.clear_user_notifications(user_id)
+    return jsonify({
+        'deleted_count': deleted_count,
+        'message': 'Notifications cleared'
+    }), 200

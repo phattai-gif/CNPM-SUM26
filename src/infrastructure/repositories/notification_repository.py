@@ -44,3 +44,16 @@ class NotificationRepository:
         self.session.refresh(model)
         return model
 
+    def delete_by_id(self, notification_id: int) -> bool:
+        model = self.get_by_id(notification_id)
+        if model is None:
+            return False
+        self.session.delete(model)
+        self.session.commit()
+        return True
+
+    def delete_all_for_user(self, user_id: int) -> int:
+        deleted = self.session.query(NotificationModel).filter_by(user_id=user_id).delete()
+        self.session.commit()
+        return deleted
+

@@ -14,9 +14,12 @@
       </button>
     </nav>
 
-    <div id="nav-notification-panel" class="is-hidden" style="position:absolute;right:24px;top:58px;z-index:1400;width:min(380px,calc(100vw - 32px));max-height:420px;overflow:auto;background:#111a26;border:1px solid #1e2a3a;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.45);padding:12px;">
-      <strong style="color:#f0f4f8;">New Alerts</strong>
-      <div id="nav-notification-list" style="display:grid;gap:8px;margin-top:10px;"></div>
+    <div id="nav-notification-panel" class="is-hidden" style="position:absolute;right:24px;top:58px;z-index:1400;width:min(420px,calc(100vw - 24px));max-height:500px;overflow:auto;background:#111a26;border:1px solid #1e2a3a;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.45);padding:18px 14px 12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
+        <strong style="color:#f0f4f8;font-size:1.15rem;">New Alerts</strong>
+        <button type="button" id="nav-notification-clear-all" style="border:none;background:transparent;color:#f5a623;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px;">Clear all</button>
+      </div>
+      <div id="nav-notification-list" style="display:grid;gap:10px;"></div>
     </div>
 
     <div class="app-nav-right" id="nav-right-auth">
@@ -62,6 +65,7 @@
       const notificationCount = document.getElementById('nav-notification-count');
       const notificationPanel = document.getElementById('nav-notification-panel');
       const notificationList = document.getElementById('nav-notification-list');
+      const clearAllButton = document.getElementById('nav-notification-clear-all');
 
       function safeGetSession() {
         if (window.AuthSession && typeof window.AuthSession.getSession === 'function') {
@@ -151,6 +155,43 @@
         }
       }
 
+      function notificationKindLabel(type) {
+        const normalized = String(type || '').toLowerCase();
+        if (normalized.includes('ai')) return 'AI';
+        if (normalized.includes('duplicate')) return 'Duplicate';
+        if (normalized.includes('fraud')) return 'Fraud';
+        return 'Alert';
+      }
+
+      function notificationAccent(type) {
+        const normalized = String(type || '').toLowerCase();
+        if (normalized.includes('ai')) return '#f5a623';
+        if (normalized.includes('duplicate')) return '#60a5fa';
+        if (normalized.includes('fraud')) return '#f87171';
+        return '#f5a623';
+      }
+
+      function renderNotificationItem(item) {
+        const title = escapeHtml(item.title || 'Alert');
+        const body = escapeHtml(item.body || '');
+        const type = escapeHtml(notificationKindLabel(item.type));
+        const accent = notificationAccent(item.type);
+        const itemId = escapeHtml(item.id);
+        return `
+          <div style="border:1px solid #233547;border-radius:12px;padding:12px 12px 10px;background:rgba(17,26,38,0.9);box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${accent};box-shadow:0 0 0 4px rgba(245,166,35,0.12);"></span>
+                <strong style="color:${accent};font-size:0.88rem;letter-spacing:0.04em;text-transform:uppercase;">${type}</strong>
+              </div>
+              <button type="button" data-notification-id="${itemId}" class="notification-delete-btn" aria-label="Delete notification" style="border:none;background:transparent;color:#90a4b7;cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 4px;">×</button>
+            </div>
+            <div style="margin-top:10px;color:#f0f4f8;font-size:0.95rem;font-weight:700;line-height:1.4;">${title}</div>
+            <div style="margin-top:8px;color:#c9d4e0;font-size:0.86rem;line-height:1.6;white-space:pre-line;">${body}</div>
+          </div>
+        `;
+      }
+
       async function loadNotifications() {
         const session = safeGetSession();
         if (!session.token || !notificationsButton || notificationsButton.classList.contains('is-hidden')) return;
@@ -164,10 +205,44 @@
           notificationCount.textContent = String(notifications.length);
           setHidden(notificationCount, notifications.length === 0);
           notificationList.innerHTML = notifications.length
-            ? notifications.map((item) => `<div style="border:1px solid #1e2a3a;border-radius:8px;padding:8px;color:#cbd5e1;font-size:.88rem;"><strong style="color:#f5a623;">${escapeHtml(item.title || 'Alert')}</strong><br>${escapeHtml(item.body || '')}</div>`).join('')
-            : '<span style="color:#8899aa;font-size:.88rem;">No new alerts.</span>';
+            ? notifications.map(renderNotificationItem).join('')
+            : '<div style="padding:12px 8px;color:#8899aa;font-size:.9rem;">No new alerts.</div>';
+
+          notificationList.querySelectorAll('.notification-delete-btn').forEach((button) => {
+            button.addEventListener('click', async () => {
+              const id = button.getAttribute('data-notification-id');
+              if (!id) return;
+              try {
+                const deleteResponse = await fetch(`/notifications/${id}`, {
+                  method: 'DELETE',
+                  headers: { Authorization: `Bearer ${session.token}`, Accept: 'application/json' }
+                });
+                if (deleteResponse.ok) {
+                  await loadNotifications();
+                }
+              } catch (error) {
+                console.warn('Unable to delete notification', error);
+              }
+            });
+          });
         } catch (error) {
           console.warn('Unable to load notifications', error);
+        }
+      }
+
+      async function clearAllNotifications() {
+        const session = safeGetSession();
+        if (!session.token) return;
+        try {
+          const response = await fetch('/notifications', {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${session.token}`, Accept: 'application/json' }
+          });
+          if (response.ok) {
+            await loadNotifications();
+          }
+        } catch (error) {
+          console.warn('Unable to clear notifications', error);
         }
       }
 
@@ -196,6 +271,12 @@
         notificationsButton.addEventListener('click', () => {
           notificationPanel.classList.toggle('is-hidden');
           loadNotifications();
+        });
+      }
+
+      if (clearAllButton) {
+        clearAllButton.addEventListener('click', () => {
+          clearAllNotifications();
         });
       }
 
